@@ -6,9 +6,27 @@ from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from django.views import View
+import subprocess
 
 
 # Create your views here.
+
+class MigrateView(View):
+    def get(self, request, *args, **kwargs):
+        try:
+            # Ejecutar el comando 'makemigrations'
+            subprocess.run(['python', 'manage.py', 'makemigrations'], check=True)
+
+            # Ejecutar el comando 'migrate'
+            subprocess.run(['python', 'manage.py', 'migrate'], check=True)
+
+            return HttpResponse("Migraciones realizadas con éxito.")
+        except subprocess.CalledProcessError as e:
+            # Capturar cualquier error que pueda ocurrir durante la ejecución de los comandos
+            return HttpResponse(f"Error al realizar las migraciones: {e}", status=500)
+
 
 def home(request):
     return render(request, 'home.html')
