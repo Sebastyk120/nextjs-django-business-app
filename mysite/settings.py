@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'inventarios.apps.InventariosConfig',
     'comercial.apps.ComercialConfig',
     'django_tables2',
-    'crispy_bootstrap5',
     'crispy_forms',
     'import_export',
     'rest_framework',
