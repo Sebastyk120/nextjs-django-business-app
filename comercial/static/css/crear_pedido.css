@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+
+/*         Name of items    */
+
+
+[name="cliente"],
+[name="fecha_solicitud"],
+[name="fecha_entrega"],
+[name="exportadora"],
+[name="awb"],
+[name="numero_factura"],
+[name="nota_credito_no"],
+[name="motivo_nota_credito"],
+[name="valor_pagado_cliente_usd"],
+[name="comision_bancaria_usd"],
+[name="fecha_pago"],
+[name="trm_monetizacion"],
+[name="documento_cobro_comision"],
+[name="fecha_pago_comision"] {
+    width: 100%;
+    border-radius: 4px;
+    border: none;
+    padding: 8px 12px;
+    color: black; /* Color por defecto */
+}
+
+/* Estilos específicos para campos deshabilitados */
+[name="cliente"]:disabled,
+[name="fecha_solicitud"]:disabled,
+[name="fecha_entrega"]:disabled,
+[name="exportadora"]:disabled,
+[name="awb"]:disabled,
+[name="numero_factura"]:disabled,
+[name="nota_credito_no"]:disabled,
+[name="motivo_nota_credito"]:disabled,
+[name="valor_pagado_cliente_usd"]:disabled,
+[name="comision_bancaria_usd"]:disabled,
+[name="fecha_pago"]:disabled,
+[name="trm_monetizacion"]:disabled,
+[name="documento_cobro_comision"]:disabled,
+[name="fecha_pago_comision"]:disabled {
+    color: white; /* Color cuando estén deshabilitados */
+    background-color: black;
+}

@@ -1,0 +1,433 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+
+.main-body {
+  background-color: #8e8e8e;
+  background-image: url("/static/img/fondo-menu.jpg");
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  animation: fadein 0.6s;
+  font-family: 'Poppins', sans-serif;
+}
+
+/*             Animación aparición de iconos tras 0.6s */
+
+@keyframes fadein {
+  0% {
+      opacity:0;
+  }
+  10%{
+    opacity: 0.1;
+  }
+  20%{
+    opacity: 0.2;
+  }
+  30%{
+    opacity: 0.3;
+  }
+  40%{
+    opacity: 0.4;
+  }
+
+  50%{
+      opacity:0.5;
+  }
+  60%{
+    opacity: 0.6;
+  }
+  70%{
+    opacity: 0.7;
+  }
+  80%{
+    opacity: 0.8;
+  }
+  90%{
+    opacity: 0.9;
+  }
+  100% {
+      opacity:1;
+  }
+}
+
+/*      Grid Responsive     */
+
+.container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 110px;
+}
+
+
+.title{
+  font-family: "Poppins", sans-serif;
+  position: relative;
+  color: white;
+  text-align: center;
+
+}
+
+/*      Custom Icons    */
+
+.icon-pedidosheavens {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/heavens.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.icon-pedidosetnico {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/etnico.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.icon-pedidosfieldex {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/fieldex.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.icon-pedidosjuan {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/juan_matas.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  font-size: 12px;
+}
+
+.icon-inventarioheavens {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/inventarioheavens.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.icon-inventarioetnico {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/inventarioetnico.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.icon-inventariofieldex {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/fieldexinventario.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+
+.icon-inventariojuan {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/inventariojuan.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.icon-tesoreria {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/tesoreria.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.icon-admin {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/Administracion.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.icon-comparador {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/comparador.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.icon-logout {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  background-image: url(../img/logout.png);
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition-duration: 0.4s;
+  text-align: center;
+  line-height: 240px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.icon-calidad:hover, .icon-ausentismos:hover, .icon-descuentos:hover, .icon-inventariotr:hover, .icon-legalizaciones:hover, .icon-nacionales:hover, .icon-novedades:hover, .icon-porcentajes:hover, .icon-registro:hover, .icon-tesoreria:hover, .icon-trasportes:hover, .icon-logout:hover{
+
+  box-shadow: 0 14px 18px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+
+}
+
+.icon-calidad:active, .icon-ausentismos:active, .icon-descuentos:active, .icon-inventariotr:active, .icon-legalizaciones:active, .icon-nacionales:active, .icon-novedades:active, .icon-porcentajes:active, .icon-registro:active, .icon-tesoreria:active, .icon-trasportes:active, .icon-logout:active{
+
+    transform: translateY(4px);
+
+}
+
+a:link {
+  text-decoration: none;
+}
+
+a:visited {
+  color: rgba(0, 0, 0, 0);
+  font-family: arial, sans-serif;
+  text-decoration: none;
+}
+
+span{
+  color: aliceblue;
+  overflow: hidden;
+  white-space: nowrap; 
+
+}
+
+
+/*      Foot Of page   */
+
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  height: 2.2%;
+  width: 100%;
+  background-color: rgb(54, 54, 54);
+  color: white;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+}
+
+
+/*      Animation Pre-Login     */
+
+body {
+  margin: 0;
+}
+
+
+.pre-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 48px;
+  padding-right: 130px;
+  text-shadow: 0 0 10px #fc84f2;
+}
+
+
+.header {
+  position: relative;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  text-align: center;
+  background-image: url(../img/bkhome.png);
+  color: white;
+
+}
+
+.inner-header {
+  height: 80vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.waves {
+  position: relative;
+  width: 100%;
+  height: 18vh;
+  margin-bottom: -7px;
+  min-height: 100px;
+  max-height: 140px;
+}
+
+.content {
+  position: relative;
+  height: 20vh;
+  text-align: center;
+  background-color: white;
+}
+
+
+.parallax>use {
+  animation: move-forever 25s cubic-bezier(.55, .5, .45, .5) infinite;
+}
+
+.parallax>use:nth-child(1) {
+  animation-delay: -2s;
+  animation-duration: 7s;
+}
+
+.parallax>use:nth-child(2) {
+  animation-delay: -3s;
+  animation-duration: 10s;
+}
+
+.parallax>use:nth-child(3) {
+  animation-delay: -4s;
+  animation-duration: 13s;
+}
+
+.parallax>use:nth-child(4) {
+  animation-delay: -5s;
+  animation-duration: 20s;
+}
+
+@keyframes move-forever {
+  0% {
+    transform: translate3d(-90px, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(85px, 0, 0);
+  }
+}
+
+.logo {
+  width: 170px;
+  fill: white;
+  display: inline-block;
+  vertical-align: middle;
+  padding-right: 0;
+}
+
+h5 {
+
+  font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+  vertical-align: middle;
+
+}
+
+.custom-btn {
+  color: #312f2f;
+  width: 170px;
+  height: 50px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+*,
+*:before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.btn-1 {
+  border: none;
+  background-color: #ff9aff;
+  box-shadow: 0 0 5px #ef97e8;
+}
+
+.btn-1:hover {
+  box-shadow: 0 0 10px #ef97e8, 0 0 20px #ef97e8, 0 0 20px #fff inset;
+}
+

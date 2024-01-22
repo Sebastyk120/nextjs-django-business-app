@@ -1,0 +1,29 @@
+[name="numero_item"],
+[name="tipo_documento"],
+[name="cantidad_cajas"],
+[name="documento"],
+[name="proveedor"],
+[name="bodega"],
+[name="fecha_movimiento"],
+[name="propiedad"],
+[name="observaciones"] {
+    width: 100%;
+    border-radius: 4px;
+    border: none;
+    padding: 8px 12px;
+    color: black; /* Color por defecto */
+}
+
+/* Estilos para campos deshabilitados */
+[name="numero_item"]:disabled,
+[name="tipo_documento"]:disabled,
+[name="cantidad_cajas"]:disabled,
+[name="documento"]:disabled,
+[name="proveedor"]:disabled,
+[name="bodega"]:disabled,
+[name="fecha_movimiento"]:disabled,
+[name="propiedad"]:disabled,
+[name="observaciones"]:disabled {
+    color: white; /* Color cuando estén deshabilitados */
+    background-color: black;
+}

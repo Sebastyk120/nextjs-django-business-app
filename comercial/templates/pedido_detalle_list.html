@@ -1,0 +1,86 @@
+{% block content %}
+    {% load static %}
+    {% load django_tables2 %}
+    <!DOCTYPE html>
+    <html lang="en" data-bs-theme="dark">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" href="{% static 'img/favicon.png' %}">
+        <link rel="stylesheet" href="{% static 'css/detalle_pedido.css' %}"/>
+        <title>Pedidos Heavens</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+              integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+              crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    </head>
+    <body>
+    <br>
+    <h1 class="align-center">Pedido No: {{ pedido.id }}</h1>
+    <h2 class="align-center">Cliente: {{ pedido.cliente.nombre }}</h2>
+    <button type="button" class="btn btn-primary me-md-5 btn-sm" name="add" id="add" data-bs-toggle="modal"
+            data-bs-target="#adddetalleItemModal" href="{% url 'detalle_pedido_crear' pedido.id %}"><i
+            class="bi bi-bag-plus-fill"></i> Agregar
+    </button>
+    <a type="button" class="btn btn-danger me-md-5 btn-sm" name="volver" id="volver" role="button"
+       onclick="history.back();"><i class="bi bi-reply-fill"></i> Pedidos</a>
+    </div>
+    <div class="container-fluid">
+        {% render_table table %}
+    </div>
+
+    <!-- Crear Detalle Pedido Modal -->
+    <div class="modal fade text-white" id="adddetalleItemModal" tabindex="-1" role="dialog"
+         aria-labelledby="adddetalleItemModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-dark">
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Editar Detalle Pedido Modal -->
+    <div class="modal fade text-white" id="moverItemModal" tabindex="-1" role="dialog"
+         aria-labelledby="moverItemModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-dark">
+            </div>
+        </div>
+    </div>
+
+    <!-- Eliminar Detalle Pedido Modal -->
+    <div class="modal fade text-white" id="eliminarItemModal" tabindex="-1" role="dialog"
+         aria-labelledby="eliminarItemModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-dark">
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
+            integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js"
+            integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V"
+            crossorigin="anonymous"></script>
+    <script src="{% static 'js/editar_detalle_pedido.js' %}"></script>
+    <script src="{% static 'js/crear_detalle_pedido.js' %}"></script>
+    <script src="{% static 'js/eliminar_detalle_pedido.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {% if messages %}{% for m in messages %}
+        <script>
+            Swal.fire({
+                title: "Operación Exitosa",
+                text: "{{m}}",
+                icon: "success",
+            });
+        </script>
+    {% endfor %}{% endif %}
+    </body>
+    </html>
+{% endblock %}

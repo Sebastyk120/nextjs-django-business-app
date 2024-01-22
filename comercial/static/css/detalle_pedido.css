@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+
+body {
+    background-image: url(../img/black.png); !important;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    font-family: 'Poppins', serif;
+}
+
+
+h1 {
+    justify-content: center;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800 !important;
+    font-size: 40px !important;
+    color: #000000;
+}
+
+h2 {
+    justify-content: center;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    color: #000000;
+    font-weight: bold;
+}
+
+
+.table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.7em;
+    font-family: 'Poppins', sans-serif;
+    width: 100%;
+    min-width: 400px;/* Hace que la tabla ocupe el 100% del ancho disponible */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    background-color: #ece9e9; /* Puedes ajustar el color de fondo según tus preferencias */
+    font-weight: bold;
+    white-space: inherit;  /* Evita el salto de línea en las celdas */
+    text-align: center;    /* Alinea el texto a la derecha */
+}
+
+.table thead tr {
+    background-color: #006098;
+    color: #ffffff;
+    text-align: center;
+
+}
+
+.table thead tr {
+    background-color: #006098;
+    color: #ffffff;
+    text-align: center;
+
+}
+
+.table thead tr {
+    background-color: #006098;
+    color: #ffffff;
+    text-align: center;
+
+}
+
+.table tbody tr.active-row {
+    font-weight: bold;
+    color: #000000;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+a:link {
+    color: rgb(255, 255, 255);
+    text-decoration: none
+}
+
+a:hover {
+    color: rgb(255, 255, 255);
+    text-decoration: none
+}
+
+a:visited {
+    color: rgb(243, 243, 243);
+    text-decoration: none
+}
+
+input[name="item_busqueda"] {
+    width: 10%;
+    border-radius: 4px;
+    border: none;
+    padding: 8px 12px;
+    background-color: #e4e4e4;
+    font-family: 'Poppins', sans-serif;
+    transition: 0.3s;
+    margin-right: 5px;
+    margin-left: 100px;
+}
+
+input[name="item_busqueda"]:active,
+input[name="item_busqueda"]:focus {
+    width: 20%;
+}
+
+
+label {
+
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    margin: 10px;
+
+}
+
+[name="volver"] {
+    position: absolute;
+    left: 68%;
+    top: 30px;
+}
+
+[name="add"] {
+    position: absolute;
+    left: 62%;
+    top: 30px;
+}
+
+
+#add {
+    position: absolute;
+    transition: all 300ms ease 0ms;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    z-index: 99;
+}
+
+#add:hover {
+    background-color: #000000;
+    box-shadow: 0 15px 20px rgba(0, 0, 0, 0.3);
+    transform: translateY(-7px);
+}
+
+
+@media only screen and (max-width: 600px) {
+    #add {
+        font-size: 14px;
+        padding: 12px 20px;
+        bottom: 20px;
+        right: 30px;
+    }
+
+    #volver {
+        font-size: 14px;
+        padding: 12px 20px;
+        bottom: 20px;
+        right: 30px;
+    }
+
+
+}
+
+#volver:hover {
+    background-color: #000000;
+    box-shadow: 0 15px 20px rgba(0, 0, 0, 0.3);
+    transform: translateY(-7px);
+}
+
+.page-link {
+
+    z-index: 3;
+    color: #000000(--bs-pagination-active-border-color);
+    background-color: #000000;
+    border-color: #000000(--bs-pagination-active-border-color);
+
+}
+
+.django-tables2 .table td {
+    white-space: nowrap;  /* Evita el salto de línea en las celdas */
+    text-align: right;    /* Alinea el texto a la derecha */
+    padding-right: 10px;  /* Añade algo de relleno a la derecha */
+}

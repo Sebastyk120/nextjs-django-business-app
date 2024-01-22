@@ -1,0 +1,118 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="{% static 'img/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/pedido_base.css' %}"/>
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+    <title>Comercial</title>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg" style="background-color: #00bfff; height: 35px;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'home' %}">Heavens Corp - Comercial</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        Pedidos General
+                    </a>
+                    <div class="submenu" style="background-color: #00bfff">
+                        <ul>
+                            <li><a href="{% url 'pedido_list_general' %}">General</a></li>
+                            <li><a href="{% url 'pedido_list_etnico' %}">Etnico</a></li>
+                            <li><a href="{% url 'pedido_list_fieldex' %}">Fieldex</a></li>
+                            <li><a href="{% url 'pedido_list_juan' %}">Juan Matas</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'comparador_cotizaciones' %}">Validador Cot</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        Comisiones Por Exportador
+                    </a>
+                    <div class="submenu" style="background-color: #00bfff">
+                        <ul>
+                            <li><a href="{% url 'comision_list_heavens' %}">Comisiones Heavens</a></li>
+                            <li><a href="{% url 'comision_list_etnico' %}">Comisiones Etnico</a></li>
+                            <li><a href="{% url 'comision_list_fieldex' %}">Comisiones Fieldex</a></li>
+                            <li><a href="{% url 'comision_list_juan' %}">Comisiones Juan Matas</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        Cartera Por Exportador
+                    </a>
+                    <div class="submenu" style="background-color: #00bfff">
+                        <ul>
+                            <li><a href="{% url 'cartera_list_heavens' %}">Cartera General</a></li>
+                            <li><a href="{% url 'cartera_list_etnico' %}">Cartera Etnico</a></li>
+                            <li><a href="{% url 'cartera_list_fieldex' %}">Cartera Fieldex</a></li>
+                            <li><a href="{% url 'cartera_list_juan' %}">Cartera Juan Matas</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        Cotizaciones Y Referencias
+                    </a>
+                    <div class="submenu" style="background-color: #00bfff">
+                        <ul>
+                            <li><a href="{% url 'cotizacion_etnico' %}">Cotización Etnico</a></li>
+                            <li><a href="{% url 'cotizacion_fieldex' %}">Cotización Fieldex</a></li>
+                            <li><a href="{% url 'cotizacion_juan' %}">Cotización Juan Matas</a></li>
+                            <li><a href="{% url 'referencia_list_etnico' %}">Referencias Etnico</a></li>
+                            <li><a href="{% url 'referencia_list_fieldex' %}">Referencias Fieldex</a></li>
+                            <li><a href="{% url 'referencia_list_juan' %}">Referencias Juan Matas</a></li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle text-white" href="" role="button" data-bs-toggle="dropdown"
+                   data-bs-auto-close="outside" id="navbarDropdown" aria-expanded="false">
+                    <i class="bi bi-person-circle"></i> {{ request.user.first_name }}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <div class="card" style="width: 15.5rem;">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="bi bi-person-check"></i> {{ request.user }}</h5>
+                                <h6 class="card-subtitle mb-2">N: {{ request.user.first_name }} {{ request.user.last_name }}</h6>
+                                <p class="card-text" style="font-size:12px;">{{ request.user.email }}</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li><a class="dropdown-item" style="--bs-dropdown-link-active-bg: #a1a5abc9"
+                           href="{% url 'logout' %}">Cerrar Sesión <i class="bi bi-box-arrow-left"></i> </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% if messages %}{% for m in messages %}
+    <script>
+        Swal.fire({
+            title: "Operación Exitosa",
+            text: "{{m}}",
+            icon: "success",
+        });
+    </script>
+{% endfor %}{% endif %}
+{% block content %} {% endblock %}
+</body>
+</html>
