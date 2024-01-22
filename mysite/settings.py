@@ -91,7 +91,6 @@ CORS_ALLOWED_ORIGINS = [
     "https://django-server-production-8f77.up.railway.app",
 ]
 
-CORS_ALLOW_ALL_ORIGINS: True
 
 
 # Database
