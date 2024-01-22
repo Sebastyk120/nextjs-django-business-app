@@ -87,10 +87,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mysite.wsgi.application'
 
-CORS_ALLOWED_ORIGINS = [
-    "https://django-server-production-8f77.up.railway.app",
-]
-
 
 
 # Database
@@ -156,3 +152,5 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
+
+CORS_ALLOW_ALL_ORIGINS: True
