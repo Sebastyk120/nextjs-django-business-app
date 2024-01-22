@@ -1,16 +1,10 @@
-import locale
-
 import django_tables2 as tables
-from babel.numbers import format_currency
 from django.utils.html import format_html
 from .models import Pedido, DetallePedido, Referencias
 
-locale.setlocale(locale.LC_ALL, '')
-
 
 def format_as_currency(value):
-    # Utiliza la función format_currency de babel
-    formatted_value = format_currency(value, 'USD', locale='es_ES')
+    formatted_value = "${:,.2f}".format(value)
     return formatted_value
 
 
