@@ -151,8 +151,8 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 
 ALLOWED_HOSTS = [
-    'django-server-production-8f77.up.railway.app',
+    'heavens-server.up.railway.app',
 ]
 CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app"]
-CSRF_ALLOWED_ORIGINS = ["https://django-server-production-8f77.up.railway.app"]
-CORS_ORIGINS_WHITELIST = ["https://django-server-production-8f77.up.railway.app"]
+CSRF_ALLOWED_ORIGINS = ["https://heavens-server.up.railway.app"]
+CORS_ORIGINS_WHITELIST = ["https://heavens-server.up.railway.app"]
