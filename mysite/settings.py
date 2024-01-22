@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'simple_history',
     'widget_tweaks',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -63,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'mysite.urls'
@@ -84,6 +86,12 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'mysite.wsgi.application'
+
+CORS_ALLOWED_ORIGINS = [
+    "https://django-server-production-8f77.up.railway.app",
+]
+
+CORS_ALLOW_ALL_ORIGINS: True
 
 
 # Database
