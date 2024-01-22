@@ -2,7 +2,6 @@ import io
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
-from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -206,6 +205,7 @@ def exportar_items_juan(request):
     response['Content-Disposition'] = 'attachment; filename="inventario_items_juan.xlsx"'
 
     return response
+
 
 # ------------------ Exportacion de inventarios  Excel General --------------------------------------------------------
 @login_required

@@ -41,6 +41,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'autenticacion.apps.AutenticacionConfig',
+    'cartera.apps.CarteraConfig',
+    'inventarios.apps.InventariosConfig',
+    'comercial.apps.ComercialConfig',
+    'django_tables2',
+    'crispy_forms',
+    'crispy_bootstrap5',
+    'import_export',
+    'rest_framework',
+    'django_extensions',
+    'simple_history',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [
@@ -111,13 +123,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
+FORMAT_MODULE_PATH = ['Django_heavens.formats']
+LANGUAGE_CODE = 'es-es'
+TIME_ZONE = 'America/Bogota'
+USE_L10N = True
+USE_THOUSAND_SEPARATOR = True
 USE_I18N = True
-
 USE_TZ = True
 
 
@@ -127,8 +138,15 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+LOGIN_URL = 'login'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000

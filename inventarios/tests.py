@@ -1,5 +1,3 @@
-from django.test import TestCase
-
 # Unir un Item De Compra
 """"numero_item = form.cleaned_data['numero_item']
         bodega = form.cleaned_data['bodega']

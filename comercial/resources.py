@@ -1,10 +1,11 @@
-from import_export import resources, fields
 import openpyxl
+from django.db.models import Sum
+from import_export import resources
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
+
 from .models import Pedido, Cliente, Fruta, Contenedor, DetallePedido, Pais, Presentacion, Referencias, Exportador, \
     TipoCaja
-from django.db.models import Sum
 
 
 # ////////////////////////////////////// Exportaciones De Cartera /////////////////////////////////////////////////////
