@@ -26,7 +26,6 @@ SECRET_KEY = 'django-insecure-rc^*w^w&6g9_(uvx#6s*bnt!w)l0rdi%!l7mv#y%uc&x%wo5pk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
 
 # FORM SUBMISSION
 # Comment out the following line and place your railway URL, and your production URL in the array.
@@ -52,7 +51,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'simple_history',
     'widget_tweaks',
-    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -153,9 +151,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 
-CORS_ALLOWED_ORIGINS = [
-    "https://django-server-production-8f77.up.railway.app",
-    # Agrega otros orígenes si es necesario
-]
-
-CRF_TRUSTED_ORIGINS = ['https://*.railway.app']
+ALLOWED_HOSTS = ["django-server-production-8f77.up.railway.app/"]
+CSRF_TRUSTED_ORIGINS = ["https://django-server-production-8f77.up.railway.app/"]
+CSRF_ALLOWED_ORIGINS = ["https://django-server-production-8f77.up.railway.app/"]
+CORS_ORIGINS_WHITELIST = ["https://django-server-production-8f77.up.railway.app/"]
