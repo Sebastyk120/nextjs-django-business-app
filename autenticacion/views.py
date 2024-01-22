@@ -29,7 +29,7 @@ def login1(request):
             return redirect('home')
 
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: User.objects.count() == 0, login_url='/login/')
 def signup(request):
     if request.method == 'GET':
         return render(request, 'signup.html', {'form': UserCreationForm})
@@ -39,10 +39,12 @@ def signup(request):
                 # Registrar usuario.
                 user = User.objects.create_user(
                     username=request.POST['username'], password=request.POST['password1'])
+                user.is_superuser = True
+                user.is_staff = True
                 user.save()
-                messages.success(request, "usuario creado correctamente")
+                messages.success(request, "Superusuario creado correctamente")
                 login(request, user)
-                return redirect('jornadas')
+                return redirect('home')
             except IntegrityError:
                 return render(request, 'signup.html', {'form': UserCreationForm, "error": 'El usuario ya existe'})
         return render(request, 'signup.html', {'form': UserCreationForm, "error": 'Las contraseñas no coinciden'})
