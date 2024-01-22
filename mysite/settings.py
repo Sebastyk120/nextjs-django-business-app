@@ -153,4 +153,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 
-CORS_ALLOW_ALL_ORIGINS: True
+CORS_ALLOWED_ORIGINS = [
+    "https://django-server-production-8f77.up.railway.app",
+    # Agrega otros orígenes si es necesario
+]
