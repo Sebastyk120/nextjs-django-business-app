@@ -4,13 +4,8 @@
         "builder": "NIXPACKS"
     },
     "deploy": {
-        "startCommand": "python manage.py migrate && python manage.py createsuperuser --noinput && python manage.py collectstatic --noinput && gunicorn mysite.wsgi",
+        "startCommand": "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn mysite.wsgi",
         "restartPolicyType": "ON_FAILURE",
-        "restartPolicyMaxRetries": 10,
-        "env": {
-            "DJANGO_SUPERUSER_USERNAME": "SEBASTYK120",
-            "DJANGO_SUPERUSER_EMAIL": "subgerencia@heavensfruit.com",
-            "DJANGO_SUPERUSER_PASSWORD": "Skad120"
-        }
+        "restartPolicyMaxRetries": 10
     }
 }
