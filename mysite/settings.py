@@ -157,3 +157,5 @@ CORS_ALLOWED_ORIGINS = [
     "https://django-server-production-8f77.up.railway.app",
     # Agrega otros orígenes si es necesario
 ]
+
+CRF_TRUSTED_ORIGINS = ['https://*.railway.app']
