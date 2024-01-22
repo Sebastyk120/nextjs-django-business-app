@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'comercial.apps.ComercialConfig',
     'django_tables2',
     'crispy_forms',
+    'crispy_bootstrap5',
     'import_export',
     'rest_framework',
     'django_extensions',
