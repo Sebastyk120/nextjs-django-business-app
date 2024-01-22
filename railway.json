@@ -4,7 +4,7 @@
         "builder": "NIXPACKS"
     },
     "deploy": {
-        "startCommand": "export LC_ALL=es_ES.UTF-8 && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn mysite.wsgi",
+        "startCommand": "bash -c 'localedef -i es_ES -f UTF-8 es_ES.UTF-8 && export LC_ALL=es_ES.UTF-8 && python manage.py migrate && python manage.py collectstatic --noinput && gunicorn mysite.wsgi'",
         "restartPolicyType": "ON_FAILURE",
         "restartPolicyMaxRetries": 10
     }
