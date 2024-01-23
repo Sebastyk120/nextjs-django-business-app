@@ -2,3 +2,4 @@ Agregar los campos relacionados NC o ND o Descuento, al modulo cartera.
 Colocar Colores De Encabezado.
 Cambiar fecha de pago en los pedidos, fecha de monetizacion. 
 Añadir el campo fecha de monetizacion.
+Acceso proveedores Fieldex. 

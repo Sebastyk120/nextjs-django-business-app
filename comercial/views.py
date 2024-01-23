@@ -1364,10 +1364,12 @@ class PedidoExportadorUpdateView(UpdateView):
         self.object = get_object_or_404(Pedido, id=pedido_id)
         formatted_fecha_solicitud = self.object.fecha_solicitud.strftime('%Y-%m-%d')
         formatted_fecha_entrega = self.object.fecha_entrega.strftime('%Y-%m-%d')
+        formatted_fecha_pago = self.object.fecha_pago.strftime('%Y-%m-%d')
         if self.object.fecha_pago_comision is None:
             form = self.form_class(
                 instance=self.object,
-                initial={'fecha_solicitud': formatted_fecha_solicitud, 'fecha_entrega': formatted_fecha_entrega}
+                initial={'fecha_solicitud': formatted_fecha_solicitud, 'fecha_entrega': formatted_fecha_entrega,
+                         'fecha_pago': formatted_fecha_pago}
             )
         else:
             formatted_fecha_pago_comision = self.object.fecha_pago_comision.strftime('%Y-%m-%d')
@@ -1375,7 +1377,7 @@ class PedidoExportadorUpdateView(UpdateView):
             form = self.form_class(
                 instance=self.object,
                 initial={'fecha_solicitud': formatted_fecha_solicitud, 'fecha_entrega': formatted_fecha_entrega,
-                         'fecha_pago_comision': formatted_fecha_pago_comision, 'fecha_pago': formatted_fecha_pago,}
+                         'fecha_pago_comision': formatted_fecha_pago_comision, 'fecha_pago': formatted_fecha_pago}
             )
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             form_html = render_to_string(self.template_name, {'form': form}, request=request)
