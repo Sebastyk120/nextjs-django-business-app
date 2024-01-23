@@ -1364,13 +1364,13 @@ class PedidoExportadorUpdateView(UpdateView):
     def get(self, request, *args, **kwargs):
         pedido_id = request.GET.get('pedido_id')
         self.object = get_object_or_404(Pedido, id=pedido_id)
-        # Manejo de fecha_pago nula
-        formatted_fecha_pago = self.object.fecha_pago.strftime('%Y-%m-%d') if self.object.fecha_pago else timezone.datetime.now().strftime('%Y-%m-%d')
 
+        formatted_fecha_pago = self.object.fecha_pago.strftime('%Y-%m-%d') if self.object.fecha_pago else ''
         form = self.form_class(
             instance=self.object,
             initial={'fecha_pago': formatted_fecha_pago}
         )
+
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             form_html = render_to_string(self.template_name, {'form': form}, request=request)
             return JsonResponse({'form': form_html})
