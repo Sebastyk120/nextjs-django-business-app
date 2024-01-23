@@ -84,4 +84,4 @@ class MyModelAdmin(ImportExportModelAdmin):
     resource_class = ClientePresentacionResource
 
 admin.site.register(Pedido, PedidoAdmin)
-admin.site.register(DetallePedido, DetallePedidoAdmin))
+admin.site.register(DetallePedido, DetallePedidoAdmin)
