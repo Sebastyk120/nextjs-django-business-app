@@ -79,7 +79,7 @@ class Cliente(models.Model):
 
 
 class Presentacion(models.Model):
-    nombre = models.CharField(max_length=255, verbose_name="Presentación")
+    nombre = models.CharField(max_length=255, verbose_name="Presentación", unique=False)
     kilos = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
                                 verbose_name="Kilos")
 
