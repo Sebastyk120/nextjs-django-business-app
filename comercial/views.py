@@ -1371,10 +1371,11 @@ class PedidoExportadorUpdateView(UpdateView):
             )
         else:
             formatted_fecha_pago_comision = self.object.fecha_pago_comision.strftime('%Y-%m-%d')
+            formatted_fecha_pago = self.object.fecha_pago.strftime('%Y-%m-%d')
             form = self.form_class(
                 instance=self.object,
                 initial={'fecha_solicitud': formatted_fecha_solicitud, 'fecha_entrega': formatted_fecha_entrega,
-                         'fecha_pago_comision': formatted_fecha_pago_comision}
+                         'fecha_pago_comision': formatted_fecha_pago_comision, 'fecha_pago': formatted_fecha_pago,}
             )
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             form_html = render_to_string(self.template_name, {'form': form}, request=request)
