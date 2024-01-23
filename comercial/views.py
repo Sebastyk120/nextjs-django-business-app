@@ -1,9 +1,9 @@
 import io
 import math
 from collections import defaultdict
-from django.utils import timezone
 from datetime import datetime
 from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
@@ -20,6 +20,7 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.workbook import Workbook
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+
 from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
     EliminarDetallePedidoForm, EditarPedidoExportadorForm, EditarDetallePedidoForm, EditarReferenciaForm
 from .models import Pedido, DetallePedido, Referencias
@@ -1366,9 +1367,11 @@ class PedidoExportadorUpdateView(UpdateView):
         self.object = get_object_or_404(Pedido, id=pedido_id)
 
         formatted_fecha_pago = self.object.fecha_pago.strftime('%Y-%m-%d') if self.object.fecha_pago else ''
+        formatted_fecha_monetizacion = self.object.fecha_monetizacion.strftime(
+            '%Y-%m-%d') if self.object.fecha_monetizacion else ''
         form = self.form_class(
             instance=self.object,
-            initial={'fecha_pago': formatted_fecha_pago}
+            initial={'fecha_pago': formatted_fecha_pago, 'fecha_monetizacion': formatted_fecha_monetizacion}
         )
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':

@@ -16,6 +16,7 @@
 [name="fecha_pago"],
 [name="trm_monetizacion"],
 [name="documento_cobro_comision"],
+[name="fecha_monetizacion"],
 [name="fecha_pago_comision"] {
     width: 100%;
     border-radius: 4px;
@@ -38,6 +39,7 @@
 [name="fecha_pago"]:disabled,
 [name="trm_monetizacion"]:disabled,
 [name="documento_cobro_comision"]:disabled,
+[name="fecha_monetizacion"]:disabled,
 [name="fecha_pago_comision"]:disabled {
     color: white; /* Color cuando estén deshabilitados */
     background-color: black;

@@ -127,7 +127,8 @@ class Pedido(models.Model):
     comision_bancaria_usd = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
                                                 verbose_name="$Comisión Bancaria USD",
                                                 null=True, blank=True, default=0)
-    fecha_pago = models.DateField(verbose_name="Fecha Pago", null=True, blank=True)
+    fecha_pago = models.DateField(verbose_name="Fecha Pago Cliente", null=True, blank=True)
+    fecha_monetizacion = models.DateField(verbose_name="Fecha Monetización", null=True, blank=True)
     trm_monetizacion = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
                                            verbose_name="$TRM Monetización", null=True,
                                            blank=True)

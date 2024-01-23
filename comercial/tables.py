@@ -28,7 +28,8 @@ class PedidoTable(tables.Table):
         fields = ("id", "cliente", "fecha_solicitud", "fecha_entrega", "exportadora", "dias_cartera", "awb", "destino",
                   "numero_factura", "total_cajas_enviadas", "nota_credito_no", "motivo_nota_credito",
                   "valor_total_nota_credito_usd", "tasa_representativa_usd_diaria", "valor_pagado_cliente_usd",
-                  "comision_bancaria_usd", "fecha_pago", "trm_monetizacion", "estado_factura", "diferencia_por_abono",
+                  "comision_bancaria_usd", "fecha_pago", "trm_monetizacion", "fecha_monetizacion", "estado_factura",
+                  "diferencia_por_abono",
                   "dias_de_vencimiento", "valor_total_factura_usd", "valor_total_comision_usd", "valor_comision_pesos",
                   "documento_cobro_comision", "fecha_pago_comision", "estado_comision", "detalle", "editar", "eliminar",
                   "inf")
@@ -113,7 +114,8 @@ class CarteraPedidoTable(tables.Table):
         order_by = ('cliente',)
         fields = (
             "id", "cliente", "exportadora", "numero_factura", "fecha_entrega_personalizada", "dias_de_vencimiento",
-            "valor_total_factura_usd", "valor_pagado_cliente_usd", "comision_bancaria_usd", "fecha_pago",
+            "valor_total_factura_usd", "valor_pagado_cliente_usd", "nota_credito_no", "motivo_nota_credito",
+            "valor_total_nota_credito_usd", "comision_bancaria_usd", "fecha_pago",
             "estado_factura")
 
     def render_valor_total_factura_usd(self, value):

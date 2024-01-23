@@ -172,7 +172,8 @@ class EditarPedidoExportadorForm(forms.ModelForm):
 
     class Meta:
         model = Pedido
-        fields = ['valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'trm_monetizacion']
+        fields = ['valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'fecha_monetizacion',
+                  'trm_monetizacion']
 
 
 class EditarReferenciaForm(forms.ModelForm):
