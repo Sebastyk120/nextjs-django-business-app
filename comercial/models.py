@@ -87,7 +87,7 @@ class Presentacion(models.Model):
         ordering = ['nombre']
 
     def __str__(self):
-        return self.nombre
+        return f'{self.nombre} - {self.kilos}'
 
 
 class ClientePresentacion(models.Model):
