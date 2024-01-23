@@ -48,6 +48,10 @@ INSTALLED_APPS = [
     'django_extensions',
     'simple_history',
     'widget_tweaks',
+    'autenticacion.apps.AutenticacionConfig',
+    'cartera.apps.CarteraConfig',
+    'comercial.apps.ComercialConfig',
+    'inventarios.apps.InventariosConfig',
 ]
 
 MIDDLEWARE = [
