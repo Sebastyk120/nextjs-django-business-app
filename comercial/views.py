@@ -1,6 +1,7 @@
 import io
 import math
 from collections import defaultdict
+from django.utils import timezone
 from datetime import datetime
 from decimal import Decimal
 from django.contrib import messages
@@ -600,7 +601,8 @@ def exportar_detalles_pedidos_excel(request):
     fill = PatternFill(start_color="251819", end_color="251819", fill_type="solid")
 
     # Encabezados
-    columns = ['Pedido', 'Exportador','Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas', 'Peso Presentacion', 'kilos',
+    columns = ['Pedido', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas', 'Peso Presentacion',
+               'kilos',
                'Cajas Enviadas',
                'Kilos Enviados', 'Diferencia', 'Tipo Caja', 'Referencia', 'Stiker', 'Lleva Contenedor',
                'Ref Contenedor', 'Cant Contenedor', 'Tarifa Comision', 'Valor x Caja USD', 'Valor X Producto',
@@ -1362,23 +1364,15 @@ class PedidoExportadorUpdateView(UpdateView):
     def get(self, request, *args, **kwargs):
         pedido_id = request.GET.get('pedido_id')
         self.object = get_object_or_404(Pedido, id=pedido_id)
-        formatted_fecha_solicitud = self.object.fecha_solicitud.strftime('%Y-%m-%d')
-        formatted_fecha_entrega = self.object.fecha_entrega.strftime('%Y-%m-%d')
-        formatted_fecha_pago = self.object.fecha_pago.strftime('%Y-%m-%d')
-        if self.object.fecha_pago_comision is None:
-            form = self.form_class(
-                instance=self.object,
-                initial={'fecha_solicitud': formatted_fecha_solicitud, 'fecha_entrega': formatted_fecha_entrega,
-                         'fecha_pago': formatted_fecha_pago}
-            )
-        else:
-            formatted_fecha_pago_comision = self.object.fecha_pago_comision.strftime('%Y-%m-%d')
-            formatted_fecha_pago = self.object.fecha_pago.strftime('%Y-%m-%d')
-            form = self.form_class(
-                instance=self.object,
-                initial={'fecha_solicitud': formatted_fecha_solicitud, 'fecha_entrega': formatted_fecha_entrega,
-                         'fecha_pago_comision': formatted_fecha_pago_comision, 'fecha_pago': formatted_fecha_pago}
-            )
+        # Manejo de fecha_pago nula
+        formatted_fecha_pago = self.object.fecha_pago.strftime(
+            '%Y-%m-%d') if self.object.fecha_pago else timezone.now().strftime('%Y-%m-%d')
+
+        form = self.form_class(
+            instance=self.object,
+            initial={'fecha_pago': formatted_fecha_pago}
+        )
+
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             form_html = render_to_string(self.template_name, {'form': form}, request=request)
             return JsonResponse({'form': form_html})
