@@ -5,7 +5,7 @@ from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 
 from .models import Pedido, Cliente, Fruta, Contenedor, DetallePedido, Pais, Presentacion, Referencias, Exportador, \
-    TipoCaja
+    TipoCaja, ClientePresentacion
 
 
 # ////////////////////////////////////// Exportaciones De Cartera /////////////////////////////////////////////////////
@@ -237,3 +237,8 @@ class PresentacionResource(resources.ModelResource):
 class ReferenciasResource(resources.ModelResource):
     class Meta:
         model = Referencias
+
+
+class ClientePresentacionResource(resources.ModelResource):
+    class Meta:
+        model = ClientePresentacion

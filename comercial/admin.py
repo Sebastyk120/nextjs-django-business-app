@@ -6,7 +6,7 @@ from .models import Pedido, Fruta, Pais, TipoCaja, Cliente, Presentacion, Conten
 from simple_history.admin import SimpleHistoryAdmin
 from import_export.admin import ImportExportModelAdmin
 from .resources import ClienteResource, PedidoResource, FrutaResource, DetallePedidoResource, ContenedorResource, \
-    PaisResource, PresentacionResource, ReferenciasResource, ExportadorResource, TipoCajaResource
+    PaisResource, PresentacionResource, ReferenciasResource, ExportadorResource, TipoCajaResource, ClientePresentacionResource
 
 
 class PedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
@@ -79,7 +79,9 @@ class MyModelAdmin(ImportExportModelAdmin):
 class MyModelAdmin(ImportExportModelAdmin):
     resource_class = TipoCajaResource
 
+@admin.register(ClientePresentacion)
+class MyModelAdmin(ImportExportModelAdmin):
+    resource_class = ClientePresentacionResource
 
 admin.site.register(Pedido, PedidoAdmin)
-admin.site.register(DetallePedido, DetallePedidoAdmin)
-admin.site.register(ClientePresentacion)
+admin.site.register(DetallePedido, DetallePedidoAdmin))
