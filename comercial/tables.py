@@ -15,6 +15,7 @@ class PedidoTable(tables.Table):
     inf = tables.TemplateColumn(template_name='resumen_pedido_button.html', orderable=False)
     valor_total_comision_usd = tables.Column(verbose_name='$Comisiones (USD)', )
     valor_comision_pesos = tables.Column(verbose_name='$Comisiones (Pesos)', )
+    descuento = tables.Column()
     trm_monetizacion = tables.Column()
     valor_total_factura_usd = tables.Column()
     diferencia_por_abono = tables.Column()
@@ -26,7 +27,7 @@ class PedidoTable(tables.Table):
         model = Pedido
         template_name = "django_tables2/bootstrap5-responsive.html"
         fields = ("id", "cliente", "fecha_solicitud", "fecha_entrega", "exportadora", "dias_cartera", "awb", "destino",
-                  "numero_factura", "total_cajas_enviadas", "nota_credito_no", "motivo_nota_credito",
+                  "numero_factura", "total_cajas_enviadas", "descuento", "nota_credito_no", "motivo_nota_credito",
                   "valor_total_nota_credito_usd", "tasa_representativa_usd_diaria", "valor_pagado_cliente_usd",
                   "comision_bancaria_usd", "fecha_pago", "trm_monetizacion", "fecha_monetizacion", "estado_factura",
                   "diferencia_por_abono",
@@ -56,6 +57,9 @@ class PedidoTable(tables.Table):
         return format_as_currency(value)
 
     def render_valor_total_nota_credito_usd(self, value):
+        return format_as_currency(value)
+
+    def render_descuento(self, value):
         return format_as_currency(value)
 
 

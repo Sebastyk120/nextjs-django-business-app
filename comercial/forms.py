@@ -40,7 +40,7 @@ class PedidoForm(forms.ModelForm):
     class Meta:
         model = Pedido
         fields = ['cliente', 'fecha_solicitud', 'fecha_entrega', 'exportadora', 'awb',
-                  'numero_factura', 'nota_credito_no', 'motivo_nota_credito', 'documento_cobro_comision',
+                  'numero_factura', 'descuento', 'nota_credito_no', 'motivo_nota_credito', 'documento_cobro_comision',
                   'fecha_pago_comision']
 
 
@@ -71,7 +71,7 @@ class EditarPedidoForm(forms.ModelForm):
     class Meta:
         model = Pedido
         fields = ['cliente', 'fecha_solicitud', 'fecha_entrega', 'exportadora', 'awb',
-                  'numero_factura', 'nota_credito_no', 'motivo_nota_credito', 'documento_cobro_comision',
+                  'numero_factura', 'descuento', 'nota_credito_no', 'motivo_nota_credito', 'documento_cobro_comision',
                   'fecha_pago_comision']
 
     def __init__(self, *args, **kwargs):
@@ -185,6 +185,5 @@ class EditarReferenciaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['nombre'].disabled = True
-        self.fields['contenedor'].disabled = True
         self.fields['cant_contenedor'].disabled = True
         self.fields['exportador'].disabled = True
