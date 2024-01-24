@@ -115,6 +115,8 @@ class Pedido(models.Model):
     nota_credito_no = models.CharField(max_length=50, verbose_name="Nota Crédito", null=True, blank=True)
     motivo_nota_credito = models.CharField(max_length=20, choices=motivo_nota, verbose_name="Motivo Nota Crédito",
                                            null=True, blank=True)
+    descuento = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Descuento C", null=True, blank=True,
+                                    default=0)
     valor_total_nota_credito_usd = models.DecimalField(max_digits=10, decimal_places=2, editable=False,
                                                        verbose_name="$Total Nota Crédito", null=True, blank=True,
                                                        default=0)
