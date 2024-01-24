@@ -15,17 +15,20 @@ import subprocess
 
 class MigrateView(View):
     def get(self, request, *args, **kwargs):
+        apps_to_migrate = ['comercial', 'cartera', 'inventarios']
+
         try:
-            # Ejecutar el comando 'makemigrations'
-            subprocess.run(['python', 'manage.py', 'makemigrations'], check=True)
+            for app_name in apps_to_migrate:
+                # Ejecutar el comando 'makemigrations' para la aplicación específica
+                subprocess.run(['python', 'manage.py', 'makemigrations', app_name], check=True)
 
-            # Ejecutar el comando 'migrate'
-            subprocess.run(['python', 'manage.py', 'migrate'], check=True)
+                # Ejecutar el comando 'migrate' para la aplicación específica
+                subprocess.run(['python', 'manage.py', 'migrate', app_name], check=True)
 
-            return HttpResponse("Migraciones realizadas con éxito.")
+            return HttpResponse(f"Migraciones para las aplicaciones {', '.join(apps_to_migrate)} realizadas con éxito.")
         except subprocess.CalledProcessError as e:
             # Capturar cualquier error que pueda ocurrir durante la ejecución de los comandos
-            return HttpResponse(f"Error al realizar las migraciones: {e}", status=500)
+            return HttpResponse(f"Error al realizar las migraciones: {e.stderr}", status=500)
 
 
 def home(request):
