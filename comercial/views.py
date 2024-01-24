@@ -3,7 +3,6 @@ import math
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
-
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
@@ -20,7 +19,6 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.workbook import Workbook
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-
 from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
     EliminarDetallePedidoForm, EditarPedidoExportadorForm, EditarDetallePedidoForm, EditarReferenciaForm
 from .models import Pedido, DetallePedido, Referencias
@@ -607,7 +605,8 @@ def exportar_detalles_pedidos_excel(request):
                'Cajas Enviadas',
                'Kilos Enviados', 'Diferencia', 'Tipo Caja', 'Referencia', 'Stiker', 'Lleva Contenedor',
                'Ref Contenedor', 'Cant Contenedor', 'Tarifa Comision', 'Valor x Caja USD', 'Valor X Producto',
-               'No Cajas NC', 'Valor NC', 'Afecta Comision', 'Valor Total Comision Producto']
+               'No Cajas NC', 'Valor NC', 'Afecta Comision', 'Valor Total Comision Producto', 'Precio Proforma',
+               'Observaciones']
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
@@ -643,6 +642,8 @@ def exportar_detalles_pedidos_excel(request):
             detalle.valor_nota_credito_usd,
             detalle.afecta_comision,
             detalle.valor_total_comision_x_producto,
+            detalle.precio_proforma,
+            detalle.observaciones,
         ]
         for col_num, cell_value in enumerate(row, start=1):
             worksheet.cell(row=row_num, column=col_num, value=cell_value)

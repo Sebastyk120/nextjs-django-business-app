@@ -2,4 +2,39 @@ Agregar los campos relacionados NC o ND o Descuento, al modulo cartera.
 Colocar Colores De Encabezado.
 Cambiar fecha de pago en los pedidos, fecha de monetizacion. 
 Añadir el campo fecha de monetizacion.
-Acceso proveedores Fieldex. 
+Acceso proveedores Fieldex.
+
+US:
+SEBASTYK120	Sebastian	Melo Garcia	subgerencia@heavensfruit.com Skad120
+DANNA	Danna	Cortes Valero	mainassistant@heavensfruit.com Heavens2023.
+FELIPEF	Felipe	Ospina	manager@fieldex.com.co FColombia1705
+PAOLAF	Paola	Maquiria	operaciones@fieldex.com.co Pmaquiriaf
+
+
+
+
+Modo Local
+from decouple import config
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': config('PGDATABASE'),
+        'USER': config('PGUSER'),
+        'PASSWORD': config('PGPASSWORD'),
+        'HOST': config('PGHOST'),
+        'PORT': config('PGPORT'),
+    }
+}
+
+Modo Nube
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.environ["PGDATABASE"],
+        'USER': os.environ["PGUSER"],
+        'PASSWORD': os.environ["PGPASSWORD"],
+        'HOST': os.environ["PGHOST"],
+        'PORT': os.environ["PGPORT"],
+    }
+}
