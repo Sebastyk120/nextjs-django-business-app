@@ -169,6 +169,9 @@ class EditarPedidoExportadorForm(forms.ModelForm):
     fecha_pago = forms.DateField(
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}), required=False
     )
+    fecha_monetizacion = forms.DateField(
+        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}), required=False
+    )
 
     class Meta:
         model = Pedido
