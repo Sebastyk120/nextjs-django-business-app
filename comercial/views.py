@@ -725,6 +725,7 @@ def exportar_pedidos_excel(request):
             pedido.destino,
             pedido.numero_factura,
             pedido.total_cajas_enviadas,
+            pedido.descuento,
             pedido.nota_credito_no,
             pedido.motivo_nota_credito,
             pedido.valor_total_nota_credito_usd,
