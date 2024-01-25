@@ -128,6 +128,11 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
     for pedido in pedidos:
         saldo = pedido['valor_total_factura_usd'] - pedido['valor_pagado_cliente_usd'] - pedido[
             'comision_bancaria_usd'] - pedido['valor_total_nota_credito_usd'] - pedido['descuento']
+        # Aplicar formato de moneda a las celdas relevantes
+        moneda_columns = [5, 6, 8, 9, 10, 12, 13, 14]  # Índices de columnas a formatear como moneda
+        for col_idx in moneda_columns:
+            sheet.cell(row=sheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
+
         fila = [
             pedido['cliente__nombre'],
             pedido['exportadora__nombre'],

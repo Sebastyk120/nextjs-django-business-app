@@ -289,7 +289,7 @@ class DetallePedido(models.Model):
         self.kilos_enviados = self.cajas_enviadas * self.presentacion_peso
         self.diferencia = self.cajas_solicitadas - self.cajas_enviadas
         self.valor_x_producto = self.valor_x_caja_usd * self.cajas_enviadas
-        if self.no_cajas_nc is not None:
+        if self.no_cajas_nc is not None or 0:
             self.valor_nota_credito_usd = self.no_cajas_nc * self.valor_x_caja_usd
         if self.afecta_comision is True:
             self.valor_total_comision_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_comision
