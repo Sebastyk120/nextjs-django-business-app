@@ -155,8 +155,13 @@ class Pedido(models.Model):
 
     def save(self, *args, **kwargs):
         # Campos Calculados
-        self.diferencia_por_abono = ((self.valor_total_nota_credito_usd + self.valor_pagado_cliente_usd
-                                      + self.comision_bancaria_usd) - self.valor_total_factura_usd)
+        if self.valor_pagado_cliente_usd is None or self.valor_pagado_cliente_usd == 0:
+            self.diferencia_por_abono = 0
+        else:
+            self.diferencia_por_abono = (
+                    (self.valor_total_nota_credito_usd + self.valor_pagado_cliente_usd + self.comision_bancaria_usd)
+                    - self.valor_total_factura_usd
+            )
         if self.valor_total_factura_usd != 0 and self.trm_monetizacion is not None:
             self.valor_comision_pesos = self.valor_total_comision_usd * self.trm_monetizacion
         if self.valor_pagado_cliente_usd == 0:
