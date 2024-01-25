@@ -122,8 +122,7 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
 
     # Escribir los datos de los pedidos
     for pedido in pedidos:
-        saldo = pedido['valor_total_factura_usd'] - pedido['valor_pagado_cliente_usd'] - pedido[
-            'comision_bancaria_usd'] - pedido['valor_total_nota_credito_usd'] - pedido['descuento']
+        saldo = pedido['valor_total_factura_usd'] - pedido['valor_pagado_cliente_usd'] - pedido['comision_bancaria_usd'] - pedido['valor_total_nota_credito_usd'] - pedido['descuento']
         fila = [
             pedido['cliente__nombre'],
             pedido['exportadora__nombre'],
