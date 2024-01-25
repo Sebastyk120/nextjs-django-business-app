@@ -14,7 +14,8 @@ def obtener_datos_con_totales_juan():
     pedidos = Pedido.objects.filter(exportadora__nombre='Juan_Matas').values(
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
-        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura'
+        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
+        'valor_total_nota_credito_usd', 'descuento'
     )
 
     # Calcular los totales por cliente y exportadora
@@ -36,7 +37,8 @@ def obtener_datos_con_totales_fieldex():
     pedidos = Pedido.objects.filter(exportadora__nombre='Fieldex').values(
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
-        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura'
+        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
+        'valor_total_nota_credito_usd', 'descuento'
     )
 
     # Calcular los totales por cliente y exportadora
@@ -58,7 +60,8 @@ def obtener_datos_con_totales_etnico():
     pedidos = Pedido.objects.filter(exportadora__nombre='Etnico').values(
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
-        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura'
+        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
+        'valor_total_nota_credito_usd', 'descuento'
     )
 
     # Calcular los totales por cliente y exportadora
@@ -80,7 +83,8 @@ def obtener_datos_con_totales():
     pedidos = Pedido.objects.all().values(
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
-        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura'
+        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
+        'valor_total_nota_credito_usd', 'descuento'
     )
 
     # Calcular los totales por cliente y exportadora
@@ -122,7 +126,8 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
 
     # Escribir los datos de los pedidos
     for pedido in pedidos:
-        saldo = pedido['valor_total_factura_usd'] - pedido['valor_pagado_cliente_usd'] - pedido['comision_bancaria_usd'] - pedido['valor_total_nota_credito_usd'] - pedido['descuento']
+        saldo = pedido['valor_total_factura_usd'] - pedido['valor_pagado_cliente_usd'] - pedido[
+            'comision_bancaria_usd'] - pedido['valor_total_nota_credito_usd'] - pedido['descuento']
         fila = [
             pedido['cliente__nombre'],
             pedido['exportadora__nombre'],
@@ -157,7 +162,8 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
             'Total Descuentos ->',
             total['total_descuentos'],
             'Saldo ->',
-            total['total_factura'] - total['total_pagado'] - total['total_comision'] - total['total_nc'] - total['total_descuentos']
+            total['total_factura'] - total['total_pagado'] - total['total_comision'] - total['total_nc'] - total[
+                'total_descuentos']
         ]
         sheet.append(fila_total)
         for cell in sheet[sheet.max_row]:
