@@ -285,25 +285,33 @@ class DetallePedido(models.Model):
         # Configurar campos de otros modelos:
         if self.presentacion:
             self.presentacion_peso = self.presentacion.kilos
+
+        # Cálculos de kilos y diferencia
         self.kilos = self.presentacion_peso * self.cajas_solicitadas
-        self.kilos_enviados = self.cajas_enviadas * self.presentacion_peso
+        self.kilos_enviados = self.presentacion_peso * self.cajas_enviadas
         self.diferencia = self.cajas_solicitadas - self.cajas_enviadas
+
+        # Otros cálculos
         self.valor_x_producto = self.valor_x_caja_usd * self.cajas_enviadas
-        if self.no_cajas_nc is not None or 0:
-            self.valor_nota_credito_usd = self.no_cajas_nc * self.valor_x_caja_usd
-        if self.afecta_comision is True:
-            self.valor_total_comision_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_comision
-        else:
-            self.valor_total_comision_x_producto = self.cajas_enviadas * self.tarifa_comision
-        if self.lleva_contenedor:
+        self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
+
+        # Cálculo de comisión
+        cajas_para_comision = self.cajas_enviadas - (self.no_cajas_nc or 0)
+        self.valor_total_comision_x_producto = cajas_para_comision * self.tarifa_comision
+
+        # Lógica de contenedor
+        if self.lleva_contenedor and self.referencia and self.referencia.contenedor:
             self.referencia_contenedor = self.referencia.contenedor.nombre
             self.cantidad_contenedores = math.ceil(self.cajas_enviadas / self.referencia.cant_contenedor)
         else:
             self.referencia_contenedor = None
             self.cantidad_contenedores = None
-        if self.tipo_caja:
-            self.stickers = self.tipo_caja.nombre
+
+        # Lógica de stickers
+        self.stickers = self.tipo_caja.nombre if self.tipo_caja else None
+
         super().save(*args, **kwargs)
+
         # Realizar las totalizaciones al guardar el detalle del pedido
         self.actualizar_totales_pedido()
 
