@@ -15,7 +15,7 @@ def obtener_datos_con_totales_juan():
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
-        'valor_total_nota_credito_usd', 'descuento'
+        'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
     )
 
     # Calcular los totales por cliente y exportadora
@@ -38,7 +38,7 @@ def obtener_datos_con_totales_fieldex():
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
-        'valor_total_nota_credito_usd', 'descuento'
+        'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
     )
 
     # Calcular los totales por cliente y exportadora
@@ -61,7 +61,7 @@ def obtener_datos_con_totales_etnico():
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
-        'valor_total_nota_credito_usd', 'descuento'
+        'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
     )
 
     # Calcular los totales por cliente y exportadora
@@ -84,7 +84,7 @@ def obtener_datos_con_totales():
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
-        'valor_total_nota_credito_usd', 'descuento'
+        'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
     )
 
     # Calcular los totales por cliente y exportadora
