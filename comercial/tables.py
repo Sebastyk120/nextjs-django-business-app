@@ -113,6 +113,7 @@ class CarteraPedidoTable(tables.Table):
     comision_bancaria_usd = tables.Column()
     valor_pagado_cliente_usd = tables.Column()
     diferencia_por_abono = tables.Column()
+    descuento = tables.Column()
 
     class Meta:
         model = Pedido
@@ -120,8 +121,9 @@ class CarteraPedidoTable(tables.Table):
         order_by = ('cliente',)
         fields = (
             "id", "cliente", "exportadora", "numero_factura", "fecha_entrega_personalizada", "dias_de_vencimiento",
-            "valor_total_factura_usd", "valor_pagado_cliente_usd", "diferencia_por_abono", "nota_credito_no", "motivo_nota_credito",
-            "valor_total_nota_credito_usd", "comision_bancaria_usd", "fecha_pago",
+            "valor_total_factura_usd", "valor_pagado_cliente_usd", "diferencia_por_abono", "nota_credito_no",
+            "motivo_nota_credito",
+            "valor_total_nota_credito_usd", "descuento", "comision_bancaria_usd", "fecha_pago",
             "estado_factura")
 
     def render_valor_total_factura_usd(self, value):
@@ -132,8 +134,11 @@ class CarteraPedidoTable(tables.Table):
 
     def render_valor_pagado_cliente_usd(self, value):
         return format_as_currency(value)
-    
+
     def render_diferencia_por_abono(self, value):
+        return format_as_currency(value)
+
+    def render_descuento(self, value):
         return format_as_currency(value)
 
 
