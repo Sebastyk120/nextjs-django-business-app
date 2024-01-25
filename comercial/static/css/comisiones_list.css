@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
 
 body {
-    background-image: url(../img/fondojornadas.png);
+    background-image: url(../img/fondojornadas.webp);
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -171,14 +171,6 @@ label {
     transform: translateY(-7px);
 }
 
-.page-link {
-
-    z-index: 3;
-    color: #000000(--bs-pagination-active-border-color);
-    background-color: #000000;
-    border-color: #000000(--bs-pagination-active-border-color);
-
-}
 
 .django-tables2 .table td {
     white-space: nowrap;  /* Evita el salto de línea en las celdas */

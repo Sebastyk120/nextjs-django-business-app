@@ -2,7 +2,7 @@
 
 body {
 
-    background-image: url(../img/fondojornadas.png);
+    background-image: url(../img/fondojornadas.webp);
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -104,14 +104,4 @@ a:hover {
 a:visited {
     color: rgb(243, 243, 243);
     text-decoration: none
-}
-
-
-.page-link {
-
-    z-index: 3;
-    color: #006098(--bs-pagination-active-border-color);
-    background-color: #006098;
-    border-color: #006098(--bs-pagination-active-border-color);
-
 }
