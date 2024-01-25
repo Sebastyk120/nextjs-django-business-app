@@ -23,7 +23,9 @@ def obtener_datos_con_totales_juan():
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
         total_comision=Sum('comision_bancaria_usd'),
-        total_pagado=Sum('valor_pagado_cliente_usd')
+        total_pagado=Sum('valor_pagado_cliente_usd'),
+        total_nc=Sum('valor_total_nota_credito_usd'),
+        total_descuentos=Sum('descuento')
     )
 
     return list(pedidos), list(totales_por_cliente_exportadora)
@@ -43,7 +45,9 @@ def obtener_datos_con_totales_fieldex():
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
         total_comision=Sum('comision_bancaria_usd'),
-        total_pagado=Sum('valor_pagado_cliente_usd')
+        total_pagado=Sum('valor_pagado_cliente_usd'),
+        total_nc=Sum('valor_total_nota_credito_usd'),
+        total_descuentos=Sum('descuento')
     )
 
     return list(pedidos), list(totales_por_cliente_exportadora)
@@ -63,7 +67,9 @@ def obtener_datos_con_totales_etnico():
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
         total_comision=Sum('comision_bancaria_usd'),
-        total_pagado=Sum('valor_pagado_cliente_usd')
+        total_pagado=Sum('valor_pagado_cliente_usd'),
+        total_nc=Sum('valor_total_nota_credito_usd'),
+        total_descuentos=Sum('descuento')
     )
 
     return list(pedidos), list(totales_por_cliente_exportadora)
@@ -83,7 +89,9 @@ def obtener_datos_con_totales():
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
         total_comision=Sum('comision_bancaria_usd'),
-        total_pagado=Sum('valor_pagado_cliente_usd')
+        total_pagado=Sum('valor_pagado_cliente_usd'),
+        total_nc=Sum('valor_total_nota_credito_usd'),
+        total_descuentos=Sum('descuento')
     )
 
     return list(pedidos), list(totales_por_cliente_exportadora)
@@ -96,8 +104,9 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
     sheet.title = 'Cartera Clientes'
 
     # Definir y escribir los encabezados de columna
-    encabezados = ['Cliente', 'Exportadora', 'Número Factura', 'Fecha Entrega', 'Días Vencimiento', 'Valor Total USD',
-                   'Valor Pagado USD', 'Comision Bancaria', 'Fecha Pago', 'Estado Factura', 'Saldo']
+    encabezados = ['Cliente', 'Exportadora', 'Número Factura', 'Fecha Entrega', 'Días Vencimiento', 'Valor Factura USD',
+                   'Valor Pagado Cliente USD', 'Nota Crédito', 'Total NC', 'Descuento', 'Comisión Bancaria',
+                   'Fecha Pago Cliente', 'Estado Factura', 'Saldo']
     sheet.append(encabezados)
 
     # Estilo para los encabezados
@@ -113,7 +122,8 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
 
     # Escribir los datos de los pedidos
     for pedido in pedidos:
-        saldo = pedido['valor_total_factura_usd'] - pedido['valor_pagado_cliente_usd'] - pedido['comision_bancaria_usd']
+        saldo = pedido['valor_total_factura_usd'] - pedido['valor_pagado_cliente_usd'] - pedido[
+            'comision_bancaria_usd'] - pedido['valor_total_nota_credito_usd'] - pedido['descuento']
         fila = [
             pedido['cliente__nombre'],
             pedido['exportadora__nombre'],
@@ -122,6 +132,9 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
             pedido['dias_de_vencimiento'],
             pedido['valor_total_factura_usd'],
             pedido['valor_pagado_cliente_usd'],
+            pedido['nota_credito_no'],
+            pedido['valor_total_nota_credito_usd'],
+            pedido['descuento'],
             pedido['comision_bancaria_usd'],
             pedido['fecha_pago'].strftime('%Y-%m-%d') if pedido['fecha_pago'] else '',
             pedido['estado_factura'],
@@ -134,20 +147,23 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
         fila_total = [
             total['cliente__nombre'],
             total['exportadora__nombre'],
-            '-----------------',
-            'Total',
-            'Total Facturas',
+            'Total Facturas ->',
             total['total_factura'],
-            'Total Pagado Cliente',
+            'Total Pagado Cliente ->',
             total['total_pagado'],
-            'Total Comisiones Banc',
+            'Total Comisiones Banc ->',
             total['total_comision'],
-            total['total_factura'] - total['total_pagado'] - total['total_comision']
+            'Total Notas Credito ->',
+            total['total_nc'],
+            'Total Descuentos ->',
+            total['total_descuentos'],
+            'Saldo ->',
+            total['total_factura'] - total['total_pagado'] - total['total_comision'] - total['total_nc'] - total['total_descuentos']
         ]
         sheet.append(fila_total)
         for cell in sheet[sheet.max_row]:
             cell.border = thin_border
-            cell.fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE',
+            cell.fill = PatternFill(start_color='3fd97f', end_color='3fd97f',
                                     fill_type='solid')  # Color diferente para totales
 
         # Ajustar el ancho de las columnas

@@ -784,12 +784,12 @@ def exportar_pedidos_etnico(request):
     fill = PatternFill(start_color="fffaac", end_color="fffaac", fill_type="solid")
 
     # Encabezados
-    columns = ['Cliente', 'Fecha Solicitud', 'Fecha Entrega', 'Exportador', 'Dias Cartera', 'awb',
-               'Destino', 'Numero Factura', 'Total Cajas Enviadas', 'No NC', 'Motivo NC', 'Valor Total NC',
-               'Tasa Representatativa', 'Valor Pagado Cliente', 'Comision Bancaria USD', 'Fecha Pago',
-               'TRM Monetizacion', 'Estado Factura', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
-               'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision', 'Fecha Pago Comision',
-               'Estado Comision']
+    columns = ['No', 'Cliente', 'Fecha Solicitud', 'Fecha Entrega', 'Exportador', 'Dias Cartera', 'awb',
+               'Destino', 'Numero Factura', 'Total Cajas Enviadas', 'Descuento Comercial', 'No NC', 'Motivo NC',
+               'Valor Total NC', 'Tasa Representatativa', 'Valor Pagado Cliente', 'Comision Bancaria USD',
+               'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Estado Factura', 'Diferencia Pago',
+               'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Comision USD', 'Valor Comision Pesos',
+               'Documento Cobro Comision', 'Fecha Pago Comision', 'Estado Comision']
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
@@ -814,6 +814,7 @@ def exportar_pedidos_etnico(request):
     # Agregar datos al libro de trabajo
     for row_num, pedido in enumerate(queryset, start=2):
         row = [
+            pedido.pk,
             pedido.cliente.nombre,
             pedido.fecha_solicitud,
             pedido.fecha_entrega,
@@ -823,6 +824,7 @@ def exportar_pedidos_etnico(request):
             pedido.destino,
             pedido.numero_factura,
             pedido.total_cajas_enviadas,
+            pedido.descuento,
             pedido.nota_credito_no,
             pedido.motivo_nota_credito,
             pedido.valor_total_nota_credito_usd,
@@ -831,6 +833,7 @@ def exportar_pedidos_etnico(request):
             pedido.comision_bancaria_usd,
             pedido.fecha_pago,
             pedido.trm_monetizacion,
+            pedido.fecha_monetizacion,
             pedido.estado_factura,
             pedido.diferencia_por_abono,
             pedido.dias_de_vencimiento,
@@ -878,12 +881,12 @@ def exportar_pedidos_fieldex(request):
     fill = PatternFill(start_color="fffaac", end_color="fffaac", fill_type="solid")
 
     # Encabezados
-    columns = ['Cliente', 'Fecha Solicitud', 'Fecha Entrega', 'Exportador', 'Dias Cartera', 'awb',
-               'Destino', 'Numero Factura', 'Total Cajas Enviadas', 'No NC', 'Motivo NC', 'Valor Total NC',
-               'Tasa Representatativa', 'Valor Pagado Cliente', 'Comision Bancaria USD', 'Fecha Pago',
-               'TRM Monetizacion', 'Estado Factura', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
-               'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision', 'Fecha Pago Comision',
-               'Estado Comision']
+    columns = ['No', 'Cliente', 'Fecha Solicitud', 'Fecha Entrega', 'Exportador', 'Dias Cartera', 'awb',
+               'Destino', 'Numero Factura', 'Total Cajas Enviadas', 'Descuento Comercial', 'No NC', 'Motivo NC',
+               'Valor Total NC', 'Tasa Representatativa', 'Valor Pagado Cliente', 'Comision Bancaria USD',
+               'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Estado Factura', 'Diferencia Pago',
+               'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Comision USD', 'Valor Comision Pesos',
+               'Documento Cobro Comision', 'Fecha Pago Comision', 'Estado Comision']
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
@@ -908,6 +911,7 @@ def exportar_pedidos_fieldex(request):
     # Agregar datos al libro de trabajo
     for row_num, pedido in enumerate(queryset, start=2):
         row = [
+            pedido.pk,
             pedido.cliente.nombre,
             pedido.fecha_solicitud,
             pedido.fecha_entrega,
@@ -917,6 +921,7 @@ def exportar_pedidos_fieldex(request):
             pedido.destino,
             pedido.numero_factura,
             pedido.total_cajas_enviadas,
+            pedido.descuento,
             pedido.nota_credito_no,
             pedido.motivo_nota_credito,
             pedido.valor_total_nota_credito_usd,
@@ -925,6 +930,7 @@ def exportar_pedidos_fieldex(request):
             pedido.comision_bancaria_usd,
             pedido.fecha_pago,
             pedido.trm_monetizacion,
+            pedido.fecha_monetizacion,
             pedido.estado_factura,
             pedido.diferencia_por_abono,
             pedido.dias_de_vencimiento,
@@ -971,12 +977,13 @@ def exportar_pedidos_juan(request):
     fill = PatternFill(start_color="fffaac", end_color="fffaac", fill_type="solid")
 
     # Encabezados
-    columns = ['Cliente', 'Fecha Solicitud', 'Fecha Entrega', 'Exportador', 'Dias Cartera', 'awb',
-               'Destino', 'Numero Factura', 'Total Cajas Enviadas', 'No NC', 'Motivo NC', 'Valor Total NC',
-               'Tasa Representatativa', 'Valor Pagado Cliente', 'Comision Bancaria USD', 'Fecha Pago',
-               'TRM Monetizacion', 'Estado Factura', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
-               'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision', 'Fecha Pago Comision',
-               'Estado Comision']
+    columns = ['No', 'Cliente', 'Fecha Solicitud', 'Fecha Entrega', 'Exportador', 'Dias Cartera', 'awb',
+               'Destino', 'Numero Factura', 'Total Cajas Enviadas', 'Descuento Comercial', 'No NC', 'Motivo NC',
+               'Valor Total NC', 'Tasa Representatativa', 'Valor Pagado Cliente', 'Comision Bancaria USD',
+               'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Estado Factura', 'Diferencia Pago',
+               'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Comision USD', 'Valor Comision Pesos',
+               'Documento Cobro Comision', 'Fecha Pago Comision', 'Estado Comision']
+
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
@@ -1001,6 +1008,7 @@ def exportar_pedidos_juan(request):
     # Agregar datos al libro de trabajo
     for row_num, pedido in enumerate(queryset, start=2):
         row = [
+            pedido.pk,
             pedido.cliente.nombre,
             pedido.fecha_solicitud,
             pedido.fecha_entrega,
@@ -1010,6 +1018,7 @@ def exportar_pedidos_juan(request):
             pedido.destino,
             pedido.numero_factura,
             pedido.total_cajas_enviadas,
+            pedido.descuento,
             pedido.nota_credito_no,
             pedido.motivo_nota_credito,
             pedido.valor_total_nota_credito_usd,
@@ -1018,6 +1027,7 @@ def exportar_pedidos_juan(request):
             pedido.comision_bancaria_usd,
             pedido.fecha_pago,
             pedido.trm_monetizacion,
+            pedido.fecha_monetizacion,
             pedido.estado_factura,
             pedido.diferencia_por_abono,
             pedido.dias_de_vencimiento,
