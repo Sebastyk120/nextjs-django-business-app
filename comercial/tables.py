@@ -5,6 +5,7 @@ from .models import Pedido, DetallePedido, Referencias
 
 def format_as_currency(value):
     formatted_value = "${:,.2f}".format(value)
+    formatted_value = formatted_value.replace(',', 'temp').replace('.', ',').replace('temp', '.')
     return formatted_value
 
 
