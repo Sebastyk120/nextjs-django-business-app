@@ -20,20 +20,14 @@ class MigrateView(View):
         try:
             for app_name in apps_to_migrate:
                 # Obtener la aplicación específica
-                app = migrations.apps.get_app_config(app_name)
-
-                # Crear una instancia del ejecutor de migraciones
-                executor = migrations.MigrationExecutor(connections[app.label].settings)
+                connection = connections[app_name]
 
                 # Ejecutar 'makemigrations' para la aplicación específica
-                migration_targets = [(app_name, None)]
-                executor.loader.build_graph()
-                executor.loader.detect_changes(graph=executor.graph)
-                executor.loader.graph.ensure_not_cyclic(graph=executor.graph)
-                executor.loader.sort_migrations()
+                connection.prepare_database()
+                connection.check_migrations()
 
                 # Ejecutar 'migrate' para la aplicación específica
-                executor.migrate(targets=migration_targets)
+                connection.migrate()
 
             return HttpResponse(f"Migraciones para las aplicaciones {', '.join(apps_to_migrate)} realizadas con éxito.")
         except Exception as e:
