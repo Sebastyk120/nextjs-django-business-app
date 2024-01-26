@@ -193,8 +193,8 @@ class Pedido(models.Model):
 
             self.dias_de_vencimiento = (hoy - fecha_entrega).days
 
-        # Estado comision:
-        if self.fecha_pago is None:
+        # Estado comisión:
+        if self.fecha_pago is None and self.valor_pagado_cliente_usd is None or 0:
             self.estado_comision = "Pendiente Pago Cliente"
         elif self.fecha_pago is not None and self.documento_cobro_comision is None:
             self.estado_comision = "Por Facturar"

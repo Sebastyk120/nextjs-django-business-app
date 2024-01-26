@@ -15,7 +15,7 @@ from django.views import View
 
 class MigrateView(View):
     def get(self, request, *args, **kwargs):
-        apps_to_migrate = ['autenticacion', 'comercial', 'cartera', 'inventarios']
+        apps_to_migrate = ['comercial', 'cartera', 'inventarios']
 
         try:
             for app_name in apps_to_migrate:
