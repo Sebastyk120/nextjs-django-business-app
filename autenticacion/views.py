@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from django.db import connections
+from django.core.management import call_command
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.views import View
@@ -19,15 +19,11 @@ class MigrateView(View):
 
         try:
             for app_name in apps_to_migrate:
-                # Obtener la aplicación específica
-                connection = connections[app_name]
-
                 # Ejecutar 'makemigrations' para la aplicación específica
-                connection.prepare_database()
-                connection.check_migrations()
+                call_command('makemigrations', app_name)
 
                 # Ejecutar 'migrate' para la aplicación específica
-                connection.migrate()
+                call_command('migrate', app_name)
 
             return HttpResponse(f"Migraciones para las aplicaciones {', '.join(apps_to_migrate)} realizadas con éxito.")
         except Exception as e:
