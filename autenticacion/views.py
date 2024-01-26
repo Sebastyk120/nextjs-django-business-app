@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from django.db import migrations, connections
+from django.db import connections
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.views import View
@@ -15,7 +15,7 @@ from django.views import View
 
 class MigrateView(View):
     def get(self, request, *args, **kwargs):
-        apps_to_migrate = ['comercial', 'cartera', 'inventarios']
+        apps_to_migrate = ['autenticacion', 'comercial', 'cartera', 'inventarios']
 
         try:
             for app_name in apps_to_migrate:
