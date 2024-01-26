@@ -91,7 +91,7 @@ class DetallePedidoTable(tables.Table):
         elif record.afecta_comision is False:
             return format_html('<span style="color: red;">❌</span>')
         else:
-            return format_html('<span style="color:blue;Descuento</span>')
+            return format_html('<span style="color: blue;">Dcto</span>')
 
     def render_tarifa_comision(self, value):
         return format_as_currency(value)
