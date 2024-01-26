@@ -85,7 +85,7 @@ class DetallePedidoTable(tables.Table):
                   "valor_total_comision_x_producto", "precio_proforma", "observaciones"]
         exclude = ("pedido", "id")
 
-    def render_afecta_comisionn(self, record):
+    def render_afecta_comision(self, record):
         if record.afecta_comision is True:
             return format_html('<span style="color: green;">✔️</span>')
         elif record.afecta_comision is False:
