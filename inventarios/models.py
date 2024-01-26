@@ -56,7 +56,6 @@ class Movimiento(models.Model):
     observaciones = models.CharField(max_length=255, verbose_name="Observaciones", blank=True, null=True)
     fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha Historico")
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE, verbose_name="Usuario")
-    validador = models.BooleanField(default=False, verbose_name="Validador", blank=True, null=True)
 
     class Meta:
         ordering = ['-fecha']

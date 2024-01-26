@@ -40,6 +40,18 @@ DATABASES = {
     }
 }
 
+Migraciones Manual:
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'railway',
+        'USER': 'postgres',
+        'PASSWORD': '5D6f6FFeCAgBFD*d1fE*A12-4EBcEF6G',
+        'HOST': 'viaduct.proxy.rlwy.net',
+        'PORT': '51014',
+    }
+}
+
 
 asgiref==3.6.0
 Django==4.2.9
