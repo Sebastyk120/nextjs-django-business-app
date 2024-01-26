@@ -261,6 +261,16 @@ def exportar_comisiones_excel(request):
 
 
 # ------------------ Exportacion de Comisiones Excel Etnico --------------------------------------------------------
+
+class ExportarComisionesEtnicoView(TemplateView):
+    template_name = 'export_comisiones_etnico.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Agrega contexto adicional aquí si es necesario
+        return context
+
+
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Etnico'), login_url='home'))
 def exportar_comisiones_etnico(request):
@@ -289,8 +299,24 @@ def exportar_comisiones_etnico(request):
     totales_cobrados_por_exportadora = defaultdict(Decimal)
     totales_por_cobrar_por_exportadora = defaultdict(Decimal)
 
+    fecha_inicial_str = request.POST.get('fecha_inicial')
+    fecha_final_str = request.POST.get('fecha_final')
+
+    # Verificar si las fechas están vacías
+    if fecha_inicial_str and fecha_final_str:
+        # Convertir las cadenas de fecha en datetime
+        fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
+        fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
+
+        # Filtrar los pedidos por fecha_entrega dentro del rango
+        queryset = Pedido.objects.filter(
+            Q(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final) | Q(exportadora__nombre='Etnico'))
+    else:
+        # Si las fechas están vacías, exportar todos los pedidos
+        queryset = Pedido.objects.filter(exportadora__nombre='Etnico')
+
     # Obtener los datos de tu modelo y calcular los totales
-    for pedido in Pedido.objects.filter(exportadora__nombre='Etnico'):
+    for pedido in queryset:
         if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
             totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
         if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
@@ -370,6 +396,16 @@ def exportar_comisiones_etnico(request):
 
 
 # ------------------ Exportacion de Comisiones Excel Fieldex --------------------------------------------------------
+
+class ExportarComisionesFieldexView(TemplateView):
+    template_name = 'export_comisiones_fieldex.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Agrega contexto adicional aquí si es necesario
+        return context
+
+
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Fieldex'), login_url='home'))
 def exportar_comisiones_fieldex(request):
@@ -397,9 +433,24 @@ def exportar_comisiones_fieldex(request):
     totales_no_cobrables_por_exportadora = defaultdict(Decimal)
     totales_cobrados_por_exportadora = defaultdict(Decimal)
     totales_por_cobrar_por_exportadora = defaultdict(Decimal)
+    fecha_inicial_str = request.POST.get('fecha_inicial')
+    fecha_final_str = request.POST.get('fecha_final')
+
+    # Verificar si las fechas están vacías
+    if fecha_inicial_str and fecha_final_str:
+        # Convertir las cadenas de fecha en datetime
+        fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
+        fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
+
+        # Filtrar los pedidos por fecha_entrega dentro del rango
+        queryset = Pedido.objects.filter(
+            Q(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final) | Q(exportadora__nombre='Fieldex'))
+    else:
+        # Si las fechas están vacías, exportar todos los pedidos
+        queryset = Pedido.objects.filter(exportadora__nombre='Fieldex')
 
     # Obtener los datos de tu modelo y calcular los totales
-    for pedido in Pedido.objects.filter(exportadora__nombre='Fieldex'):
+    for pedido in queryset:
         if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
             totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
         if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
@@ -479,6 +530,15 @@ def exportar_comisiones_fieldex(request):
 
 
 # ------------------ Exportacion de Comisiones Excel Juan Matas --------------------------------------------------------
+class ExportarComisionesJuanView(TemplateView):
+    template_name = 'export_comisiones_juan.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Agrega contexto adicional aquí si es necesario
+        return context
+
+
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Juan_Matas'), login_url='home'))
 def exportar_comisiones_juan(request):
@@ -506,9 +566,24 @@ def exportar_comisiones_juan(request):
     totales_no_cobrables_por_exportadora = defaultdict(Decimal)
     totales_cobrados_por_exportadora = defaultdict(Decimal)
     totales_por_cobrar_por_exportadora = defaultdict(Decimal)
+    fecha_inicial_str = request.POST.get('fecha_inicial')
+    fecha_final_str = request.POST.get('fecha_final')
+
+    # Verificar si las fechas están vacías
+    if fecha_inicial_str and fecha_final_str:
+        # Convertir las cadenas de fecha en datetime
+        fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
+        fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
+
+        # Filtrar los pedidos por fecha_entrega dentro del rango
+        queryset = Pedido.objects.filter(
+            Q(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final) | Q(exportadora__nombre='Juan_Matas'))
+    else:
+        # Si las fechas están vacías, exportar todos los pedidos
+        queryset = Pedido.objects.filter(exportadora__nombre='Juan_Matas')
 
     # Obtener los datos de tu modelo y calcular los totales
-    for pedido in Pedido.objects.filter(exportadora__nombre='Juan_Matas'):
+    for pedido in queryset:
         if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
             totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
         if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
