@@ -184,17 +184,17 @@ def exportar_comisiones_excel(request):
 
     # Obtener los datos
     for pedido in queryset:
-        if pedido.diferencia_por_abono < 0:
+        if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
             totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        if pedido.fecha_pago_comision is not None:
+        if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
             totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        if pedido.fecha_pago_comision is None and pedido.diferencia_por_abono >= 0:
+        if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
             totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
         totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
 
     # Agregar datos al libro de trabajo
     for row_num, pedido in enumerate(queryset, start=2):
-        cobrar_comision = "Sí" if pedido.diferencia_por_abono >= 0 else "No"
+        cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
         row = [
             pedido.pk,
             pedido.cliente.nombre,
@@ -291,11 +291,11 @@ def exportar_comisiones_etnico(request):
 
     # Obtener los datos de tu modelo y calcular los totales
     for pedido in Pedido.objects.filter(exportadora__nombre='Etnico'):
-        if pedido.diferencia_por_abono < 0:
+        if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
             totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        if pedido.fecha_pago_comision is not None:
+        if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
             totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        if pedido.fecha_pago_comision is None and pedido.diferencia_por_abono >= 0:
+        if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
             totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
         totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
     # Obtener los datos de tu modelo
@@ -303,7 +303,7 @@ def exportar_comisiones_etnico(request):
 
     # Agregar datos al libro de trabajo
     for row_num, pedido in enumerate(queryset, start=2):
-        cobrar_comision = "Sí" if pedido.diferencia_por_abono >= 0 else "No"
+        cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
         row = [
             pedido.pk,
             pedido.cliente.nombre,
@@ -400,11 +400,11 @@ def exportar_comisiones_fieldex(request):
 
     # Obtener los datos de tu modelo y calcular los totales
     for pedido in Pedido.objects.filter(exportadora__nombre='Fieldex'):
-        if pedido.diferencia_por_abono < 0:
+        if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
             totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        if pedido.fecha_pago_comision is not None:
+        if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
             totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        if pedido.fecha_pago_comision is None and pedido.diferencia_por_abono > 0:
+        if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
             totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
         totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
     # Obtener los datos de tu modelo
@@ -412,7 +412,7 @@ def exportar_comisiones_fieldex(request):
 
     # Agregar datos al libro de trabajo
     for row_num, pedido in enumerate(queryset, start=2):
-        cobrar_comision = "Sí" if pedido.diferencia_por_abono >= 0 else "No"
+        cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
         row = [
             pedido.pk,
             pedido.cliente.nombre,
@@ -509,11 +509,11 @@ def exportar_comisiones_juan(request):
 
     # Obtener los datos de tu modelo y calcular los totales
     for pedido in Pedido.objects.filter(exportadora__nombre='Juan_Matas'):
-        if pedido.diferencia_por_abono < 0:
+        if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
             totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        if pedido.fecha_pago_comision is not None:
+        if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
             totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        if pedido.fecha_pago_comision is None and pedido.diferencia_por_abono > 0:
+        if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
             totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
         totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
     # Obtener los datos de tu modelo
@@ -521,7 +521,7 @@ def exportar_comisiones_juan(request):
 
     # Agregar datos al libro de trabajo
     for row_num, pedido in enumerate(queryset, start=2):
-        cobrar_comision = "Sí" if pedido.diferencia_por_abono >= 0 else "No"
+        cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
         row = [
             pedido.pk,
             pedido.cliente.nombre,

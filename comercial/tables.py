@@ -241,7 +241,7 @@ class ComisionPedidoTable(tables.Table):
                   "documento_cobro_comision", "fecha_pago_comision", "estado_comision")
 
     def render_cobro_comision(self, record):
-        if record.diferencia_por_abono >= 0:
+        if record.estado_comision == "Por Facturar" or record.estado_comision == "Facturada":
             return format_html('<span style="color: green;">✔️</span>')
         else:
             return format_html('<span style="color: red;">❌</span>')
