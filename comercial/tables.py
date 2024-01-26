@@ -120,24 +120,63 @@ class DetallePedidoTable(tables.Table):
 
 
 class PedidoExportadorTable(tables.Table):
-    detalle = tables.TemplateColumn(
-        template_name='detalle_pedido_button.html',
-        orderable=False
-    )
-
-    editar = tables.TemplateColumn(
-        template_name='editar_pedido_button.html',
-        orderable=False
-    )
-
-    inf = tables.TemplateColumn(
-        template_name='resumen_pedido_button.html',
-        orderable=False
-    )
+    detalle = tables.TemplateColumn(template_name='detalle_pedido_button.html', orderable=False)
+    editar = tables.TemplateColumn(template_name='editar_pedido_button.html', orderable=False)
+    inf = tables.TemplateColumn(template_name='resumen_pedido_button.html', orderable=False)
+    valor_total_comision_usd = tables.Column(verbose_name='$Comisiones (USD)', )
+    valor_comision_pesos = tables.Column(verbose_name='$Comisiones (Pesos)', )
+    descuento = tables.Column()
+    trm_monetizacion = tables.Column()
+    valor_total_factura_usd = tables.Column()
+    diferencia_por_abono = tables.Column()
+    comision_bancaria_usd = tables.Column()
+    valor_pagado_cliente_usd = tables.Column()
+    valor_total_nota_credito_usd = tables.Column()
+    dias_de_vencimiento = tables.Column()
 
     class Meta:
         model = Pedido
         template_name = "django_tables2/bootstrap5-responsive.html"
+        fields = ("id", "cliente", "fecha_solicitud", "fecha_entrega", "exportadora", "dias_cartera", "awb", "destino",
+                  "numero_factura", "total_cajas_enviadas", "descuento", "nota_credito_no", "motivo_nota_credito",
+                  "valor_total_nota_credito_usd", "tasa_representativa_usd_diaria", "valor_pagado_cliente_usd",
+                  "comision_bancaria_usd", "fecha_pago", "trm_monetizacion", "fecha_monetizacion", "estado_factura",
+                  "diferencia_por_abono",
+                  "dias_de_vencimiento", "valor_total_factura_usd", "valor_total_comision_usd", "valor_comision_pesos",
+                  "documento_cobro_comision", "fecha_pago_comision", "estado_comision", "detalle", "editar", "inf")
+
+    def render_dias_de_vencimiento(self, value):
+        if value <= 0:
+            return format_html(f'<span style="color: green;">{value}</span>')
+        else:
+            return format_html(f'<span style="color: red;">{value}</span>')
+
+    def render_valor_total_factura_usd(self, value):
+        return format_as_currency(value)
+
+    def render_comision_bancaria_usd(self, value):
+        return format_as_currency(value)
+
+    def render_valor_total_comision_usd(self, value):
+        return format_as_currency(value)
+
+    def render_valor_comision_pesos(self, value):
+        return format_as_currency(value)
+
+    def render_trm_monetizacion(self, value):
+        return format_as_currency(value)
+
+    def render_diferencia_por_abono(self, value):
+        return format_as_currency(value)
+
+    def render_valor_pagado_cliente_usd(self, value):
+        return format_as_currency(value)
+
+    def render_valor_total_nota_credito_usd(self, value):
+        return format_as_currency(value)
+
+    def render_descuento(self, value):
+        return format_as_currency(value)
 
 
 class CarteraPedidoTable(tables.Table):
@@ -147,6 +186,7 @@ class CarteraPedidoTable(tables.Table):
     valor_pagado_cliente_usd = tables.Column()
     diferencia_por_abono = tables.Column()
     descuento = tables.Column()
+    dias_de_vencimiento = tables.Column()
 
     class Meta:
         model = Pedido
@@ -158,6 +198,12 @@ class CarteraPedidoTable(tables.Table):
             "motivo_nota_credito",
             "valor_total_nota_credito_usd", "descuento", "comision_bancaria_usd", "fecha_pago",
             "estado_factura")
+    
+    def render_dias_de_vencimiento(self, value):
+        if value <= 0:
+            return format_html(f'<span style="color: green;">{value}</span>')
+        else:
+            return format_html(f'<span style="color: red;">{value}</span>')
 
     def render_valor_total_factura_usd(self, value):
         return format_as_currency(value)
