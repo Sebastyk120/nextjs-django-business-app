@@ -23,6 +23,7 @@ class PedidoTable(tables.Table):
     comision_bancaria_usd = tables.Column()
     valor_pagado_cliente_usd = tables.Column()
     valor_total_nota_credito_usd = tables.Column()
+    dias_de_vencimiento = tables.Column()
 
     class Meta:
         model = Pedido
@@ -35,6 +36,12 @@ class PedidoTable(tables.Table):
                   "dias_de_vencimiento", "valor_total_factura_usd", "valor_total_comision_usd", "valor_comision_pesos",
                   "documento_cobro_comision", "fecha_pago_comision", "estado_comision", "detalle", "editar", "eliminar",
                   "inf")
+
+    def render_dias_de_vencimiento(self, value):
+        if value <= 0:
+            return f'<span style="color: green;">{value}</span>'
+        else:
+            return f'<span style="color: red;">{value}</span>'
 
     def render_valor_total_factura_usd(self, value):
         return format_as_currency(value)
