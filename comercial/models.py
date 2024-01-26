@@ -85,6 +85,7 @@ class Presentacion(models.Model):
 
     class Meta:
         ordering = ['nombre']
+        unique_together = ['nombre', 'kilos']
 
     def __str__(self):
         return f'{self.nombre} - {self.kilos}'
@@ -96,6 +97,7 @@ class ClientePresentacion(models.Model):
 
     class Meta:
         ordering = ['cliente']
+        unique_together = ['cliente', 'presentacion']
 
     def __str__(self):
         return f'{self.cliente.nombre} -P: {self.presentacion.nombre}'
