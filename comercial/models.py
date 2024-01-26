@@ -273,7 +273,7 @@ class DetallePedido(models.Model):
                                                  null=True, blank=True, editable=False)
     afecta_comision = models.BooleanField(choices=[(True, "Sí"), (False, "No"), (None, "Descuento")],
                                           verbose_name="Afecta Comisión",
-                                          null=True, blank=True)
+                                          null=True, blank=True, default=False)
     valor_total_comision_x_producto = models.DecimalField(max_digits=10, decimal_places=2,
                                                           verbose_name="$Comisión X Producto", null=True,
                                                           blank=True, editable=False)

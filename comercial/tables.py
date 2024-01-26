@@ -65,15 +65,15 @@ class PedidoTable(tables.Table):
 
 
 class DetallePedidoTable(tables.Table):
-    editar = tables.TemplateColumn(
-        template_name='detalle_pedido_editar_button.html',
-        orderable=False
-    )
-
-    eliminar = tables.TemplateColumn(
-        template_name='detalle_pedido_eliminar_button.html',
-        orderable=False
-    )
+    editar = tables.TemplateColumn(template_name='detalle_pedido_editar_button.html', orderable=False)
+    eliminar = tables.TemplateColumn(template_name='detalle_pedido_eliminar_button.html', orderable=False)
+    afecta_comision = tables.Column()
+    tarifa_comision = tables.Column()
+    valor_x_caja_usd = tables.Column()
+    valor_x_producto = tables.Column()
+    valor_nota_credito_usd = tables.Column()
+    valor_total_comision_x_producto = tables.Column()
+    precio_proforma = tables.Column()
 
     class Meta:
         model = DetallePedido
@@ -81,9 +81,35 @@ class DetallePedidoTable(tables.Table):
         fields = ["fruta", "presentacion", "cajas_solicitadas", "presentacion_peso", "kilos", "cajas_enviadas",
                   "kilos_enviados", "diferencia", "tipo_caja", "referencia__nombre", "stickers", "lleva_contenedor",
                   "referencia_contenedor", "cantidad_contenedores", "tarifa_comision", "valor_x_caja_usd",
-                  "valor_x_caja_usd", "valor_x_producto", "no_cajas_nc", "valor_nota_credito_usd", "afecta_comision",
+                  "valor_x_producto", "no_cajas_nc", "valor_nota_credito_usd", "afecta_comision",
                   "valor_total_comision_x_producto", "precio_proforma", "observaciones"]
         exclude = ("pedido", "id")
+
+    def render_afecta_comisionn(self, record):
+        if record.afecta_comision is True:
+            return format_html('<span style="color: green;">✔️</span>')
+        elif record.afecta_comision is False:
+            return format_html('<span style="color: red;">❌</span>')
+        else:
+            return format_html('<span style="color:blue;Descuento</span>')
+
+    def render_tarifa_comision(self, value):
+        return format_as_currency(value)
+
+    def render_valor_x_caja_usd(self, value):
+        return format_as_currency(value)
+
+    def render_valor_x_producto(self, value):
+        return format_as_currency(value)
+
+    def render_valor_nota_credito_usd(self, value):
+        return format_as_currency(value)
+
+    def render_valor_total_comision_x_producto(self, value):
+        return format_as_currency(value)
+
+    def render_precio_proforma(self, value):
+        return format_as_currency(value)
 
 
 class PedidoExportadorTable(tables.Table):
