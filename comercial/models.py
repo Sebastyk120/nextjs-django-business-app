@@ -271,7 +271,8 @@ class DetallePedido(models.Model):
     no_cajas_nc = models.IntegerField(verbose_name="No Cajas NC", null=True, blank=True)
     valor_nota_credito_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Nota Crédito USD",
                                                  null=True, blank=True, editable=False)
-    afecta_comision = models.BooleanField(choices=[(True, "Sí"), (False, "No")], verbose_name="Afecta Comisión",
+    afecta_comision = models.BooleanField(choices=[(True, "Sí"), (False, "No"), (None, "Descuento")],
+                                          verbose_name="Afecta Comisión",
                                           null=True, blank=True)
     valor_total_comision_x_producto = models.DecimalField(max_digits=10, decimal_places=2,
                                                           verbose_name="$Comisión X Producto", null=True,
@@ -293,11 +294,16 @@ class DetallePedido(models.Model):
 
         # Otros cálculos
         self.valor_x_producto = self.valor_x_caja_usd * self.cajas_enviadas
-        self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
-
         # Cálculo de comisión
-        cajas_para_comision = self.cajas_enviadas - (self.no_cajas_nc or 0)
-        self.valor_total_comision_x_producto = cajas_para_comision * self.tarifa_comision
+        if self.afecta_comision is True:
+            self.valor_total_comision_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_comision
+            self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
+        elif self.afecta_comision is None:
+            self.valor_total_comision_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_comision
+            self.valor_nota_credito_usd = 0
+        else:
+            self.valor_total_comision_x_producto = self.cajas_enviadas * self.tarifa_comision
+            self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
 
         # Lógica de contenedor
         if self.lleva_contenedor and self.referencia and self.referencia.contenedor:
