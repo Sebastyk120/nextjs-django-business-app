@@ -1,14 +1,14 @@
-from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib import messages
 from django.contrib.admin.views.decorators import user_passes_test
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.db import migrations, connections
 from django.http import HttpResponse
+from django.shortcuts import render, redirect
 from django.views import View
-import subprocess
 
 
 # Create your views here.
@@ -19,16 +19,26 @@ class MigrateView(View):
 
         try:
             for app_name in apps_to_migrate:
-                # Ejecutar el comando 'makemigrations' para la aplicación específica
-                subprocess.run(['python', 'manage.py', 'makemigrations', app_name], check=True)
+                # Obtener la aplicación específica
+                app = migrations.apps.get_app_config(app_name)
 
-                # Ejecutar el comando 'migrate' para la aplicación específica
-                subprocess.run(['python', 'manage.py', 'migrate', app_name], check=True)
+                # Crear una instancia del ejecutor de migraciones
+                executor = migrations.MigrationExecutor(connections[app.label].settings)
+
+                # Ejecutar 'makemigrations' para la aplicación específica
+                migration_targets = [(app_name, None)]
+                executor.loader.build_graph()
+                executor.loader.detect_changes(graph=executor.graph)
+                executor.loader.graph.ensure_not_cyclic(graph=executor.graph)
+                executor.loader.sort_migrations()
+
+                # Ejecutar 'migrate' para la aplicación específica
+                executor.migrate(targets=migration_targets)
 
             return HttpResponse(f"Migraciones para las aplicaciones {', '.join(apps_to_migrate)} realizadas con éxito.")
-        except subprocess.CalledProcessError as e:
-            # Capturar cualquier error que pueda ocurrir durante la ejecución de los comandos
-            return HttpResponse(f"Error al realizar las migraciones: {e.stderr}", status=500)
+        except Exception as e:
+            # Capturar cualquier error que pueda ocurrir durante la ejecución de las migraciones
+            return HttpResponse(f"Error al realizar las migraciones: {str(e)}", status=500)
 
 
 def home(request):
