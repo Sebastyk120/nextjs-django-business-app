@@ -39,9 +39,9 @@ class PedidoTable(tables.Table):
 
     def render_dias_de_vencimiento(self, value):
         if value <= 0:
-            return f'<span style="color: green;">{value}</span>'
+            return format_html(f'<span style="color: green;">{value}</span>')
         else:
-            return f'<span style="color: red;">{value}</span>'
+            return format_html(f'<span style="color: red;">{value}</span>')
 
     def render_valor_total_factura_usd(self, value):
         return format_as_currency(value)
