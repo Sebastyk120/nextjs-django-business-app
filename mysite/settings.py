@@ -156,3 +156,5 @@ ALLOWED_HOSTS = [
 CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app"]
 CSRF_ALLOWED_ORIGINS = ["https://heavens-server.up.railway.app"]
 CORS_ORIGINS_WHITELIST = ["https://heavens-server.up.railway.app"]
+SESSION_COOKIE_AGE = 1800
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
