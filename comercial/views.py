@@ -1128,11 +1128,29 @@ def exportar_pedidos_juan(request):
 
 
 # -------------------------- Funciones De Exportacion Cartera General--------------------------------------------------
+
+# Vista De Fechas Exportacion Cartera Heavens --- Pendiente
+class ExportarCarteraView(TemplateView):
+    template_name = 'export_cartera_general.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Agrega contexto adicional aquí si es necesario
+        return context
+
+
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
 def export_cartera_clientes(request):
     # Obtener los datos y los totales
-    pedidos, totales = obtener_datos_con_totales()
+    fecha_inicial_str = request.POST.get('fecha_inicial', None)
+    fecha_final_str = request.POST.get('fecha_final', None)
+
+    fecha_inicial = datetime.strptime(fecha_inicial_str, "%Y-%m-%d") if fecha_inicial_str else None
+    fecha_final = datetime.strptime(fecha_final_str, "%Y-%m-%d") if fecha_final_str else None
+
+    # Obtener los datos y los totales con el filtro de fecha
+    pedidos, totales = obtener_datos_con_totales(fecha_inicial, fecha_final)
 
     # Crear el archivo Excel
     ruta_archivo = 'estado_cuenta_clientes.xlsx'

@@ -78,9 +78,9 @@ def obtener_datos_con_totales_etnico():
     return list(pedidos), list(totales_por_cliente_exportadora)
 
 
-def obtener_datos_con_totales():
+def obtener_datos_con_totales(fecha_inicial=None, fecha_final=None):
     # Obtener los pedidos y sus datos
-    pedidos = Pedido.objects.all().values(
+    pedidos = Pedido.objects.filter(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final).values(
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
@@ -88,7 +88,8 @@ def obtener_datos_con_totales():
     )
 
     # Calcular los totales por cliente y exportadora
-    totales_por_cliente_exportadora = Pedido.objects.values(
+    totales_por_cliente_exportadora = Pedido.objects.filter(fecha_entrega__gte=fecha_inicial,
+                                                            fecha_entrega__lte=fecha_final).values(
         'cliente__nombre', 'exportadora__nombre'
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
