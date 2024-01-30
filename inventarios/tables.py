@@ -43,5 +43,10 @@ class InventarioTable(tables.Table):
                   "traslado_propio", "traslado_remisionado", "ventas", "venta_contenedor")
 
     def render_stock_actual(self, record):
-        return (record.compras_efectivas + record.saldos_iniciales) - (
+        stock_actual = (record.compras_efectivas + record.saldos_iniciales) - (
                 record.salidas + record.traslado_propio + record.traslado_remisionado + record.ventas)
+
+        # Aplicar color rojo si el stock actual es negativo
+        color = 'red' if stock_actual < 0 else 'black'
+
+        return tables.Column(attrs={"style": f"color: {color}"}).render(stock_actual)
