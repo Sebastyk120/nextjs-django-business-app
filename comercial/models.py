@@ -100,7 +100,7 @@ class ClientePresentacion(models.Model):
         unique_together = ['cliente', 'presentacion']
 
     def __str__(self):
-        return f'{self.cliente.nombre} -P: {self.presentacion.nombre}'
+        return f'{self.cliente.nombre} -P: {self.presentacion.nombre} - {self.presentacion.kilos}'
 
 
 class Pedido(models.Model):
