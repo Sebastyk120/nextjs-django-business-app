@@ -79,8 +79,15 @@ def obtener_datos_con_totales_etnico():
 
 
 def obtener_datos_con_totales(fecha_inicial=None, fecha_final=None):
+    pedidos_query = Pedido.objects.all()
+
+    if fecha_inicial is not None:
+        pedidos_query = pedidos_query.filter(fecha_entrega__gte=fecha_inicial)
+
+    if fecha_final is not None:
+        pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
     # Obtener los pedidos y sus datos
-    pedidos = Pedido.objects.filter(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final).values(
+    pedidos = pedidos_query.values(
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
@@ -88,8 +95,7 @@ def obtener_datos_con_totales(fecha_inicial=None, fecha_final=None):
     )
 
     # Calcular los totales por cliente y exportadora
-    totales_por_cliente_exportadora = Pedido.objects.filter(fecha_entrega__gte=fecha_inicial,
-                                                            fecha_entrega__lte=fecha_final).values(
+    totales_por_cliente_exportadora = pedidos_query.values(
         'cliente__nombre', 'exportadora__nombre'
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
@@ -174,7 +180,7 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
         sheet.append(fila_total)
         for cell in sheet[sheet.max_row]:
             cell.border = thin_border
-            cell.fill = PatternFill(start_color='3fd97f', end_color='3fd97f',
+            cell.fill = PatternFill(start_color='9ed1b7', end_color='9ed1b7',
                                     fill_type='solid')  # Color diferente para totales
 
         # Ajustar el ancho de las columnas
