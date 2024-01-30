@@ -39,20 +39,12 @@ def exportar_items_etnico(request):
     font = Font(bold=True)
     fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
 
-    # Fusionar celdas antes de asignar el valor al título
-    worksheet.merge_cells('A1:J1')
-
-    # Configurar el título después de fusionar
-    title_cell = worksheet['A1']
-    title_cell.value = "Movimientos Inventario Etnico"
-    title_cell.font = Font(bold=True, size=16)
-    title_cell.alignment = Alignment(horizontal="center")
 
     # Encabezados
     columns = ['Referencia', 'Cantidad Cajas', 'Tipo Documento', 'Documento', 'Bodega', 'Proveedor',
                'Fecha Movimiento', 'Propiedad', 'Observaciones', 'Usuario']
     for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=3, column=col_num, value=column_title)
+        cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
         cell.fill = fill
 
@@ -60,7 +52,7 @@ def exportar_items_etnico(request):
     queryset = Item.objects.filter(bodega__exportador__nombre='Etnico')
 
     # Agregar datos al libro de trabajo
-    for row_num, item in enumerate(queryset, start=3):
+    for row_num, item in enumerate(queryset, start=2):
         row = [
             item.numero_item.nombre,
             item.cantidad_cajas,
