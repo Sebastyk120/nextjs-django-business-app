@@ -42,6 +42,10 @@ class InventarioTable(tables.Table):
         template_name = 'django_tables2/bootstrap5-responsive.html'
         fields = ("numero_item", "compras_efectivas", "saldos_iniciales", "salidas",
                   "traslado_propio", "traslado_remisionado", "ventas", "venta_contenedor")
+        attrs = {
+            'compras_efectivas': {'th': {'style': 'color: red; background-color: #c5e65c;'}},
+            # Agrega más columnas según sea necesario
+        }
 
     def render_stock_actual(self, record):
         stock_actual = (record.compras_efectivas + record.saldos_iniciales) - (
