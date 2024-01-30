@@ -92,20 +92,11 @@ def exportar_items_fieldex(request):
     font = Font(bold=True)
     fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
 
-    # Configurar el título antes de fusionar
-    title_cell = worksheet['A1']
-    title_cell.value = "Movimientos Inventario Fieldex"
-    title_cell.font = Font(bold=True, size=16)
-    title_cell.alignment = Alignment(horizontal="center")
-
-    # Fusionar celdas después de asignar el valor
-    worksheet.merge_cells('A1:J1')
-
     # Encabezados
     columns = ['Referencia', 'Cantidad Cajas', 'Tipo Documento', 'Documento', 'Bodega', 'Proveedor',
                'Fecha Movimiento', 'Propiedad', 'Observaciones', 'Usuario']
     for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=2, column=col_num, value=column_title)
+        cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
         cell.fill = fill
 
@@ -152,20 +143,11 @@ def exportar_items_juan(request):
     font = Font(bold=True)
     fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
 
-    # Configurar el título antes de fusionar
-    title_cell = worksheet['A1']
-    title_cell.value = "Movimientos Inventario Fieldex"
-    title_cell.font = Font(bold=True, size=16)
-    title_cell.alignment = Alignment(horizontal="center")
-
-    # Fusionar celdas después de asignar el valor
-    worksheet.merge_cells('A1:J1')
-
     # Encabezados
     columns = ['Referencia', 'Cantidad Cajas', 'Tipo Documento', 'Documento', 'Bodega', 'Proveedor',
                'Fecha Movimiento', 'Propiedad', 'Observaciones', 'Usuario']
     for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=2, column=col_num, value=column_title)
+        cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
         cell.fill = fill
 
