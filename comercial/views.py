@@ -1139,6 +1139,7 @@ class ExportarCarteraView(TemplateView):
         return context
 
 
+# Exportación Cartera:
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
 def export_cartera_clientes(request):
@@ -1166,6 +1167,18 @@ def export_cartera_clientes(request):
 
 
 # -------------------------- Exportacion Cartera Etnico -------------------------------------------------------
+
+# Vista De Fechas Exportacion Cartera Heavens --- Pendiente
+class ExportarCarteraEtnicoView(TemplateView):
+    template_name = 'export_cartera_etnico.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Agrega contexto adicional aquí si es necesario
+        return context
+
+
+# Exportación Cartera:
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Etnico'), login_url='home'))
 def export_cartera_etnico(request):
@@ -1186,6 +1199,18 @@ def export_cartera_etnico(request):
 
 
 # -------------------------- Exportacion Cartera Fieldex -------------------------------------------------------
+# Vista De Fechas Exportacion Cartera Heavens --- Pendiente
+class ExportarCarteraFieldexView(TemplateView):
+    template_name = 'export_cartera_fieldex.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Agrega contexto adicional aquí si es necesario
+        return context
+
+
+# Exportación Cartera:
+
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Fieldex'), login_url='home'))
 def export_cartera_fieldex(request):
@@ -1206,6 +1231,18 @@ def export_cartera_fieldex(request):
 
 
 # -------------------------- Exportacion Cartera Juan Matas -------------------------------------------------------
+
+# Vista De Fechas Exportacion Cartera Heavens --- Pendiente
+class ExportarCarteraJuanView(TemplateView):
+    template_name = 'export_cartera_juan.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Agrega contexto adicional aquí si es necesario
+        return context
+
+
+# Exportación Cartera:
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Juan_Matas'), login_url='home'))
 def export_cartera_juan(request):

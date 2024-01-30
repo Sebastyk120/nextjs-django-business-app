@@ -9,9 +9,15 @@ from .models import Pedido, Cliente, Fruta, Contenedor, DetallePedido, Pais, Pre
 
 
 # ////////////////////////////////////// Exportaciones De Cartera /////////////////////////////////////////////////////
-def obtener_datos_con_totales_juan():
+def obtener_datos_con_totales_juan(fecha_inicial=None, fecha_final=None):
+    pedidos_query = Pedido.objects.filter(exportadora__nombre='Juan_Matas')
+    if fecha_inicial is not None:
+        pedidos_query = pedidos_query.filter(fecha_entrega__gte=fecha_inicial)
+
+    if fecha_final is not None:
+        pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
     # Obtener los pedidos y sus datos
-    pedidos = Pedido.objects.filter(exportadora__nombre='Juan_Matas').values(
+    pedidos = pedidos_query.values(
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
@@ -19,7 +25,7 @@ def obtener_datos_con_totales_juan():
     )
 
     # Calcular los totales por cliente y exportadora
-    totales_por_cliente_exportadora = Pedido.objects.filter(exportadora__nombre='Juan_Matas').values(
+    totales_por_cliente_exportadora = pedidos_query.values(
         'cliente__nombre', 'exportadora__nombre'
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
@@ -32,9 +38,15 @@ def obtener_datos_con_totales_juan():
     return list(pedidos), list(totales_por_cliente_exportadora)
 
 
-def obtener_datos_con_totales_fieldex():
+def obtener_datos_con_totales_fieldex(fecha_inicial=None, fecha_final=None):
+    pedidos_query = Pedido.objects.filter(exportadora__nombre='Fieldex')
+    if fecha_inicial is not None:
+        pedidos_query = pedidos_query.filter(fecha_entrega__gte=fecha_inicial)
+
+    if fecha_final is not None:
+        pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
     # Obtener los pedidos y sus datos
-    pedidos = Pedido.objects.filter(exportadora__nombre='Fieldex').values(
+    pedidos = pedidos_query.values(
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
@@ -42,7 +54,7 @@ def obtener_datos_con_totales_fieldex():
     )
 
     # Calcular los totales por cliente y exportadora
-    totales_por_cliente_exportadora = Pedido.objects.filter(exportadora__nombre='Fieldex').values(
+    totales_por_cliente_exportadora = pedidos_query.values(
         'cliente__nombre', 'exportadora__nombre'
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
@@ -55,9 +67,16 @@ def obtener_datos_con_totales_fieldex():
     return list(pedidos), list(totales_por_cliente_exportadora)
 
 
-def obtener_datos_con_totales_etnico():
-    # Obtener los pedidos y sus datos
-    pedidos = Pedido.objects.filter(exportadora__nombre='Etnico').values(
+def obtener_datos_con_totales_etnico(fecha_inicial=None, fecha_final=None):
+    pedidos_query = Pedido.objects.filter(exportadora__nombre='Etnico')
+
+    if fecha_inicial is not None:
+        pedidos_query = pedidos_query.filter(fecha_entrega__gte=fecha_inicial)
+
+    if fecha_final is not None:
+        pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
+
+    pedidos = pedidos_query.values(
         'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
@@ -65,7 +84,7 @@ def obtener_datos_con_totales_etnico():
     )
 
     # Calcular los totales por cliente y exportadora
-    totales_por_cliente_exportadora = Pedido.objects.filter(exportadora__nombre='Etnico').values(
+    totales_por_cliente_exportadora = pedidos_query.values(
         'cliente__nombre', 'exportadora__nombre'
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),

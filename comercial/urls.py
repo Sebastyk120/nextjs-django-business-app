@@ -59,5 +59,8 @@ urlpatterns = [
     path('exportar_referencias_fieldex', views.exportar_referencias_fieldex, name='exportar_referencias_fieldex'),
     path('exportar_referencias_juan', views.exportar_referencias_juan, name='exportar_referencias_juan'),
     path('exportar_cartera_view', views.ExportarCarteraView.as_view(), name='exportar_cartera_view'),
+    path('exportar_cartera_etnico_view', views.ExportarCarteraEtnicoView.as_view(), name='exportar_cartera_etnico_view'),
+    path('exportar_cartera_fieldex_view', views.ExportarCarteraFieldexView.as_view(), name='exportar_cartera_fieldex_view'),
+    path('exportar_cartera_juan_view', views.ExportarCarteraJuanView.as_view(), name='exportar_cartera_juan_view'),
 
 ]
