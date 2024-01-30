@@ -66,11 +66,6 @@ h1 {
     vertical-align: middle;
 }
 
-table tr td:nth-child(3) {
-    text-align: justify;
-    background-color: #d3d308
-}
-
 a:link {
     color: rgb(0, 0, 0);
     text-decoration: none

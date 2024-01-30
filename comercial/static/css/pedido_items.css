@@ -26,12 +26,12 @@ h1 {
     font-size: 0.8em;
     font-family: 'Poppins', sans-serif;
     width: 100%;
-    min-width: 400px;/* Hace que la tabla ocupe el 100% del ancho disponible */
+    min-width: 400px; /* Hace que la tabla ocupe el 100% del ancho disponible */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     background-color: #F2F2F2; /* Puedes ajustar el color de fondo según tus preferencias */
     font-weight: bold;
-    white-space: inherit;  /* Evita el salto de línea en las celdas */
-    text-align: center;    /* Alinea el texto a la derecha */
+    white-space: inherit; /* Evita el salto de línea en las celdas */
+    text-align: center; /* Alinea el texto a la derecha */
     overflow-x: auto;
 }
 
@@ -55,6 +55,10 @@ h1 {
     color: #ffffff;
     text-align: center;
 
+}
+
+table tr td:nth-child(16), table tr td:nth-child(17), table tr td:nth-child(18), table tr td:nth-child(19), table tr td:nth-child(20) {
+    background-color: #fdd86e
 }
 
 .table tbody tr.active-row {

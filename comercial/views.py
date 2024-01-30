@@ -1424,10 +1424,6 @@ class PedidoCreateView(CreateView):
 # -------------------------------  Formulario - Editar Pedido General - Modal (General) ----------------------------
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
-@permission_classes([
-    IsAuthenticated,
-    DjangoModelPermissionsOrAnonReadOnly,
-])
 class PedidoUpdateView(UpdateView):
     model = Pedido
     form_class = EditarPedidoForm
