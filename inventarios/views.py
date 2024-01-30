@@ -39,20 +39,20 @@ def exportar_items_etnico(request):
     font = Font(bold=True)
     fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
 
-    # Configurar el título antes de fusionar
+    # Fusionar celdas antes de asignar el valor al título
+    worksheet.merge_cells('A1:J1')
+
+    # Configurar el título después de fusionar
     title_cell = worksheet['A1']
     title_cell.value = "Movimientos Inventario Etnico"
     title_cell.font = Font(bold=True, size=16)
     title_cell.alignment = Alignment(horizontal="center")
 
-    # Fusionar celdas después de asignar el valor
-    worksheet.merge_cells('A1:J1')
-
     # Encabezados
     columns = ['Referencia', 'Cantidad Cajas', 'Tipo Documento', 'Documento', 'Bodega', 'Proveedor',
                'Fecha Movimiento', 'Propiedad', 'Observaciones', 'Usuario']
     for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=2, column=col_num, value=column_title)
+        cell = worksheet.cell(row=3, column=col_num, value=column_title)
         cell.font = font
         cell.fill = fill
 
@@ -60,18 +60,18 @@ def exportar_items_etnico(request):
     queryset = Item.objects.filter(bodega__exportador__nombre='Etnico')
 
     # Agregar datos al libro de trabajo
-    for row_num, item in enumerate(queryset, start=2):
+    for row_num, item in enumerate(queryset, start=3):
         row = [
             item.numero_item.nombre,
             item.cantidad_cajas,
-            item.get_tipo_documento_display(),  # RECORDAR QUE ES PARA LISTAS.
+            item.get_tipo_documento_display(),
             item.documento,
-            item.bodega.nombre,  #
-            item.proveedor.nombre,  #
-            item.fecha_movimiento.strftime("%Y-%m-%d"),  # RECORDAR FORMATEO.
-            item.propiedad.nombre,  #
+            item.bodega.nombre,
+            item.proveedor.nombre,
+            item.fecha_movimiento.strftime("%Y-%m-%d"),
+            item.propiedad.nombre,
             item.observaciones,
-            item.user.username,  # Nombre de Usuario.
+            item.user.username,
         ]
         for col_num, cell_value in enumerate(row, start=1):
             worksheet.cell(row=row_num, column=col_num, value=cell_value)
@@ -85,6 +85,7 @@ def exportar_items_etnico(request):
     response['Content-Disposition'] = 'attachment; filename="inventario_items_etnico.xlsx"'
 
     return response
+
 
 
 # -------------------------------------- Exportar Items Fieldex (Movimientos) Excel: ---------------------------------
