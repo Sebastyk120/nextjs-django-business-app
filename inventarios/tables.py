@@ -1,4 +1,5 @@
 import django_tables2 as tables
+from django.utils.html import format_html
 from .models import Movimiento, Item, Inventario
 
 
@@ -45,8 +46,7 @@ class InventarioTable(tables.Table):
     def render_stock_actual(self, record):
         stock_actual = (record.compras_efectivas + record.saldos_iniciales) - (
                 record.salidas + record.traslado_propio + record.traslado_remisionado + record.ventas)
-
-        # Aplicar color rojo si el stock actual es negativo
-        color = 'red' if stock_actual < 0 else 'black'
-
-        return tables.Column(attrs={"style": f"color: {color}"}).render(stock_actual)
+        if stock_actual < 0:
+            return format_html(f'<span style="color: black;">{stock_actual}</span>')
+        else:
+            return format_html(f'<span style="color: red;">{stock_actual}</span>')
