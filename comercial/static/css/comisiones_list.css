@@ -68,6 +68,7 @@ h1 {
 
 table tr td:nth-child(3) {
     text-align: justify;
+    background-color: #d3d308
 }
 
 a:link {

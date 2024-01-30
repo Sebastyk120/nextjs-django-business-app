@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
 from django.contrib import messages
-from django.contrib.auth.decorators import user_passes_test, login_required
+from django.contrib.auth.decorators import user_passes_test, login_required, permission_required
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
@@ -1420,6 +1420,7 @@ class PedidoCreateView(CreateView):
 # -------------------------------  Formulario - Editar Pedido General - Modal (General) ----------------------------
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
+@method_decorator(permission_required('change_pedido', (Pedido, ), raise_exception=True), name='dispatch')
 class PedidoUpdateView(UpdateView):
     model = Pedido
     form_class = EditarPedidoForm
