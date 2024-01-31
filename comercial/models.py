@@ -351,7 +351,7 @@ class DetallePedido(models.Model):
             return (cajas_solicitadas * Decimal('0.9')) + kilos
 
     def calcular_no_piezas(self):
-        # Asegurarse de que todos los valores son de tipo Decimal
+        # todos los valores son de tipo Decimal
         cajas_solicitadas = Decimal(self.cajas_solicitadas)
         if self.presentacion_peso < 7.5:
             return cajas_solicitadas / 160

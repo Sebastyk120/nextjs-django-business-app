@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap');
 
 body {
     background-image: url(../img/black.webp); !important;
@@ -6,14 +6,14 @@ body {
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    font-family: 'Roboto', serif !important;
+    font-family: 'Noto Sans', serif !important;
 }
 
 
 h1 {
     justify-content: center;
     text-align: center;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Noto Sans', sans-serif;
     font-weight: 800 !important;
     font-size: 40px !important;
     color: #000000;
@@ -22,7 +22,7 @@ h1 {
 h2 {
     justify-content: center;
     text-align: center;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Noto Sans', sans-serif;
     color: #48f8bc;
     font-weight: normal;
 }
@@ -30,7 +30,7 @@ h2 {
 h5 {
     justify-content: center;
     text-align: center;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Noto Sans', sans-serif;
     color: #000000;
     font-weight: 1000 !important;
 }
@@ -38,7 +38,7 @@ h5 {
 h6 {
     justify-content: center;
     text-align: center;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Noto Sans', sans-serif;
     color: #000000;
     font-weight: 600 !important;
 }
@@ -48,7 +48,7 @@ h6 {
     border-collapse: collapse;
     margin: 25px 0;
     font-size: 0.9em;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Noto Sans', sans-serif;
     width: 100%;
     min-width: 400px;/* Hace que la tabla ocupe el 100% del ancho disponible */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
@@ -107,27 +107,10 @@ a:visited {
     text-decoration: none
 }
 
-input[name="item_busqueda"] {
-    width: 10%;
-    border-radius: 4px;
-    border: none;
-    padding: 8px 12px;
-    background-color: #e4e4e4;
-    font-family: 'Poppins', sans-serif;
-    transition: 0.3s;
-    margin-right: 5px;
-    margin-left: 100px;
-}
-
-input[name="item_busqueda"]:active,
-input[name="item_busqueda"]:focus {
-    width: 20%;
-}
-
 
 label {
 
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Noto Sans', sans-serif;
     font-weight: 600;
     margin: 10px;
 
