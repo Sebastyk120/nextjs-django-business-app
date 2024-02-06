@@ -10,6 +10,18 @@ DANNA	Danna	Cortes Valero	mainassistant@heavensfruit.com Heavens2023.
 FELIPEF	Felipe	Ospina	manager@fieldex.com.co FColombia1705
 PAOLAF	Paola	Maquiria	operaciones@fieldex.com.co Pmaquiriaf
 VALEN   Valentina Garay Diaz valentinagaray@heavensfruit.com     Vheavens1725.
+JONATHANM Mjheavens1603 costos@etnico.co    JONATHANM Montoya Herrera
+STEVENC  reservas@juanmatas.com.co   Steven Carranza Schevanes6908
+
+
+
+Link: https://heavens-server.up.railway.app/
+Usuario: STEVENC
+Constraseña: Schevanes6908
+
+
+
+
 FELIPEF Clave: Fieldex705
 PAOLAF Calve Pmaquiriaf
 
