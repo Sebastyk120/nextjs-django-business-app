@@ -184,13 +184,16 @@ def exportar_comisiones_excel(request):
 
     # Obtener los datos
     for pedido in queryset:
+        valor_comision_usd = pedido.valor_total_comision_usd
+        if valor_comision_usd is None:
+            continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
         if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
-            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
-            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
+        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
 
     # Agregar datos al libro de trabajo
     for row_num, pedido in enumerate(queryset, start=2):
@@ -317,13 +320,16 @@ def exportar_comisiones_etnico(request):
 
     # Obtener los datos de tu modelo y calcular los totales
     for pedido in queryset:
+        valor_comision_usd = pedido.valor_total_comision_usd
+        if valor_comision_usd is None:
+            continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
         if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
-            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
-            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
+        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
     # Obtener los datos de tu modelo
     queryset = Pedido.objects.filter(exportadora__nombre='Etnico')
 
@@ -451,13 +457,16 @@ def exportar_comisiones_fieldex(request):
 
     # Obtener los datos de tu modelo y calcular los totales
     for pedido in queryset:
+        valor_comision_usd = pedido.valor_total_comision_usd
+        if valor_comision_usd is None:
+            continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
         if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
-            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
-            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
+        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
     # Obtener los datos de tu modelo
     queryset = Pedido.objects.filter(exportadora__nombre='Fieldex')
 
@@ -584,13 +593,16 @@ def exportar_comisiones_juan(request):
 
     # Obtener los datos de tu modelo y calcular los totales
     for pedido in queryset:
+        valor_comision_usd = pedido.valor_total_comision_usd
+        if valor_comision_usd is None:
+            continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
         if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
-            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
-            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
-        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(pedido.valor_total_comision_usd)
+            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
+        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
     # Obtener los datos de tu modelo
     queryset = Pedido.objects.filter(exportadora__nombre='Juan_Matas')
 
