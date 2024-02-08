@@ -145,10 +145,10 @@ class Pedido(models.Model):
                                                   null=True, blank=True, editable=False, default=0)
     valor_total_comision_usd = models.DecimalField(max_digits=10, decimal_places=2,
                                                    verbose_name="$Comisiones USD", null=True, blank=True,
-                                                   editable=False)
+                                                   editable=False, default=0)
     valor_comision_pesos = models.DecimalField(max_digits=10, decimal_places=2,
                                                verbose_name="$Comisiones Pesos", null=True, blank=True,
-                                               editable=False)
+                                               editable=False, default=0)
     documento_cobro_comision = models.CharField(max_length=50, verbose_name="Doc Cobro Comisión", null=True,
                                                 blank=True)
     fecha_pago_comision = models.DateField(verbose_name="Fecha Pago Comisión", null=True, blank=True)
