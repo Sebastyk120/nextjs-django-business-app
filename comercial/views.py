@@ -154,7 +154,8 @@ def exportar_comisiones_excel(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'Valor Total Factura USD', 'Estado Factura',
+    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura', 'Valor Total Factura USD',
+               'Estado Factura',
                'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
                'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
     for col_num, column_title in enumerate(columns, start=1):
@@ -202,7 +203,8 @@ def exportar_comisiones_excel(request):
             pedido.pk,
             pedido.cliente.nombre,
             pedido.exportadora.nombre,
-            pedido.fecha_pago_comision,
+            pedido.fecha_pago,
+            pedido.numero_factura,
             pedido.valor_total_factura_usd,
             pedido.estado_factura,
             pedido.trm_monetizacion,
@@ -289,7 +291,8 @@ def exportar_comisiones_etnico(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'Valor Total Factura USD', 'Estado Factura',
+    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura', 'Valor Total Factura USD',
+               'Estado Factura',
                'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
                'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
     for col_num, column_title in enumerate(columns, start=1):
@@ -341,6 +344,7 @@ def exportar_comisiones_etnico(request):
             pedido.cliente.nombre,
             pedido.exportadora.nombre,
             pedido.fecha_pago,
+            pedido.numero_factura,
             pedido.valor_total_factura_usd,
             pedido.estado_factura,
             pedido.trm_monetizacion,
@@ -427,7 +431,8 @@ def exportar_comisiones_fieldex(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'Valor Total Factura USD', 'Estado Factura',
+    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura', 'Valor Total Factura USD',
+               'Estado Factura',
                'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
                'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
     for col_num, column_title in enumerate(columns, start=1):
@@ -478,6 +483,7 @@ def exportar_comisiones_fieldex(request):
             pedido.cliente.nombre,
             pedido.exportadora.nombre,
             pedido.fecha_pago,
+            pedido.numero_factura,
             pedido.valor_total_factura_usd,
             pedido.estado_factura,
             pedido.trm_monetizacion,
@@ -563,7 +569,8 @@ def exportar_comisiones_juan(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'Valor Total Factura USD', 'Estado Factura',
+    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura', 'Valor Total Factura USD',
+               'Estado Factura',
                'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
                'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
     for col_num, column_title in enumerate(columns, start=1):
@@ -614,6 +621,7 @@ def exportar_comisiones_juan(request):
             pedido.cliente.nombre,
             pedido.exportadora.nombre,
             pedido.fecha_pago,
+            pedido.numero_factura,
             pedido.valor_total_factura_usd,
             pedido.estado_factura,
             pedido.trm_monetizacion,
