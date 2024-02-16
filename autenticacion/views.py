@@ -4,6 +4,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
+from django.contrib.auth.views import PasswordResetView
 from django.db import IntegrityError
 from django.core.management import call_command
 from django.http import HttpResponse
@@ -75,3 +76,12 @@ def signup(request):
 def salir(request):
     logout(request)
     return redirect('home')
+
+
+class CustomPasswordResetView(PasswordResetView):
+    title = 'Restablecer Contraseña - Heavens Fruits'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['header_text'] = "Administración Heavens Fruits"
+        return context
