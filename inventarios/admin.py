@@ -2,6 +2,11 @@ from django.contrib import admin
 from .models import Bodega, Item, Movimiento, Inventario, Proveedor
 from .resources import MovimientoResource, ItemResource, BodegaResource, ProveedorResource
 from import_export.admin import ImportExportModelAdmin
+from django.contrib import admin
+
+admin.site.site_header = "Administración Heavens Fruits"
+admin.site.site_title = "Administración Heavens"
+admin.site.index_title = "Bienvenido al Portal de Administración Heavens"
 
 
 @admin.register(Item)

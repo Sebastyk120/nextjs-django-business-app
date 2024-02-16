@@ -7,6 +7,11 @@ from simple_history.admin import SimpleHistoryAdmin
 from import_export.admin import ImportExportModelAdmin
 from .resources import ClienteResource, PedidoResource, FrutaResource, DetallePedidoResource, ContenedorResource, \
     PaisResource, PresentacionResource, ReferenciasResource, ExportadorResource, TipoCajaResource, ClientePresentacionResource
+from django.contrib import admin
+
+admin.site.site_header = "Administración Heavens Fruits"
+admin.site.site_title = "Administración Heavens"
+admin.site.index_title = "Bienvenido al Portal de Administración Heavens"
 
 
 class PedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
