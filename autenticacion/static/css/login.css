@@ -84,7 +84,7 @@ form .row input::placeholder{
 .wrapper form .pass a:hover{
   text-decoration: underline;
 }
-.wrapper form .button input{
+.wrapper form .button input {
   color: #fff;
   font-size: 20px;
   font-weight: 500;
@@ -92,9 +92,13 @@ form .row input::placeholder{
   background: #8416a0;
   border: 1px solid #8416a0;
   cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
-form .button input:hover{
-  background: #8416a0;
+
+.wrapper form .button input:hover {
+  background: #c675d7; /* Cambia el color de fondo al pasar el mouse */
+  border-color: #d2a1e5; /* Cambia el color del borde al pasar el mouse */
+  color: #000000; /* Cambia el color del texto al pasar el mouse */
 }
 .wrapper form .signup-link{
   text-align: center;
