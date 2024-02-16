@@ -83,5 +83,5 @@ class CustomPasswordResetView(PasswordResetView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['header_text'] = "Administración Heavens Fruits"
+        context['site_name'] = "Administración Heavens Fruits"
         return context
