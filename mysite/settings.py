@@ -152,11 +152,12 @@ CSRF_ALLOWED_ORIGINS = ["https://heavens-server.up.railway.app"]
 CORS_ORIGINS_WHITELIST = ["https://heavens-server.up.railway.app"]
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-#CONFIGURACION MAIL:
+# CONFIGURACIÓN MAIL:
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.outlook.com'
+EMAIL_HOST = 'smtp.office365.com'
 EMAIL_USE_TLS = True
+EMAIL_USE_SSL = True
 EMAIL_PORT = 587
-EMAIL_HOST_USER = '<EMAIL>'
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_USER = 'server@heavensfruit.com'
+EMAIL_HOST_PASSWORD = 'Servheaven1705*'
