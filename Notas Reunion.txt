@@ -5,6 +5,8 @@ Añadir el campo fecha de monetizacion.
 Acceso proveedores Fieldex.
 
 US:
+Correo Backend: User: server@heavensfruit.com Contraseña: Servheaven1705*
+
 SEBASTYK120	Sebastian	Melo Garcia	subgerencia@heavensfruit.com Skad120
 DANNA	Danna	Cortes Valero	mainassistant@heavensfruit.com Heavens2023.
 FELIPEF	Felipe	Ospina	manager@fieldex.com.co FColombia1705

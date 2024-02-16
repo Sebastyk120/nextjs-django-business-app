@@ -151,3 +151,12 @@ CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app"]
 CSRF_ALLOWED_ORIGINS = ["https://heavens-server.up.railway.app"]
 CORS_ORIGINS_WHITELIST = ["https://heavens-server.up.railway.app"]
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+#CONFIGURACION MAIL:
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.outlook.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = '<EMAIL>'
+EMAIL_HOST_PASSWORD = ''
