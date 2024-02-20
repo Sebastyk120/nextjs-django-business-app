@@ -695,13 +695,11 @@ def exportar_detalles_pedidos_excel(request):
     fill = PatternFill(start_color="251819", end_color="251819", fill_type="solid")
 
     # Encabezados
-    columns = ['Pedido', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas', 'Peso Presentacion',
-               'kilos',
-               'Cajas Enviadas',
-               'Kilos Enviados', 'Diferencia', 'Tipo Caja', 'Referencia', 'Stiker', 'Lleva Contenedor',
-               'Ref Contenedor', 'Cant Contenedor', 'Tarifa Comision', 'Valor x Caja USD', 'Valor X Producto',
-               'No Cajas NC', 'Valor NC', 'Afecta Comision', 'Valor Total Comision Producto', 'Precio Proforma',
-               'Observaciones']
+    columns = ['Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
+               'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
+               'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa Comision',
+               'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta Comision',
+               'Valor Total Comision Producto', 'Precio Proforma', 'Observaciones']
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
@@ -714,6 +712,7 @@ def exportar_detalles_pedidos_excel(request):
     for row_num, detalle in enumerate(queryset, start=2):
         row = [
             detalle.pedido.pk,
+            detalle.pedido.fecha_entrega,
             detalle.pedido.exportadora.nombre,
             detalle.pedido.cliente.nombre,
             detalle.fruta.nombre,
