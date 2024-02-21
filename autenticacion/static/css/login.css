@@ -147,6 +147,7 @@ form .signup-link a:hover {
 
 
 .navbar-brand {
+    display: block; /* Make the element block-level */
     text-align: center;
     color: #000;
     text-decoration: none;
