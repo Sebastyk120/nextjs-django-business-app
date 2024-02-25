@@ -85,4 +85,3 @@ class CustomPasswordResetView(PasswordResetView):
         context = super().get_context_data(**kwargs)
         context['site_name'] = "Administración Heavens Fruits"
         return context
-
