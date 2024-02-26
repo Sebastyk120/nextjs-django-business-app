@@ -167,9 +167,12 @@ class EditarDetallePedidoForm(forms.ModelForm):
 
 class EditarPedidoExportadorForm(forms.ModelForm):
     fecha_pago = forms.DateField(
+        label=Pedido._meta.get_field('fecha_pago').verbose_name,  # Establecer el label al verbose_name del modelo
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}), required=False
     )
     fecha_monetizacion = forms.DateField(
+        label=Pedido._meta.get_field('fecha_monetizacion').verbose_name,
+        # Establecer el label al verbose_name del modelo
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}), required=False
     )
 
