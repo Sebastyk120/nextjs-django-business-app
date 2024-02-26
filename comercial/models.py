@@ -168,7 +168,7 @@ class Pedido(models.Model):
         if self.valor_pagado_cliente_usd == 0:
             self.estado_factura = "Pendiente Pago"
         elif self.valor_pagado_cliente_usd < (
-                self.valor_total_factura_usd - self.valor_total_nota_credito_usd - self.comision_bancaria_usd -self.descuento):
+                self.valor_total_factura_usd - self.valor_total_nota_credito_usd - self.comision_bancaria_usd - self.descuento):
             self.estado_factura = "Abono"
         else:
             self.estado_factura = "Pagada"
