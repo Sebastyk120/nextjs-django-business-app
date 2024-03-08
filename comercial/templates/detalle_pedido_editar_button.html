@@ -1,3 +1,4 @@
-<a href="#" class="btn btn-outline-primary mover-button" id="editar" data-detallepedido-id="{{ record.pk|default_if_none:"" }}" >
+<button type="button" class="btn btn-outline-primary mover-button" id="editar"
+        data-detallepedido-id="{{ record.pk|default_if_none:""|int }}">
     <i class="bi bi-pencil-square"></i>
-</a>
+</button>
