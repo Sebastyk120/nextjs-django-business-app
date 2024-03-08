@@ -1719,7 +1719,7 @@ class DetallePedidoUpdateView(UpdateView):
         self.object = None
 
     def get_object(self, queryset=None):
-        detallepedido_id = self.request.POST.get('detallepedido_id')
+        detallepedido_id = self.kwargs.get('pk')
         detallepedido = get_object_or_404(DetallePedido, id=detallepedido_id)
         return detallepedido
 
