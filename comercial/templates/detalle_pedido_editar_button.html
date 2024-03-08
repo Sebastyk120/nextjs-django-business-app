@@ -1,8 +1,5 @@
-<button type="button" class="btn btn-outline-primary mover-button" id="editar"
-        data-detallepedido-id="{{ record.pk|default_if_none:"" }}">
+{% load custom_filters %}
+
+<button type="button" class="btn btn-outline-primary mover-button" id="editar" data-detallepedido-id="{{ record.pk|to_int}}">
     <i class="bi bi-pencil-square"></i>
 </button>
-<script>
-    var detallepedidoId = parseInt(document.getElementById('editar').getAttribute('data-detallepedido-id'));
-    document.getElementById('editar').setAttribute('data-detallepedido-id', detallepedidoId);
-</script>
