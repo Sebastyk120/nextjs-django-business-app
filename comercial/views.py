@@ -1724,7 +1724,7 @@ class DetallePedidoUpdateView(UpdateView):
         return detallepedido
 
     def get(self, request, *args, **kwargs):
-        detallepedido_id = request.GET.get('detallepedido_id')
+        detallepedido_id = int(request.GET.get('detallepedido_id').replace(".", ""))
         self.object = get_object_or_404(DetallePedido, id=detallepedido_id)
         form = self.form_class(
             instance=self.object,
