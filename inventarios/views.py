@@ -476,12 +476,12 @@ class ItemUpdateView(UpdateView):
         self.object = None
 
     def get_object(self, queryset=None):
-        item_id = self.request.POST.get('item_id')
+        item_id = int(self.request.POST.get('item_id').replace(".", ""))
         item = get_object_or_404(Item, id=item_id)
         return item
 
     def get(self, request, *args, **kwargs):
-        item_id = request.GET.get('item_id')
+        item_id = int(request.GET.get('item_id').replace(".", ""))
         self.object = get_object_or_404(Item, id=item_id)
         formatted_fecha_movimiento = self.object.fecha_movimiento.strftime('%Y-%m-%d')
         form = self.form_class(
@@ -549,12 +549,12 @@ class ItemDeleteView(UpdateView):
         self.object = None
 
     def get_object(self, queryset=None):
-        item_id = self.request.POST.get('item_id')
+        item_id = int(self.request.POST.get('item_id').replace(".", ""))
         item = get_object_or_404(Item, id=item_id)
         return item
 
     def get(self, request, *args, **kwargs):
-        item_id = request.GET.get('item_id')
+        item_id = int(request.GET.get('item_id').replace(".", ""))
         self.object = get_object_or_404(Item, id=item_id)
         form = self.form_class(instance=self.object)
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':

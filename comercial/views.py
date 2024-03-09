@@ -1450,12 +1450,12 @@ class PedidoUpdateView(UpdateView):
         self.object = None
 
     def get_object(self, queryset=None):
-        pedido_id = self.request.POST.get('pedido_id')
+        pedido_id = int(self.request.POST.get('pedido_id').replace(".", ""))
         pedido = get_object_or_404(Pedido, id=pedido_id)
         return pedido
 
     def get(self, request, *args, **kwargs):
-        pedido_id = request.GET.get('pedido_id')
+        pedido_id = int(request.GET.get('pedido_id').replace(".", ""))
         self.object = get_object_or_404(Pedido, id=pedido_id)
         formatted_fecha_solicitud = self.object.fecha_solicitud.strftime('%Y-%m-%d')
         formatted_fecha_entrega = self.object.fecha_entrega.strftime('%Y-%m-%d')
@@ -1521,12 +1521,12 @@ class PedidoExportadorUpdateView(UpdateView):
         self.object = None
 
     def get_object(self, queryset=None):
-        pedido_id = self.request.POST.get('pedido_id')
+        pedido_id = int(self.request.POST.get('pedido_id').replace(".", ""))
         pedido = get_object_or_404(Pedido, id=pedido_id)
         return pedido
 
     def get(self, request, *args, **kwargs):
-        pedido_id = request.GET.get('pedido_id')
+        pedido_id = int(request.GET.get('pedido_id').replace(".", ""))
         self.object = get_object_or_404(Pedido, id=pedido_id)
 
         formatted_fecha_pago = self.object.fecha_pago.strftime('%Y-%m-%d') if self.object.fecha_pago else ''
@@ -1588,12 +1588,12 @@ class PedidoDeleteView(UpdateView):
         self.object = None
 
     def get_object(self, queryset=None):
-        pedido_id = self.request.POST.get('pedido_id')
+        pedido_id = int(self.request.POST.get('pedido_id').replace(".", ""))
         pedido = get_object_or_404(Pedido, id=pedido_id)
         return pedido
 
     def get(self, request, *args, **kwargs):
-        pedido_id = request.GET.get('pedido_id')
+        pedido_id = int(request.GET.get('pedido_id').replace(".", ""))
         self.object = get_object_or_404(Pedido, id=pedido_id)
         formatted_fecha_solicitud = self.object.fecha_solicitud.strftime('%Y-%m-%d')
         formatted_fecha_entrega = self.object.fecha_entrega.strftime('%Y-%m-%d')
@@ -1775,12 +1775,12 @@ class DetallePedidoDeleteiew(UpdateView):
         self.object = None
 
     def get_object(self, queryset=None):
-        detallepedido_id = self.request.POST.get('detallepedido_id')
+        detallepedido_id = int(self.request.POST.get('detallepedido_id').replace(".", ""))
         detallepedido = get_object_or_404(DetallePedido, id=detallepedido_id)
         return detallepedido
 
     def get(self, request, *args, **kwargs):
-        detallepedido_id = request.GET.get('detallepedido_id')
+        detallepedido_id = int(request.GET.get('detallepedido_id').replace(".", ""))
         self.object = get_object_or_404(DetallePedido, id=detallepedido_id)
         form = self.form_class(
             instance=self.object,
@@ -2177,12 +2177,12 @@ class ReferenciaUpdateView(UpdateView):
     success_url = reverse_lazy('referencia_editar')
 
     def get_object(self, queryset=None):
-        referencia_id = self.request.POST.get('referencia_id')
+        referencia_id = int(self.request.POST.get('referencia_id').replace(".", ""))
         referencia = get_object_or_404(Referencias, id=referencia_id)
         return referencia
 
     def get(self, request, *args, **kwargs):
-        referencia_id = request.GET.get('referencia_id')
+        referencia_id = int(request.GET.get('referencia_id').replace(".", ""))
         self.object = get_object_or_404(Referencias, id=referencia_id)
         form = self.form_class(instance=self.object)
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
