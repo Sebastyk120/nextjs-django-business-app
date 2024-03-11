@@ -154,8 +154,8 @@ def exportar_comisiones_excel(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura', 'Valor Total Factura USD',
-               'Estado Factura',
+    columns = ['Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura',
+               'Valor Total Factura USD', 'Estado Factura',
                'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
                'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
     for col_num, column_title in enumerate(columns, start=1):
@@ -201,6 +201,7 @@ def exportar_comisiones_excel(request):
         cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
         row = [
             pedido.pk,
+            pedido.fecha_entrega,
             pedido.cliente.nombre,
             pedido.exportadora.nombre,
             pedido.fecha_pago,
@@ -291,8 +292,8 @@ def exportar_comisiones_etnico(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura', 'Valor Total Factura USD',
-               'Estado Factura',
+    columns = ['Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura',
+               'Valor Total Factura USD', 'Estado Factura',
                'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
                'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
     for col_num, column_title in enumerate(columns, start=1):
@@ -341,6 +342,7 @@ def exportar_comisiones_etnico(request):
         cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
         row = [
             pedido.pk,
+            pedido.fecha_entrega,
             pedido.cliente.nombre,
             pedido.exportadora.nombre,
             pedido.fecha_pago,
@@ -431,8 +433,8 @@ def exportar_comisiones_fieldex(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura', 'Valor Total Factura USD',
-               'Estado Factura',
+    columns = ['Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura',
+               'Valor Total Factura USD', 'Estado Factura',
                'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
                'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
     for col_num, column_title in enumerate(columns, start=1):
@@ -480,6 +482,7 @@ def exportar_comisiones_fieldex(request):
         cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
         row = [
             pedido.pk,
+            pedido.fecha_entrega,
             pedido.cliente.nombre,
             pedido.exportadora.nombre,
             pedido.fecha_pago,
@@ -569,8 +572,8 @@ def exportar_comisiones_juan(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura', 'Valor Total Factura USD',
-               'Estado Factura',
+    columns = ['Pedido', 'Fecha Entrega Pedido',  'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura',
+               'Valor Total Factura USD', 'Estado Factura',
                'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
                'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
     for col_num, column_title in enumerate(columns, start=1):
@@ -618,6 +621,7 @@ def exportar_comisiones_juan(request):
         cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
         row = [
             pedido.pk,
+            pedido.fecha_entrega,
             pedido.cliente.nombre,
             pedido.exportadora.nombre,
             pedido.fecha_pago,
