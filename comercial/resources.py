@@ -18,7 +18,7 @@ def obtener_datos_con_totales_juan(fecha_inicial=None, fecha_final=None):
         pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
     # Obtener los pedidos y sus datos
     pedidos = pedidos_query.values(
-        'cliente__nombre', 'exportadora__nombre', 'numero_factura',
+        'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
         'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
@@ -47,7 +47,7 @@ def obtener_datos_con_totales_fieldex(fecha_inicial=None, fecha_final=None):
         pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
     # Obtener los pedidos y sus datos
     pedidos = pedidos_query.values(
-        'cliente__nombre', 'exportadora__nombre', 'numero_factura',
+        'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
         'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
@@ -77,7 +77,7 @@ def obtener_datos_con_totales_etnico(fecha_inicial=None, fecha_final=None):
         pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
 
     pedidos = pedidos_query.values(
-        'cliente__nombre', 'exportadora__nombre', 'numero_factura',
+        'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
         'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
@@ -107,7 +107,7 @@ def obtener_datos_con_totales(fecha_inicial=None, fecha_final=None):
         pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
     # Obtener los pedidos y sus datos
     pedidos = pedidos_query.values(
-        'cliente__nombre', 'exportadora__nombre', 'numero_factura',
+        'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
         'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
@@ -134,9 +134,9 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
     sheet.title = 'Cartera Clientes'
 
     # Definir y escribir los encabezados de columna
-    encabezados = ['Cliente', 'Exportadora', 'Número Factura', 'Fecha Entrega', 'Días Vencimiento', 'Valor Factura USD',
-                   'Valor Pagado Cliente USD', 'Nota Crédito', 'Total NC', 'Descuento', 'Comisión Bancaria',
-                   'Fecha Pago Cliente', 'Estado Factura', 'Saldo']
+    encabezados = ['No. Pedido', 'Cliente', 'Exportadora', 'Número Factura', 'Fecha Entrega', 'Días Vencimiento',
+                   'Valor Factura USD', 'Valor Pagado Cliente USD', 'Nota Crédito', 'Total NC', 'Descuento',
+                   'Comisión Bancaria', 'Fecha Pago Cliente', 'Estado Factura', 'Saldo']
     sheet.append(encabezados)
 
     # Estilo para los encabezados
@@ -160,6 +160,7 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
             sheet.cell(row=sheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
 
         fila = [
+            pedido['id'],
             pedido['cliente__nombre'],
             pedido['exportadora__nombre'],
             pedido['numero_factura'],
