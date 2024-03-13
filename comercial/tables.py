@@ -234,7 +234,7 @@ class ComisionPedidoTable(tables.Table):
         model = Pedido
         template_name = "django_tables2/bootstrap5-responsive.html"
         order_by = ('cliente',)
-        fields = ("id", "cobro_comision",
+        fields = ("id", "cobro_comision", "fecha_entrega",
                   "cliente", "exportadora", "fecha_entrega_personalizada", "numero_factura", "valor_total_factura_usd",
                   "diferencia_por_abono",
                   "trm_monetizacion", "estado_factura", "valor_total_comision_usd", "valor_comision_pesos",
