@@ -15,9 +15,18 @@ VALEN   Valentina Garay Diaz valentinagaray@heavensfruit.com     Vheavens1725.
 JONATHANM Mjheavens1603 costos@etnico.co    JONATHANM Montoya Herrera
 LUISAE  Mheavens1705 compras@etnico.com Luisa Moreno
 STEVENC  reservas@juanmatas.com.co   Steven Carranza Schevanes6908
+DANIELP Dheavens6513 documentos@heavensfruit.com Daniel Peña Gonzalez
+TATIANASB Theavens2548 exportaciones@heavensfruit.com Tatiana Sulvara Bastidas
 
-
-
+Daniel Peña Gonzalez
+Usuario aplicativo: DANIELP
+Contraseña: Dheavens6513
+Correo: documentos@heavensfruit.com
+----------------------------------------
+Tatiana Sulvara Bastidas
+Usuario aplicativo: TATIANASB
+Contraseña: Theavens2548
+Correo: exportaciones@heavensfruit.com
 
 Link: https://heavens-server.up.railway.app/
 Usuario: STEVENC
