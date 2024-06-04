@@ -158,11 +158,21 @@ class EditarDetallePedidoForm(forms.ModelForm):
         fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'cajas_enviadas',
                   'tipo_caja', 'referencia', 'lleva_contenedor', 'tarifa_comision',
                   'valor_x_caja_usd', 'no_cajas_nc', 'afecta_comision', 'observaciones', 'precio_proforma']
-
+        
     def __init__(self, *args, **kwargs):
+        pedido_id = kwargs.pop('pedido_id', None)
+        super(DetallePedidoForm, self).__init__(*args, **kwargs)
+        self.fields['pedido'].disabled = True
+
+        if pedido_id:
+            pedido = Pedido.objects.get(id=pedido_id)
+            self.fields['referencia'].queryset = Referencias.objects.filter(exportador=pedido.exportadora)
+            self.fields['presentacion'].queryset = Presentacion.objects.filter(clientes=pedido.cliente)
+
+    """def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['pedido'].disabled = True
-        self.fields['referencia'].disabled = True
+        self.fields['referencia'].disabled = True"""
 
 
 class EditarPedidoExportadorForm(forms.ModelForm):
