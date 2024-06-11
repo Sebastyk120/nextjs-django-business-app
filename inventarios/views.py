@@ -39,7 +39,6 @@ def exportar_items_etnico(request):
     font = Font(bold=True)
     fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
 
-
     # Encabezados
     columns = ['Referencia', 'Cantidad Cajas', 'Tipo Documento', 'Documento', 'Bodega', 'Proveedor',
                'Fecha Movimiento', 'Propiedad', 'Observaciones', 'Usuario']
@@ -77,7 +76,6 @@ def exportar_items_etnico(request):
     response['Content-Disposition'] = 'attachment; filename="inventario_items_etnico.xlsx"'
 
     return response
-
 
 
 # -------------------------------------- Exportar Items Fieldex (Movimientos) Excel: ---------------------------------
