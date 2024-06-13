@@ -31,12 +31,12 @@ class MyModelAdmin(ImportExportModelAdmin):
 
 
 @admin.register(User)
-class MyModelAdmin(ImportExportModelAdmin):
+class UserAdmin(ImportExportModelAdmin):
     resource_class = UserResource
 
 
 @admin.register(Group)
-class MyModelAdmin(ImportExportModelAdmin):
+class GroupAdmin(ImportExportModelAdmin):
     resource_class = GroupResource
 
 
