@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import User, Group
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin, GroupAdmin as BaseGroupAdmin
 from .models import Bodega, Item, Movimiento, Inventario, Proveedor
 from .resources import MovimientoResource, ItemResource, BodegaResource, ProveedorResource, UserResource, GroupResource
 from import_export.admin import ImportExportModelAdmin
@@ -30,13 +31,23 @@ class MyModelAdmin(ImportExportModelAdmin):
     resource_class = ProveedorResource
 
 
+# Anular el registro del modelo User
+admin.site.unregister(User)
+
+
+# Registrar de nuevo el modelo User con la clase personalizada
 @admin.register(User)
-class UserAdmin(ImportExportModelAdmin):
+class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
     resource_class = UserResource
 
 
+# Anular el registro del modelo Group
+admin.site.unregister(Group)
+
+
+# Registrar de nuevo el modelo Group con la clase personalizada
 @admin.register(Group)
-class GroupAdmin(ImportExportModelAdmin):
+class GroupAdmin(ImportExportModelAdmin, BaseGroupAdmin):
     resource_class = GroupResource
 
 
