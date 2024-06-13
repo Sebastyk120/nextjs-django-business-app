@@ -155,7 +155,7 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
         saldo = pedido['valor_total_factura_usd'] - pedido['valor_pagado_cliente_usd'] - pedido[
             'comision_bancaria_usd'] - pedido['valor_total_nota_credito_usd'] - pedido['descuento']
         # Aplicar formato de moneda a las celdas relevantes
-        moneda_columns = [6, 7, 9, 10, 11, 14]  # Índices de columnas a formatear como moneda
+        moneda_columns = [7, 8, 10, 11, 12, 15]  # Índices de columnas a formatear como moneda
         for col_idx in moneda_columns:
             sheet.cell(row=sheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
 
@@ -198,6 +198,9 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
                 'total_descuentos']
         ]
         sheet.append(fila_total)
+        moneda_columns = [4, 6, 8, 10, 12, 14]  # Índices de columnas a formatear como moneda totales
+        for col_idx in moneda_columns:
+            sheet.cell(row=sheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
         for cell in sheet[sheet.max_row]:
             cell.border = thin_border
             cell.fill = PatternFill(start_color='9ed1b7', end_color='9ed1b7',
