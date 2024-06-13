@@ -1,6 +1,7 @@
 from django.contrib import admin
+from django.contrib.auth.models import User, Group
 from .models import Bodega, Item, Movimiento, Inventario, Proveedor
-from .resources import MovimientoResource, ItemResource, BodegaResource, ProveedorResource
+from .resources import MovimientoResource, ItemResource, BodegaResource, ProveedorResource, UserResource, GroupResource
 from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
 
@@ -27,6 +28,16 @@ class MyModelAdmin(ImportExportModelAdmin):
 @admin.register(Proveedor)
 class MyModelAdmin(ImportExportModelAdmin):
     resource_class = ProveedorResource
+
+
+@admin.register(User)
+class MyModelAdmin(ImportExportModelAdmin):
+    resource_class = UserResource
+
+
+@admin.register(Group)
+class MyModelAdmin(ImportExportModelAdmin):
+    resource_class = GroupResource
 
 
 admin.site.register(Inventario)
