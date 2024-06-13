@@ -103,7 +103,7 @@ class EliminarPedidoForm(forms.ModelForm):
         self.fields['numero_factura'].disabled = True
 
 
-# ------------------------------------ Formulario Crear o editar Detalle Pedido ---------------------------------------
+# ------------------------------------ Formulario Crear Detalle Pedido ---------------------------------------
 class DetallePedidoForm(forms.ModelForm):
     class Meta:
         model = DetallePedido
