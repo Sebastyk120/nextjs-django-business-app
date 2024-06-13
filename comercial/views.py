@@ -1714,26 +1714,30 @@ class DetallePedidoCreateView(CreateView):
 @method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
 class DetallePedidoUpdateView(UpdateView):
     model = DetallePedido
-    form_class = DetallePedidoForm
+    form_class = EditarDetallePedidoForm
     template_name = 'detalle_pedido_editar.html'
-    success_url = reverse_lazy('detalle_pedido_editar')
+    success_url = '/detalle_pedido_editar/'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.object = None
 
     def get_object(self, queryset=None):
-        detallepedido_id = self.request.POST.get('detallepedido_id') or self.request.GET.get('detallepedido_id')
-        detallepedido_id = int(detallepedido_id.replace(".", "")) if detallepedido_id else None
-        return get_object_or_404(DetallePedido, id=detallepedido_id)
-
-    def is_ajax(self):
-        return self.request.headers.get('x-requested-with') == 'XMLHttpRequest'
+        detallepedido_id = int(self.request.POST.get('detallepedido_id').replace(".", ""))
+        detallepedido = get_object_or_404(DetallePedido, id=detallepedido_id)
+        return detallepedido
 
     def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        form = self.form_class(instance=self.object)
-        if self.is_ajax():
+        detallepedido_id = int(request.GET.get('detallepedido_id').replace(".", ""))
+        self.object = get_object_or_404(DetallePedido, id=detallepedido_id)
+        form = self.form_class(
+            instance=self.object,
+        )
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             form_html = render_to_string(self.template_name, {'form': form}, request=request)
             return JsonResponse({'form': form_html})
         else:
-            return self.render_to_response(self.get_context_data(form=form))
+            return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -1746,17 +1750,17 @@ class DetallePedidoUpdateView(UpdateView):
     @transaction.atomic
     def form_valid(self, form):
         self.object = form.save()
-        messages.success(self.request, f"El detalle para el pedido se ha editado exitosamente.")
-        if self.is_ajax():
+        messages.success(self.request,
+                         f"El detalle para el {form.cleaned_data['pedido']} se ha editado exitosamente.")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
         else:
             return super().form_valid(form)
 
     def form_invalid(self, form):
-        if self.is_ajax():
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse(
-                {'success': False, 'html': render_to_string(self.template_name, {'form': form}, request=self.request)}
-            )
+                {'success': False, 'html': render_to_string(self.template_name, {'form': form}, request=self.request)})
         else:
             return super().form_invalid(form)
 
