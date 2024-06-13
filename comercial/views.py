@@ -1714,53 +1714,55 @@ class DetallePedidoCreateView(CreateView):
 @method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
 class DetallePedidoUpdateView(UpdateView):
     model = DetallePedido
-    form_class = DetallePedidoForm
+    form_class = EditarDetallePedidoForm
     template_name = 'detalle_pedido_editar.html'
-    success_url = reverse_lazy('detalle_pedido_editar')  # Ajusta según tu configuración de URLs
+    success_url = '/detalle_pedido_editar/'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.object = None
 
     def get_object(self, queryset=None):
-        detallepedido_id = self.kwargs.get('pk') or self.request.GET.get('detallepedido_id')
-        if detallepedido_id:
-            detallepedido_id = int(detallepedido_id.replace(".", ""))
-        return get_object_or_404(DetallePedido, id=detallepedido_id)
+        detallepedido_id = int(self.request.POST.get('detallepedido_id').replace(".", ""))
+        detallepedido = get_object_or_404(DetallePedido, id=detallepedido_id)
+        return detallepedido
 
-    def get_initial(self):
-        initial = super().get_initial()
-        pedido_id = self.kwargs.get('pedido_id') or self.request.GET.get('pedido_id')
-        if pedido_id:
-            initial['pedido'] = pedido_id
-        return initial
+    def get(self, request, *args, **kwargs):
+        detallepedido_id = int(request.GET.get('detallepedido_id').replace(".", ""))
+        self.object = get_object_or_404(DetallePedido, id=detallepedido_id)
+        form = self.form_class(
+            instance=self.object,
+        )
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            form_html = render_to_string(self.template_name, {'form': form}, request=request)
+            return JsonResponse({'form': form_html})
+        else:
+            return super().get(request, *args, **kwargs)
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['pedido_id'] = self.kwargs.get('pedido_id')
-        return kwargs
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.form_class(request.POST, instance=self.object)
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
 
     @transaction.atomic
     def form_valid(self, form):
-        pedido_id = self.kwargs.get('pedido_id')
-        if pedido_id:
-            pedido = get_object_or_404(Pedido, pk=pedido_id)
-            form.instance.pedido = pedido
-
         self.object = form.save()
-        messages.success(self.request, f'El detalle de pedido para el pedido {pedido_id} se ha editado exitosamente.')
+        messages.success(self.request,
+                         f"El detalle para el {form.cleaned_data['pedido']} se ha editado exitosamente.")
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
         else:
             return super().form_valid(form)
 
     def form_invalid(self, form):
-        errors = form.errors.as_json()
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': errors})
+            return JsonResponse(
+                {'success': False, 'html': render_to_string(self.template_name, {'form': form}, request=self.request)})
         else:
             return super().form_invalid(form)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['pedido_id'] = self.kwargs.get('pedido_id')
-        return context
 
 
 # ---------------------------- Formulario Eliminar Detalle De Pedido --------------------------------------------
