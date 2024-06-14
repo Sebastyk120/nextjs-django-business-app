@@ -223,7 +223,7 @@ def exportar_comisiones_excel(request):
             cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
             # Aplicar formato de moneda a las columnas específicas
             if col_num in [7, 10, 11, 14]:
-                cell.number_format = NumberFormat.FORMAT_CURRENCY_USD_SIMPLE
+                cell.number_format = '$#,##0.00'
 
     # Agregar los totales al final de la hoja de trabajo
 
@@ -239,7 +239,7 @@ def exportar_comisiones_excel(request):
         worksheet.cell(row=row_num, column=1, value=exportadora)
         worksheet.cell(row=row_num, column=2, value="Total Comisiónes USD " + exportadora)
         total_cell = worksheet.cell(row=row_num, column=3, value=total)
-        total_cell.number_format = NumberFormat.FORMAT_CURRENCY_USD_SIMPLE
+        total_cell.number_format = '$#,##0.00'
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
 
@@ -247,7 +247,7 @@ def exportar_comisiones_excel(request):
         worksheet.cell(row=row_num, column=1, value=exportadora)
         worksheet.cell(row=row_num, column=2, value="Total Comisiónes No Cobrables USD " + exportadora)
         total_no_cobrable_cell = worksheet.cell(row=row_num, column=3, value=total_no_cobrable)
-        total_no_cobrable_cell.number_format = NumberFormat.FORMAT_CURRENCY_USD_SIMPLE
+        total_no_cobrable_cell.number_format = '$#,##0.00'
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
 
@@ -255,7 +255,7 @@ def exportar_comisiones_excel(request):
         worksheet.cell(row=row_num, column=1, value=exportadora)
         worksheet.cell(row=row_num, column=2, value="Total Comisiónes Cobradas " + exportadora)
         total_cobrado_cell = worksheet.cell(row=row_num, column=3, value=total_cobrado)
-        total_cobrado_cell.number_format = NumberFormat.FORMAT_CURRENCY_USD_SIMPLE
+        total_cobrado_cell.number_format = '$#,##0.00'
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
 
@@ -263,7 +263,7 @@ def exportar_comisiones_excel(request):
         worksheet.cell(row=row_num, column=1, value=exportadora)
         worksheet.cell(row=row_num, column=2, value="Total Por Cobrar " + exportadora)
         total_por_cobrar_cell = worksheet.cell(row=row_num, column=3, value=total_por_cobrar)
-        total_por_cobrar_cell.number_format = NumberFormat.FORMAT_CURRENCY_USD_SIMPLE
+        total_por_cobrar_cell.number_format = '$#,##0.00'
         aplicar_estilo_total(row_num)
         row_num += 1
 
