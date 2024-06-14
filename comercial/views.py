@@ -190,7 +190,7 @@ def exportar_comisiones_excel(request):
         valor_comision_usd = pedido.valor_total_comision_usd
         if valor_comision_usd is None:
             continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
-        if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago":
+        if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
             totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
             totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
