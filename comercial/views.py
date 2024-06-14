@@ -197,6 +197,10 @@ def exportar_comisiones_excel(request):
         totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
 
     # Agregar datos al libro de trabajo
+    moneda_columns = [7, 9, 10, 11, 14]  # Índices de columnas a formatear como moneda
+    for col_idx in moneda_columns:
+        worksheet.cell(row=worksheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
+
     for row_num, pedido in enumerate(queryset, start=2):
         cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
         row = [
