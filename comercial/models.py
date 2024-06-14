@@ -200,7 +200,7 @@ class Pedido(models.Model):
             self.estado_comision = "Pendiente Pago Cliente"
         elif self.estado_factura == "Abono":
             self.estado_comision = "Factura en abono"
-        elif self.fecha_pago is not None and self.documento_cobro_comision is None:
+        elif self.fecha_pago is not None and self.estado_factura =="Pagada" and self.documento_cobro_comision is None:
             self.estado_comision = "Por Facturar"
         elif self.fecha_pago is not None and self.documento_cobro_comision is not None and self.fecha_pago_comision is None:
             self.estado_comision = "Facturada"
