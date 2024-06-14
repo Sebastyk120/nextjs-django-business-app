@@ -16,6 +16,7 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django_tables2 import SingleTableView
 from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.styles.numbers import NumberFormat
 from openpyxl.workbook import Workbook
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -162,6 +163,7 @@ def exportar_comisiones_excel(request):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
         cell.fill = fill
+
     # Crear un diccionario para almacenar los totales de comisiones por exportadora
     totales_por_comision_usd = defaultdict(Decimal)
     totales_no_cobrables_por_exportadora = defaultdict(Decimal)
@@ -197,10 +199,6 @@ def exportar_comisiones_excel(request):
         totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
 
     # Agregar datos al libro de trabajo
-    moneda_columns = [7, 9, 10, 11, 14]  # Índices de columnas a formatear como moneda
-    for col_idx in moneda_columns:
-        worksheet.cell(row=worksheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
-
     for row_num, pedido in enumerate(queryset, start=2):
         cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
         row = [
@@ -222,7 +220,10 @@ def exportar_comisiones_excel(request):
             cobrar_comision,  # Añadido valor de 'Cobrar comision'
         ]
         for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+            cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
+            # Aplicar formato de moneda a las columnas específicas
+            if col_num in [7, 10, 11, 14]:
+                cell.number_format = NumberFormat.FORMAT_CURRENCY_USD_SIMPLE
 
     # Agregar los totales al final de la hoja de trabajo
 
@@ -237,25 +238,32 @@ def exportar_comisiones_excel(request):
     for exportadora, total in totales_por_comision_usd.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
         worksheet.cell(row=row_num, column=2, value="Total Comisiónes USD " + exportadora)
-        worksheet.cell(row=row_num, column=3, value=total)
+        total_cell = worksheet.cell(row=row_num, column=3, value=total)
+        total_cell.number_format = NumberFormat.FORMAT_CURRENCY_USD_SIMPLE
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
+
     for exportadora, total_no_cobrable in totales_no_cobrables_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
         worksheet.cell(row=row_num, column=2, value="Total Comisiónes No Cobrables USD " + exportadora)
-        worksheet.cell(row=row_num, column=3, value=total_no_cobrable)
+        total_no_cobrable_cell = worksheet.cell(row=row_num, column=3, value=total_no_cobrable)
+        total_no_cobrable_cell.number_format = NumberFormat.FORMAT_CURRENCY_USD_SIMPLE
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
+
     for exportadora, total_cobrado in totales_cobrados_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
         worksheet.cell(row=row_num, column=2, value="Total Comisiónes Cobradas " + exportadora)
-        worksheet.cell(row=row_num, column=3, value=total_cobrado)
+        total_cobrado_cell = worksheet.cell(row=row_num, column=3, value=total_cobrado)
+        total_cobrado_cell.number_format = NumberFormat.FORMAT_CURRENCY_USD_SIMPLE
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
+
     for exportadora, total_por_cobrar in totales_por_cobrar_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
         worksheet.cell(row=row_num, column=2, value="Total Por Cobrar " + exportadora)
-        worksheet.cell(row=row_num, column=3, value=total_por_cobrar)
+        total_por_cobrar_cell = worksheet.cell(row=row_num, column=3, value=total_por_cobrar)
+        total_por_cobrar_cell.number_format = NumberFormat.FORMAT_CURRENCY_USD_SIMPLE
         aplicar_estilo_total(row_num)
         row_num += 1
 
