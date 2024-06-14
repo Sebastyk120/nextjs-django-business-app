@@ -194,7 +194,7 @@ def exportar_comisiones_excel(request):
             totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
             totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
+        if pedido.fecha_pago_comision is None and (pedido.estado_factura == "Pagada" or pedido.estado_comision == "Facturada"):
             totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
 
