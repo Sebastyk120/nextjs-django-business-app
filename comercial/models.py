@@ -206,6 +206,8 @@ class Pedido(models.Model):
             self.estado_comision = "Facturada"
         elif self.fecha_pago_comision is not None and self.documento_cobro_comision is not None and self.fecha_pago is not None:
             self.estado_comision = "Pagada"
+        else:
+            self.estado_comision = "Pendiente Pago Cliente"
         # Llama al método save de la clase base para realizar el guardado
         super().save(*args, **kwargs)
 
