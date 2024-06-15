@@ -156,9 +156,9 @@ def exportar_comisiones_excel(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Estado Factura',
-               'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
+    columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
+               'Valor Total Factura USD', 'Estado Factura', 'T Cajas Enviadas', 'Trm Monetizacion',
+               'TRM Banrep', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
                'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
@@ -195,7 +195,8 @@ def exportar_comisiones_excel(request):
             totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
             totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada" and (pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada"):
+        if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada" and (
+                pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada"):
             totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
         totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
 
@@ -207,11 +208,14 @@ def exportar_comisiones_excel(request):
             pedido.fecha_entrega,
             pedido.cliente.nombre,
             pedido.exportadora.nombre,
+            pedido.awb,
             pedido.fecha_pago,
             pedido.numero_factura,
             pedido.valor_total_factura_usd,
             pedido.estado_factura,
+            pedido.total_cajas_enviadas,
             pedido.trm_monetizacion,
+            pedido.tasa_representativa_usd_diaria,
             pedido.valor_total_comision_usd,
             pedido.valor_comision_pesos,
             pedido.documento_cobro_comision,
@@ -223,7 +227,7 @@ def exportar_comisiones_excel(request):
         for col_num, cell_value in enumerate(row, start=1):
             cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
             # Aplicar formato de moneda a las columnas específicas
-            if col_num in [7, 10, 11, 14]:
+            if col_num in [8, 11, 12, 13, 14, 17]:
                 cell.number_format = '$#,##0.00'
 
     # Agregar los totales al final de la hoja de trabajo
@@ -585,7 +589,7 @@ def exportar_comisiones_juan(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Fecha Entrega Pedido',  'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura',
+    columns = ['Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura',
                'Valor Total Factura USD', 'Estado Factura',
                'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
                'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
@@ -2364,6 +2368,7 @@ def exportar_referencias_juan(request):
 
     return response
 
+
 # ----------------------------- Actualizar los días de Vencimiento ---------------------------------------------
 
 def actualizar_dias_de_vencimiento_todos(request):
@@ -2372,6 +2377,7 @@ def actualizar_dias_de_vencimiento_todos(request):
         pedido.actualizar_dias_de_vencimiento()
     messages.success(request, 'Días de vencimiento actualizados para todos los pedidos.')
     return redirect('pedido_list_general')
+
 
 def actualizar_tasas(request):
     pedidos = Pedido.objects.order_by('-id')[:50]

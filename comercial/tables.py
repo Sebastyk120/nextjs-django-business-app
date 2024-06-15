@@ -233,16 +233,18 @@ class ComisionPedidoTable(tables.Table):
     trm_monetizacion = tables.Column()
     valor_total_factura_usd = tables.Column()
     diferencia_por_abono = tables.Column()
+    tasa_representativa_usd_diaria = tables.Column()
 
     class Meta:
         model = Pedido
         template_name = "django_tables2/bootstrap5-responsive.html"
         order_by = ('cliente',)
         fields = ("id", "cobro_comision", "fecha_entrega",
-                  "cliente", "exportadora", "fecha_entrega_personalizada", "numero_factura", "valor_total_factura_usd",
-                  "diferencia_por_abono",
-                  "trm_monetizacion", "estado_factura", "valor_total_comision_usd", "valor_comision_pesos",
-                  "documento_cobro_comision", "fecha_pago_comision", "estado_comision")
+                  "cliente", "exportadora", "awb", "fecha_entrega_personalizada", "numero_factura",
+                  "valor_total_factura_usd", "diferencia_por_abono", "trm_monetizacion",
+                  "tasa_representativa_usd_diaria", "estado_factura", "total_cajas_enviadas",
+                  "valor_total_comision_usd", "valor_comision_pesos", "documento_cobro_comision", "fecha_pago_comision",
+                  "estado_comision")
 
     def render_cobro_comision(self, record):
         if record.estado_comision == "Por Facturar" or record.estado_comision == "Facturada":
@@ -251,6 +253,9 @@ class ComisionPedidoTable(tables.Table):
             return format_html('<span style="color: red;">❌</span>')
 
     def render_valor_total_comision_usd(self, value):
+        return format_as_currency(value)
+
+    def render_tasa_representativa_usd_diaria(self, value):
         return format_as_currency(value)
 
     def render_valor_comision_pesos(self, value):
