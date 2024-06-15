@@ -167,7 +167,7 @@ button[name="actualizar-vencimiento"]:hover {
 button[name="actualizar-tasas"] {
     position: absolute; /* Puedes usar relative, fixed, etc., según sea necesario */
     top: 41px;  /* Ajusta según tu necesidad */
-    left: 19px; /* Ajusta según tu necesidad */
+    left: 1200px; /* Ajusta según tu necesidad */
     /* Otros estilos opcionales */
     background-color: #0c9c2b;
     color: white;
