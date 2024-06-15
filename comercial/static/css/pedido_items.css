@@ -150,7 +150,7 @@ label {
 button[name="actualizar-vencimiento"] {
     position: absolute; /* Puedes usar relative, fixed, etc., según sea necesario */
     top: 41px;  /* Ajusta según tu necesidad */
-    left: 25%; /* Ajusta según tu necesidad */
+    left: 8%; /* Ajusta según tu necesidad */
     /* Otros estilos opcionales */
     background-color: #007bff;
     color: white;
