@@ -166,16 +166,19 @@ class Pedido(models.Model):
         if self.valor_total_factura_usd != 0 and self.trm_monetizacion is not None:
             self.valor_comision_pesos = self.valor_total_comision_usd * self.trm_monetizacion
         if self.valor_pagado_cliente_usd == 0:
-            if (self.valor_total_nota_credito_usd + self.descuento) >= self.valor_total_factura_usd:
+            # Caso cuando el valor pagado por el cliente es 0
+            if (self.valor_total_nota_credito_usd + self.descuento) >= self.valor_total_factura_usd and self.valor_total_factura_usd > 0:
                 self.estado_factura = "Pagada"
             else:
                 self.estado_factura = "Pendiente Pago"
         else:
+            # Caso cuando hay algún valor pagado por el cliente
             total_restante = self.valor_total_factura_usd - self.valor_total_nota_credito_usd - self.comision_bancaria_usd - self.descuento
             if self.valor_pagado_cliente_usd < total_restante:
                 self.estado_factura = "Abono"
             else:
                 self.estado_factura = "Pagada"
+
         # Actualizar los campos que vienen del cliente
         if self.cliente:
             self.destino = self.cliente.pais.nombre
