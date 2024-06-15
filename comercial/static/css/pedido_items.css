@@ -150,7 +150,7 @@ label {
 button[name="actualizar-vencimiento"] {
     position: absolute; /* Puedes usar relative, fixed, etc., según sea necesario */
     top: 41px;  /* Ajusta según tu necesidad */
-    left: 19px; /* Ajusta según tu necesidad */
+    left: 70px; /* Ajusta según tu necesidad */
     /* Otros estilos opcionales */
     background-color: #007bff;
     color: white;
@@ -162,6 +162,23 @@ button[name="actualizar-vencimiento"] {
 
 button[name="actualizar-vencimiento"]:hover {
     background-color: #0056b3;
+}
+
+button[name="actualizar-tasas"] {
+    position: absolute; /* Puedes usar relative, fixed, etc., según sea necesario */
+    top: 41px;  /* Ajusta según tu necesidad */
+    left: 19px; /* Ajusta según tu necesidad */
+    /* Otros estilos opcionales */
+    background-color: #0c9c2b;
+    color: white;
+    padding: 5px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button[name="actualizar-tasas"]:hover {
+    background-color: #0e4e1b;
 }
 
 @media only screen and (max-width: 600px) {

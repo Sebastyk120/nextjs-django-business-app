@@ -2,6 +2,9 @@ import math
 from datetime import datetime, timedelta, date
 from decimal import Decimal
 from importlib import import_module
+
+import pandas as pd
+import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -234,6 +237,31 @@ class Pedido(models.Model):
 
             self.dias_de_vencimiento = (hoy - fecha_entrega).days
         self.save()
+
+    def actualizar_tasa_representativa(self):
+        # URL del JSON
+        url = "https://www.datos.gov.co/resource/mcec-87by.json"
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            data = response.json()
+            df = pd.DataFrame(data)
+
+            # Convertir las columnas de fecha a datetime
+            df['vigenciadesde'] = pd.to_datetime(df['vigenciadesde'])
+
+            # Ordenar los datos por la fecha de inicio de vigencia
+            df = df.sort_values('vigenciadesde')
+
+            # Encontrar la tasa correcta
+            fecha_entrega = pd.to_datetime(self.fecha_entrega)
+            df_filtrado = df[df['vigenciadesde'] <= fecha_entrega]
+            if not df_filtrado.empty:
+                tasa_valor = df_filtrado.iloc[-1]['valor']
+                self.tasa_representativa_usd_diaria = tasa_valor
+                self.save()
+        else:
+            print("Error al acceder a la URL")
 
     class Meta:
         ordering = ['-id']
