@@ -2374,7 +2374,7 @@ def actualizar_dias_de_vencimiento_todos(request):
     return redirect('pedido_list_general')
 
 def actualizar_tasas(request):
-    pedidos = Pedido.objects.all()
+    pedidos = Pedido.objects.order_by('-id')[:50]
     for pedido in pedidos:
         pedido.actualizar_tasa_representativa()
     messages.success(request, 'Se Actualizaron Las Tasas Con Banco De La Republica Correctamente')
