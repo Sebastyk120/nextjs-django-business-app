@@ -64,7 +64,6 @@ class Migration(migrations.Migration):
                 ('fecha_movimiento', models.DateField(verbose_name='Fecha Movimiento')),
                 ('observaciones', models.CharField(blank=True, max_length=255, null=True, verbose_name='Observaciones')),
                 ('fecha', models.DateTimeField(auto_now_add=True, verbose_name='Fecha Historico')),
-                ('validador', models.BooleanField(blank=True, default=False, null=True, verbose_name='Validador')),
                 ('bodega', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='inventarios.bodega', verbose_name='Bodega')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Usuario')),
             ],
