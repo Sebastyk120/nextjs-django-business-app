@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -1727,38 +1727,31 @@ class DetallePedidoCreateView(CreateView):
 
 
 # ---------------------------- Formulario Editar Detalle De Pedido --------------------------------------------
-@method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
 class DetallePedidoUpdateView(UpdateView):
     model = DetallePedido
     form_class = EditarDetallePedidoForm
     template_name = 'detalle_pedido_editar.html'
     success_url = '/detalle_pedido_editar/'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.object = None
-
     def get_object(self, queryset=None):
-        detallepedido_id = int(self.request.POST.get('detallepedido_id').replace(".", ""))
+        detallepedido_id = self.kwargs.get('pk')
         detallepedido = get_object_or_404(DetallePedido, id=detallepedido_id)
         return detallepedido
 
     def get(self, request, *args, **kwargs):
-        detallepedido_id = int(request.GET.get('detallepedido_id').replace(".", ""))
-        self.object = get_object_or_404(DetallePedido, id=detallepedido_id)
-        form = self.form_class(
-            instance=self.object,
-        )
+        self.object = self.get_object()
+        pedido_id = self.object.pedido.id
+        form = self.form_class(instance=self.object, pedido_id=pedido_id)
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             form_html = render_to_string(self.template_name, {'form': form}, request=request)
             return JsonResponse({'form': form_html})
         else:
-            return super().get(request, *args, **kwargs)
+            return render(request, self.template_name, {'form': form, 'object': self.object})
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        form = self.form_class(request.POST, instance=self.object)
+        pedido_id = self.object.pedido.id
+        form = self.form_class(request.POST, instance=self.object, pedido_id=pedido_id)
         if form.is_valid():
             return self.form_valid(form)
         else:
