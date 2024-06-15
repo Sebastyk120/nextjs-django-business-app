@@ -24,6 +24,7 @@ class PedidoTable(tables.Table):
     valor_pagado_cliente_usd = tables.Column()
     valor_total_nota_credito_usd = tables.Column()
     dias_de_vencimiento = tables.Column()
+    tasa_representativa_usd_diaria = tables.Column()
 
     class Meta:
         model = Pedido
@@ -42,6 +43,9 @@ class PedidoTable(tables.Table):
             return format_html(f'<span style="color: green;">{value}</span>')
         else:
             return format_html(f'<span style="color: red;">{value}</span>')
+
+    def render_tasa_representativa_usd_diaria(self, value):
+        return format_as_currency(value)
 
     def render_valor_total_factura_usd(self, value):
         return format_as_currency(value)
@@ -198,7 +202,7 @@ class CarteraPedidoTable(tables.Table):
             "motivo_nota_credito",
             "valor_total_nota_credito_usd", "descuento", "comision_bancaria_usd", "fecha_pago",
             "estado_factura")
-    
+
     def render_dias_de_vencimiento(self, value):
         if value <= 0:
             return format_html(f'<span style="color: green;">{value}</span>')
