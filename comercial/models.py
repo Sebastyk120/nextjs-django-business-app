@@ -170,11 +170,12 @@ class Pedido(models.Model):
                 self.estado_factura = "Pagada"
             else:
                 self.estado_factura = "Pendiente Pago"
-        elif self.valor_pagado_cliente_usd < (
-                self.valor_total_factura_usd - self.valor_total_nota_credito_usd - self.comision_bancaria_usd - self.descuento):
-            self.estado_factura = "Abono"
         else:
-            self.estado_factura = "Pagada"
+            total_restante = self.valor_total_factura_usd - self.valor_total_nota_credito_usd - self.comision_bancaria_usd - self.descuento
+            if self.valor_pagado_cliente_usd < total_restante:
+                self.estado_factura = "Abono"
+            else:
+                self.estado_factura = "Pagada"
         # Actualizar los campos que vienen del cliente
         if self.cliente:
             self.destino = self.cliente.pais.nombre
