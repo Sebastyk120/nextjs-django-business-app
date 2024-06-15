@@ -3,12 +3,13 @@ import math
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -16,10 +17,10 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django_tables2 import SingleTableView
 from openpyxl.styles import Font, PatternFill, Alignment
-from openpyxl.styles.numbers import NumberFormat
 from openpyxl.workbook import Workbook
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+
 from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
     EliminarDetallePedidoForm, EditarPedidoExportadorForm, EditarDetallePedidoForm, EditarReferenciaForm
 from .models import Pedido, DetallePedido, Referencias
@@ -2362,3 +2363,13 @@ def exportar_referencias_juan(request):
     response['Content-Disposition'] = 'attachment; filename="referencias_juan.xlsx"'
 
     return response
+
+# ----------------------------- Actualizar los días de Vencimiento ---------------------------------------------
+
+def actualizar_dias_de_vencimiento_todos(request):
+    pedidos = Pedido.objects.all()
+    for pedido in pedidos:
+        pedido.actualizar_dias_de_vencimiento()
+    messages.success(request, 'Días de vencimiento actualizados para todos los pedidos.')
+    return redirect('pedido_list_general')
+

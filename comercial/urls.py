@@ -62,5 +62,6 @@ urlpatterns = [
     path('exportar_cartera_etnico_view', views.ExportarCarteraEtnicoView.as_view(), name='exportar_cartera_etnico_view'),
     path('exportar_cartera_fieldex_view', views.ExportarCarteraFieldexView.as_view(), name='exportar_cartera_fieldex_view'),
     path('exportar_cartera_juan_view', views.ExportarCarteraJuanView.as_view(), name='exportar_cartera_juan_view'),
+    path('actualizar-vencimiento/', views.actualizar_dias_de_vencimiento_todos, name='actualizar_dias_de_vencimiento_todos'),
 
 ]

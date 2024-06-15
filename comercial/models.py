@@ -214,6 +214,23 @@ class Pedido(models.Model):
         # Llama al método save de la clase base para realizar el guardado
         super().save(*args, **kwargs)
 
+    def actualizar_dias_de_vencimiento(self):
+        if self.fecha_pago is not None:
+            self.dias_de_vencimiento = 0
+        else:
+            if isinstance(self.fecha_entrega, datetime):
+                fecha_entrega = self.fecha_entrega.date()
+            elif isinstance(self.fecha_entrega, date):
+                fecha_entrega = self.fecha_entrega
+            else:
+                raise ValueError("Tipo de fecha no soportado")
+
+            fecha_entrega += timedelta(days=self.dias_cartera)
+            hoy = datetime.now().date()
+
+            self.dias_de_vencimiento = (hoy - fecha_entrega).days
+        self.save()
+
     class Meta:
         ordering = ['-id']
 
