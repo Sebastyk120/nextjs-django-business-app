@@ -147,6 +147,23 @@ label {
     top: 85px;
 }
 
+button[name="actualizar-vencimiento"] {
+    position: absolute; /* Puedes usar relative, fixed, etc., según sea necesario */
+    top: 70px;  /* Ajusta según tu necesidad */
+    left: 5px; /* Ajusta según tu necesidad */
+    /* Otros estilos opcionales */
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button[name="actualizar-vencimiento"]:hover {
+    background-color: #0056b3;
+}
+
 @media only screen and (max-width: 600px) {
     #add {
         font-size: 14px;

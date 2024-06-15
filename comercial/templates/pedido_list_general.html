@@ -35,7 +35,7 @@
     </a>
     <form method="post" action="{% url 'actualizar_dias_de_vencimiento_todos' %}">
     {% csrf_token %}
-    <button type="submit">Actualizar Días de Vencimiento</button>
+    <button class="btn btn-primary btn-sm" type="submit" name="actualizar-vencimiento">Actualizar Días De Vencimiento</button>
     </form>
     <div class="container-fluid">
         {% render_table table %}
