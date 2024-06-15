@@ -3,9 +3,10 @@ from django.contrib.admin.views.decorators import user_passes_test
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordResetView
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.core.management import call_command
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -14,19 +15,21 @@ from django.views import View
 
 # Create your views here.
 
-class MigrateView(View):
+class MigrateView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        # Solo permitir acceso a usuarios que son administradores
+        return self.request.user.is_superuser
+
     def get(self, request, *args, **kwargs):
-        apps_to_migrate = ['comercial', 'cartera', 'inventarios']
-
         try:
-            for app_name in apps_to_migrate:
-                # Ejecutar 'makemigrations' para la aplicación específica
-                call_command('makemigrations', app_name)
+            with transaction.atomic():
+                # Ejecutar 'makemigrations' para todas las aplicaciones
+                call_command('makemigrations')
 
-                # Ejecutar 'migrate' para la aplicación específica
-                call_command('migrate', app_name)
+                # Ejecutar 'migrate' para todas las aplicaciones
+                call_command('migrate')
 
-            return HttpResponse(f"Migraciones para las aplicaciones {', '.join(apps_to_migrate)} realizadas con éxito.")
+            return HttpResponse("Todas las migraciones realizadas con éxito.")
         except Exception as e:
             # Capturar cualquier error que pueda ocurrir durante la ejecución de las migraciones
             return HttpResponse(f"Error al realizar las migraciones: {str(e)}", status=500)
