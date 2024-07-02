@@ -1,11 +1,24 @@
 {
-    "$schema": "https://railway.app/railway.schema.json",
-    "build": {
-        "builder": "NIXPACKS"
-    },
-    "deploy": {
-        "startCommand": "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn mysite.wsgi",
-        "restartPolicyType": "ON_FAILURE",
-        "restartPolicyMaxRetries": 10
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "nixpacks": {
+      "phases": {
+        "install": {
+          "nixPackages": [
+            "pkg-config",
+            "glib",
+            "cairo",
+            "pango",
+            "gobject-introspection"
+          ]
+        }
+      }
     }
+  },
+  "deploy": {
+    "startCommand": "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn mysite.wsgi",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
 }
