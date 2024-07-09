@@ -9,21 +9,35 @@ nixPkgs = [
 # Instalar paquetes de apt-get si es necesario
 aptPkgs = [
   "build-essential",
-  "libcairo2",
   "libffi-dev",
   "shared-mime-info",
-  "libjpeg-dev",  # Necesario para manejo de imágenes en PDF
-  "zlib1g-dev",  # Necesario para compresión de imágenes en PDF
-  "libfreetype6-dev",  # Necesario para manejo de fuentes
-  "liblcms2-dev",  # Necesario para manejo de perfiles de color
-  "libopenjpeg-dev",  # Necesario para manejo de imágenes JPEG2000
-  "libtiff5-dev",  # Necesario para manejo de imágenes TIFF
-  "libwebp-dev"  # Necesario para manejo de imágenes WebP
+  "libjpeg-dev",
+  "zlib1g-dev",
+  "libfreetype6-dev",
+  "liblcms2-dev",
+  "libopenjpeg-dev",
+  "libtiff5-dev",
+  "libwebp-dev"
+]
+
+# Actualizar y limpiar caché de apt antes de instalar los paquetes
+cmds = [
+  "sudo apt-get update",
+  "sudo apt-get install -y --no-install-recommends build-essential",
+  "sudo apt-get install -y --no-install-recommends libffi-dev",
+  "sudo apt-get install -y --no-install-recommends shared-mime-info",
+  "sudo apt-get install -y --no-install-recommends libjpeg-dev",
+  "sudo apt-get install -y --no-install-recommends zlib1g-dev",
+  "sudo apt-get install -y --no-install-recommends libfreetype6-dev",
+  "sudo apt-get install -y --no-install-recommends liblcms2-dev",
+  "sudo apt-get install -y --no-install-recommends libopenjpeg-dev",
+  "sudo apt-get install -y --no-install-recommends libtiff5-dev",
+  "sudo apt-get install -y --no-install-recommends libwebp-dev"
 ]
 
 [phases.python_install]
-    dependsOn = ['setup']
-    cmds = ['pip install -r requirements.txt']
+dependsOn = ['setup']
+cmds = ['pip install -r requirements.txt']
 
 [phases.build]
 # Colectar archivos estáticos y migrar la base de datos
