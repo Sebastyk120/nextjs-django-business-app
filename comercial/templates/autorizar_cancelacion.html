@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Autorizar Cancelación</title>
+</head>
+<body>
+    <h1>Autorizar Cancelación para Pedido {{ autorizacion.pedido.id }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <label for="observaciones">Observaciones:</label>
+        <textarea name="observaciones" id="observaciones" rows="4" cols="50">{{ autorizacion.pedido.observaciones }}</textarea><br><br>
+        <button type="submit" name="accion" value="autorizar">Autorizar Cancelación</button>
+        <button type="submit" name="accion" value="no_autorizar">No Autorizar Cancelación</button>
+    </form>
+</body>
+</html>

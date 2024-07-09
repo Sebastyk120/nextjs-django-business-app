@@ -1,12 +1,14 @@
 from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
-from .models import Pedido, Fruta, Pais, TipoCaja, Cliente, Presentacion, Contenedor, DetallePedido, Referencias, \
-    Exportador, ClientePresentacion
+from .models import Pedido, Fruta, Iata, TipoCaja, Cliente, Presentacion, Contenedor, DetallePedido, Referencias, \
+    Exportador, ClientePresentacion, AutorizacionCancelacion, AgenciaCarga, Aerolinea, Intermediario, SubExportadora, PresentacionReferencia
 from simple_history.admin import SimpleHistoryAdmin
 from import_export.admin import ImportExportModelAdmin
 from .resources import ClienteResource, PedidoResource, FrutaResource, DetallePedidoResource, ContenedorResource, \
-    PaisResource, PresentacionResource, ReferenciasResource, ExportadorResource, TipoCajaResource, ClientePresentacionResource
+    IataResource, PresentacionResource, ReferenciasResource, ExportadorResource, TipoCajaResource, \
+    ClientePresentacionResource, AutorizacionCancelacionResource, AgenciaCargaResource, AerolineaResource, \
+    IntermediarioResource, SubExportadoraResource, PresentacionReferenciaResource
 from django.contrib import admin
 
 admin.site.site_header = "Administración Heavens Fruits"
@@ -65,9 +67,9 @@ class MyModelAdmin(ImportExportModelAdmin):
     resource_class = FrutaResource
 
 
-@admin.register(Pais)
+@admin.register(Iata)
 class MyModelAdmin(ImportExportModelAdmin):
-    resource_class = PaisResource
+    resource_class = IataResource
 
 
 @admin.register(Presentacion)
@@ -84,9 +86,40 @@ class MyModelAdmin(ImportExportModelAdmin):
 class MyModelAdmin(ImportExportModelAdmin):
     resource_class = TipoCajaResource
 
+
 @admin.register(ClientePresentacion)
 class MyModelAdmin(ImportExportModelAdmin):
     resource_class = ClientePresentacionResource
+
+
+@admin.register(AutorizacionCancelacion)
+class MyModelAdmin(ImportExportModelAdmin):
+    resource_class = AutorizacionCancelacionResource
+
+
+@admin.register(Aerolinea)
+class MyModelAdmin(ImportExportModelAdmin):
+    resource_class = AerolineaResource
+
+
+@admin.register(AgenciaCarga)
+class MyModelAdmin(ImportExportModelAdmin):
+    resource_class = AgenciaCargaResource
+
+
+@admin.register(Intermediario)
+class MyModelAdmin(ImportExportModelAdmin):
+    resource_class = IntermediarioResource
+
+
+@admin.register(SubExportadora)
+class MyModelAdmin(ImportExportModelAdmin):
+    resource_class = SubExportadoraResource
+
+@admin.register(PresentacionReferencia)
+class MyModelAdmin(ImportExportModelAdmin):
+    resource_class = PresentacionReferenciaResource
+
 
 admin.site.register(Pedido, PedidoAdmin)
 admin.site.register(DetallePedido, DetallePedidoAdmin)

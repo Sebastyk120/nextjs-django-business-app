@@ -28,4 +28,9 @@ $(document).ready(function () {
             }
         });
     });
+
+    // Limpiar el contenido del modal de creación cuando se cierra
+    $('#adddetalleItemModal').on('hidden.bs.modal', function () {
+        $(this).find('.modal-content').html(''); // Limpiar el contenido del modal
+    });
 });

@@ -1,5 +1,4 @@
 $(document).ready(function () {
-
     var itemId = null;
 
     $('.eliminar-button').click(function () {
@@ -9,11 +8,13 @@ $(document).ready(function () {
             type: 'get',
             data: {'detallepedido_id': itemId},
             success: function (data) {
-                $('.modal-content').html(data.form);
+                $('#eliminarItemModal .modal-content').html(data.form);
                 $('#eliminarItemModal').modal('show');
             }
         });
     });
+
+    $(document).off('submit', '#eliminarItemForm');
 
     $(document).on('submit', '#eliminarItemForm', function (event) {
         event.preventDefault();
@@ -39,4 +40,7 @@ $(document).ready(function () {
         });
     });
 
+    $('#eliminarItemModal').on('hidden.bs.modal', function () {
+        $(this).find('.modal-content').html(''); // Limpiar el contenido del modal
+    });
 });

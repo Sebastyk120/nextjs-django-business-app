@@ -1,4 +1,5 @@
 import io
+
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
@@ -10,8 +11,9 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import CreateView, UpdateView
 from django_tables2 import SingleTableView
-from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.styles import Font, PatternFill
 from openpyxl.workbook import Workbook
+
 from comercial.models import Referencias
 from .forms import ItemForm, SearchForm, EditarItemForm, EliminarItemForm
 from .models import Bodega, Item, Movimiento, Inventario
@@ -834,3 +836,6 @@ class InventarioBodegaJuanListView(SingleTableView):
         context = super().get_context_data(**kwargs)
         context['item_busqueda'] = self.form_class(self.request.GET)
         return context
+
+
+

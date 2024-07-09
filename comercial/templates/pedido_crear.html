@@ -1,23 +1,12 @@
 {% load static %}
-<!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedidos</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-    <link rel="stylesheet" href="{% static 'css/crear_pedido.css' %}"/>
-
-</head>
-<body>
+<link rel="stylesheet" href="{% static 'css/crear_pedido.css' %}"/>
 <div class="modal-header">
     <h5 class="modal-title">Crear Pedido <i class="bi bi-bag-plus-fill"></i></h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 <form action="{% url 'pedido_crear' %}" method="post">
     {% csrf_token %}
-    <div class="modal-body ">
+    <div class="modal-body">
         <div id="errores">
             {% for field, error_list in form.errors.items %}
                 {% for error in error_list %}
@@ -25,12 +14,67 @@
                 {% endfor %}
             {% endfor %}
         </div>
-        {{ form.as_p }}
+        <div class="container">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.cliente.label_tag }} {{ form.cliente }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.fecha_solicitud.label_tag }} {{ form.fecha_solicitud }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.fecha_entrega.label_tag }} {{ form.fecha_entrega }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.fecha_llegada.label_tag }} {{ form.fecha_llegada }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.exportadora.label_tag }} {{ form.exportadora }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.subexportadora.label_tag }} {{ form.subexportadora }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.awb.label_tag }} {{ form.awb }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.destino.label_tag }} {{ form.destino }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.numero_factura.label_tag }} {{ form.numero_factura }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.descuento.label_tag }} {{ form.descuento }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.nota_credito_no.label_tag }} {{ form.nota_credito_no }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.motivo_nota_credito.label_tag }} {{ form.motivo_nota_credito }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.documento_cobro_utilidad.label_tag }} {{ form.documento_cobro_utilidad }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.fecha_pago_utilidad.label_tag }} {{ form.fecha_pago_utilidad }}
+                </div>
+            </div>
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Cerrar</button>
         <button type="submit" class="btn btn-primary">Guardar</button>
     </div>
 </form>
-</body>
-</html>

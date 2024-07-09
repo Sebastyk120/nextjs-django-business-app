@@ -1,0 +1,48 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="{% static 'css/login2.css' %}"/>
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="box">
+    <span class="borderLine"></span>
+    <form class="form-signin" method="POST" action="{% url 'login' %}">
+        {% csrf_token %}
+        <h2>Heaven's Fruits Connect</h2>
+        <div class="inputBox">
+            <input type="text" required="required" name="username"
+                       oninput="this.value = this.value.toUpperCase();">
+            <span> Usuario</span>
+            <i></i>
+        </div>
+        <div class="inputBox">
+            <input type="password" required="required" name="password">
+            <span>Contraseña</span>
+            <i></i>
+        </div>
+        <div class="links">
+            <a href="{% url 'password_reset' %}">Recuperar Usuario O Contraseña</a>
+            <a href="{% url 'signup' %}">Registrar</a>
+        </div>
+        <input type="submit" value="Login">
+    </form>
+</div>
+<div class="footer">
+    <p>Heavens Fruit. - Todos los derechos reservados ©</p>
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% if messages %}{% for m in messages %}
+<script>
+    Swal.fire({
+        title: "Credenciales",
+        text: "{{m}}",
+        icon: "warning",
+    });
+</script>
+{% endfor %}{% endif %}
+</html>

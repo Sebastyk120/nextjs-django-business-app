@@ -1,0 +1,49 @@
+{% load static %}
+{% load django_tables2 %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen Pedido</title>
+</head>
+<body>
+<h1>Resumen Pedido No: {{ pedido.id }}</h1>
+<div class="container">
+    <!-- Tabla para los detalles del pedido -->
+    <table class="header-table">
+        <tr>
+            <th>Exportador</th>
+            <td>{{ pedido.exportadora.nombre }}</td>
+        </tr>
+        <tr>
+            <th>Cliente</th>
+            <td>{{ pedido.cliente.nombre }}</td>
+        </tr>
+        <tr>
+            <th>Fecha De Entrega Final</th>
+            <td>{{ pedido.fecha_entrega }}</td>
+        </tr>
+    </table>
+
+    <!-- Tabla para los totales -->
+    <table class="details-table">
+        <tr>
+            <th>Total Peso Bruto</th>
+            <td>{{ total_peso_bruto }}</td>
+        </tr>
+        <tr>
+            <th>Numero De Piezas</th>
+            <td>{{ total_piezas }}</td>
+        </tr>
+        <tr>
+            <th>Total De Cajas Pedido</th>
+            <td>{{ total_cajas_solicitadas }}</td>
+        </tr>
+    </table>
+</div>
+<div class="container-fluid">
+    {% render_table table %}
+</div>
+</body>
+</html>

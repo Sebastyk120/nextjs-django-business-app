@@ -1,15 +1,16 @@
 import io
 import math
+import time
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
-
 from django.contrib import messages
+from django.utils import timezone
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -20,14 +21,16 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.workbook import Workbook
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from weasyprint import HTML, CSS
 
 from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
-    EliminarDetallePedidoForm, EditarPedidoExportadorForm, EditarDetallePedidoForm, EditarReferenciaForm
-from .models import Pedido, DetallePedido, Referencias
+    EliminarDetallePedidoForm, EditarPedidoExportadorForm, EditarDetallePedidoForm, EditarReferenciaForm, \
+    EditarPedidoSeguimientoForm, FiltroSemanaExportadoraForm, SearchFormReferencias
+from .models import Pedido, DetallePedido, Referencias, AutorizacionCancelacion, Presentacion, Exportador
 from .resources import obtener_datos_con_totales, crear_archivo_excel, obtener_datos_con_totales_etnico, \
     obtener_datos_con_totales_fieldex, obtener_datos_con_totales_juan
-from .tables import PedidoTable, DetallePedidoTable, PedidoExportadorTable, CarteraPedidoTable, ComisionPedidoTable, \
-    ResumenPedidoTable, ReferenciasTable
+from .tables import PedidoTable, DetallePedidoTable, PedidoExportadorTable, CarteraPedidoTable, UtilidadPedidoTable, \
+    ResumenPedidoTable, ReferenciasTable, SeguimienosTable, SeguimienosResumenTable
 
 
 # from .resources import CarteraPedidoResource
@@ -95,7 +98,7 @@ def exportar_detalle_pedido_a_pdf(request):
     encabezados = [
         "Fruta", "Presentación", "Cajas Solicitadas", "Peso Caja", "Kilos", "Cajas Enviadas",
         "Marca Caja", "Referencia", "Stickers", "Lleva Contenedor", "Referencia Contenedor",
-        "$Comisión Por Caja", "$Por Caja USD", "$Por Producto"
+        "$Utilidad Por Caja", "$Por Caja USD", "$Por Producto"
     ]
 
     # Dibujar los encabezados de las columnas
@@ -113,7 +116,7 @@ def exportar_detalle_pedido_a_pdf(request):
             detalle.presentacion_peso, detalle.kilos, detalle.cajas_enviadas,
             str(detalle.tipo_caja), str(detalle.referencia), detalle.stickers,
             "Sí" if detalle.lleva_contenedor else "No", detalle.referencia_contenedor,
-            detalle.tarifa_comision, detalle.valor_x_caja_usd, detalle.valor_x_producto
+            detalle.tarifa_utilidad, detalle.valor_x_caja_usd, detalle.valor_x_producto
         ]
 
         for dato in datos:
@@ -131,9 +134,9 @@ def exportar_detalle_pedido_a_pdf(request):
     return response
 
 
-# ------------------ Exportacion de Comisiones Excel General --------------------------------------------------------
-class ExportarComisionesView(TemplateView):
-    template_name = 'export_comisiones_general.html'
+# ------------------ Exportacion de Utilidades Excel General --------------------------------------------------------
+class ExportarUtilidadesView(TemplateView):
+    template_name = 'export_utilidades_general.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -141,32 +144,37 @@ class ExportarComisionesView(TemplateView):
         return context
 
 
+# ---------------------------------- Funcion que exporta las utilidades a Excel ---------------------------------------
+
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
-def exportar_comisiones_excel(request):
+def exportar_utilidades_excel(request):
     # Crear un libro de trabajo de Excel
     output = io.BytesIO()
     workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Comisiones Totales General'
-    font = Font(bold=True)
-    fill = PatternFill(start_color="3ef983", end_color="3ef983", fill_type="solid")
+
+    # Hoja 1: Utilidades Totales General
+    worksheet1 = workbook.active
+    worksheet1.title = 'Utilidades Totales General'
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="4CAF50", end_color="4CAF50", fill_type="solid")
     total_font = Font(bold=True, color="FFFFFF")
-    total_fill = PatternFill(start_color="3580e0", end_color="3580e0", fill_type="solid")
+    total_fill = PatternFill(start_color="2196F3", end_color="2196F3", fill_type="solid")
     total_align = Alignment(horizontal="center")
 
     # Encabezados
     columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
                'Valor Total Factura USD', 'Estado Factura', 'T Cajas Enviadas', 'Trm Monetizacion',
-               'TRM Banrep', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
-               'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
+               'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
+               'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
     for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
+        cell = worksheet1.cell(row=1, column=col_num, value=column_title)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
 
-    # Crear un diccionario para almacenar los totales de comisiones por exportadora
-    totales_por_comision_usd = defaultdict(Decimal)
+    # Crear un diccionario para almacenar los totales de Utilidades por exportadora
+    totales_por_utilidad_usd = defaultdict(Decimal)
     totales_no_cobrables_por_exportadora = defaultdict(Decimal)
     totales_cobrados_por_exportadora = defaultdict(Decimal)
     totales_por_cobrar_por_exportadora = defaultdict(Decimal)
@@ -188,21 +196,21 @@ def exportar_comisiones_excel(request):
 
     # Obtener los datos
     for pedido in queryset:
-        valor_comision_usd = pedido.valor_total_comision_usd
-        if valor_comision_usd is None:
+        valor_utilidad_usd = pedido.valor_total_utilidad_usd
+        if valor_utilidad_usd is None:
             continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
-        if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
-            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada" and (
-                pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada"):
-            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
+        if pedido.estado_utilidad == "Factura en abono" or pedido.estado_utilidad == "Pendiente Pago Cliente":
+            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+        if pedido.fecha_pago_utilidad is not None and pedido.documento_cobro_utilidad is not None:
+            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+        if pedido.fecha_pago_utilidad is None and pedido.estado_factura == "Pagada" and (
+                pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada"):
+            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+        totales_por_utilidad_usd[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
 
-    # Agregar datos al libro de trabajo
+    # Agregar datos a la hoja de trabajo 1
     for row_num, pedido in enumerate(queryset, start=2):
-        cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
+        cobrar_utilidad = "Sí" if pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada" else "No"
         row = [
             pedido.pk,
             pedido.fecha_entrega,
@@ -216,60 +224,51 @@ def exportar_comisiones_excel(request):
             pedido.total_cajas_enviadas,
             pedido.trm_monetizacion,
             pedido.tasa_representativa_usd_diaria,
-            pedido.valor_total_comision_usd,
-            pedido.valor_comision_pesos,
-            pedido.documento_cobro_comision,
-            pedido.fecha_pago_comision,
+            pedido.valor_total_utilidad_usd,
+            pedido.valor_utilidad_pesos,
+            pedido.documento_cobro_utilidad,
+            pedido.fecha_pago_utilidad,
             pedido.diferencia_por_abono,
-            pedido.estado_comision,
-            cobrar_comision,  # Añadido valor de 'Cobrar comision'
+            pedido.estado_utilidad,
+            cobrar_utilidad,  # Añadido valor de 'Cobrar utilidad'
         ]
         for col_num, cell_value in enumerate(row, start=1):
-            cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
+            cell = worksheet1.cell(row=row_num, column=col_num, value=cell_value)
             # Aplicar formato de moneda a las columnas específicas
             if col_num in [8, 11, 12, 13, 14, 17]:
                 cell.number_format = '$#,##0.00'
 
-    # Agregar los totales al final de la hoja de trabajo
+    # Hoja 2: Totales por Exportadora
+    worksheet2 = workbook.create_sheet(title='Totales por Exportadora')
 
-    def aplicar_estilo_total(fila):  # Funcion Para Dar Estilo A Los Totales.
-        for col in range(1, len(columns) + 1):
+    # Encabezados para la segunda hoja
+    totals_columns = ["Exportadora", "Total Utilidades USD", "Total Utilidades No Cobrables USD",
+                      "Total Utilidades Cobradas USD", "Total Por Cobrar USD"]
+    for col_num, column_title in enumerate(totals_columns, start=1):
+        cell = worksheet2.cell(row=1, column=col_num, value=column_title)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+
+    # Función para dar estilo a los totales.
+    def aplicar_estilo_total(worksheet, fila):
+        for col in range(1, len(totals_columns) + 1):
             celda = worksheet.cell(row=fila, column=col)
             celda.font = total_font
             celda.fill = total_fill
             celda.alignment = total_align
 
-    row_num += 2  # Saltar a la siguiente fila después de los datos
-    for exportadora, total in totales_por_comision_usd.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes USD " + exportadora)
-        total_cell = worksheet.cell(row=row_num, column=3, value=total)
-        total_cell.number_format = '$#,##0.00'
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-
-    for exportadora, total_no_cobrable in totales_no_cobrables_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes No Cobrables USD " + exportadora)
-        total_no_cobrable_cell = worksheet.cell(row=row_num, column=3, value=total_no_cobrable)
-        total_no_cobrable_cell.number_format = '$#,##0.00'
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-
-    for exportadora, total_cobrado in totales_cobrados_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes Cobradas " + exportadora)
-        total_cobrado_cell = worksheet.cell(row=row_num, column=3, value=total_cobrado)
-        total_cobrado_cell.number_format = '$#,##0.00'
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-
-    for exportadora, total_por_cobrar in totales_por_cobrar_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Por Cobrar " + exportadora)
-        total_por_cobrar_cell = worksheet.cell(row=row_num, column=3, value=total_por_cobrar)
-        total_por_cobrar_cell.number_format = '$#,##0.00'
-        aplicar_estilo_total(row_num)
+    # Agregar totales a la segunda hoja
+    row_num = 2
+    for exportadora in totales_por_utilidad_usd.keys():
+        worksheet2.cell(row=row_num, column=1, value=exportadora)
+        for col_num, total in enumerate([totales_por_utilidad_usd[exportadora],
+                                         totales_no_cobrables_por_exportadora[exportadora],
+                                         totales_cobrados_por_exportadora[exportadora],
+                                         totales_por_cobrar_por_exportadora[exportadora]], start=2):
+            cell = worksheet2.cell(row=row_num, column=col_num, value=total)
+            cell.number_format = '$#,##0.00'
+        aplicar_estilo_total(worksheet2, row_num)
         row_num += 1
 
     workbook.save(output)
@@ -278,15 +277,15 @@ def exportar_comisiones_excel(request):
     # Crear una respuesta HTTP con el archivo de Excel
     response = HttpResponse(output.read(),
                             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="comisiones_pedidos_general.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="utilidades_pedidos_general.xlsx"'
 
     return response
 
 
-# ------------------ Exportacion de Comisiones Excel Etnico --------------------------------------------------------
+# ------------------ Exportacion de utilidades Excel Etnico --------------------------------------------------------
 
-class ExportarComisionesEtnicoView(TemplateView):
-    template_name = 'export_comisiones_etnico.html'
+class ExportarUtilidadesEtnicoView(TemplateView):
+    template_name = 'export_utilidades_etnico.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -296,12 +295,12 @@ class ExportarComisionesEtnicoView(TemplateView):
 
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Etnico'), login_url='home'))
-def exportar_comisiones_etnico(request):
+def exportar_utilidades_etnico(request):
     # Crear un libro de trabajo de Excel
     output = io.BytesIO()
     workbook = Workbook()
     worksheet = workbook.active
-    worksheet.title = 'Comisiones Totales Etnico'
+    worksheet.title = 'Utilidades Totales Etnico'
     font = Font(bold=True)
     fill = PatternFill(start_color="3ef983", end_color="3ef983", fill_type="solid")
     total_font = Font(bold=True, color="FFFFFF")
@@ -309,16 +308,16 @@ def exportar_comisiones_etnico(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Estado Factura',
-               'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
-               'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
+    columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
+               'Valor Total Factura USD', 'Estado Factura', 'T Cajas Enviadas', 'Trm Monetizacion',
+               'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
+               'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
         cell.fill = fill
-    # Crear un diccionario para almacenar los totales de comisiones por exportadora
-    totales_por_comision_usd = defaultdict(Decimal)
+    # Crear un diccionario para almacenar los totales de Utilidades por exportadora
+    totales_por_utilidad_usd = defaultdict(Decimal)
     totales_no_cobrables_por_exportadora = defaultdict(Decimal)
     totales_cobrados_por_exportadora = defaultdict(Decimal)
     totales_por_cobrar_por_exportadora = defaultdict(Decimal)
@@ -340,47 +339,50 @@ def exportar_comisiones_etnico(request):
         queryset = Pedido.objects.filter(exportadora__nombre='Etnico')
 
     # Obtener los datos de tu modelo y calcular los totales
-    for pedido in queryset:
-        valor_comision_usd = pedido.valor_total_comision_usd
-        if valor_comision_usd is None:
-            continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
-        if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
-            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
-            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-    # Obtener los datos de tu modelo
-    queryset = Pedido.objects.filter(exportadora__nombre='Etnico')
+        for pedido in queryset:
+            valor_utilidad_usd = pedido.valor_total_utilidad_usd
+            if valor_utilidad_usd is None:
+                continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
+            if pedido.estado_utilidad == "Factura en abono" or pedido.estado_utilidad == "Pendiente Pago Cliente":
+                totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+            if pedido.fecha_pago_utilidad is not None and pedido.documento_cobro_utilidad is not None:
+                totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+            if pedido.fecha_pago_utilidad is None and pedido.estado_factura == "Pagada" and (
+                    pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada"):
+                totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+            totales_por_utilidad_usd[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
 
-    # Agregar datos al libro de trabajo
-    for row_num, pedido in enumerate(queryset, start=2):
-        cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
-        row = [
-            pedido.pk,
-            pedido.fecha_entrega,
-            pedido.cliente.nombre,
-            pedido.exportadora.nombre,
-            pedido.fecha_pago,
-            pedido.numero_factura,
-            pedido.valor_total_factura_usd,
-            pedido.estado_factura,
-            pedido.trm_monetizacion,
-            pedido.valor_total_comision_usd,
-            pedido.valor_comision_pesos,
-            pedido.documento_cobro_comision,
-            pedido.fecha_pago_comision,
-            pedido.diferencia_por_abono,
-            pedido.estado_comision,
-            cobrar_comision,  # Añadido valor de 'Cobrar comision'
-        ]
-        for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+        # Agregar datos a la hoja de trabajo 1
+        for row_num, pedido in enumerate(queryset, start=2):
+            cobrar_utilidad = "Sí" if pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada" else "No"
+            row = [
+                pedido.pk,
+                pedido.fecha_entrega,
+                pedido.cliente.nombre,
+                pedido.exportadora.nombre,
+                pedido.awb,
+                pedido.fecha_pago,
+                pedido.numero_factura,
+                pedido.valor_total_factura_usd,
+                pedido.estado_factura,
+                pedido.total_cajas_enviadas,
+                pedido.trm_monetizacion,
+                pedido.tasa_representativa_usd_diaria,
+                pedido.valor_total_utilidad_usd,
+                pedido.valor_utilidad_pesos,
+                pedido.documento_cobro_utilidad,
+                pedido.fecha_pago_utilidad,
+                pedido.diferencia_por_abono,
+                pedido.estado_utilidad,
+                cobrar_utilidad,  # Añadido valor de 'Cobrar utilidad'
+            ]
+            for col_num, cell_value in enumerate(row, start=1):
+                cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
+                # Aplicar formato de moneda a las columnas específicas
+                if col_num in [8, 11, 12, 13, 14, 17]:
+                    cell.number_format = '$#,##0.00'
 
-    # Agregar los totales al final de la hoja de trabajo
-
-    """def aplicar_estilo_total(fila):  # Funcion APara Dar Estilo A Los Totales.
+    def aplicar_estilo_total(fila):  # Funcion APara Dar Estilo A Los Totales.
         for col in range(1, len(columns) + 1):
             celda = worksheet.cell(row=fila, column=col)
             celda.font = total_font
@@ -388,30 +390,30 @@ def exportar_comisiones_etnico(request):
             celda.alignment = total_align
 
     row_num += 2  # Saltar a la siguiente fila después de los datos
-    for exportadora, total in totales_por_comision_usd.items():
+    for exportadora, total in totales_por_utilidad_usd.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes USD")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades USD")
         worksheet.cell(row=row_num, column=3, value=total)
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
     for exportadora, total_no_cobrable in totales_no_cobrables_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes No Cobrables USD")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades No Cobrables USD")
         worksheet.cell(row=row_num, column=3, value=total_no_cobrable)
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
     for exportadora, total_cobrado in totales_cobrados_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes Pagadas")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades Pagadas")
         worksheet.cell(row=row_num, column=3, value=total_cobrado)
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
     for exportadora, total_por_cobrar in totales_por_cobrar_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiones Por Pagar")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades Por Pagar")
         worksheet.cell(row=row_num, column=3, value=total_por_cobrar)
         aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila"""
+        row_num += 1  # Prepararse para la siguiente fila
 
     workbook.save(output)
     output.seek(0)
@@ -419,15 +421,15 @@ def exportar_comisiones_etnico(request):
     # Crear una respuesta HTTP con el archivo de Excel
     response = HttpResponse(output.read(),
                             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="comisiones_pedidos_etnico.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="utilidades_pedidos_etnico.xlsx"'
 
     return response
 
 
-# ------------------ Exportacion de Comisiones Excel Fieldex --------------------------------------------------------
+# ------------------ Exportacion de Utilidades Excel Fieldex --------------------------------------------------------
 
-class ExportarComisionesFieldexView(TemplateView):
-    template_name = 'export_comisiones_fieldex.html'
+class ExportarUtilidadesFieldexView(TemplateView):
+    template_name = 'export_utilidades_fieldex.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -437,12 +439,12 @@ class ExportarComisionesFieldexView(TemplateView):
 
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Fieldex'), login_url='home'))
-def exportar_comisiones_fieldex(request):
+def exportar_utilidades_fieldex(request):
     # Crear un libro de trabajo de Excel
     output = io.BytesIO()
     workbook = Workbook()
     worksheet = workbook.active
-    worksheet.title = 'Comisiones Totales Fieldex'
+    worksheet.title = 'Utilidades Totales Fieldex'
     font = Font(bold=True)
     fill = PatternFill(start_color="3ef983", end_color="3ef983", fill_type="solid")
     total_font = Font(bold=True, color="FFFFFF")
@@ -450,16 +452,16 @@ def exportar_comisiones_fieldex(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Estado Factura',
-               'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
-               'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
+    columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
+               'Valor Total Factura USD', 'Estado Factura', 'T Cajas Enviadas', 'Trm Monetizacion',
+               'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
+               'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
         cell.fill = fill
-    # Crear un diccionario para almacenar los totales de comisiones por exportadora
-    totales_por_comision_usd = defaultdict(Decimal)
+    # Crear un diccionario para almacenar los totales de Utilidades por exportadora
+    totales_por_utilidad_usd = defaultdict(Decimal)
     totales_no_cobrables_por_exportadora = defaultdict(Decimal)
     totales_cobrados_por_exportadora = defaultdict(Decimal)
     totales_por_cobrar_por_exportadora = defaultdict(Decimal)
@@ -481,46 +483,51 @@ def exportar_comisiones_fieldex(request):
 
     # Obtener los datos de tu modelo y calcular los totales
     for pedido in queryset:
-        valor_comision_usd = pedido.valor_total_comision_usd
-        if valor_comision_usd is None:
+        valor_utilidad_usd = pedido.valor_total_utilidad_usd
+        if valor_utilidad_usd is None:
             continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
-        if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
-            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
-            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-    # Obtener los datos de tu modelo
-    queryset = Pedido.objects.filter(exportadora__nombre='Fieldex')
+        if pedido.estado_utilidad == "Factura en abono" or pedido.estado_utilidad == "Pendiente Pago Cliente":
+            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+        if pedido.fecha_pago_utilidad is not None and pedido.documento_cobro_utilidad is not None:
+            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+        if pedido.fecha_pago_utilidad is None and pedido.estado_factura == "Pagada" and (
+                pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada"):
+            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+        totales_por_utilidad_usd[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
 
-    # Agregar datos al libro de trabajo
+    # Agregar datos a la hoja de trabajo 1
     for row_num, pedido in enumerate(queryset, start=2):
-        cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
+        cobrar_utilidad = "Sí" if pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada" else "No"
         row = [
             pedido.pk,
             pedido.fecha_entrega,
             pedido.cliente.nombre,
             pedido.exportadora.nombre,
+            pedido.awb,
             pedido.fecha_pago,
             pedido.numero_factura,
             pedido.valor_total_factura_usd,
             pedido.estado_factura,
+            pedido.total_cajas_enviadas,
             pedido.trm_monetizacion,
-            pedido.valor_total_comision_usd,
-            pedido.valor_comision_pesos,
-            pedido.documento_cobro_comision,
-            pedido.fecha_pago_comision,
+            pedido.tasa_representativa_usd_diaria,
+            pedido.valor_total_utilidad_usd,
+            pedido.valor_utilidad_pesos,
+            pedido.documento_cobro_utilidad,
+            pedido.fecha_pago_utilidad,
             pedido.diferencia_por_abono,
-            pedido.estado_comision,
-            cobrar_comision,  # Añadido valor de 'Cobrar comision'
+            pedido.estado_utilidad,
+            cobrar_utilidad,  # Añadido valor de 'Cobrar utilidad'
         ]
         for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+            cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
+            # Aplicar formato de moneda a las columnas específicas
+            if col_num in [8, 11, 12, 13, 14, 17]:
+                cell.number_format = '$#,##0.00'
 
     # Agregar los totales al final de la hoja de trabajo
 
-    """def aplicar_estilo_total(fila):  # Funcion APara Dar Estilo A Los Totales.
+    def aplicar_estilo_total(fila):  # Funcion APara Dar Estilo A Los Totales.
         for col in range(1, len(columns) + 1):
             celda = worksheet.cell(row=fila, column=col)
             celda.font = total_font
@@ -528,30 +535,30 @@ def exportar_comisiones_fieldex(request):
             celda.alignment = total_align
 
     row_num += 2  # Saltar a la siguiente fila después de los datos
-    for exportadora, total in totales_por_comision_usd.items():
+    for exportadora, total in totales_por_utilidad_usd.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes USD")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades USD")
         worksheet.cell(row=row_num, column=3, value=total)
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
     for exportadora, total_no_cobrable in totales_no_cobrables_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes No Cobrables USD")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades No Cobrables USD")
         worksheet.cell(row=row_num, column=3, value=total_no_cobrable)
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
     for exportadora, total_cobrado in totales_cobrados_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes Pagadas")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades Pagadas")
         worksheet.cell(row=row_num, column=3, value=total_cobrado)
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
     for exportadora, total_por_cobrar in totales_por_cobrar_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiones Por Pagar")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades Por Pagar")
         worksheet.cell(row=row_num, column=3, value=total_por_cobrar)
         aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila"""
+        row_num += 1  # Prepararse para la siguiente fila
 
     workbook.save(output)
     output.seek(0)
@@ -559,14 +566,14 @@ def exportar_comisiones_fieldex(request):
     # Crear una respuesta HTTP con el archivo de Excel
     response = HttpResponse(output.read(),
                             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="comisiones_pedidos_fieldex.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="utilidades_pedidos_fieldex.xlsx"'
 
     return response
 
 
-# ------------------ Exportacion de Comisiones Excel Juan Matas --------------------------------------------------------
-class ExportarComisionesJuanView(TemplateView):
-    template_name = 'export_comisiones_juan.html'
+# ------------------ Exportacion de Utilidades Excel Juan Matas --------------------------------------------------------
+class ExportarUtilidadesJuanView(TemplateView):
+    template_name = 'export_utilidades_juan.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -576,12 +583,12 @@ class ExportarComisionesJuanView(TemplateView):
 
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Juan_Matas'), login_url='home'))
-def exportar_comisiones_juan(request):
+def exportar_utilidades_juan(request):
     # Crear un libro de trabajo de Excel
     output = io.BytesIO()
     workbook = Workbook()
     worksheet = workbook.active
-    worksheet.title = 'Comisiones Totales Juan Matas'
+    worksheet.title = 'Utilidades Totales Juan Matas'
     font = Font(bold=True)
     fill = PatternFill(start_color="3ef983", end_color="3ef983", fill_type="solid")
     total_font = Font(bold=True, color="FFFFFF")
@@ -589,16 +596,16 @@ def exportar_comisiones_juan(request):
     total_align = Alignment(horizontal="center")
 
     # Encabezados
-    columns = ['Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Estado Factura',
-               'Trm Monetizacion', 'Valor Comision USD', 'Valor Comision Pesos', 'Documento Cobro Comision',
-               'Fecha Pago Comision', 'Diferencia O Abono', 'Estado Comision', 'Cobrar comision']
+    columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
+               'Valor Total Factura USD', 'Estado Factura', 'T Cajas Enviadas', 'Trm Monetizacion',
+               'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
+               'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
         cell.fill = fill
-    # Crear un diccionario para almacenar los totales de comisiones por exportadora
-    totales_por_comision_usd = defaultdict(Decimal)
+    # Crear un diccionario para almacenar los totales de Utilidades por exportadora
+    totales_por_utilidad_usd = defaultdict(Decimal)
     totales_no_cobrables_por_exportadora = defaultdict(Decimal)
     totales_cobrados_por_exportadora = defaultdict(Decimal)
     totales_por_cobrar_por_exportadora = defaultdict(Decimal)
@@ -620,46 +627,51 @@ def exportar_comisiones_juan(request):
 
     # Obtener los datos de tu modelo y calcular los totales
     for pedido in queryset:
-        valor_comision_usd = pedido.valor_total_comision_usd
-        if valor_comision_usd is None:
+        valor_utilidad_usd = pedido.valor_total_utilidad_usd
+        if valor_utilidad_usd is None:
             continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
-        if pedido.estado_comision == "Factura en abono" or pedido.estado_comision == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        if pedido.fecha_pago_comision is not None and pedido.documento_cobro_comision is not None:
-            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        if pedido.fecha_pago_comision is None and pedido.estado_factura == "Pagada":
-            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-        totales_por_comision_usd[pedido.exportadora.nombre] += Decimal(valor_comision_usd)
-    # Obtener los datos de tu modelo
-    queryset = Pedido.objects.filter(exportadora__nombre='Juan_Matas')
+        if pedido.estado_utilidad == "Factura en abono" or pedido.estado_utilidad == "Pendiente Pago Cliente":
+            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+        if pedido.fecha_pago_utilidad is not None and pedido.documento_cobro_utilidad is not None:
+            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+        if pedido.fecha_pago_utilidad is None and pedido.estado_factura == "Pagada" and (
+                pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada"):
+            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
+        totales_por_utilidad_usd[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
 
-    # Agregar datos al libro de trabajo
+    # Agregar datos a la hoja de trabajo 1
     for row_num, pedido in enumerate(queryset, start=2):
-        cobrar_comision = "Sí" if pedido.estado_comision == "Por Facturar" or pedido.estado_comision == "Facturada" else "No"
+        cobrar_utilidad = "Sí" if pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada" else "No"
         row = [
             pedido.pk,
             pedido.fecha_entrega,
             pedido.cliente.nombre,
             pedido.exportadora.nombre,
+            pedido.awb,
             pedido.fecha_pago,
             pedido.numero_factura,
             pedido.valor_total_factura_usd,
             pedido.estado_factura,
+            pedido.total_cajas_enviadas,
             pedido.trm_monetizacion,
-            pedido.valor_total_comision_usd,
-            pedido.valor_comision_pesos,
-            pedido.documento_cobro_comision,
-            pedido.fecha_pago_comision,
+            pedido.tasa_representativa_usd_diaria,
+            pedido.valor_total_utilidad_usd,
+            pedido.valor_utilidad_pesos,
+            pedido.documento_cobro_utilidad,
+            pedido.fecha_pago_utilidad,
             pedido.diferencia_por_abono,
-            pedido.estado_comision,
-            cobrar_comision,  # Añadido valor de 'Cobrar comision'
+            pedido.estado_utilidad,
+            cobrar_utilidad,  # Añadido valor de 'Cobrar utilidad'
         ]
         for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+            cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
+            # Aplicar formato de moneda a las columnas específicas
+            if col_num in [8, 11, 12, 13, 14, 17]:
+                cell.number_format = '$#,##0.00'
 
     # Agregar los totales al final de la hoja de trabajo
 
-    """def aplicar_estilo_total(fila):  # Funcion APara Dar Estilo A Los Totales.
+    def aplicar_estilo_total(fila):  # Funcion APara Dar Estilo A Los Totales.
         for col in range(1, len(columns) + 1):
             celda = worksheet.cell(row=fila, column=col)
             celda.font = total_font
@@ -667,30 +679,30 @@ def exportar_comisiones_juan(request):
             celda.alignment = total_align
 
     row_num += 2  # Saltar a la siguiente fila después de los datos
-    for exportadora, total in totales_por_comision_usd.items():
+    for exportadora, total in totales_por_utilidad_usd.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes USD")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades USD")
         worksheet.cell(row=row_num, column=3, value=total)
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
     for exportadora, total_no_cobrable in totales_no_cobrables_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes No Cobrables USD")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades No Cobrables USD")
         worksheet.cell(row=row_num, column=3, value=total_no_cobrable)
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
     for exportadora, total_cobrado in totales_cobrados_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiónes Pagadas")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades Pagadas")
         worksheet.cell(row=row_num, column=3, value=total_cobrado)
         aplicar_estilo_total(row_num)
         row_num += 1  # Prepararse para la siguiente fila
     for exportadora, total_por_cobrar in totales_por_cobrar_por_exportadora.items():
         worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Comisiones Por Pagar")
+        worksheet.cell(row=row_num, column=2, value="Total Utilidades Por Pagar")
         worksheet.cell(row=row_num, column=3, value=total_por_cobrar)
         aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila"""
+        row_num += 1  # Prepararse para la siguiente fila
 
     workbook.save(output)
     output.seek(0)
@@ -698,9 +710,19 @@ def exportar_comisiones_juan(request):
     # Crear una respuesta HTTP con el archivo de Excel
     response = HttpResponse(output.read(),
                             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="comisiones_pedidos_juan.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="utilidades_pedidos_juan.xlsx"'
 
     return response
+
+
+# ----------------------- Vista exportacion Detalles de pedido --------------------------------------------
+class ExportarDetallesPedidoView(TemplateView):
+    template_name = 'export_detalles_pedido_view.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Agrega contexto adicional aquí si es necesario
+        return context
 
 
 # ------------------ Exportacion de Detalles de Pedidos Excel General -------------------------------------
@@ -718,16 +740,22 @@ def exportar_detalles_pedidos_excel(request):
     # Encabezados
     columns = ['Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
                'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
-               'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa Comision',
-               'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta Comision',
-               'Valor Total Comision Producto', 'Precio Proforma', 'Observaciones']
+               'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
+               'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
+               'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones']
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
         cell.fill = fill
 
-    # Obtener los datos de tu modelo
+    # Filtrar datos basado en el rango de número de pedido
+    numero_pedido_inicial = request.POST.get('numero_pedido_inicial')
+    numero_pedido_final = request.POST.get('numero_pedido_final')
+
     queryset = DetallePedido.objects.all()
+
+    if numero_pedido_inicial and numero_pedido_final:
+        queryset = queryset.filter(pedido__pk__range=(numero_pedido_inicial, numero_pedido_final))
 
     # Agregar datos al libro de trabajo
     for row_num, detalle in enumerate(queryset, start=2):
@@ -750,13 +778,13 @@ def exportar_detalles_pedidos_excel(request):
             detalle.lleva_contenedor,
             detalle.referencia_contenedor,
             detalle.cantidad_contenedores,
-            detalle.tarifa_comision,
+            detalle.tarifa_utilidad,
             detalle.valor_x_caja_usd,
             detalle.valor_x_producto,
             detalle.no_cajas_nc,
             detalle.valor_nota_credito_usd,
-            detalle.afecta_comision,
-            detalle.valor_total_comision_x_producto,
+            detalle.afecta_utilidad,
+            detalle.valor_total_utilidad_x_producto,
             detalle.precio_proforma,
             detalle.observaciones,
         ]
@@ -800,12 +828,18 @@ def exportar_pedidos_excel(request):
     fill = PatternFill(start_color="1e0c42", end_color="1e0c42", fill_type="solid")
 
     # Encabezados
-    columns = ['No', 'Cliente', 'Fecha Solicitud', 'Fecha Entrega', 'Exportador', 'Dias Cartera', 'awb',
-               'Destino', 'Numero Factura', 'Total Cajas Enviadas', 'Descuento Comercial', 'No NC', 'Motivo NC',
-               'Valor Total NC', 'Tasa Representatativa', 'Valor Pagado Cliente', 'Comision Bancaria USD',
-               'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Estado Factura', 'Diferencia Pago',
-               'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Comision USD', 'Valor Comision Pesos',
-               'Documento Cobro Comision', 'Fecha Pago Comision', 'Estado Comision']
+    columns = ['No', 'Cliente', 'Semana',
+               'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada', 'Exportador', 'Subexportadora', 'Intermediario',
+               'Dias Cartera',
+               'AWB', 'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
+               'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado', 'Peso Bruto Enviado',
+               'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB', 'ETA', 'ETD', 'Variedades', 'Descuento Comercial',
+               'No NC', 'Motivo NC', 'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura',
+               'Utilidad Bancaria USD', 'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
+               'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Utilidad USD',
+               'Valor Utilidad Pesos', 'Documento Cobro Utilidad', 'Fecha Pago Utilidad', 'Estado Utilidad',
+               'Estado Cancelacion', 'Estado Documentos', 'Estado Reserva', 'Estado Pedido', 'Observaciones Tracking',
+               'Observaciones Generales']
 
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
@@ -831,34 +865,57 @@ def exportar_pedidos_excel(request):
     for row_num, pedido in enumerate(queryset, start=2):
         row = [
             pedido.pk,
-            pedido.cliente.nombre,
+            pedido.cliente.nombre if pedido.cliente else '',
+            pedido.semana,
             pedido.fecha_solicitud,
             pedido.fecha_entrega,
-            pedido.exportadora.nombre,
+            pedido.fecha_llegada,
+            pedido.exportadora.nombre if pedido.exportadora else '',
+            pedido.subexportadora.nombre if pedido.subexportadora else '',
+            pedido.intermediario.nombre if pedido.intermediario else '',
             pedido.dias_cartera,
             pedido.awb,
-            pedido.destino,
+            pedido.destino.codigo if pedido.destino else '',
+            pedido.aerolinea.nombre if pedido.aerolinea else '',
+            pedido.agencia_carga,
+            pedido.responsable_reserva.nombre if pedido.responsable_reserva else '',
             pedido.numero_factura,
+            pedido.total_cajas_solicitadas,
             pedido.total_cajas_enviadas,
+            pedido.total_peso_bruto_solicitado,
+            pedido.total_peso_bruto_enviado,
+            pedido.total_piezas_solicitadas,
+            pedido.total_piezas_enviadas,
+            pedido.peso_awb,
+            pedido.eta.replace(tzinfo=None) if pedido.eta else '',
+            pedido.etd.replace(tzinfo=None) if pedido.etd else '',
+            pedido.variedades,
             pedido.descuento,
             pedido.nota_credito_no,
             pedido.motivo_nota_credito,
             pedido.valor_total_nota_credito_usd,
-            pedido.tasa_representativa_usd_diaria,
             pedido.valor_pagado_cliente_usd,
-            pedido.comision_bancaria_usd,
+            pedido.estado_factura,
+            pedido.utilidad_bancaria_usd,
             pedido.fecha_pago,
             pedido.trm_monetizacion,
             pedido.fecha_monetizacion,
-            pedido.estado_factura,
+            pedido.tasa_representativa_usd_diaria,
+            pedido.trm_cotizacion,
             pedido.diferencia_por_abono,
             pedido.dias_de_vencimiento,
             pedido.valor_total_factura_usd,
-            pedido.valor_total_comision_usd,
-            pedido.valor_comision_pesos,
-            pedido.documento_cobro_comision,
-            pedido.fecha_pago_comision,
-            pedido.estado_comision,
+            pedido.valor_total_utilidad_usd,
+            pedido.valor_utilidad_pesos,
+            pedido.documento_cobro_utilidad,
+            pedido.fecha_pago_utilidad,
+            pedido.estado_utilidad,
+            pedido.estado_cancelacion,
+            pedido.estado_documentos,
+            pedido.estatus_reserva,
+            pedido.estado_pedido,
+            pedido.observaciones_tracking,
+            pedido.observaciones
         ]
         for col_num, cell_value in enumerate(row, start=1):
             worksheet.cell(row=row_num, column=col_num, value=cell_value)
@@ -901,10 +958,10 @@ def exportar_pedidos_etnico(request):
     # Encabezados
     columns = ['No', 'Cliente', 'Fecha Solicitud', 'Fecha Entrega', 'Exportador', 'Dias Cartera', 'awb',
                'Destino', 'Numero Factura', 'Total Cajas Enviadas', 'Descuento Comercial', 'No NC', 'Motivo NC',
-               'Valor Total NC', 'Tasa Representatativa', 'Valor Pagado Cliente', 'Comision Bancaria USD',
+               'Valor Total NC', 'Tasa Representatativa', 'Valor Pagado Cliente', 'Utilidad Bancaria USD',
                'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Estado Factura', 'Diferencia Pago',
-               'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Comision USD', 'Valor Comision Pesos',
-               'Documento Cobro Comision', 'Fecha Pago Comision', 'Estado Comision']
+               'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Utilidad USD', 'Valor Utilidad Pesos',
+               'Documento Cobro Utilidad', 'Fecha Pago Utilidad', 'Estado Utilidad']
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
@@ -945,7 +1002,7 @@ def exportar_pedidos_etnico(request):
             pedido.valor_total_nota_credito_usd,
             pedido.tasa_representativa_usd_diaria,
             pedido.valor_pagado_cliente_usd,
-            pedido.comision_bancaria_usd,
+            pedido.utilidad_bancaria_usd,
             pedido.fecha_pago,
             pedido.trm_monetizacion,
             pedido.fecha_monetizacion,
@@ -953,11 +1010,11 @@ def exportar_pedidos_etnico(request):
             pedido.diferencia_por_abono,
             pedido.dias_de_vencimiento,
             pedido.valor_total_factura_usd,
-            pedido.valor_total_comision_usd,
-            pedido.valor_comision_pesos,
-            pedido.documento_cobro_comision,
-            pedido.fecha_pago_comision,
-            pedido.estado_comision,
+            pedido.valor_total_utilidad_usd,
+            pedido.valor_utilidad_pesos,
+            pedido.documento_cobro_utilidad,
+            pedido.fecha_pago_utilidad,
+            pedido.estado_utilidad,
         ]
         for col_num, cell_value in enumerate(row, start=1):
             worksheet.cell(row=row_num, column=col_num, value=cell_value)
@@ -998,10 +1055,10 @@ def exportar_pedidos_fieldex(request):
     # Encabezados
     columns = ['No', 'Cliente', 'Fecha Solicitud', 'Fecha Entrega', 'Exportador', 'Dias Cartera', 'awb',
                'Destino', 'Numero Factura', 'Total Cajas Enviadas', 'Descuento Comercial', 'No NC', 'Motivo NC',
-               'Valor Total NC', 'Tasa Representatativa', 'Valor Pagado Cliente', 'Comision Bancaria USD',
+               'Valor Total NC', 'Tasa Representatativa', 'Valor Pagado Cliente', 'Utilidad Bancaria USD',
                'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Estado Factura', 'Diferencia Pago',
-               'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Comision USD', 'Valor Comision Pesos',
-               'Documento Cobro Comision', 'Fecha Pago Comision', 'Estado Comision']
+               'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Utilidad USD', 'Valor Utilidad Pesos',
+               'Documento Cobro Utilidad', 'Fecha Pago Utilidad', 'Estado Utilidad']
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
@@ -1042,7 +1099,7 @@ def exportar_pedidos_fieldex(request):
             pedido.valor_total_nota_credito_usd,
             pedido.tasa_representativa_usd_diaria,
             pedido.valor_pagado_cliente_usd,
-            pedido.comision_bancaria_usd,
+            pedido.utilidad_bancaria_usd,
             pedido.fecha_pago,
             pedido.trm_monetizacion,
             pedido.fecha_monetizacion,
@@ -1050,11 +1107,11 @@ def exportar_pedidos_fieldex(request):
             pedido.diferencia_por_abono,
             pedido.dias_de_vencimiento,
             pedido.valor_total_factura_usd,
-            pedido.valor_total_comision_usd,
-            pedido.valor_comision_pesos,
-            pedido.documento_cobro_comision,
-            pedido.fecha_pago_comision,
-            pedido.estado_comision,
+            pedido.valor_total_utilidad_usd,
+            pedido.valor_utilidad_pesos,
+            pedido.documento_cobro_utilidad,
+            pedido.fecha_pago_utilidad,
+            pedido.estado_utilidad,
         ]
         for col_num, cell_value in enumerate(row, start=1):
             worksheet.cell(row=row_num, column=col_num, value=cell_value)
@@ -1094,10 +1151,10 @@ def exportar_pedidos_juan(request):
     # Encabezados
     columns = ['No', 'Cliente', 'Fecha Solicitud', 'Fecha Entrega', 'Exportador', 'Dias Cartera', 'awb',
                'Destino', 'Numero Factura', 'Total Cajas Enviadas', 'Descuento Comercial', 'No NC', 'Motivo NC',
-               'Valor Total NC', 'Tasa Representatativa', 'Valor Pagado Cliente', 'Comision Bancaria USD',
+               'Valor Total NC', 'Tasa Representatativa', 'Valor Pagado Cliente', 'Utilidad Bancaria USD',
                'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Estado Factura', 'Diferencia Pago',
-               'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Comision USD', 'Valor Comision Pesos',
-               'Documento Cobro Comision', 'Fecha Pago Comision', 'Estado Comision']
+               'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Utilidad USD', 'Valor Utilidad Pesos',
+               'Documento Cobro Utilidad', 'Fecha Pago Utilidad', 'Estado Utilidad']
 
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
@@ -1139,7 +1196,7 @@ def exportar_pedidos_juan(request):
             pedido.valor_total_nota_credito_usd,
             pedido.tasa_representativa_usd_diaria,
             pedido.valor_pagado_cliente_usd,
-            pedido.comision_bancaria_usd,
+            pedido.utilidad_bancaria_usd,
             pedido.fecha_pago,
             pedido.trm_monetizacion,
             pedido.fecha_monetizacion,
@@ -1147,11 +1204,11 @@ def exportar_pedidos_juan(request):
             pedido.diferencia_por_abono,
             pedido.dias_de_vencimiento,
             pedido.valor_total_factura_usd,
-            pedido.valor_total_comision_usd,
-            pedido.valor_comision_pesos,
-            pedido.documento_cobro_comision,
-            pedido.fecha_pago_comision,
-            pedido.estado_comision,
+            pedido.valor_total_utilidad_usd,
+            pedido.valor_utilidad_pesos,
+            pedido.documento_cobro_utilidad,
+            pedido.fecha_pago_utilidad,
+            pedido.estado_utilidad,
         ]
         for col_num, cell_value in enumerate(row, start=1):
             worksheet.cell(row=row_num, column=col_num, value=cell_value)
@@ -1313,25 +1370,106 @@ class PedidoListView(SingleTableView):
     form_class = SearchForm
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().prefetch_related('autorizacioncancelacion_set')
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()  # No results if ID is not an integer
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET)
+        context['es_autorizador'] = self.request.user.groups.filter(name='Autorizadores').exists()
+        return context
+
+
+# -------------------------------- Tabla De Pedidos Seguimientos ----------------------------------------------
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
+class SeguimientosPedidosListView(SingleTableView):
+    model = Pedido
+    table_class = SeguimienosTable
+    table_pagination = {"per_page": 14}
+    template_name = 'seguimiento_pedido_list_general.html'
+    form_class = SearchForm
+
+    def get_queryset(self):
+        queryset = super().get_queryset().prefetch_related('autorizacioncancelacion_set')
+        form = self.form_class(self.request.GET)
+
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
+            item_busqueda = form.cleaned_data.get('item_busqueda')
+
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()  # No results if ID is not an integer
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = self.form_class(self.request.GET)
+        context['es_autorizador'] = self.request.user.groups.filter(name='Autorizadores').exists()
+        return context
+
+
+# -------------------------------- Tabla De Pedidos Seguimientos Resumen ----------------------------------------------
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
+class ResumenSeguimientosPedidosListView(SingleTableView):
+    model = Pedido
+    table_class = SeguimienosResumenTable
+    table_pagination = {"per_page": 50}
+    template_name = 'resumen_seguimiento_pedido_list_general.html'
+    form_class = FiltroSemanaExportadoraForm
+
+    def get_queryset(self):
+        queryset = super().get_queryset().prefetch_related('autorizacioncancelacion_set')
+        form = self.form_class(self.request.GET)
+
+        if form.is_valid():
+            semana = form.cleaned_data.get('semana')
+            exportadora = form.cleaned_data.get('exportadora')
+
+            if semana:
+                queryset = queryset.filter(semana=semana)
+            if exportadora:
+                queryset = queryset.filter(exportadora=exportadora)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = self.form_class(self.request.GET)
+        context['es_autorizador'] = self.request.user.groups.filter(name='Autorizadores').exists()
         return context
 
 
@@ -1349,16 +1487,23 @@ class PedidoEtnicoListView(SingleTableView):
         queryset = super().get_queryset().filter(exportadora__nombre='Etnico')
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()  # No results if ID is not an integer
 
         return queryset
 
@@ -1382,16 +1527,23 @@ class PedidoFieldexListView(SingleTableView):
         queryset = super().get_queryset().filter(exportadora__nombre='Fieldex')
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()  # No results if ID is not an integer
 
         return queryset
 
@@ -1415,16 +1567,23 @@ class PedidoJuanListView(SingleTableView):
         queryset = super().get_queryset().filter(exportadora__nombre='Juan_Matas')
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()  # No results if ID is not an integer
 
         return queryset
 
@@ -1466,37 +1625,36 @@ class PedidoUpdateView(UpdateView):
     template_name = 'pedido_editar.html'
     success_url = '/pedido_list_general/'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.object = None
-
     def get_object(self, queryset=None):
-        pedido_id = int(self.request.POST.get('pedido_id').replace(".", ""))
+        pedido_id = int(self.request.POST.get('pedido_id').replace(".", "")) if self.request.POST.get(
+            'pedido_id') else int(self.request.GET.get('pedido_id').replace(".", ""))
         pedido = get_object_or_404(Pedido, id=pedido_id)
         return pedido
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pedido'] = self.object
+        return context
+
     def get(self, request, *args, **kwargs):
-        pedido_id = int(request.GET.get('pedido_id').replace(".", ""))
-        self.object = get_object_or_404(Pedido, id=pedido_id)
-        formatted_fecha_solicitud = self.object.fecha_solicitud.strftime('%Y-%m-%d')
-        formatted_fecha_entrega = self.object.fecha_entrega.strftime('%Y-%m-%d')
-        if self.object.fecha_pago_comision is None:
-            form = self.form_class(
-                instance=self.object,
-                initial={'fecha_solicitud': formatted_fecha_solicitud, 'fecha_entrega': formatted_fecha_entrega}
-            )
-        else:
-            formatted_fecha_pago_comision = self.object.fecha_pago_comision.strftime('%Y-%m-%d')
-            form = self.form_class(
-                instance=self.object,
-                initial={'fecha_solicitud': formatted_fecha_solicitud, 'fecha_entrega': formatted_fecha_entrega,
-                         'fecha_pago_comision': formatted_fecha_pago_comision}
-            )
+        self.object = self.get_object()
+
+        formatted_fecha_solicitud = self.object.fecha_solicitud.strftime('%Y-%m-%d') if self.object.fecha_solicitud else ''
+        formatted_fecha_entrega = self.object.fecha_entrega.strftime('%Y-%m-%d') if self.object.fecha_entrega else ''
+        formatted_fecha_llegada = self.object.fecha_llegada.strftime('%Y-%m-%d') if self.object.fecha_llegada else ''
+        formatted_fecha_pago_utilidad = self.object.fecha_pago_utilidad.strftime('%Y-%m-%d') if self.object.fecha_pago_utilidad else ''
+
+        form = self.form_class(
+            instance=self.object,
+            initial={'fecha_solicitud': formatted_fecha_solicitud, 'fecha_entrega': formatted_fecha_entrega,
+                     'fecha_llegada': formatted_fecha_llegada, 'fecha_pago_utilidad': formatted_fecha_pago_utilidad}
+        )
+
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            form_html = render_to_string(self.template_name, {'form': form}, request=request)
+            form_html = render_to_string(self.template_name, {'form': form, 'pedido': self.object}, request=request)
             return JsonResponse({'form': form_html})
         else:
-            return super().get(request, *args, **kwargs)
+            return self.render_to_response(self.get_context_data(form=form))
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1514,8 +1672,7 @@ class PedidoUpdateView(UpdateView):
     @transaction.atomic
     def form_valid(self, form):
         self.object = form.save()
-        messages.success(self.request,
-                         f"El pedido para el cliente {form.cleaned_data['cliente']} se ha editado exitosamente.")
+        messages.success(self.request, f"El pedido ha sido editado exitosamente.")
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
         else:
@@ -1523,10 +1680,12 @@ class PedidoUpdateView(UpdateView):
 
     def form_invalid(self, form):
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse(
-                {'success': False, 'html': render_to_string(self.template_name, {'form': form}, request=self.request)})
+            return JsonResponse({'success': False,
+                                 'html': render_to_string(self.template_name, {'form': form, 'pedido': self.object},
+                                                          request=self.request)})
         else:
             return super().form_invalid(form)
+
 
 
 # -------------------------------  //// Formulario - Editar Pedido Por Exportador //// ----------------------------
@@ -1534,40 +1693,37 @@ class PedidoUpdateView(UpdateView):
 class PedidoExportadorUpdateView(UpdateView):
     model = Pedido
     form_class = EditarPedidoExportadorForm
-    template_name = 'pedido_editar.html'
+    template_name = 'pedido_editar_exportador.html'
     success_url = '/update_items/'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.object = None
-
     def get_object(self, queryset=None):
-        pedido_id = int(self.request.POST.get('pedido_id').replace(".", ""))
+        pedido_id = int(self.request.POST.get('pedido_id').replace(".", "")) if self.request.POST.get(
+            'pedido_id') else int(self.request.GET.get('pedido_id').replace(".", ""))
         pedido = get_object_or_404(Pedido, id=pedido_id)
         return pedido
 
-    def get(self, request, *args, **kwargs):
-        pedido_id = int(request.GET.get('pedido_id').replace(".", ""))
-        self.object = get_object_or_404(Pedido, id=pedido_id)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pedido'] = self.object
+        return context
 
-        formatted_fecha_pago = self.object.fecha_pago.strftime('%Y-%m-%d') if self.object.fecha_pago else ''
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
         formatted_fecha_monetizacion = self.object.fecha_monetizacion.strftime(
             '%Y-%m-%d') if self.object.fecha_monetizacion else ''
+        formatted_fecha_pago = self.object.fecha_pago.strftime('%Y-%m-%d') if self.object.fecha_pago else ''
+
         form = self.form_class(
             instance=self.object,
-            initial={'fecha_pago': formatted_fecha_pago, 'fecha_monetizacion': formatted_fecha_monetizacion}
+            initial={'fecha_monetizacion': formatted_fecha_monetizacion, 'fecha_pago': formatted_fecha_pago}
         )
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            form_html = render_to_string(self.template_name, {'form': form}, request=request)
+            form_html = render_to_string(self.template_name, {'form': form, 'pedido': self.object}, request=request)
             return JsonResponse({'form': form_html})
         else:
-            return super().get(request, *args, **kwargs)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['instance'] = self.object
-        return kwargs
+            return self.render_to_response(self.get_context_data(form=form))
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -1580,8 +1736,7 @@ class PedidoExportadorUpdateView(UpdateView):
     @transaction.atomic
     def form_valid(self, form):
         self.object = form.save()
-        messages.success(self.request,
-                         f'El pedido se ha editado exitosamente.')
+        messages.success(self.request, f"El pedido ha sido editado exitosamente.")
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
         else:
@@ -1589,8 +1744,72 @@ class PedidoExportadorUpdateView(UpdateView):
 
     def form_invalid(self, form):
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse(
-                {'success': False, 'html': render_to_string(self.template_name, {'form': form}, request=self.request)})
+            return JsonResponse({'success': False,
+                                 'html': render_to_string(self.template_name, {'form': form, 'pedido': self.object},
+                                                          request=self.request)})
+        else:
+            return super().form_invalid(form)
+
+
+# -------------------------------  Formulario - Editar Pedido Seguimiento - Modal (Tracking)----------------------------
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
+class PedidoUpdateSebguimientoView(UpdateView):
+    model = Pedido
+    form_class = EditarPedidoSeguimientoForm
+    template_name = 'pedido_editar_seguimiento.html'
+    success_url = '/seguimiento_pedido_list_general/'
+
+    def get_object(self, queryset=None):
+        pedido_id = int(self.request.POST.get('pedido_id').replace(".", "")) if self.request.POST.get(
+            'pedido_id') else int(self.request.GET.get('pedido_id').replace(".", ""))
+        pedido = get_object_or_404(Pedido, id=pedido_id)
+        return pedido
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pedido'] = self.object
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        formatted_etd = self.object.etd.strftime('%Y-%m-%dT%H:%M') if self.object.etd else ''
+        formatted_eta = self.object.eta.strftime('%Y-%m-%dT%H:%M') if self.object.eta else ''
+
+        form = self.form_class(
+            instance=self.object,
+            initial={'etd': formatted_etd, 'eta': formatted_eta}
+        )
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            form_html = render_to_string(self.template_name, {'form': form, 'pedido': self.object}, request=request)
+            return JsonResponse({'form': form_html})
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.form_class(request.POST, instance=self.object)
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        messages.success(self.request, f"El pedido ha sido editado exitosamente.")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        else:
+            return super().form_valid(form)
+
+    def form_invalid(self, form):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False,
+                                 'html': render_to_string(self.template_name, {'form': form, 'pedido': self.object},
+                                                          request=self.request)})
         else:
             return super().form_invalid(form)
 
@@ -1733,53 +1952,59 @@ class DetallePedidoUpdateView(UpdateView):
     model = DetallePedido
     form_class = EditarDetallePedidoForm
     template_name = 'detalle_pedido_editar.html'
-    success_url = '/detalle_pedido_editar/'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.object = None
+    success_url = reverse_lazy('pedido_detalle_list')  # Ajusta esta URL según tu configuración
 
     def get_object(self, queryset=None):
-        detallepedido_id = int(self.request.POST.get('detallepedido_id').replace(".", ""))
-        detallepedido = get_object_or_404(DetallePedido, id=detallepedido_id)
-        return detallepedido
+        detallepedido_id = self.request.GET.get('detallepedido_id') or self.request.POST.get('detallepedido_id')
+        if not detallepedido_id:
+            raise ValueError("No se proporcionó 'detallepedido_id'")
+        return get_object_or_404(DetallePedido, id=int(detallepedido_id))
 
     def get(self, request, *args, **kwargs):
-        detallepedido_id = int(request.GET.get('detallepedido_id').replace(".", ""))
-        self.object = get_object_or_404(DetallePedido, id=detallepedido_id)
-        form = self.form_class(
-            instance=self.object,
-        )
+        self.object = self.get_object()
+        pedido_id = request.GET.get('pedido_id')
+        form = self.form_class(instance=self.object, pedido_id=pedido_id)
+        context = self.get_context_data(form=form)
+
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            form_html = render_to_string(self.template_name, {'form': form}, request=request)
+            form_html = render_to_string(self.template_name, context, request=request)
             return JsonResponse({'form': form_html})
         else:
-            return super().get(request, *args, **kwargs)
+            return self.render_to_response(context)
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        form = self.form_class(request.POST, instance=self.object)
+        pedido_id = request.POST.get('pedido_id')
+        form = self.form_class(request.POST, instance=self.object, pedido_id=pedido_id)
+        context = self.get_context_data(form=form)
+
         if form.is_valid():
-            return self.form_valid(form)
+            return self.form_valid(form, pedido_id)
         else:
-            return self.form_invalid(form)
+            return self.form_invalid(form, context)
 
     @transaction.atomic
-    def form_valid(self, form):
+    def form_valid(self, form, pedido_id):
         self.object = form.save()
         messages.success(self.request,
-                         f"El detalle para el {form.cleaned_data['pedido']} se ha editado exitosamente.")
+                         f"El detalle para el pedido {pedido_id} se ha editado exitosamente.")
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
         else:
             return super().form_valid(form)
 
-    def form_invalid(self, form):
+    def form_invalid(self, form, context):
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse(
-                {'success': False, 'html': render_to_string(self.template_name, {'form': form}, request=self.request)})
+                {'success': False, 'html': render_to_string(self.template_name, context, request=self.request)})
         else:
-            return super().form_invalid(form)
+            return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pedido_id'] = self.request.GET.get('pedido_id') or self.request.POST.get('pedido_id')
+        return context
+
 
 
 # ---------------------------- Formulario Eliminar Detalle De Pedido --------------------------------------------
@@ -1858,16 +2083,23 @@ class CarteraHeavensListView(SingleTableView):
         queryset = super().get_queryset()
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()
 
         return queryset
 
@@ -1891,16 +2123,23 @@ class CarteraEtnicoListView(SingleTableView):
         queryset = super().get_queryset().filter(exportadora__nombre='Etnico')
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()
 
         return queryset
 
@@ -1924,16 +2163,23 @@ class CarteraFieldexListView(SingleTableView):
         queryset = super().get_queryset().filter(exportadora__nombre='Fieldex')
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()
 
         return queryset
 
@@ -1957,16 +2203,23 @@ class CarteraJuanListView(SingleTableView):
         queryset = super().get_queryset().filter(exportadora__nombre='Juan_Matas')
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()
 
         return queryset
 
@@ -1976,30 +2229,37 @@ class CarteraJuanListView(SingleTableView):
         return context
 
 
-# ------------------------- COMISIONES GENERAL /// Table mostrar comisiones de pedidos Heavens ///  ------------------
+# ------------------------- Utilidades GENERAL /// Table mostrar Utilidades de pedidos Heavens ///  ------------------
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
-class ComisionHeavensListView(SingleTableView):
+class UtilidadHeavensListView(SingleTableView):
     model = Pedido
-    table_class = ComisionPedidoTable
+    table_class = UtilidadPedidoTable
     table_pagination = {"per_page": 14}
-    template_name = 'comision_list_heavens.html'
+    template_name = 'utilidad_list_heavens.html'
     form_class = SearchForm
 
     def get_queryset(self):
         queryset = super().get_queryset()
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()
 
         return queryset
 
@@ -2009,30 +2269,37 @@ class ComisionHeavensListView(SingleTableView):
         return context
 
 
-# ------------------------- COMISIONES /// Table mostrar comisiones de pedidos Etnico ///  ---------------------------
+# ------------------------- Utilidades /// Table mostrar Utilidades de pedidos Etnico ///  ---------------------------
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(es_miembro_del_grupo('Etnico'), login_url=reverse_lazy('home')), name='dispatch')
-class ComisionEtnicoListView(SingleTableView):
+class UtilidadEtnicoListView(SingleTableView):
     model = Pedido
-    table_class = ComisionPedidoTable
+    table_class = UtilidadPedidoTable
     table_pagination = {"per_page": 14}
-    template_name = 'comision_list_etnico.html'
+    template_name = 'utilidad_list_etnico.html'
     form_class = SearchForm
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Etnico')
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()
 
         return queryset
 
@@ -2042,30 +2309,37 @@ class ComisionEtnicoListView(SingleTableView):
         return context
 
 
-# ------------------------- COMISIONES /// Table mostrar comisiones de pedidos Fieldex ///  ---------------------------
+# ------------------------- Utilidades /// Table mostrar Utilidades de pedidos Fieldex ///  ---------------------------
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(es_miembro_del_grupo('Fieldex'), login_url=reverse_lazy('home')), name='dispatch')
-class ComisionFiedexListView(SingleTableView):
+class UtilidadFiedexListView(SingleTableView):
     model = Pedido
-    table_class = ComisionPedidoTable
+    table_class = UtilidadPedidoTable
     table_pagination = {"per_page": 14}
-    template_name = 'comision_list_fieldex.html'
+    template_name = 'utilidad_list_fieldex.html'
     form_class = SearchForm
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Fieldex')
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()
 
         return queryset
 
@@ -2075,30 +2349,37 @@ class ComisionFiedexListView(SingleTableView):
         return context
 
 
-# ------------------------- COMISIONES /// Table mostrar comisiones de pedidos Juan Matas // -----------------------
+# ------------------------- Utilidades /// Table mostrar Utilidades de pedidos Juan Matas // -----------------------
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(es_miembro_del_grupo('Juan_Matas'), login_url=reverse_lazy('home')), name='dispatch')
-class ComisionJuanListView(SingleTableView):
+class UtilidadJuanListView(SingleTableView):
     model = Pedido
-    table_class = ComisionPedidoTable
+    table_class = UtilidadPedidoTable
     table_pagination = {"per_page": 14}
-    template_name = 'comision_list_juan.html'
+    template_name = 'utilidad_list_juan.html'
     form_class = SearchForm
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Juan_Matas')
         form = self.form_class(self.request.GET)
 
-        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
 
-            # Aquí se maneja la lógica de la búsqueda
-            try:
-                item_busqueda_id = int(item_busqueda)  # Intenta convertir a entero
-                queryset = queryset.filter(Q(cliente__nombre__icontains=item_busqueda) | Q(id=item_busqueda_id))
-            except ValueError:
-                # Si la conversión falla, busca solo por nombre
-                queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'cliente':
+                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()
 
         return queryset
 
@@ -2116,7 +2397,7 @@ class ReferenciasEtnicoListView(SingleTableView):
     model = Referencias
     table_class = ReferenciasTable
     template_name = 'referencia_list_etnico.html'
-    form_class = SearchForm
+    form_class = SearchFormReferencias
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportador__nombre='Etnico')
@@ -2369,7 +2650,8 @@ def exportar_referencias_juan(request):
     return response
 
 
-# ----------------------------- Actualizar los días de Vencimiento ---------------------------------------------
+# --------------------------------- Funciones Heavens General ---------------------------------------------------------
+# ----------------------------- Actualizar los días de Vencimiento ----------------------------------------------------
 
 def actualizar_dias_de_vencimiento_todos(request):
     pedidos = Pedido.objects.all()
@@ -2379,9 +2661,388 @@ def actualizar_dias_de_vencimiento_todos(request):
     return redirect('pedido_list_general')
 
 
+# ------------------------ Vista para actualizar la TRM Banco de la republica -----------------------------------------
 def actualizar_tasas(request):
     pedidos = Pedido.objects.order_by('-id')[:50]
     for pedido in pedidos:
         pedido.actualizar_tasa_representativa()
     messages.success(request, 'Se Actualizaron Las Tasas Con Banco De La Republica Correctamente')
     return redirect('pedido_list_general')
+
+
+# --------------------------------- Funciones Etnico  ---------------------------------------------------------
+def actualizar_dias_de_vencimiento_etnico(request):
+    pedidos = Pedido.objects.all()
+    for pedido in pedidos:
+        pedido.actualizar_dias_de_vencimiento()
+    messages.success(request, 'Días de vencimiento actualizados para todos los pedidos.')
+    return redirect('pedido_list_etnico')
+
+
+def actualizar_tasas_etnico(request):
+    pedidos = Pedido.objects.order_by('-id')[:50]
+    for pedido in pedidos:
+        pedido.actualizar_tasa_representativa()
+    messages.success(request, 'Se Actualizo La TRM Con Banco De La Republica Correctamente')
+    return redirect('pedido_list_etnico')
+
+
+# --------------------------------- Funciones Fieldex  ---------------------------------------------------------
+def actualizar_dias_de_vencimiento_fieldex(request):
+    pedidos = Pedido.objects.all()
+    for pedido in pedidos:
+        pedido.actualizar_dias_de_vencimiento()
+    messages.success(request, 'Días de vencimiento actualizados para todos los pedidos.')
+    return redirect('pedido_list_fieldex')
+
+
+def actualizar_tasas_fieldex(request):
+    pedidos = Pedido.objects.order_by('-id')[:50]
+    for pedido in pedidos:
+        pedido.actualizar_tasa_representativa()
+    messages.success(request, 'Se Actualizo La TRM Con Banco De La Republica Correctamente')
+    return redirect('pedido_list_fieldex')
+
+
+# --------------------------------- Funciones Juan_matas  ---------------------------------------------------------
+def actualizar_dias_de_vencimiento_juan(request):
+    pedidos = Pedido.objects.all()
+    for pedido in pedidos:
+        pedido.actualizar_dias_de_vencimiento()
+    messages.success(request, 'Días de vencimiento actualizados para todos los pedidos.')
+    return redirect('pedido_list_juan')
+
+
+def actualizar_tasas_juan(request):
+    pedidos = Pedido.objects.order_by('-id')[:50]
+    for pedido in pedidos:
+        pedido.actualizar_tasa_representativa()
+    messages.success(request, 'Se Actualizo La TRM Con Banco De La Republica Correctamente')
+    return redirect('pedido_list_juan')
+
+
+# ----------------------------- Vista Autorización De Cancelaciones De Pedidos ---------------------------------------
+
+# Solicitar Cancelacion Del pedido.
+@login_required
+def solicitar_cancelacion(request, pedido_id):
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+
+    if request.method == 'POST':
+        observaciones = request.POST.get('observaciones', '')
+        if pedido.estado_cancelacion == 'sin_solicitud' or pedido.estado_cancelacion == 'no_autorizado':
+            autorizacion = AutorizacionCancelacion.objects.create(pedido=pedido, usuario_solicitante=request.user)
+            pedido.estado_cancelacion = 'pendiente'
+            pedido.observaciones = observaciones
+            pedido.save()
+        messages.success(request, f'Se ha enviado la solicitud de cancelación para el pedido: {pedido.id}')
+        return redirect('pedido_list_general')  # Redirigir a la lista de pedidos o a donde sea necesario
+
+    return render(request, 'solicitar_cancelacion.html', {'pedido': pedido})
+
+
+# Autorizar Cancelacion del pedido
+@login_required
+def autorizar_cancelacion(request, autorizacion_id):
+    autorizacion = get_object_or_404(AutorizacionCancelacion, id=autorizacion_id)
+
+    if request.method == 'POST':
+        observaciones = request.POST.get('observaciones', '')
+        accion = request.POST.get('accion', '')
+        # Verificar si el usuario actual tiene permiso para autorizar la cancelación
+        if request.user.groups.filter(name='Autorizadores').exists():
+            pedido = autorizacion.pedido
+            if accion == 'autorizar':
+                autorizacion.autorizado = True
+                autorizacion.fecha_autorizacion = timezone.now()
+                autorizacion.usuario_autorizador = request.user
+                autorizacion.save()
+                pedido.estado_cancelacion = 'autorizado'
+                pedido.estado_pedido = 'Cancelado'
+                pedido.estado_factura = 'Cancelada'
+                pedido.awb = '-'
+                pedido.descuento = 0
+                pedido.dias_de_vencimiento = 0
+                pedido.diferencia_por_abono = 0
+                pedido.documento_cobro_utilidad = '-'
+                pedido.estado_utilidad = '-'
+                pedido.numero_factura = '-'
+                pedido.tasa_representativa_usd_diaria = 0
+                pedido.total_cajas_enviadas = 0
+                pedido.total_peso_bruto = 0
+                pedido.total_piezas_enviadas = 0
+                pedido.total_piezas_solicitadas = 0
+                pedido.trm_cotizacion = 0
+                pedido.trm_monetizacion = 0
+                pedido.utilidad_bancaria_usd = 0
+                pedido.valor_total_factura_usd = 0
+                pedido.valor_total_nota_credito_usd = 0
+                pedido.valor_total_utilidad_usd = 0
+                pedido.valor_utilidad_pesos = 0
+            elif accion == 'no_autorizar':
+                pedido.estado_cancelacion = 'no_autorizado'
+                messages.success(request, f' Se ha anulado la cancelación para el pedido: {pedido.id}')
+            pedido.observaciones = observaciones
+            pedido.save()
+
+            # Eliminar todos los detalles del pedido asociado si autorizado
+            if accion == 'autorizar':
+                DetallePedido.objects.filter(pedido=pedido).delete()
+                messages.success(request, f' Se ha cancelado correctamente el pedido: {pedido.id}')
+        return redirect('pedido_list_general')
+    return render(request, 'autorizar_cancelacion.html', {'autorizacion': autorizacion})
+
+
+@login_required
+def filtrar_presentaciones(request):
+    fruta_id = request.GET.get('fruta_id')
+    pedido_id = request.GET.get('pedido_id')
+
+    if fruta_id and pedido_id:
+        presentaciones = Presentacion.objects.filter(
+            clientepresentacion__cliente__pedido__id=pedido_id,
+            clientepresentacion__fruta_id=fruta_id
+        ).values('id', 'nombre', 'kilos')
+        return JsonResponse({'presentaciones': list(presentaciones)})
+    return JsonResponse({'presentaciones': []})
+
+
+@login_required
+def load_referencias(request):
+    presentacion_id = request.GET.get('presentacion_id')
+    pedido_id = request.GET.get('pedido_id')
+
+    if presentacion_id and pedido_id:
+        try:
+            pedido = Pedido.objects.get(id=pedido_id)
+            referencias = Referencias.objects.filter(
+                presentacionreferencia__presentacion_id=presentacion_id,
+                exportador=pedido.exportadora
+            ).distinct()
+        except Pedido.DoesNotExist:
+            referencias = Referencias.objects.none()
+    else:
+        referencias = Referencias.objects.none()
+
+    referencias_data = [{'id': ref.id, 'nombre': ref.nombre} for ref in referencias]
+    return JsonResponse({'referencias': referencias_data})
+
+
+# Exportacion de Resumen a PDF
+@login_required(login_url=reverse_lazy('home'))
+def export_pdf_resumen_semana(request):
+    # Obtener los parámetros de filtro
+    semana = request.GET.get('semana')
+    exportador_id = request.GET.get('exportadora')
+
+    # Filtrar los datos basados en los parámetros
+    pedidos = Pedido.objects.all()
+    if semana:
+        pedidos = pedidos.filter(semana=semana)
+    if exportador_id:
+        pedidos = pedidos.filter(exportadora_id=exportador_id)
+        try:
+            exportador_nombre = Exportador.objects.get(id=exportador_id).nombre
+        except Exportador.DoesNotExist:
+            exportador_nombre = None
+    else:
+        exportador_nombre = None
+
+    # Generar la tabla con los datos filtrados
+    table = SeguimienosResumenTable(pedidos)
+    context = {
+        'table': table,
+        'semana': semana,
+        'exportador': exportador_nombre
+    }
+    html_string = render_to_string('seguimiento_resumen_pdf.html', context, request=request)
+    html = HTML(string=html_string)
+
+    # Añadir un CSS para formato horizontal y ajuste de ancho de columnas
+    css = CSS(string='''
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 400;
+            src: url('/static/fonts/Poppins/Poppins-Regular.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 600;
+            src: url('/static/fonts/Poppins/Poppins-SemiBold.ttf') format('truetype');
+        }    
+        @page {
+            size: A3 landscape;
+            margin: 1cm;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            font-size: 12px;
+            background: none;
+        }
+        .container {
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            color: #ffffff;
+            background-color: #000000;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 10px;
+        }
+        .table thead th {
+            background-color: #036098;
+            color: #ffffff;
+        }
+        .table thead th a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: center;
+        }
+        .table th {
+            font-weight: bold;
+        }
+        ''')
+
+    pdf = html.write_pdf(stylesheets=[css])
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="seguimiento_resumen.pdf"'
+    return response
+
+
+@login_required(login_url=reverse_lazy('home'))
+def exportar_pdf_resumen_pedido(request, pedido_id):
+    start_time = time.time()
+
+    # Obtener el pedido y los detalles del pedido
+    pedido = get_object_or_404(Pedido, pk=pedido_id)
+    if not request.user.groups.filter(name=pedido.exportadora.nombre).exists():
+        return HttpResponseForbidden("No tienes permiso para ver estos detalles del pedido")
+    step_time = time.time()
+    print(f"Tiempo para verificar permisos y obtener el pedido: {step_time - start_time:.2f} segundos")
+
+    # Filtrar los detalles del pedido
+    detalles = DetallePedido.objects.filter(pedido=pedido).select_related('pedido')
+    step_time_2 = time.time()
+    print(f"Tiempo para filtrar los detalles del pedido: {step_time_2 - step_time:.2f} segundos")
+
+    # Calcular totales
+    total_cajas_solicitadas = detalles.aggregate(Sum('cajas_solicitadas'))['cajas_solicitadas__sum']
+    total_peso_bruto = sum(detalle.calcular_peso_bruto() for detalle in detalles)
+    total_piezas = math.ceil(sum(detalle.calcular_no_piezas() for detalle in detalles))
+    step_time_3 = time.time()
+    print(f"Tiempo para calcular los totales: {step_time_3 - step_time_2:.2f} segundos")
+
+    # Generar la tabla con los datos filtrados
+    table = ResumenPedidoTable(detalles)
+    step_time_4 = time.time()
+    print(f"Tiempo para generar la tabla: {step_time_4 - step_time_3:.2f} segundos")
+
+    # Contexto para la plantilla
+    context = {
+        'pedido': pedido,
+        'table': table,
+        'total_cajas_solicitadas': total_cajas_solicitadas,
+        'total_peso_bruto': total_peso_bruto,
+        'total_piezas': total_piezas
+    }
+
+    # Renderizar la plantilla a HTML
+    html_string = render_to_string('resumen_pedido_pdf.html', context, request=request)
+    step_time_5 = time.time()
+    print(f"Tiempo para renderizar la plantilla a HTML: {step_time_5 - step_time_4:.2f} segundos")
+
+    html = HTML(string=html_string)
+
+    # Añadir CSS para el formato horizontal y ajuste de ancho de columnas
+    css = CSS(string='''
+        @page {
+            size: A4 landscape;
+            margin: 1cm;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            font-size: 10px;
+            background: none;
+        }
+        h1 {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            color: #ffffff;
+            background-color: #000000;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .container, .header-table, .details-table, .table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+        .header-table th, .header-table td, .details-table th, .details-table td,
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .header-table th, .details-table th, .table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .header-table th, .details-table th {
+            background-color: #f2f2f2;
+        }
+        .table {
+            font-size: 10px;
+        }
+        .table thead th {
+            color: #ffffff;
+            background-color: #036098;
+        }
+        .table thead th a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .table th, .table td {
+            padding: 4px;
+            text-align: center;
+        }
+        ''')
+    options = {
+        'page-size': 'A4',
+        'margin-top': '1cm',
+        'margin-right': '1cm',
+        'margin-bottom': '1cm',
+        'margin-left': '1cm',
+        'encoding': "UTF-8",
+        'no-outline': None
+    }
+
+    pdf = html.write_pdf(stylesheets=[css], presentational_hints=True, optimize_size=('images', 'fonts'))
+    step_time_6 = time.time()
+    print(f"Tiempo para generar el PDF: {step_time_6 - step_time_5:.2f} segundos")
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="resumen_pedido_{pedido_id}.pdf"'
+    end_time = time.time()
+    print(f"Tiempo total: {end_time - start_time:.2f} segundos")
+
+    return response
+
+
+
+

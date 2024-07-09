@@ -1,75 +1,64 @@
 /* Estilos generales del body */
 body {
-    height: 90vh;
+    height: 100vh;
     background-image: url(../img/fondojornadas.webp);
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
     overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-/* Estilos del contenedor principal */
 .container {
-    position: absolute;
-    top: 35%;
-    left: 10%;
+    margin-top: auto;
+    margin-bottom: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
 }
 
-/* Estilos del título h1 */
 h2 {
     color: aliceblue;
 }
 
-/* Estilos del footer */
 .footer {
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    height: 2.2%;
-    width: 100%;
     background-color: rgb(54, 54, 54);
     color: white;
     text-align: center;
     font-family: 'Noto Sans Display', sans-serif;
     font-size: 15px;
+    padding: 10px 0;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
 }
-
-/* Estilos del botón "Volver" */
 
 /* Estilos para pantallas más pequeñas */
 @media screen and (max-width: 1366px), screen and (max-height: 900px) {
     .card {
-        position: relative;
-        top: -90px;
-        left: -50px;
+        width: 90%;
+        margin: auto;
     }
 }
 
-
-/* Estilos personalizados para los botones */
-
-
-/* Estilos para el botón Volver */
 #volver {
-    display: inline-block; /* Para asegurar la correcta visualización del botón */
-    text-align: center; /* Alinea el texto dentro del botón */
-    /* Agrega cualquier otro estilo que desees aquí */
+    display: inline-block;
+    text-align: center;
 }
 
 .form-group {
     display: flex;
     align-items: center;
-    /* Asegura que los elementos estén alineados verticalmente /
-   gap: 1rem; / Espaciado entre los elementos del formulario */
 }
 
-
 .btn {
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-/ Agrega una sombra para un efecto 3 D / border: none;
-/ Elimina el borde para un look más moderno / padding: 0.5 rem 1 rem;
-/ Ajusta el relleno para un tamaño óptimo * /
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); /* Agrega una sombra para un efecto 3D */
+    border: none; /* Elimina el borde para un look más moderno */
+    padding: 0.5rem 1rem; /* Ajusta el relleno para un tamaño óptimo */
 }
 
 .formulario-blanco {

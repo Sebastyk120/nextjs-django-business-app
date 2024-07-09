@@ -1,21 +1,29 @@
-import requests
-import pandas as pd
+def actualizar_tasa_representativa(self):
+    # Si fecha_monetizacion es None, establecer tasa_representativa_usd_diaria a 0 y salir
+    if self.fecha_monetizacion is None:
+        self.tasa_representativa_usd_diaria = 0
+        self.save()
+        return
 
-# URL del JSON
-url = "https://www.datos.gov.co/resource/mcec-87by.json"
+    url = "https://www.datos.gov.co/resource/mcec-87by.json"
+    response = requests.get(url)
 
-# Hacer la solicitud GET para obtener el contenido
-response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        df = pd.DataFrame(data)
 
-# Verificar que la solicitud fue exitosa
-if response.status_code == 200:
-    # Parsear el contenido JSON
-    data = response.json()
+        # Convertir las columnas de fecha a datetime
+        df['vigenciadesde'] = pd.to_datetime(df['vigenciadesde'])
 
-    # Convertir a DataFrame de pandas
-    df = pd.DataFrame(data)
+        # Ordenar los datos por la fecha de inicio de vigencia
+        df = df.sort_values('vigenciadesde')
 
-    # Mostrar las primeras filas del DataFrame
-    print(df.head())
-else:
-    print("Error al acceder a la URL")
+        # Encontrar la tasa correcta
+        fecha_monetizacion = pd.to_datetime(self.fecha_monetizacion)
+        df_filtrado = df[df['vigenciadesde'] <= fecha_monetizacion]
+        if not df_filtrado.empty:
+            tasa_valor = df_filtrado.iloc[-1]['valor']
+            self.tasa_representativa_usd_diaria = tasa_valor
+            self.save()
+    else:
+        print("Error al acceder a la URL")

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Solicitar Cancelación</title>
+</head>
+<body>
+<h1>Solicitar Cancelación para Pedido {{ pedido.id }}</h1>
+<form method="post">
+    {% csrf_token %}
+    <label for="observaciones">Observaciones:</label>
+    <textarea name="observaciones" id="observaciones" rows="4" cols="50" required></textarea><br><br>
+    <button type="submit">Solicitar Cancelación</button>
+</form>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{% load django_tables2 %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento Resumen Exportaciones</title>
+</head>
+<body>
+    <div class="responsive-table__container">
+        <h1>Resumen Exportaciones Semana: {{ semana }}  Exportador: {{ exportador }}</h1>
+        {% render_table table %}
+    </div>
+</body>
+</html>

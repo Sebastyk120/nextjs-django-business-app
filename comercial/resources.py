@@ -4,8 +4,9 @@ from import_export import resources
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 
-from .models import Pedido, Cliente, Fruta, Contenedor, DetallePedido, Pais, Presentacion, Referencias, Exportador, \
-    TipoCaja, ClientePresentacion
+from .models import Pedido, Cliente, Fruta, Contenedor, DetallePedido, Iata, Presentacion, Referencias, Exportador, \
+    TipoCaja, ClientePresentacion, PresentacionReferencia, AutorizacionCancelacion, Aerolinea, AgenciaCarga, \
+    Intermediario, SubExportadora
 
 
 # ////////////////////////////////////// Exportaciones De Cartera /////////////////////////////////////////////////////
@@ -20,7 +21,7 @@ def obtener_datos_con_totales_juan(fecha_inicial=None, fecha_final=None):
     pedidos = pedidos_query.values(
         'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
-        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
+        'valor_pagado_cliente_usd', 'utilidad_bancaria_usd', 'fecha_pago', 'estado_factura',
         'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
     )
 
@@ -29,7 +30,7 @@ def obtener_datos_con_totales_juan(fecha_inicial=None, fecha_final=None):
         'cliente__nombre', 'exportadora__nombre'
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
-        total_comision=Sum('comision_bancaria_usd'),
+        total_utilidad=Sum('utilidad_bancaria_usd'),
         total_pagado=Sum('valor_pagado_cliente_usd'),
         total_nc=Sum('valor_total_nota_credito_usd'),
         total_descuentos=Sum('descuento')
@@ -49,7 +50,7 @@ def obtener_datos_con_totales_fieldex(fecha_inicial=None, fecha_final=None):
     pedidos = pedidos_query.values(
         'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
-        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
+        'valor_pagado_cliente_usd', 'utilidad_bancaria_usd', 'fecha_pago', 'estado_factura',
         'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
     )
 
@@ -58,7 +59,7 @@ def obtener_datos_con_totales_fieldex(fecha_inicial=None, fecha_final=None):
         'cliente__nombre', 'exportadora__nombre'
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
-        total_comision=Sum('comision_bancaria_usd'),
+        total_utilidad=Sum('utilidad_bancaria_usd'),
         total_pagado=Sum('valor_pagado_cliente_usd'),
         total_nc=Sum('valor_total_nota_credito_usd'),
         total_descuentos=Sum('descuento')
@@ -79,7 +80,7 @@ def obtener_datos_con_totales_etnico(fecha_inicial=None, fecha_final=None):
     pedidos = pedidos_query.values(
         'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
-        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
+        'valor_pagado_cliente_usd', 'utilidad_bancaria_usd', 'fecha_pago', 'estado_factura',
         'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
     )
 
@@ -88,7 +89,7 @@ def obtener_datos_con_totales_etnico(fecha_inicial=None, fecha_final=None):
         'cliente__nombre', 'exportadora__nombre'
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
-        total_comision=Sum('comision_bancaria_usd'),
+        total_utilidad=Sum('utilidad_bancaria_usd'),
         total_pagado=Sum('valor_pagado_cliente_usd'),
         total_nc=Sum('valor_total_nota_credito_usd'),
         total_descuentos=Sum('descuento')
@@ -109,7 +110,7 @@ def obtener_datos_con_totales(fecha_inicial=None, fecha_final=None):
     pedidos = pedidos_query.values(
         'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
-        'valor_pagado_cliente_usd', 'comision_bancaria_usd', 'fecha_pago', 'estado_factura',
+        'valor_pagado_cliente_usd', 'utilidad_bancaria_usd', 'fecha_pago', 'estado_factura',
         'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
     )
 
@@ -118,7 +119,7 @@ def obtener_datos_con_totales(fecha_inicial=None, fecha_final=None):
         'cliente__nombre', 'exportadora__nombre'
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
-        total_comision=Sum('comision_bancaria_usd'),
+        total_utilidad=Sum('utilidad_bancaria_usd'),
         total_pagado=Sum('valor_pagado_cliente_usd'),
         total_nc=Sum('valor_total_nota_credito_usd'),
         total_descuentos=Sum('descuento')
@@ -136,7 +137,7 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
     # Definir y escribir los encabezados de columna
     encabezados = ['No. Pedido', 'Cliente', 'Exportadora', 'Número Factura', 'Fecha Entrega', 'Días Vencimiento',
                    'Valor Factura USD', 'Valor Pagado Cliente USD', 'Nota Crédito', 'Total NC', 'Descuento',
-                   'Comisión Bancaria', 'Fecha Pago Cliente', 'Estado Factura', 'Saldo']
+                   'Utilidad Bancaria', 'Fecha Pago Cliente', 'Estado Factura', 'Saldo']
     sheet.append(encabezados)
 
     # Estilo para los encabezados
@@ -153,7 +154,7 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
     # Escribir los datos de los pedidos
     for pedido in pedidos:
         saldo = pedido['valor_total_factura_usd'] - pedido['valor_pagado_cliente_usd'] - pedido[
-            'comision_bancaria_usd'] - pedido['valor_total_nota_credito_usd'] - pedido['descuento']
+            'utilidad_bancaria_usd'] - pedido['valor_total_nota_credito_usd'] - pedido['descuento']
         # Aplicar formato de moneda a las celdas relevantes
         moneda_columns = [7, 8, 10, 11, 12, 15]  # Índices de columnas a formatear como moneda
         for col_idx in moneda_columns:
@@ -171,7 +172,7 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
             pedido['nota_credito_no'],
             pedido['valor_total_nota_credito_usd'],
             pedido['descuento'],
-            pedido['comision_bancaria_usd'],
+            pedido['utilidad_bancaria_usd'],
             pedido['fecha_pago'].strftime('%Y-%m-%d') if pedido['fecha_pago'] else '',
             pedido['estado_factura'],
             saldo
@@ -187,14 +188,14 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
             total['total_factura'],
             'Total Pagado Cliente ->',
             total['total_pagado'],
-            'Total Comisiones Banc ->',
-            total['total_comision'],
+            'Total Utilidades Banc ->',
+            total['total_utilidad'],
             'Total Notas Credito ->',
             total['total_nc'],
             'Total Descuentos ->',
             total['total_descuentos'],
             'Saldo ->',
-            total['total_factura'] - total['total_pagado'] - total['total_comision'] - total['total_nc'] - total[
+            total['total_factura'] - total['total_pagado'] - total['total_utilidad'] - total['total_nc'] - total[
                 'total_descuentos']
         ]
         sheet.append(fila_total)
@@ -262,9 +263,9 @@ class FrutaResource(resources.ModelResource):
         model = Fruta
 
 
-class PaisResource(resources.ModelResource):
+class IataResource(resources.ModelResource):
     class Meta:
-        model = Pais
+        model = Iata
 
 
 class PedidoResource(resources.ModelResource):
@@ -298,3 +299,33 @@ class ReferenciasResource(resources.ModelResource):
 class ClientePresentacionResource(resources.ModelResource):
     class Meta:
         model = ClientePresentacion
+
+
+class PresentacionReferenciaResource(resources.ModelResource):
+    class Meta:
+        model = PresentacionReferencia
+
+
+class AutorizacionCancelacionResource(resources.ModelResource):
+    class Meta:
+        model = AutorizacionCancelacion
+
+
+class AerolineaResource(resources.ModelResource):
+    class Meta:
+        model = Aerolinea
+
+
+class AgenciaCargaResource(resources.ModelResource):
+    class Meta:
+        model = AgenciaCarga
+
+
+class IntermediarioResource(resources.ModelResource):
+    class Meta:
+        model = Intermediario
+
+
+class SubExportadoraResource(resources.ModelResource):
+    class Meta:
+        model = SubExportadora

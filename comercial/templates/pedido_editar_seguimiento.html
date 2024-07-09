@@ -1,0 +1,57 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/crear_pedido.css' %}"/>
+<div class="modal-header">
+    <h5 class="modal-title" id="moverItemModalLabel">Seguimiento Para El Pedido {{ pedido.id }} <i class="bi bi-pencil-fill"></i></h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<form id="moverItemForm" method="post">
+    {% csrf_token %}
+    <div class="modal-body">
+        <div id="errores">
+            {% for field, error_list in form.errors.items %}
+                {% for error in error_list %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="container">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.responsable_reserva.label_tag }} {{ form.responsable_reserva }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.estatus_reserva.label_tag }} {{ form.estatus_reserva }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.agencia_carga.label_tag }} {{ form.agencia_carga }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.etd.label_tag }} {{ form.etd }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.eta.label_tag }} {{ form.eta }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.peso_awb.label_tag }} {{ form.peso_awb }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.estado_documentos.label_tag }} {{ form.estado_documentos }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.observaciones_tracking.label_tag }} {{ form.observaciones_tracking }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">Cerrar</button>
+        <button type="submit" class="btn btn-success">Editar</button>
+    </div>
+</form>
+

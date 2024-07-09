@@ -1,5 +1,4 @@
 $(document).ready(function () {
-
     var itemId = null;
 
     $('.mover-button').click(function () {
@@ -9,7 +8,7 @@ $(document).ready(function () {
             type: 'get',
             data: {'pedido_id': itemId},
             success: function (data) {
-                $('.modal-content').html(data.form);
+                $('#moverItemModal .modal-content').html(data.form);
                 $('#moverItemModal').modal('show');
             }
         });
@@ -39,4 +38,8 @@ $(document).ready(function () {
         });
     });
 
+    // Limpiar el contenido del modal cuando se cierra
+    $('#moverItemModal').on('hidden.bs.modal', function () {
+        $(this).find('.modal-content').html(''); // Limpiar el contenido del modal
+    });
 });

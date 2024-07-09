@@ -1,0 +1,61 @@
+{% extends 'comercialbase.html' %} {% block content %}
+    {% load static %}
+    {% load django_tables2 %}
+    <!DOCTYPE html>
+    <html lang="es" data-bs-theme="dark">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{% static 'css/seguimiento_pedido_items.css' %}"/>
+        <title>Pedidos Heavens</title>
+    </head>
+    <body>
+    <h1 class="align-center">Seguimiento Y Resumen Exportaciones <i class="bi bi-journal-arrow-up"></i></h1>
+    <div class="button-container">
+        <form method="get" class="d-flex justify-content-center mb-3" id="searchForm">
+        <select name="metodo_busqueda" class="form-control" required>
+            <option value="" disabled selected>Modo De Búsqueda</option>
+            <option value="awb">AWB</option>
+            <option value="numero_factura">Número de Factura</option>
+            <option value="cliente">Cliente</option>
+            <option value="id">Número De Pedido</option>
+        </select>
+        <input type="text" name="item_busqueda" placeholder="Ingrese búsqueda" class="form-control" required/>
+        <div class="ml-auto">
+            <button class="btn btn-secondary btn-sm" type="submit"><i class="bi bi-search"></i></button>
+            <button class="btn btn-danger ms-2" id="clearFilters" type="button"><i class="bi bi-x-circle"> </i>
+            </button>
+        </div>
+    </form>
+
+        <a class="nav-link" href="{% url 'exportar_pedidos_view' %}" name="exportar">
+            <button class="btn btn-success mx-2" id="export"><i class="bi bi-table"></i> Resumen</button>
+        </a>
+    </div>
+
+    <div class="container-fluid">
+        {% render_table table %}
+    </div>
+    <!-- Editar Item Modal -->
+    <div class="modal fade text-white" id="moverItemModal" tabindex="-1" role="dialog"
+         aria-labelledby="moverItemModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content text-white bg-dark">
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/editar_pedido_seguimiento.js' %}"></script>
+    <script>
+        document.getElementById('clearFilters').addEventListener('click', function () {
+            // Obtener la URL actual sin los parámetros de búsqueda
+            const url = new URL(window.location.href);
+            url.search = '';
+
+            // Recargar la página con la URL sin parámetros de búsqueda
+            window.location.href = url.href;
+        });
+    </script>
+    </body>
+    </html>
+{% endblock %}

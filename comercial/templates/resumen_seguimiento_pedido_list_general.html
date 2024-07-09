@@ -1,0 +1,42 @@
+{% extends 'comercialbase.html' %}
+{% block content %}
+    {% load static %}
+    {% load django_tables2 %}
+    <!DOCTYPE html>
+    <html lang="es" data-bs-theme="dark">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{% static 'css/seguimiento_resumen_pedido_items.css' %}"/>
+        <title>Tracking Heavens</title>
+    </head>
+    <body>
+    <div class="container">
+        <h1 class="align-center">Resumen Exportaciones <i class="bi bi-clipboard-data-fill"></i></h1>
+        <form method="get" class="form-inline my-2 my-lg-0 d-flex align-items-center justify-content-center">
+            {{ form.as_p }}
+            <div class="button-container">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <button type="button" id="clearFilters" class="btn btn-secondary">Limpiar Filtros</button>
+                <a class="btn btn-danger btn-md" id="volver" name="exportar"
+                   href="{% url 'exportar_resumen_semana_pdf' %}?{{ request.GET.urlencode }}" target="_blank">
+                    <i class="bi bi-filetype-pdf"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+    <div class="container-fluid">
+        {% render_table table %}
+    </div>
+    <script>
+        document.getElementById('clearFilters').addEventListener('click', function () {
+            // Obtener la URL actual sin los parámetros de búsqueda
+            const url = new URL(window.location.href);
+            url.search = '';
+            // Recargar la página con la URL sin parámetros de búsqueda
+            window.location.href = url.href;
+        });
+    </script>
+    </body>
+    </html>
+{% endblock %}

@@ -2,37 +2,29 @@ import math
 from datetime import datetime, timedelta, date
 from decimal import Decimal
 from importlib import import_module
-
 import pandas as pd
 import requests
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxLengthValidator, MaxValueValidator
 from django.db import models
 from django.db.models import Sum
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from simple_history.models import HistoricalRecords
-from .choices import motivo_nota
+from .choices import motivo_nota, estatus_reserva_list, estado_documentos_list
 
 
-class Fruta(models.Model):
-    nombre = models.CharField(max_length=20, unique=True)
-
-    class Meta:
-        ordering = ['nombre']
-
-    def __str__(self):
-        return self.nombre
-
-
-class Pais(models.Model):
-    nombre = models.CharField(max_length=100, unique=True)
+class Iata(models.Model):
+    codigo = models.CharField(max_length=3, unique=True)
+    ciudad = models.CharField(max_length=25)
+    pais = models.CharField(max_length=25)
 
     class Meta:
-        ordering = ['nombre']
+        ordering = ['codigo']
 
     def __str__(self):
-        return self.nombre
+        return f'{self.codigo} - {self.ciudad} - {self.pais}'
 
 
 class Exportador(models.Model):
@@ -55,11 +47,47 @@ class TipoCaja(models.Model):
         return self.nombre
 
 
+class Contenedor(models.Model):
+    nombre = models.CharField(max_length=255, verbose_name="Nombre del Contenedor", unique=True)
+
+    class Meta:
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
+class Referencias(models.Model):
+    nombre = models.CharField(max_length=255, verbose_name="Referencia")
+    referencia_nueva = models.CharField(max_length=255, verbose_name="Referencia Nueva", blank=True, null=True)
+    contenedor = models.ForeignKey(Contenedor, on_delete=models.CASCADE, verbose_name="Contenedor", null=True,
+                                   blank=True)
+    cant_contenedor = models.IntegerField(validators=[MinValueValidator(0)],
+                                          verbose_name="Cantidad Cajas En Contenedor", null=True, blank=True)
+    precio = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+                                 verbose_name="Precio", null=True, blank=True)
+    exportador = models.ForeignKey(Exportador, on_delete=models.CASCADE, verbose_name="Exportador")
+    cantidad_pallet_con_contenedor = models.IntegerField(validators=[MinValueValidator(0)],
+                                                         verbose_name="Cajas Pallet Contenedor", null=True, blank=True)
+    cantidad_pallet_sin_contenedor = models.IntegerField(validators=[MinValueValidator(0)],
+                                                         verbose_name="Cajas Pallet Sin Contenedor", null=True,
+                                                         blank=True)
+    porcentaje_peso_bruto = models.DecimalField(max_digits=5, decimal_places=2,
+                                                validators=[MinValueValidator(0), MaxValueValidator(100)],
+                                                verbose_name="Porcentaje de Peso Bruto", )
+
+    class Meta:
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f"{self.nombre} -N {self.referencia_nueva} - {self.exportador}"
+
+
 class Cliente(models.Model):
     nombre = models.CharField(max_length=255, verbose_name="Nombre Cliente", unique=True)
     direccion = models.CharField(max_length=255, verbose_name="Dirección")
     ciudad = models.CharField(max_length=100, verbose_name="Ciudad", null=True, blank=True)
-    pais = models.ForeignKey(Pais, on_delete=models.CASCADE, verbose_name="Pais")
+    destino_iata = models.ForeignKey(Iata, on_delete=models.CASCADE, verbose_name="Iata", null=True, blank=True)
     tax_id = models.CharField(max_length=50, verbose_name="Tax ID", null=True, blank=True)
     incoterm = models.CharField(max_length=50, verbose_name="Incoterm", null=True, blank=True)
     agencia_de_carga = models.CharField(max_length=100, blank=True, null=True, verbose_name="Agencia De Carga")
@@ -94,51 +122,131 @@ class Presentacion(models.Model):
         return f'{self.nombre} - {self.kilos}'
 
 
+class Fruta(models.Model):
+    nombre = models.CharField(max_length=20, unique=True)
+    presentaciones = models.ManyToManyField(Presentacion, through='ClientePresentacion', related_name='frutas')
+
+    class Meta:
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
 class ClientePresentacion(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     presentacion = models.ForeignKey(Presentacion, on_delete=models.CASCADE)
+    fruta = models.ForeignKey(Fruta, on_delete=models.CASCADE)
 
     class Meta:
         ordering = ['cliente']
-        unique_together = ['cliente', 'presentacion']
+        unique_together = ('cliente', 'presentacion', 'fruta')
 
     def __str__(self):
-        return f'{self.cliente.nombre} -P: {self.presentacion.nombre} - {self.presentacion.kilos}'
+        return f'{self.cliente.nombre} -P: {self.presentacion.nombre} - {self.presentacion.kilos} - {self.fruta}'
+
+
+class PresentacionReferencia(models.Model):
+    presentacion = models.ForeignKey(Presentacion, on_delete=models.CASCADE)
+    referencia = models.ForeignKey(Referencias, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ['referencia__nombre']
+
+    def __str__(self):
+        return f"Presentacion: {self.presentacion} -- Referencia: {self.referencia}"
+
+
+class AgenciaCarga(models.Model):
+    nombre = models.CharField(max_length=50, verbose_name="Agencia Carga", unique=True)
+
+    class Meta:
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
+class Aerolinea(models.Model):
+    codigo = models.CharField(max_length=3, verbose_name="Codigo Aerolinea", unique=True)
+    nombre = models.CharField(max_length=50, verbose_name="Nombre Aerolinea", unique=True)
+
+    class Meta:
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
+class SubExportadora(models.Model):
+    nombre = models.CharField(max_length=50, verbose_name="Subexportadora", unique=True)
+
+    class Meta:
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
+class Intermediario(models.Model):
+    nombre = models.CharField(max_length=50, verbose_name="Intermediario", unique=True)
+
+    class Meta:
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
 
 
 class Pedido(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, verbose_name="Cliente")
+    intermediario = models.ForeignKey(Intermediario, on_delete=models.CASCADE, verbose_name="Intermediario", null=True,
+                                      blank=True)
+    semana = models.IntegerField(verbose_name="Semana", null=True, blank=True, editable=False)
     fecha_solicitud = models.DateField(verbose_name="Fecha Solicitud")
     fecha_entrega = models.DateField(verbose_name="Fecha Entrega")
+    fecha_llegada = models.DateField(verbose_name="Fecha Llegada Estimada", blank=True, null=True)
     exportadora = models.ForeignKey(Exportador, on_delete=models.CASCADE, verbose_name="Exportador")
+    subexportadora = models.ForeignKey(SubExportadora, on_delete=models.CASCADE, verbose_name="Subexportadora",
+                                       null=True, blank=True)
     dias_cartera = models.IntegerField(verbose_name="Dias Cartera", editable=False, null=True, blank=True)
     awb = models.CharField(max_length=50, verbose_name="AWB", null=True, blank=True)
-    destino = models.CharField(max_length=50, verbose_name="Destino", null=True, blank=True, editable=False)
+    destino = models.ForeignKey(Iata, on_delete=models.CASCADE, verbose_name="Destino", null=True, blank=True)
     numero_factura = models.CharField(max_length=50, verbose_name="Factura", null=True, blank=True)
-    total_cajas_enviadas = models.IntegerField(verbose_name="Cajas Enviadas", null=True, blank=True,
-                                               editable=False)
+    total_cajas_solicitadas = models.IntegerField(verbose_name="Cajas Solicitadas", null=True, blank=True,
+                                                  editable=False)
+    total_cajas_enviadas = models.IntegerField(verbose_name="Cajas Enviadas", null=True, blank=True, editable=False)
+    total_peso_bruto_solicitado = models.DecimalField(max_digits=10, decimal_places=2,
+                                                      verbose_name="Total Bruto Solicitado",
+                                                      editable=False, default=0)
+    total_peso_bruto_enviado = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Total Bruto Enviado",
+                                                   editable=False, default=0)
+    total_piezas_solicitadas = models.IntegerField(verbose_name="Total Piezas Solicitadas", null=True, blank=True,
+                                                   editable=False)
+    total_piezas_enviadas = models.IntegerField(verbose_name="Total Piezas Enviadas", null=True, blank=True,
+                                                editable=False)
     nota_credito_no = models.CharField(max_length=50, verbose_name="Nota Crédito", null=True, blank=True)
     motivo_nota_credito = models.CharField(max_length=20, choices=motivo_nota, verbose_name="Motivo Nota Crédito",
                                            null=True, blank=True)
-    descuento = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Descuento C", null=True, blank=True,
+    descuento = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+                                    verbose_name="$Descuento C", null=True, blank=True,
                                     default=0)
     valor_total_nota_credito_usd = models.DecimalField(max_digits=10, decimal_places=2, editable=False,
                                                        verbose_name="$Total Nota Crédito", null=True, blank=True,
                                                        default=0)
     tasa_representativa_usd_diaria = models.DecimalField(max_digits=10, decimal_places=2, editable=True,
-                                                         verbose_name="$TRM Oficial", null=True, blank=True,
-                                                         default=0)
+                                                         verbose_name="$TRM Oficial", null=True, blank=True, default=0)
+    trm_cotizacion = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+                                         editable=True, verbose_name="$TRM Cotización", null=True, blank=True,
+                                         default=0)
     valor_pagado_cliente_usd = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
-                                                   verbose_name="$Pagado Cliente",
-                                                   null=True, blank=True, default=0)
-    comision_bancaria_usd = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
-                                                verbose_name="$Comisión Bancaria USD",
-                                                null=True, blank=True, default=0)
+                                                   verbose_name="$Pagado Cliente", null=True, blank=True, default=0)
+    utilidad_bancaria_usd = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+                                                verbose_name="$Utilidad Bancaria USD", null=True, blank=True, default=0)
     fecha_pago = models.DateField(verbose_name="Fecha Pago Cliente", null=True, blank=True)
     fecha_monetizacion = models.DateField(verbose_name="Fecha Monetización", null=True, blank=True)
     trm_monetizacion = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
-                                           verbose_name="$TRM Monetización", null=True,
-                                           blank=True)
+                                           verbose_name="$TRM Monetización", null=True, blank=True)
     estado_factura = models.CharField(max_length=50, verbose_name="Estado Factura", null=True, blank=True,
                                       editable=False)
     diferencia_por_abono = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Diferencia o Abono",
@@ -146,37 +254,98 @@ class Pedido(models.Model):
     dias_de_vencimiento = models.IntegerField(verbose_name="Dias Vencimiento", editable=False, null=True, blank=True)
     valor_total_factura_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Total Factura",
                                                   null=True, blank=True, editable=False, default=0)
-    valor_total_comision_usd = models.DecimalField(max_digits=10, decimal_places=2,
-                                                   verbose_name="$Comisiones USD", null=True, blank=True,
-                                                   editable=False, default=0)
-    valor_comision_pesos = models.DecimalField(max_digits=10, decimal_places=2,
-                                               verbose_name="$Comisiones Pesos", null=True, blank=True,
-                                               editable=False, default=0)
-    documento_cobro_comision = models.CharField(max_length=50, verbose_name="Doc Cobro Comisión", null=True,
-                                                blank=True)
-    fecha_pago_comision = models.DateField(verbose_name="Fecha Pago Comisión", null=True, blank=True)
-    estado_comision = models.CharField(max_length=50, verbose_name="Estado Comisión", editable=False)
+    valor_total_utilidad_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Utilidades USD",
+                                                   null=True, blank=True, editable=False, default=0)
+    valor_utilidad_pesos = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Utilidades Pesos",
+                                               null=True, blank=True, editable=False, default=0)
+    documento_cobro_utilidad = models.CharField(max_length=50, verbose_name="Doc Cobro Utilidad", null=True, blank=True)
+    fecha_pago_utilidad = models.DateField(verbose_name="Fecha Pago Utilidad", null=True, blank=True)
+    estado_utilidad = models.CharField(max_length=50, verbose_name="Estado Utilidad", editable=False)
+    estado_pedido = models.CharField(max_length=20, verbose_name="Estado Pedido", editable=False, null=True, blank=True,
+                                     default="En Proceso")
+    estado_cancelacion = models.CharField(max_length=20,
+                                          choices=[
+                                              ('sin_solicitud', 'Sin solicitud'),
+                                              ('pendiente', 'Pendiente'),
+                                              ('autorizado', 'Autorizado'),
+                                              ('no_autorizado', 'No Autorizado')
+                                          ],
+                                          default='sin_solicitud', editable=False, verbose_name="Estado Cancelación")
+    observaciones = models.TextField(verbose_name="Observaciones", validators=[MaxLengthValidator(300)], blank=True,
+                                     null=True)
+    # -------------------------------------- Campos Para Tracking ----------------------------------------------
+    variedades = models.TextField(verbose_name="Variedades", validators=[MaxLengthValidator(500)], blank=True,
+                                  null=True, editable=False)
+    responsable_reserva = models.ForeignKey(Exportador, on_delete=models.CASCADE, verbose_name="Responsable Reserva",
+                                            related_name='pedidos_responsable_reserva', blank=True, null=True)
+    estatus_reserva = models.CharField(max_length=50, choices=estatus_reserva_list, verbose_name="Estado Reserva",
+                                       null=True, blank=True)
+    agencia_carga = models.ForeignKey(AgenciaCarga, on_delete=models.CASCADE, verbose_name="Agencia Carga", null=True,
+                                      blank=True)
+    aerolinea = models.ForeignKey(Aerolinea, on_delete=models.CASCADE, verbose_name="Aerolinea", null=True,
+                                  blank=True)
+    etd = models.DateTimeField(verbose_name="Estimated Time of Departure", null=True, blank=True)
+    eta = models.DateTimeField(verbose_name="Estimated Time of Arrival", null=True, blank=True)
+    peso_awb = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+                                   verbose_name="Peso Awb", null=True, blank=True)
+    estado_documentos = models.CharField(max_length=60, choices=estado_documentos_list,
+                                         verbose_name="Estado Documentos",
+                                         null=True, blank=True)
+    observaciones_tracking = models.TextField(validators=[MaxLengthValidator(300)],
+                                              verbose_name="Observaciones Tracking", blank=True, null=True)
     history = HistoricalRecords()
 
+    @property
+    def autorizacion(self):
+        return self.autorizacioncancelacion_set.first()  # Asume que solo hay una autorización por pedido
+
     def save(self, *args, **kwargs):
+        # Agregacion de campo aerolinea:
+        if self.awb:
+            # Extraer los primeros 3 dígitos del AWB
+            codigo_aerolinea = self.awb[:3]
+            try:
+                # Buscar la aerolínea correspondiente
+                aerolinea = Aerolinea.objects.get(codigo=codigo_aerolinea)
+                self.aerolinea = aerolinea
+            except Aerolinea.DoesNotExist:
+                # Si no se encuentra la aerolínea, dejar el campo en blanco
+                self.aerolinea = None
+        # Comprobación de cambio de exportador y eliminación de detalles de pedido:
+        """if self.pk is not None:
+            # Obtener el pedido anterior (o sea no es una instancia nueva, mejor dicho pedido nuevo)
+            pedido_anterior = Pedido.objects.get(pk=self.pk)
+            # Verificar si el exportador ha cambiado
+            if pedido_anterior.exportadora != self.exportadora:
+                # Eliminar todos los detalles del pedido
+                DetallePedido.objects.filter(pedido=self).delete()
+                self.total_cajas_enviadas = 0
+                self.total_cajas_solicitadas = 0
+                self.total_piezas_solicitadas = 0
+                self.total_piezas_enviadas = 0"""
         # Campos Calculados
+        if self.fecha_entrega is not None:
+            self.semana = self.fecha_entrega.isocalendar()[1]
         if self.valor_pagado_cliente_usd is None or self.valor_pagado_cliente_usd == 0:
             self.diferencia_por_abono = 0
         else:
             self.diferencia_por_abono = (
-                    (self.valor_total_nota_credito_usd + self.valor_pagado_cliente_usd + self.comision_bancaria_usd
+                    (self.valor_total_nota_credito_usd + self.valor_pagado_cliente_usd + self.utilidad_bancaria_usd
                      + self.descuento) - self.valor_total_factura_usd)
         if self.valor_total_factura_usd != 0 and self.trm_monetizacion is not None:
-            self.valor_comision_pesos = self.valor_total_comision_usd * self.trm_monetizacion
+            self.valor_utilidad_pesos = self.valor_total_utilidad_usd * self.trm_monetizacion
         if self.valor_pagado_cliente_usd == 0:
+            if self.estado_cancelacion == "autorizado":
+                self.estado_factura = "Cancelada"
             # Caso cuando el valor pagado por el cliente es 0
-            if (self.valor_total_nota_credito_usd + self.descuento) >= self.valor_total_factura_usd and self.valor_total_factura_usd > 0:
+            elif (
+                    self.valor_total_nota_credito_usd + self.descuento) >= self.valor_total_factura_usd and self.valor_total_factura_usd > 0:
                 self.estado_factura = "Pagada"
             else:
                 self.estado_factura = "Pendiente Pago"
         else:
             # Caso cuando hay algún valor pagado por el cliente
-            total_restante = self.valor_total_factura_usd - self.valor_total_nota_credito_usd - self.comision_bancaria_usd - self.descuento
+            total_restante = self.valor_total_factura_usd - self.valor_total_nota_credito_usd - self.utilidad_bancaria_usd - self.descuento
             if self.valor_pagado_cliente_usd < total_restante:
                 self.estado_factura = "Abono"
             else:
@@ -184,7 +353,6 @@ class Pedido(models.Model):
 
         # Actualizar los campos que vienen del cliente
         if self.cliente:
-            self.destino = self.cliente.pais.nombre
             self.dias_cartera = self.cliente.negociaciones_cartera
         # Calcular dias_de_vencimiento:
         if self.fecha_pago is not None:
@@ -205,21 +373,34 @@ class Pedido(models.Model):
 
             self.dias_de_vencimiento = (hoy - fecha_entrega).days
 
-        # Estado comisión:
+        # Estado Utilidad:
         if self.fecha_pago is None and (self.valor_pagado_cliente_usd is None or self.valor_pagado_cliente_usd == 0):
-            self.estado_comision = "Pendiente Pago Cliente"
+            self.estado_utilidad = "Pendiente Pago Cliente"
         elif self.estado_factura == "Abono":
-            self.estado_comision = "Factura en abono"
-        elif self.fecha_pago is not None and self.estado_factura == "Pagada" and self.documento_cobro_comision is None:
-            self.estado_comision = "Por Facturar"
-        elif self.fecha_pago is not None and self.documento_cobro_comision is not None and self.fecha_pago_comision is None:
-            self.estado_comision = "Facturada"
-        elif self.fecha_pago_comision is not None and self.documento_cobro_comision is not None and self.fecha_pago is not None:
-            self.estado_comision = "Pagada"
+            self.estado_utilidad = "Factura en abono"
+        elif self.fecha_pago is not None and self.estado_factura == "Pagada" and self.documento_cobro_utilidad is None:
+            self.estado_utilidad = "Por Facturar"
+        elif self.fecha_pago is not None and self.documento_cobro_utilidad is not None and self.fecha_pago_utilidad is None:
+            self.estado_utilidad = "Facturada"
+        elif self.fecha_pago_utilidad is not None and self.documento_cobro_utilidad is not None and self.fecha_pago is not None:
+            self.estado_utilidad = "Pagada"
         else:
-            self.estado_comision = "Pendiente Pago Cliente"
+            self.estado_utilidad = "Pendiente Pago Cliente"
+        # Estado pedido:
+        if self.estado_cancelacion == "autorizado":
+            self.estado_pedido = "Cancelado"
+        elif self.awb and self.numero_factura is not None:
+            self.estado_pedido = "Despachado"
+        elif self.estado_utilidad == "Pagada" and self.estado_pedido == "Pagada":
+            self.estado_pedido = "Finalizado"
         # Llama al método save de la clase base para realizar el guardado
         super().save(*args, **kwargs)
+
+    def actualizar_variedades(self):
+        detalles = self.detallepedido_set.all()
+        frutas = set(detalle.fruta.nombre for detalle in detalles)
+        self.variedades = ", ".join(frutas)
+        self.save()
 
     def actualizar_dias_de_vencimiento(self):
         if self.fecha_pago is not None:
@@ -239,29 +420,27 @@ class Pedido(models.Model):
         self.save()
 
     def actualizar_tasa_representativa(self):
-        # URL del JSON
+        if self.fecha_monetizacion is None:
+            self.tasa_representativa_usd_diaria = 0
+            self.save()
+            return
+
         url = "https://www.datos.gov.co/resource/mcec-87by.json"
         response = requests.get(url)
 
         if response.status_code == 200:
             data = response.json()
             df = pd.DataFrame(data)
-
-            # Convertir las columnas de fecha a datetime
             df['vigenciadesde'] = pd.to_datetime(df['vigenciadesde'])
-
-            # Ordenar los datos por la fecha de inicio de vigencia
             df = df.sort_values('vigenciadesde')
-
-            # Encontrar la tasa correcta
-            fecha_entrega = pd.to_datetime(self.fecha_entrega)
-            df_filtrado = df[df['vigenciadesde'] <= fecha_entrega]
+            fecha_monetizacion = pd.to_datetime(self.fecha_monetizacion)
+            df_filtrado = df[df['vigenciadesde'] <= fecha_monetizacion]
             if not df_filtrado.empty:
                 tasa_valor = df_filtrado.iloc[-1]['valor']
                 self.tasa_representativa_usd_diaria = tasa_valor
                 self.save()
         else:
-            print("Error al acceder a la URL")
+            print("Error al acceder al banco de la republica")
 
     class Meta:
         ordering = ['-id']
@@ -270,32 +449,21 @@ class Pedido(models.Model):
         return f'Pedido: {self.id} - Cliente: {self.cliente.nombre}'
 
 
-class Contenedor(models.Model):
-    nombre = models.CharField(max_length=255, verbose_name="Nombre del Contenedor", unique=True)
+class AutorizacionCancelacion(models.Model):
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, verbose_name="Pedido")
+    usuario_solicitante = models.ForeignKey(User, on_delete=models.CASCADE, related_name='solicitante',
+                                            verbose_name="Usuario Solicitante")
+    usuario_autorizador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='autorizador',
+                                            verbose_name="Usuario Autorizador", null=True, blank=True)
+    autorizado = models.BooleanField(default=False)
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)
+    fecha_autorizacion = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ['nombre']
+        ordering = ['pedido']
 
     def __str__(self):
-        return self.nombre
-
-
-class Referencias(models.Model):
-    nombre = models.CharField(max_length=255, verbose_name="Referencia")
-    referencia_nueva = models.CharField(max_length=255, verbose_name="Referencia Nueva", blank=True, null=True)
-    contenedor = models.ForeignKey(Contenedor, on_delete=models.CASCADE, verbose_name="Contenedor", null=True,
-                                   blank=True)
-    cant_contenedor = models.IntegerField(validators=[MinValueValidator(0)],
-                                          verbose_name="Cantidad Cajas En Contenedor", null=True, blank=True)
-    precio = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
-                                 verbose_name="Precio", null=True, blank=True)
-    exportador = models.ForeignKey(Exportador, on_delete=models.CASCADE, verbose_name="Exportador")
-
-    class Meta:
-        ordering = ['nombre']
-
-    def __str__(self):
-        return f"{self.nombre} -N {self.referencia_nueva} - {self.exportador}"
+        return f'Pedido: {self.pedido.id} - Solicitante: {self.usuario_solicitante} Autorizador: {self.usuario_autorizador}'
 
 
 class DetallePedido(models.Model):
@@ -318,8 +486,8 @@ class DetallePedido(models.Model):
                                              null=True, editable=False)
     cantidad_contenedores = models.IntegerField(verbose_name="No. Contenedores", blank=True, null=True,
                                                 editable=False)
-    tarifa_comision = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
-                                          verbose_name="$Comisión Por Caja", null=True,
+    tarifa_utilidad = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+                                          verbose_name="$Utilidad Por Caja", null=True,
                                           blank=True, default=0)
     valor_x_caja_usd = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
                                            verbose_name="$Por Caja USD", null=True,
@@ -329,11 +497,11 @@ class DetallePedido(models.Model):
     no_cajas_nc = models.IntegerField(verbose_name="No Cajas NC", null=True, blank=True)
     valor_nota_credito_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Nota Crédito USD",
                                                  null=True, blank=True, editable=False)
-    afecta_comision = models.BooleanField(choices=[(True, "Sí"), (False, "No"), (None, "Descuento")],
-                                          verbose_name="Afecta Comisión",
+    afecta_utilidad = models.BooleanField(choices=[(True, "Sí"), (False, "No"), (None, "Descuento")],
+                                          verbose_name="Afecta Utilidad",
                                           null=True, blank=True, default=False)
-    valor_total_comision_x_producto = models.DecimalField(max_digits=10, decimal_places=2,
-                                                          verbose_name="$Comisión X Producto", null=True,
+    valor_total_utilidad_x_producto = models.DecimalField(max_digits=10, decimal_places=2,
+                                                          verbose_name="$Utilidad X Producto", null=True,
                                                           blank=True, editable=False)
     precio_proforma = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Proforma", null=True,
                                           blank=True)
@@ -352,15 +520,15 @@ class DetallePedido(models.Model):
 
         # Otros cálculos
         self.valor_x_producto = self.valor_x_caja_usd * self.cajas_enviadas
-        # Cálculo de comisión
-        if self.afecta_comision is True:
-            self.valor_total_comision_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_comision
+        # Cálculo de Utilidad
+        if self.afecta_utilidad is True:
+            self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
-        elif self.afecta_comision is None:
-            self.valor_total_comision_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_comision
+        elif self.afecta_utilidad is None:
+            self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
             self.valor_nota_credito_usd = 0
         else:
-            self.valor_total_comision_x_producto = self.cajas_enviadas * self.tarifa_comision
+            self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
 
         # Lógica de contenedor
@@ -388,29 +556,43 @@ class DetallePedido(models.Model):
         pedido = self.pedido
         detalles = DetallePedido.objects.filter(pedido=pedido)
         pedido.total_cajas_enviadas = sum(detalle.cajas_enviadas or 0 for detalle in detalles)
+        pedido.total_cajas_solicitadas = sum(detalle.cajas_solicitadas or 0 for detalle in detalles)
         pedido.valor_total_factura_usd = sum(detalle.valor_x_producto or 0 for detalle in detalles)
         pedido.valor_total_nota_credito_usd = sum(detalle.valor_nota_credito_usd or 0 for detalle in detalles)
-        pedido.valor_total_comision_usd = sum(detalle.valor_total_comision_x_producto or 0 for detalle in detalles)
+        pedido.valor_total_utilidad_usd = sum(detalle.valor_total_utilidad_x_producto or 0 for detalle in detalles)
+        pedido.total_piezas_solicitadas = math.ceil(sum(detalle.calcular_no_piezas() or 0 for detalle in detalles))
+        pedido.total_piezas_enviadas = math.ceil(sum(detalle.calcular_no_piezas_final() or 0 for detalle in detalles))
+        pedido.total_peso_bruto_solicitado = sum(detalle.calcular_peso_bruto() or 0 for detalle in detalles)
+        pedido.total_peso_bruto_enviado = sum(detalle.calcular_peso_bruto_final() or 0 for detalle in detalles)
         pedido.save()
 
     def calcular_peso_bruto(self):
         # Asegurarse de que todos los valores son de tipo Decimal
-        cajas_solicitadas = Decimal(self.cajas_solicitadas)
+        porcentaje = Decimal(self.referencia.porcentaje_peso_bruto)
         kilos = Decimal(self.kilos)
-        if self.presentacion_peso < Decimal('4'):
-            return (cajas_solicitadas * Decimal('0.3')) + kilos
-        elif self.presentacion_peso < Decimal('8'):
-            return (cajas_solicitadas * Decimal('0.5')) + kilos
-        else:
-            return (cajas_solicitadas * Decimal('0.9')) + kilos
+        return round(kilos + ((kilos * porcentaje) / 100), 2)
+
+    def calcular_peso_bruto_final(self):
+        # Asegurarse de que todos los valores son de tipo Decimal
+        porcentaje = Decimal(self.referencia.porcentaje_peso_bruto)
+        kilos_enviados = Decimal(self.kilos_enviados)
+        return round(kilos_enviados + ((kilos_enviados * porcentaje) / 100), 2)
 
     def calcular_no_piezas(self):
         # todos los valores son de tipo Decimal
         cajas_solicitadas = Decimal(self.cajas_solicitadas)
-        if self.presentacion_peso < 7.5:
-            return cajas_solicitadas / 160
+        if self.lleva_contenedor is True:
+            return cajas_solicitadas / self.referencia.cantidad_pallet_con_contenedor
         else:
-            return cajas_solicitadas / 50
+            return cajas_solicitadas / self.referencia.cantidad_pallet_sin_contenedor
+
+    def calcular_no_piezas_final(self):
+        # todos los valores son de tipo Decimal
+        cajas_enviadas = Decimal(self.cajas_enviadas)
+        if self.lleva_contenedor is True:
+            return cajas_enviadas / self.referencia.cantidad_pallet_con_contenedor
+        else:
+            return cajas_enviadas / self.referencia.cantidad_pallet_sin_contenedor
 
     class Meta:
         ordering = ['pedido']
@@ -474,4 +656,9 @@ def actualizar_inventario_al_eliminar(sender, instance, **kwargs):
     ).aggregate(Sum('cantidad_contenedores'))['cantidad_contenedores__sum'] or 0
     nuevo_inventario.save()
 
-# ////////// Señal para actualizar Tasa Representativa de bolsa de Valores //////////////////////////////
+
+@receiver(post_save, sender=DetallePedido)
+@receiver(post_delete, sender=DetallePedido)
+def actualizar_variedades_pedido(sender, instance, **kwargs):
+    pedido = instance.pedido
+    pedido.actualizar_variedades()

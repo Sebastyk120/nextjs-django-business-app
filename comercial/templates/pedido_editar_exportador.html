@@ -1,0 +1,48 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/crear_pedido.css' %}"/>
+<div class="modal-header">
+    <h5 class="modal-title" id="moverItemModalLabel">Editar Pedido Número:  {{ pedido.id }}  <i class="bi bi-pencil-fill"></i></h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<form id="moverItemForm" method="post">
+    {% csrf_token %}
+    <div class="modal-body">
+        <div id="errores">
+            {% for field, error_list in form.errors.items %}
+                {% for error in error_list %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="container">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.valor_pagado_cliente_usd.label_tag }} {{ form.valor_pagado_cliente_usd }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.utilidad_bancaria_usd.label_tag }} {{ form.utilidad_bancaria_usd }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.fecha_pago.label_tag }} {{ form.fecha_pago }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.fecha_monetizacion.label_tag }} {{ form.fecha_monetizacion }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.trm_monetizacion.label_tag }} {{ form.trm_monetizacion }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.trm_cotizacion.label_tag }} {{ form.trm_cotizacion }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">Cerrar</button>
+        <button type="submit" class="btn btn-success">Guardar</button>
+    </div>
+</form>

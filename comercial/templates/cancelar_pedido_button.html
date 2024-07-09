@@ -1,0 +1,95 @@
+<!-- Modal para ingresar observaciones al solicitar cancelación -->
+<div class="modal fade" id="cancelModal{{ record.pk }}" tabindex="-1" aria-labelledby="cancelModalLabel{{ record.pk }}"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'solicitar_cancelacion' record.pk %}">
+                {% csrf_token %}
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="cancelModalLabel{{ record.pk }}">Solicitar Cancelación</h5>
+                    <h7 class="modal-title">Pedido: {{ record.id }}</h7>
+                    <h7 class="modal-title">Cliente: {{ record.cliente.nombre }}</h7>
+                    <h7 class="modal-title">Exportador: {{ record.exportadora.nombre }}</h7>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="observaciones{{ record.pk }}" class="form-label">Motivo De Cancelación:</label>
+                        <textarea name="observaciones" id="observaciones{{ record.pk }}" rows="4" cols="50"
+                                  class="form-control" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-danger">Solicitar Cancelación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ingresar observaciones al autorizar cancelación -->
+<div class="modal fade" id="authorizeModal{{ record.pk }}" tabindex="-1"
+     aria-labelledby="authorizeModalLabel{{ record.pk }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            {% if record.autorizacion %}
+                <form method="post" action="{% url 'autorizar_cancelacion' record.autorizacion.id %}">
+                    {% csrf_token %}
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title" id="authorizeModalLabel{{ record.pk }}">Autorizar Cancelación</h5>
+                        <h7 class="modal-title">Pedido: {{ record.id }}</h7>
+                        <h7 class="modal-title">Cliente: {{ record.cliente.nombre }}</h7>
+                        <h7 class="modal-title">Exportador: {{ record.exportadora.nombre }}</h7>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="observaciones{{ record.pk }}" class="form-label">Motivo De Cancelación:</label>
+                            <textarea name="observaciones" id="observaciones{{ record.pk }}" rows="4" cols="50"
+                                      class="form-control">{{ record.observaciones }}</textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer button-container">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-warning" name="accion" value="no_autorizar">Denegar
+                            Cancelación
+                        </button>
+                        <button type="submit" class="btn btn-danger" name="accion" value="autorizar">Autorizar
+                            Cancelación
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="authorizeModalLabel{{ record.pk }}">No se encontró autorización</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    No se pudo encontrar una autorización para este pedido.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Botón para abrir el modal de solicitar cancelación (visible solo si el usuario no es autorizador) -->
+{% if not es_autorizador %}
+    {% if record.estado_cancelacion == 'sin_solicitud' or record.estado_cancelacion == 'no_autorizado' %}
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal"
+                data-bs-target="#cancelModal{{ record.pk }}">
+            <i class="bi bi-sign-stop"></i>
+        </button>
+    {% endif %}
+{% endif %}
+
+<!-- Botón para abrir el modal de autorizar cancelación (visible solo si el estado es pendiente, el usuario es autorizador y hay una autorización) -->
+{% if record.estado_cancelacion == 'pendiente' and es_autorizador and record.autorizacion %}
+    <button type="button" class="btn btn-success" data-bs-toggle="modal"
+            data-bs-target="#authorizeModal{{ record.pk }}">
+        <i class="bi bi-check-circle"></i>
+    </button>
+{% endif %}

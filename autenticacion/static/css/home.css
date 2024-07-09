@@ -10,114 +10,39 @@
     font-family: 'Poppins', sans-serif;
 }
 
-/*             Animación aparición de iconos tras 0.6s */
+/* Animación aparición de iconos tras 0.6s */
 
 @keyframes fadein {
     0% {
         opacity: 0;
-    }
-    10% {
-        opacity: 0.1;
-    }
-    20% {
-        opacity: 0.2;
-    }
-    30% {
-        opacity: 0.3;
-    }
-    40% {
-        opacity: 0.4;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
-    60% {
-        opacity: 0.6;
-    }
-    70% {
-        opacity: 0.7;
-    }
-    80% {
-        opacity: 0.8;
-    }
-    90% {
-        opacity: 0.9;
     }
     100% {
         opacity: 1;
     }
 }
 
-/*      Grid Responsive     */
+/* Grid Responsive */
 
 .container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-gap: 110px;
+    grid-gap: 50px; /* Reducir el espacio entre columnas */
+    padding: 40px; /* Añadir padding para un mejor margen */
 }
-
 
 .title {
     font-family: "Poppins", sans-serif;
     position: relative;
     color: white;
     text-align: center;
-
 }
 
-/*      Custom Icons    */
+/* Custom Icons */
 
-.icon-pedidosheavens {
+.icon {
     width: 110px;
     height: 110px;
     border-radius: 8px;
-    background-image: url(../img/heavens.webp);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition-duration: 0.4s;
-    text-align: center;
-    line-height: 240px;
-    text-overflow: ellipsis;
-    font-size: 12px;
-}
-
-.icon-pedidosetnico {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background-image: url(../img/etnico.webp);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition-duration: 0.4s;
-    text-align: center;
-    line-height: 240px;
-    text-overflow: ellipsis;
-    font-size: 12px;
-}
-
-.icon-pedidosfieldex {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background-image: url(../img/fieldex.webp);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition-duration: 0.4s;
-    text-align: center;
-    line-height: 240px;
-    text-overflow: ellipsis;
-    font-size: 12px;
-}
-
-.icon-pedidosjuan {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background-image: url(../img/juan_matas.webp);
     background-position: center center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -125,148 +50,20 @@
     text-align: center;
     line-height: 240px;
     font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
 }
 
-.icon-inventarioheavens {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background-image: url(../img/inventarioheavens.webp);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition-duration: 0.4s;
-    text-align: center;
-    line-height: 240px;
-    text-overflow: ellipsis;
-    font-size: 12px;
+.icon-utilidades:hover, .icon-pedidosetnico:hover, .icon-admin:hover, .icon-comparador:hover, .icon-inventarioetnico:hover, .icon-inventariofieldex:hover, .icon-inventarioheavens:hover, .icon-inventarioheavens:hover, .icon-pedidosfieldex:hover, .icon-pedidosjuan:hover, .icon-tesoreria:hover, .icon-logout:hover {
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
 }
 
-.icon-inventarioetnico {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background-image: url(../img/inventarioetnico.webp);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition-duration: 0.4s;
-    text-align: center;
-    line-height: 240px;
-    text-overflow: ellipsis;
-    font-size: 12px;
+.icon-utilidades:hover, .icon-seguimiento:hover, .icon-resumen:hover, .icon-inventariojuan:hover, .icon-pedidosheavens:hover, .icon-pedidosetnico:hover, .icon-admin:hover, .icon-comparador:hover, .icon-inventarioetnico:hover, .icon-inventariofieldex:hover, .icon-inventarioheavens:hover, .icon-inventarioheavens:hover, .icon-pedidosfieldex:hover, .icon-pedidosjuan:hover, .icon-tesoreria:hover, .icon-logout:hover {
+    transform: translateY(25px)
 }
 
-.icon-inventariofieldex {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background-image: url(../img/fieldexinventario.webp);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition-duration: 0.4s;
-    text-align: center;
-    line-height: 240px;
-    text-overflow: ellipsis;
-    font-size: 12px;
-}
-
-
-.icon-inventariojuan {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background-image: url(../img/inventariojuan.webp);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition-duration: 0.4s;
-    text-align: center;
-    line-height: 240px;
-    text-overflow: ellipsis;
-    font-size: 12px;
-}
-
-.icon-tesoreria {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background-image: url(../img/tesoreria.webp);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition-duration: 0.4s;
-    text-align: center;
-    line-height: 240px;
-    text-overflow: ellipsis;
-    font-size: 12px;
-}
-
-.icon-admin {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background-image: url(../img/Administracion.webp);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition-duration: 0.4s;
-    text-align: center;
-    line-height: 240px;
-    text-overflow: ellipsis;
-    font-size: 12px;
-}
-
-.icon-comparador {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background-image: url(../img/comparador.webp);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition-duration: 0.4s;
-    text-align: center;
-    line-height: 240px;
-    text-overflow: ellipsis;
-    font-size: 12px;
-}
-
-.icon-logout {
-    width: 110px;
-    height: 110px;
-    border-radius: 8px;
-    background-image: url(../img/logout.webp);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition-duration: 0.4s;
-    text-align: center;
-    line-height: 240px;
-    text-overflow: ellipsis;
-    font-size: 12px;
-}
-
-.icon-pedidosheavens:hover, .icon-pedidosetnico:hover, .icon-pedidosfieldex:hover, .icon-pedidosjuan:hover, .icon-inventarioheavens:hover, .icon-inventarioetnico:hover, .icon-inventariofieldex:hover, .icon-inventariojuan:hover, .icon-registro:hover, .icon-tesoreria:hover, .icon-admin:hover, icon-comparador:hover, .icon-logout:hover {
-
-    box-shadow: 0 14px 18px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
-
-}
-
-.icon-pedidosheavens:active, .icon-pedidosetnico:active, .icon-pedidosfieldex:active, .icon-pedidosjuan:active, .icon-inventarioheavens:active, .icon-inventarioetnico:active, .icon-inventariofieldex:active, .icon-inventariojuan:active, .icon-registro:active, .icon-tesoreria:active, .icon-admin:active, icon-comparador:active, .icon-logout:active {
-
-    transform: translateY(4px);
-
-}
-
-a:link {
-    text-decoration: none;
-}
-
-a:visited {
-    color: rgba(0, 0, 0, 0);
-    font-family: arial, sans-serif;
+a:link, a:visited {
     text-decoration: none;
 }
 
@@ -274,11 +71,267 @@ span {
     color: aliceblue;
     overflow: hidden;
     white-space: nowrap;
-
 }
 
+/* Specific Icons */
 
-/*      Foot Of page   */
+
+.icon-utilidades {
+    background-image: url(../img/utilidades.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-pedidosheavens {
+    background-image: url(../img/heavens.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-seguimiento {
+    background-image: url(../img/traking.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-resumen {
+    background-image: url(../img/summary.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-pedidosetnico {
+    background-image: url(../img/etnico.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-pedidosfieldex {
+    background-image: url(../img/fieldex.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-pedidosjuan {
+    background-image: url(../img/juan_matas.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-inventarioheavens {
+    background-image: url(../img/inventarioheavens.png);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-inventarioetnico {
+    background-image: url(../img/inventarioetnico.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-inventariofieldex {
+    background-image: url(../img/fieldexinventario.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-inventariojuan {
+    background-image: url(../img/inventariojuan.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-tesoreria {
+    background-image: url(../img/tesoreria.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-admin {
+    background-image: url(../img/Administracion.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-comparador {
+    background-image: url(../img/comparador.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+.icon-logout {
+    background-image: url(../img/logout.webp);
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition-duration: 0.4s;
+    text-align: center;
+    line-height: 240px;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: 0 auto; /* Centrar el ícono */
+}
+
+/* Foot Of page */
 
 .footer {
     position: fixed;
@@ -293,13 +346,11 @@ span {
     font-size: 13px;
 }
 
-
-/*      Animation Pre-Login     */
+/* Animation Pre-Login */
 
 body {
     margin: 0;
 }
-
 
 .pre-title {
     font-family: 'Poppins', sans-serif;
@@ -307,7 +358,6 @@ body {
     padding-right: 130px;
     text-shadow: 0 0 10px #fc84f2;
 }
-
 
 .header {
     position: relative;
@@ -318,7 +368,6 @@ body {
     text-align: center;
     background-image: url(../img/bkhome.webp);
     color: white;
-
 }
 
 .inner-header {
@@ -351,7 +400,6 @@ body {
     background-color: white;
 }
 
-
 .parallax > use {
     animation: move-forever 25s cubic-bezier(.55, .5, .45, .5) infinite;
 }
@@ -380,7 +428,6 @@ body {
     0% {
         transform: translate3d(-90px, 0, 0);
     }
-
     100% {
         transform: translate3d(85px, 0, 0);
     }
@@ -395,11 +442,9 @@ body {
 }
 
 h5 {
-
     font-size: 14px;
     font-family: 'Poppins', sans-serif;
     vertical-align: middle;
-
 }
 
 .custom-btn {
@@ -430,4 +475,3 @@ h5 {
 .btn-1:hover {
     box-shadow: 0 0 10px #ef97e8, 0 0 20px #ef97e8, 0 0 20px #fff inset;
 }
-

@@ -1,0 +1,55 @@
+@font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 400;
+            src: url('/static/fonts/Poppins/Poppins-Regular.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'Poppins';
+            font-style: normal;
+            font-weight: 600;
+            src: url('/static/fonts/Poppins/Poppins-SemiBold.ttf') format('truetype');
+        }
+        @page {
+            size: A3 landscape;
+            margin: 1cm;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            font-size: 12px;
+            background: none;
+        }
+        .container {
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            color: #ffffff;
+            background-color: #000000;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 10px;
+        }
+        .table thead th {
+            background-color: #036098;
+            color: #ffffff;
+        }
+        .table thead th a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: center;
+        }
+        .table th {
+            font-weight: bold;
+        }

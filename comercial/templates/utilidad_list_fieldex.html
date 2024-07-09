@@ -1,0 +1,55 @@
+{% extends 'comercialbase.html' %} {% block content %}
+    {% load static %}
+    {% load django_tables2 %}
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{% static 'css/utilidades_list.css' %}"/>
+        <title>Fieldex</title>
+    </head>
+    <body>
+    <h1 class="align-center">Informe De Utilidades Fieldex <i class="bi bi-box2-heart"></i></h1>
+
+    <form method="get" class="d-flex" id="searchForm">
+        <select name="metodo_busqueda" class="form-control" required>
+            <option value="" disabled selected>Modo De Búsqueda</option>
+            <option value="awb">AWB</option>
+            <option value="numero_factura">Número de Factura</option>
+            <option value="cliente">Cliente</option>
+            <option value="id">Número De Pedido</option>
+        </select>
+        <input type="text" name="item_busqueda" placeholder="Ingrese búsqueda" class="form-control" required/>
+        <div class="ml-auto">
+            <button class="btn btn-secondary btn-sm" type="submit"><i class="bi bi-search"></i></button>
+            <button class="btn btn-danger btn-sm me-md-5" id="clearFilters" type="button"><i class="bi bi-x-circle"></i>
+            </button>
+        </div>
+    </form>
+    <div class="button-container">
+        <a class="nav-link" href="{% url 'exportar_utilidades_fieldex_view' %}" name="exportardetalle">
+            <button class="btn btn-success btn-sm" id="export">Informe De Utilidades <i class="bi bi-filetype-xlsx"></i>
+            </button>
+        </a>
+        <a type="button" class="btn btn-danger btn-sm" name="volver" id="volver" role="button"
+           onclick="history.back();"><i class="bi bi-reply-fill"></i></a>
+    </div>
+
+    <div class="container-fluid">
+        {% render_table table %}
+    </div>
+    </div>
+    <script src="{% static 'js/editar_pedido_exportador.js' %}"></script>    <script>
+        document.getElementById('clearFilters').addEventListener('click', function () {
+            // Obtener la URL actual sin los parámetros de búsqueda
+            const url = new URL(window.location.href);
+            url.search = '';
+
+            // Recargar la página con la URL sin parámetros de búsqueda
+            window.location.href = url.href;
+        });
+    </script>
+    </body>
+    </html>
+{% endblock %}

@@ -1,0 +1,32 @@
+# nixpacks.toml
+
+[phases.setup]
+# Instalar paquetes de Nix
+nixPkgs = [
+  "pkg-config",
+  "glib",
+  "cairo",
+  "pango",
+  "gobject-introspection"
+]
+
+# Instalar paquetes de apt-get si es necesario
+aptPkgs = [
+  "build-essential",
+  "libcairo2",
+  "libcairo2-dev",
+  "libgirepository1.0-dev",
+  "gir1.2-pango-1.0",
+  "gir1.2-gtk-3.0",
+  "python3-gi",
+  "shared-mime-info"
+]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[phases.build]
+cmds = ["python manage.py collectstatic --noinput", "python manage.py migrate"]
+
+[start]
+cmd = "gunicorn mysite.wsgi"

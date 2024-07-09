@@ -41,13 +41,13 @@ def home(request):
 
 def login1(request):
     if request.method == 'GET':
-        return render(request, 'login.html', {'form': AuthenticationForm})
+        return render(request, 'login2.html', {'form': AuthenticationForm})
     else:
         user = authenticate(
             request, username=request.POST['username'], password=request.POST['password'])
         if user is None:
             messages.error(request, f'Usuario o contraseña incorrecto')
-            return render(request, 'login.html',
+            return render(request, 'login2.html',
                           {'form': AuthenticationForm})
         else:
             login(request, user)

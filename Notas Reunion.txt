@@ -17,6 +17,7 @@ LUISAE  Mheavens1705 compras@etnico.com Luisa Moreno
 STEVENC  reservas@juanmatas.com.co   Steven Carranza Schevanes6908
 DANIELP Dheavens6513 documentos@heavensfruit.com Daniel Peña Gonzalez
 TATIANASB Theavens2548 exportaciones@heavensfruit.com Tatiana Sulvara Bastidas
+LUISCARLOS  Lheavens2024 luiscarlos@heavensfruit.com Luis Carlos Gonzales
 
 Daniel Peña Gonzalez
 Usuario aplicativo: DANIELP
@@ -31,13 +32,20 @@ Correo: exportaciones@heavensfruit.com
 Link: https://heavens-server.up.railway.app/
 Usuario: STEVENC
 Constraseña: Schevanes6908
-
-
-
-
 FELIPEF Clave: Fieldex705
 PAOLAF Calve Pmaquiriaf
 
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'heavens',  # Nombre de tu base de datos
+        'USER': 'postgres',  # Nombre de usuario de tu base de datos
+        'PASSWORD': 'Sebastyk120',  # Contraseña del usuario de la base de datos
+        'HOST': 'localhost',  # Deja esto como 'localhost' si estás ejecutando PostgreSQL localmente
+        'PORT': '5432',  # Puerto de PostgreSQL (por defecto es 5432)
+    }
+}
 
 
 Modo Local
@@ -66,18 +74,6 @@ DATABASES = {
     }
 }
 
-Migraciones Manual:
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'railway',
-        'USER': 'postgres',
-        'PASSWORD': '5D6f6FFeCAgBFD*d1fE*A12-4EBcEF6G',
-        'HOST': 'viaduct.proxy.rlwy.net',
-        'PORT': '51014',
-    }
-}
-
 
 asgiref==3.6.0
 Django==4.2.9
@@ -95,3 +91,18 @@ djangorestframework==3.14.0
 django-extensions==3.2.3
 django-widget-tweaks==1.5.0
 crispy-bootstrap5==2023.10
+
+
+Railiway Json Original
+{
+    "$schema": "https://railway.app/railway.schema.json",
+    "build": {
+        "builder": "NIXPACKS"
+    },
+    "deploy": {
+        "startCommand": "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn mysite.wsgi",
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 10
+    }
+}
+

@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-rc^*w^w&6g9_(uvx#6s*bnt!w)l0rdi%!l7mv#y%uc&x%wo5pk'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 # FORM SUBMISSION
 # Comment out the following line and place your railway URL, and your production URL in the array.
@@ -89,11 +89,13 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
+
 DATABASES = {
     'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
 }
 
-""""DATABASES = {
+""""
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': os.environ["PGDATABASE"],
@@ -152,7 +154,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
 ALLOWED_HOSTS = [
-    'heavens-server.up.railway.app',
+    'heavens-server.up.railway.app', 'localhost',
 ]
 CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app"]
 CSRF_ALLOWED_ORIGINS = ["https://heavens-server.up.railway.app"]
