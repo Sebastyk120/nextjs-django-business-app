@@ -18,7 +18,12 @@
         }
         h1 {
             text-align: center;
-            color: #333;
+            font-family: Arial, sans-serif;
+            color: #ffffff;
+            background-color: #000000;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .container, .header-table, .details-table {
             width: 100%;
@@ -34,20 +39,30 @@
             background-color: #f2f2f2;
             font-weight: bold;
         }
-        .container-fluid {
-            width: 100%;
+        .responsive-table__container {
+            margin: 20px;
         }
         .table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 10px;
+        }
+        .table thead th {
+            background-color: #036098;
+            color: #ffffff;
+        }
+        .table thead th a {
+            color: #ffffff;
+            text-decoration: none;
         }
         .table th, .table td {
             border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+            padding: 4px;
+            text-align: center;
         }
         .table th {
-            background-color: #f2f2f2;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -86,7 +101,7 @@
         </tr>
     </table>
 </div>
-<div class="container-fluid">
+<div class="responsive-table__container">
     {% render_table table %}
 </div>
 </body>
