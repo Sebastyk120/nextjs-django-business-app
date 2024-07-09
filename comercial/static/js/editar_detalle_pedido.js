@@ -21,7 +21,7 @@ $(document).ready(function () {
             success: function (data) {
                 $('#moverItemModal .modal-content').html(data.form);
                 $('#moverItemModal').modal('show');
-                initializeForm(pedidoId); // Inicializar la lógica del formulario al cargar el modal
+                initializeForm(); // Inicializar la lógica del formulario al cargar el modal
                 $('#id_referencia').prop('disabled', true); // Deshabilitar el campo referencia inicialmente
             }
         });
@@ -36,14 +36,16 @@ $(document).ready(function () {
     });
 
     // Inicializar eventos de formulario
-    function initializeForm(pedidoId) {
-        initializeFrutaSelect(pedidoId);
-        initializePresentacionSelect(pedidoId);
+    function initializeForm() {
+        initializeFrutaSelect();
+        initializePresentacionSelect();
 
         // Asignar evento de submit para el formulario dentro del modal
         $(document).on('submit', '#moverItemForm', function (event) {
             event.preventDefault();
-            var serializedData = $(this).serialize() + '&detallepedido_id=' + itemId + '&pedido_id=' + pedidoId;
+            var serializedData = $(this).serialize();
+            serializedData += '&detallepedido_id=' + itemId;
+
             console.log(serializedData); // Imprimir los datos serializados
             $.ajax({
                 url: '/comercial/detalle_pedido_editar',
@@ -66,7 +68,7 @@ $(document).ready(function () {
         });
     }
 
-    function initializeFrutaSelect(pedidoId) {
+    function initializeFrutaSelect() {
         $(document).on('change', '.fruta-select', function () {
             var frutaId = $(this).val();
             if (frutaId) {
@@ -97,7 +99,7 @@ $(document).ready(function () {
         });
     }
 
-    function initializePresentacionSelect(pedidoId) {
+    function initializePresentacionSelect() {
         $(document).on('change', '.presentacion-select', function () {
             var presentacionId = $(this).val();
             if (presentacionId) {
