@@ -76,11 +76,12 @@
             });
         }
     </script>
-    <a type="button" class="btn btn-secondary me-md-5 btn-lg" name="volver" id="volver" role="button"
-       onclick="history.back();"><i class="bi bi-reply-fill"></i></a>
-    <a href="{% url 'pedido_resumen_pdf' pedido.id %}" class="btn btn-danger btn-lg" id="exportar" name="exportar" target="_blank">
-        <i class="bi bi-filetype-pdf"></i> Exportar a PDF
-    </a>
+    <div class="button-container">
+        <a type="button" class="btn btn-secondary me-md-5 btn-lg" name="volver" id="volver" role="button"
+           onclick="history.back();"><i class="bi bi-reply-fill"></i></a>
+        <a href="{% url 'pedido_resumen_pdf' pedido.id %}" class="btn btn-danger btn-sm" id="exportar" name="exportar" target="_blank">
+            <i class="bi bi-filetype-pdf"></i> Exportar</a>
+    </div>
     </body>
     </html>
 {% endblock %}

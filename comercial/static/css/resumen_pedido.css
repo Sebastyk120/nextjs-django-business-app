@@ -1,12 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Mulish:wght@300&display=swap');
 
 body {
-    background-image: url(../img/black.webp); !important;
+    background-image: url(../img/black.webp) !important;
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
     font-family: 'Mulish', serif !important;
+    margin-bottom: 100px; /* Asegura espacio para los botones al fondo */
 }
 
 h1 {
@@ -48,12 +49,12 @@ h6 {
     font-size: 0.9em;
     font-family: 'Mulish', sans-serif;
     width: 100%;
-    min-width: 400px;/* Hace que la tabla ocupe el 100% del ancho disponible */
+    min-width: 400px; /* Hace que la tabla ocupe el 100% del ancho disponible */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     background-color: #ece9e9; /* Puedes ajustar el color de fondo según tus preferencias */
     font-weight: bold;
-    white-space: initial;  /* Evita el salto de línea en las celdas */
-    text-align: center;    /* Alinea el texto a la derecha */
+    white-space: initial; /* Evita el salto de línea en las celdas */
+    text-align: center; /* Alinea el texto a la derecha */
 }
 
 .table thead tr {
@@ -71,23 +72,23 @@ h6 {
     vertical-align: middle;
 }
 
-table tr td:nth-child(1), table tr td:nth-child(2), table tr td:nth-child(8){
+table tr td:nth-child(1), table tr td:nth-child(2), table tr td:nth-child(8) {
     text-align: justify;
 }
 
 a:link {
     color: rgb(0, 0, 0);
-    text-decoration: none
+    text-decoration: none;
 }
 
 a:hover {
     color: rgb(0, 0, 0);
-    text-decoration: none
+    text-decoration: none;
 }
 
 a:visited {
     color: rgb(0, 0, 0);
-    text-decoration: none
+    text-decoration: none;
 }
 
 label {
@@ -96,45 +97,29 @@ label {
     margin: 10px;
 }
 
-[name="volver"], [name="exportar"] {
-    position: absolute;
-    left: 2%;
-    top: 30px;
+.button-container {
+    position: fixed;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
 }
 
-#exportar {
-    position: absolute;
-    left: 10%; /* Ajusta según sea necesario */
-    top: 30px;
+.button-container a {
+    margin: 5px;
     transition: all 300ms ease 0ms;
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
     z-index: 99;
 }
 
-#exportar:hover {
+.button-container a:hover {
     background-color: #000000;
     box-shadow: 0 15px 20px rgba(0, 0, 0, 0.3);
     transform: translateY(-7px);
 }
 
 @media only screen and (max-width: 600px) {
-    #exportar {
+    .button-container a {
         font-size: 14px;
         padding: 12px 20px;
-        bottom: 20px;
-        right: 30px;
     }
-}
-
-#volver {
-    position: fixed;
-    transition: all 300ms ease 0ms;
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-    z-index: 99;
-}
-
-#volver:hover {
-    background-color: #000000;
-    box-shadow: 0 15px 20px rgba(0, 0, 0, 0.3);
-    transform: translateY(-7px);
 }
