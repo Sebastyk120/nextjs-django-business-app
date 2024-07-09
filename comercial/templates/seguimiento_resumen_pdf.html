@@ -5,6 +5,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seguimiento Resumen Exportaciones</title>
+    <style>
+        @page {
+            size: A3 landscape;
+            margin: 1cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            background: none;
+        }
+        .responsive-table__container {
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            color: #ffffff;
+            background-color: #000000;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 10px;
+        }
+        .table thead th {
+            background-color: #036098;
+            color: #ffffff;
+        }
+        .table thead th a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: center;
+        }
+        .table th {
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <div class="responsive-table__container">

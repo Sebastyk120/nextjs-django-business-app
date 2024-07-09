@@ -3,22 +3,22 @@
 [phases.setup]
 # Instalar Python 3.11 y los paquetes de Nix
 nixPkgs = [
-  "python311",
-  "fontconfig",
-  "glib",
-  "harfbuzz",
-  "pango"
+  "python312"
 ]
 
 # Instalar paquetes de apt-get si es necesario
 aptPkgs = [
   "build-essential",
   "libcairo2",
-  "libpango-1.0-0",
-  "libpangocairo-1.0-0",
-  "libgdk-pixbuf2.0-0",
   "libffi-dev",
-  "shared-mime-info"
+  "shared-mime-info",
+  "libjpeg-dev",  # Necesario para manejo de imágenes en PDF
+  "zlib1g-dev",  # Necesario para compresión de imágenes en PDF
+  "libfreetype6-dev",  # Necesario para manejo de fuentes
+  "liblcms2-dev",  # Necesario para manejo de perfiles de color
+  "libopenjpeg-dev",  # Necesario para manejo de imágenes JPEG2000
+  "libtiff5-dev",  # Necesario para manejo de imágenes TIFF
+  "libwebp-dev"  # Necesario para manejo de imágenes WebP
 ]
 
 [phases.python_install]

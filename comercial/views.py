@@ -22,6 +22,7 @@ from openpyxl.workbook import Workbook
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from weasyprint import HTML, CSS
+from xhtml2pdf import pisa
 
 from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
     EliminarDetallePedidoForm, EditarPedidoExportadorForm, EditarDetallePedidoForm, EditarReferenciaForm, \
@@ -2856,72 +2857,24 @@ def export_pdf_resumen_semana(request):
         'exportador': exportador_nombre
     }
     html_string = render_to_string('seguimiento_resumen_pdf.html', context, request=request)
-    html = HTML(string=html_string)
 
-    # Añadir un CSS para formato horizontal y ajuste de ancho de columnas
-    css = CSS(string='''
-        @font-face {
-            font-family: 'Poppins';
-            font-style: normal;
-            font-weight: 400;
-            src: url('/static/fonts/Poppins/Poppins-Regular.ttf') format('truetype');
-        }
-        @font-face {
-            font-family: 'Poppins';
-            font-style: normal;
-            font-weight: 600;
-            src: url('/static/fonts/Poppins/Poppins-SemiBold.ttf') format('truetype');
-        }    
-        @page {
-            size: A3 landscape;
-            margin: 1cm;
-        }
-        body {
-            font-family: 'Poppins', sans-serif;
-            font-size: 12px;
-            background: none;
-        }
-        .container {
-            margin: 20px;
-        }
-        h1 {
-            text-align: center;
-            font-family: Arial, sans-serif;
-            color: #ffffff;
-            background-color: #000000;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            font-size: 10px;
-        }
-        .table thead th {
-            background-color: #036098;
-            color: #ffffff;
-        }
-        .table thead th a {
-            color: #ffffff;
-            text-decoration: none;
-        }
-        .table th, .table td {
-            border: 1px solid #ddd;
-            padding: 4px;
-            text-align: center;
-        }
-        .table th {
-            font-weight: bold;
-        }
-        ''')
+    # Función para convertir HTML a PDF
+    def convert_html_to_pdf(source_html, output_filename):
+        result_file = open(output_filename, "w+b")
+        pisa_status = pisa.CreatePDF(source_html, dest=result_file)
+        result_file.close()
+        return pisa_status.err
 
-    pdf = html.write_pdf(stylesheets=[css])
+    # Generar el PDF
+    result = convert_html_to_pdf(html_string, 'output.pdf')
 
-    response = HttpResponse(pdf, content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename="seguimiento_resumen.pdf"'
-    return response
+    if result:
+        return HttpResponse("Error al generar el PDF", status=500)
+
+    with open('output.pdf', 'rb') as pdf:
+        response = HttpResponse(pdf.read(), content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="seguimiento_resumen.pdf"'
+        return response
 
 
 @login_required(login_url=reverse_lazy('home'))
@@ -2966,79 +2919,24 @@ def exportar_pdf_resumen_pedido(request, pedido_id):
     step_time_5 = time.time()
     print(f"Tiempo para renderizar la plantilla a HTML: {step_time_5 - step_time_4:.2f} segundos")
 
-    html = HTML(string=html_string)
+    # Función para convertir HTML a PDF
+    def convert_html_to_pdf(source_html, output_filename):
+        result_file = open(output_filename, "w+b")
+        pisa_status = pisa.CreatePDF(source_html, dest=result_file)
+        result_file.close()
+        return pisa_status.err
 
-    # Añadir CSS para el formato horizontal y ajuste de ancho de columnas
-    css = CSS(string='''
-        @page {
-            size: A4 landscape;
-            margin: 1cm;
-        }
-        body {
-            font-family: 'Poppins', sans-serif;
-            font-size: 10px;
-            background: none;
-        }
-        h1 {
-            text-align: center;
-            font-family: Arial, sans-serif;
-            color: #ffffff;
-            background-color: #000000;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .container, .header-table, .details-table, .table {
-            width: 100%;
-            margin-bottom: 20px;
-            border-collapse: collapse;
-        }
-        .header-table th, .header-table td, .details-table th, .details-table td,
-        .table th, .table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .header-table th, .details-table th, .table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        .header-table th, .details-table th {
-            background-color: #f2f2f2;
-        }
-        .table {
-            font-size: 10px;
-        }
-        .table thead th {
-            color: #ffffff;
-            background-color: #036098;
-        }
-        .table thead th a {
-            color: #ffffff;
-            text-decoration: none;
-        }
-        .table th, .table td {
-            padding: 4px;
-            text-align: center;
-        }
-        ''')
-    options = {
-        'page-size': 'A4',
-        'margin-top': '1cm',
-        'margin-right': '1cm',
-        'margin-bottom': '1cm',
-        'margin-left': '1cm',
-        'encoding': "UTF-8",
-        'no-outline': None
-    }
-
-    pdf = html.write_pdf(stylesheets=[css], presentational_hints=True, optimize_size=('images', 'fonts'))
+    # Generar el PDF
+    result = convert_html_to_pdf(html_string, 'output.pdf')
     step_time_6 = time.time()
     print(f"Tiempo para generar el PDF: {step_time_6 - step_time_5:.2f} segundos")
 
-    response = HttpResponse(pdf, content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="resumen_pedido_{pedido_id}.pdf"'
-    end_time = time.time()
-    print(f"Tiempo total: {end_time - start_time:.2f} segundos")
+    if result:
+        return HttpResponse("Error al generar el PDF", status=500)
 
-    return response
+    with open('output.pdf', 'rb') as pdf:
+        response = HttpResponse(pdf.read(), content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="resumen_pedido_{pedido_id}.pdf"'
+        end_time = time.time()
+        print(f"Tiempo total: {end_time - start_time:.2f} segundos")
+        return response
