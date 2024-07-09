@@ -76,7 +76,7 @@ class PedidoForm(forms.ModelForm):
 
     class Meta:
         model = Pedido
-        fields = ['cliente', 'fecha_solicitud', 'fecha_entrega', 'fecha_llegada', 'exportadora', 'subexportadora',
+        fields = ['cliente', 'intermediario', 'fecha_solicitud', 'fecha_entrega', 'fecha_llegada', 'exportadora', 'subexportadora',
                   'awb', 'destino', 'numero_factura', 'descuento', 'nota_credito_no', 'motivo_nota_credito',
                   'documento_cobro_utilidad', 'fecha_pago_utilidad']
 
@@ -111,7 +111,8 @@ class EditarPedidoForm(forms.ModelForm):
 
     class Meta:
         model = Pedido
-        fields = ['cliente', 'fecha_solicitud', 'fecha_entrega', 'fecha_llegada', 'exportadora', 'subexportadora',
+        fields = ['cliente', 'intermediario', 'fecha_solicitud', 'fecha_entrega', 'fecha_llegada', 'exportadora',
+                  'subexportadora',
                   'awb', 'destino', 'numero_factura', 'descuento', 'nota_credito_no', 'motivo_nota_credito',
                   'documento_cobro_utilidad', 'fecha_pago_utilidad']
 

@@ -51,6 +51,7 @@
 [name="peso_awb"],
 [name="estado_documentos"],
 [name="trm_cotizacion"],
+[name="intermediario"],
 textarea[name="observaciones_tracking"] {
     width: 100%;
     border-radius: 4px;
@@ -87,6 +88,7 @@ textarea[name="observaciones_tracking"] {
 [name="peso_awb"]:disabled,
 [name="estado_documentos"]:disabled,
 [name="trm_cotizacion"]:disabled,
+[name="intermediario"]:disabled,
 textarea[name="observaciones_tracking"]:disabled {
     background-color: #000000;  /* Fondo cuando estén deshabilitados */
     color: #ecf0f1;  /* Color cuando estén deshabilitados */
