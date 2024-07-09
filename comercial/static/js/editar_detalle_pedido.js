@@ -21,7 +21,7 @@ $(document).ready(function () {
             success: function (data) {
                 $('#moverItemModal .modal-content').html(data.form);
                 $('#moverItemModal').modal('show');
-                initializeForm(); // Inicializar la lógica del formulario al cargar el modal
+                initializeForm(itemId, pedidoId); // Inicializar la lógica del formulario al cargar el modal
                 $('#id_referencia').prop('disabled', true); // Deshabilitar el campo referencia inicialmente
             }
         });
@@ -36,9 +36,10 @@ $(document).ready(function () {
     });
 
     // Inicializar eventos de formulario
-    function initializeForm() {
-        initializeFrutaSelect();
-        initializePresentacionSelect();
+    function initializeForm(itemId, pedidoId) {
+        $('#moverItemForm input[name="detallepedido_id"]').val(itemId); // Establecer el detallepedido_id
+        initializeFrutaSelect(pedidoId);
+        initializePresentacionSelect(pedidoId);
 
         // Asignar evento de submit para el formulario dentro del modal
         $(document).on('submit', '#moverItemForm', function (event) {
@@ -48,7 +49,7 @@ $(document).ready(function () {
 
             console.log(serializedData); // Imprimir los datos serializados
             $.ajax({
-                url: '/comercial/detalle_pedido_editar',
+                url: form.attr('action'), // Usar la URL del formulario
                 type: 'post',
                 data: serializedData,
                 success: function (data) {
@@ -68,7 +69,7 @@ $(document).ready(function () {
         });
     }
 
-    function initializeFrutaSelect() {
+    function initializeFrutaSelect(pedidoId) {
         $(document).on('change', '.fruta-select', function () {
             var frutaId = $(this).val();
             if (frutaId) {
@@ -99,7 +100,7 @@ $(document).ready(function () {
         });
     }
 
-    function initializePresentacionSelect() {
+    function initializePresentacionSelect(pedidoId) {
         $(document).on('change', '.presentacion-select', function () {
             var presentacionId = $(this).val();
             if (presentacionId) {
