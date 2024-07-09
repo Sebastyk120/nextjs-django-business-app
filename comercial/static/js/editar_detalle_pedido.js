@@ -38,6 +38,8 @@ $(document).ready(function () {
     // Inicializar eventos de formulario
     function initializeForm(itemId, pedidoId) {
         $('#moverItemForm input[name="detallepedido_id"]').val(itemId); // Establecer el detallepedido_id
+        $('#moverItemForm input[name="pedido_id"]').val(pedidoId); // Establecer el pedido_id
+        $('#moverItemForm').attr('action', '/comercial/detalle_pedido_editar'); // Establecer la acción correcta del formulario
         initializeFrutaSelect(pedidoId);
         initializePresentacionSelect(pedidoId);
 
