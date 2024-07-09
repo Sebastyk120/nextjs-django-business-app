@@ -43,8 +43,8 @@ $(document).ready(function () {
         // Asignar evento de submit para el formulario dentro del modal
         $(document).on('submit', '#moverItemForm', function (event) {
             event.preventDefault();
-            var serializedData = $(this).serialize();
-            serializedData += '&detallepedido_id=' + itemId;
+            var form = $(this);
+            var serializedData = form.serialize();
 
             console.log(serializedData); // Imprimir los datos serializados
             $.ajax({

@@ -1,11 +1,11 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/detalle_pedido_crear.css' %}">
 <div class="modal-header">
-    <h5 class="modal-title" id="moverItemModalLabel">Editar Detalle De Pedido: {{ pedido_id }} <i
-            class="bi bi-pencil-fill"></i></h5>
+    <h5 class="modal-title" id="moverItemModalLabel">Editar Detalle De Pedido: {{ pedido_id }} <i class="bi bi-pencil-fill"></i></h5>
 </div>
 <form id="moverItemForm" method="post">
     {% csrf_token %}
+    <input type="hidden" name="detallepedido_id" value="{{ detallepedido_id }}">
     <input type="hidden" name="pedido_id" value="{{ pedido_id }}">
     <div class="modal-body">
         <div id="errores">
