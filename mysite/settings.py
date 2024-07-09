@@ -91,11 +91,6 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
-}
-
-""""
-DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': os.environ["PGDATABASE"],
@@ -104,7 +99,7 @@ DATABASES = {
         'HOST': os.environ["PGHOST"],
         'PORT': os.environ["PGPORT"],
     }
-}"""
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
