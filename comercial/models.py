@@ -312,7 +312,7 @@ class Pedido(models.Model):
                 # Si no se encuentra la aerolínea, dejar el campo en blanco
                 self.aerolinea = None
         # Comprobación de cambio de exportador y eliminación de detalles de pedido:
-        """if self.pk is not None:
+        if self.pk is not None:
             # Obtener el pedido anterior (o sea no es una instancia nueva, mejor dicho pedido nuevo)
             pedido_anterior = Pedido.objects.get(pk=self.pk)
             # Verificar si el exportador ha cambiado
@@ -322,7 +322,7 @@ class Pedido(models.Model):
                 self.total_cajas_enviadas = 0
                 self.total_cajas_solicitadas = 0
                 self.total_piezas_solicitadas = 0
-                self.total_piezas_enviadas = 0"""
+                self.total_piezas_enviadas = 0
         # Campos Calculados
         if self.fecha_entrega is not None:
             self.semana = self.fecha_entrega.isocalendar()[1]
