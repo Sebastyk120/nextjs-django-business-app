@@ -21,7 +21,6 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.workbook import Workbook
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from weasyprint import HTML, CSS
 from xhtml2pdf import pisa
 
 from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
