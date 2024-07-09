@@ -3,7 +3,6 @@
 [phases.setup]
 # Instalar Python 3.11 y los paquetes de Nix
 nixPkgs = [
-  "python311",
   "pkg-config",
   "glib",
   "cairo",
@@ -23,9 +22,9 @@ aptPkgs = [
   "shared-mime-info"
 ]
 
-[phases.install]
-# Instalar las dependencias de Python
-cmds = ["pip install -r requirements.txt"]
+[phases.python_install]
+    dependsOn = ['setup']
+    cmds = ['pip install -r requirements.txt']
 
 [phases.build]
 # Colectar archivos estáticos y migrar la base de datos
