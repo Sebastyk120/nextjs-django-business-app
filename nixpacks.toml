@@ -3,12 +3,11 @@
 [phases.setup]
 # Instalar Python 3.11 y los paquetes de Nix
 nixPkgs = [
-  "python312",
+  "python311",
   "fontconfig",
   "glib",
   "harfbuzz",
-  "pango",
-  "pytest"
+  "pango"
 ]
 
 # Instalar paquetes de apt-get si es necesario
