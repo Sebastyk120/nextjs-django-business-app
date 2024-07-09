@@ -8,7 +8,8 @@ nixPkgs = [
   "glib",
   "cairo",
   "pango",
-  "gobject-introspection"
+  "gobject-introspection",
+  "gtk3"  # Asegurarnos de que GTK+ 3 esté instalado
 ]
 
 # Instalar paquetes de apt-get si es necesario
@@ -20,7 +21,17 @@ aptPkgs = [
   "gir1.2-pango-1.0",
   "gir1.2-gtk-3.0",
   "python3-gi",
-  "shared-mime-info"
+  "shared-mime-info",
+  "libpq-dev",
+  "libgirepository1.0-1",  # Dependencias adicionales para gobject
+  "libgirepository1.0-dev",  # Dependencias adicionales para gobject
+  "libgirepository1.0-bin",  # Dependencias adicionales para gobject
+  "libpango-1.0-0",
+  "libpangoft2-1.0-0",
+  "libharfbuzz-subset0",
+  "libjpeg-dev",
+  "libopenjp2-7-dev",
+  "libffi-dev"
 ]
 
 [phases.python_install]
