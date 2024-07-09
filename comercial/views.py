@@ -338,7 +338,7 @@ def exportar_utilidades_etnico(request):
         # Si las fechas están vacías, exportar todos los pedidos
         queryset = Pedido.objects.filter(exportadora__nombre='Etnico')
 
-    # Obtener los datos de tu modelo y calcular los totales
+        # Obtener los datos de tu modelo y calcular los totales
         for pedido in queryset:
             valor_utilidad_usd = pedido.valor_total_utilidad_usd
             if valor_utilidad_usd is None:
@@ -1639,10 +1639,12 @@ class PedidoUpdateView(UpdateView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        formatted_fecha_solicitud = self.object.fecha_solicitud.strftime('%Y-%m-%d') if self.object.fecha_solicitud else ''
+        formatted_fecha_solicitud = self.object.fecha_solicitud.strftime(
+            '%Y-%m-%d') if self.object.fecha_solicitud else ''
         formatted_fecha_entrega = self.object.fecha_entrega.strftime('%Y-%m-%d') if self.object.fecha_entrega else ''
         formatted_fecha_llegada = self.object.fecha_llegada.strftime('%Y-%m-%d') if self.object.fecha_llegada else ''
-        formatted_fecha_pago_utilidad = self.object.fecha_pago_utilidad.strftime('%Y-%m-%d') if self.object.fecha_pago_utilidad else ''
+        formatted_fecha_pago_utilidad = self.object.fecha_pago_utilidad.strftime(
+            '%Y-%m-%d') if self.object.fecha_pago_utilidad else ''
 
         form = self.form_class(
             instance=self.object,
@@ -1685,7 +1687,6 @@ class PedidoUpdateView(UpdateView):
                                                           request=self.request)})
         else:
             return super().form_invalid(form)
-
 
 
 # -------------------------------  //// Formulario - Editar Pedido Por Exportador //// ----------------------------
@@ -2004,7 +2005,6 @@ class DetallePedidoUpdateView(UpdateView):
         context = super().get_context_data(**kwargs)
         context['pedido_id'] = self.request.GET.get('pedido_id') or self.request.POST.get('pedido_id')
         return context
-
 
 
 # ---------------------------- Formulario Eliminar Detalle De Pedido --------------------------------------------
@@ -3042,7 +3042,3 @@ def exportar_pdf_resumen_pedido(request, pedido_id):
     print(f"Tiempo total: {end_time - start_time:.2f} segundos")
 
     return response
-
-
-
-
