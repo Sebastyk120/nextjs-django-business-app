@@ -8,7 +8,7 @@ nixPkgs = [
   "glib",
   "harfbuzz",
   "pango",
-  "pytestCheckHook"
+  "pytest"
 ]
 
 # Instalar paquetes de apt-get si es necesario
