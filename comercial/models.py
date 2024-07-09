@@ -524,10 +524,10 @@ class DetallePedido(models.Model):
         if self.afecta_utilidad is True:
             self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
-        elif self.afecta_utilidad is None:
-            self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
+        elif self.afecta_utilidad is False:
+            self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
             self.valor_nota_credito_usd = 0
-        else:
+        else:  # afecta_utilidad is None
             self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
 
