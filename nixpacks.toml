@@ -4,12 +4,21 @@
 # Instalar Python 3.11 y los paquetes de Nix
 nixPkgs = [
   "python312",
-  "pkg-config",
+  "cairosvg",
+  "cffi",
+  "cssselect2",
+  "fontconfig",
+  "fonttools",
+  "ghostscript",
   "glib",
-  "cairo",
+  "harfbuzz",
+  "html5lib",
   "pango",
-  "gobject-introspection",
-  "gtk3"  # Asegurarnos de que GTK+ 3 esté instalado
+  "pillow",
+  "pydyf",
+  "pyphen",
+  "pytestCheckHook",
+  "tinycss2"
 ]
 
 # Instalar paquetes de apt-get si es necesario
