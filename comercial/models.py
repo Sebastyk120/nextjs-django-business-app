@@ -391,7 +391,7 @@ class Pedido(models.Model):
             self.estado_pedido = "Cancelado"
         elif self.awb and self.numero_factura is not None:
             self.estado_pedido = "Despachado"
-        elif self.estado_utilidad == "Pagada" and self.estado_pedido == "Pagada":
+        elif self.estado_utilidad == "Pagada" and self.estado_factura == "Pagada":
             self.estado_pedido = "Finalizado"
         # Llama al método save de la clase base para realizar el guardado
         super().save(*args, **kwargs)

@@ -78,7 +78,7 @@ class PedidoForm(forms.ModelForm):
         model = Pedido
         fields = ['cliente', 'intermediario', 'fecha_solicitud', 'fecha_entrega', 'fecha_llegada', 'exportadora', 'subexportadora',
                   'awb', 'destino', 'numero_factura', 'descuento', 'nota_credito_no', 'motivo_nota_credito',
-                  'documento_cobro_utilidad', 'fecha_pago_utilidad']
+                  'documento_cobro_utilidad', 'fecha_pago_utilidad', 'observaciones']
 
 
 # ------------------------------------ Formulario Editar Pedido ---------------------------------------------
@@ -114,7 +114,7 @@ class EditarPedidoForm(forms.ModelForm):
         fields = ['cliente', 'intermediario', 'fecha_solicitud', 'fecha_entrega', 'fecha_llegada', 'exportadora',
                   'subexportadora',
                   'awb', 'destino', 'numero_factura', 'descuento', 'nota_credito_no', 'motivo_nota_credito',
-                  'documento_cobro_utilidad', 'fecha_pago_utilidad']
+                  'documento_cobro_utilidad', 'fecha_pago_utilidad', 'observaciones']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
