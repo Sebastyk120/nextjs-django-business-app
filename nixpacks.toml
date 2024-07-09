@@ -3,7 +3,7 @@
 [phases.setup]
 # Instalar Python 3.11 y los paquetes de Nix
 nixPkgs = [
-  "python312"
+  "python311"
 ]
 
 # Instalar paquetes de apt-get si es necesario
@@ -15,24 +15,8 @@ aptPkgs = [
   "zlib1g-dev",
   "libfreetype6-dev",
   "liblcms2-dev",
-  "libopenjpeg-dev",
   "libtiff5-dev",
   "libwebp-dev"
-]
-
-# Actualizar y limpiar caché de apt antes de instalar los paquetes
-cmds = [
-  "sudo apt-get update",
-  "sudo apt-get install -y --no-install-recommends build-essential",
-  "sudo apt-get install -y --no-install-recommends libffi-dev",
-  "sudo apt-get install -y --no-install-recommends shared-mime-info",
-  "sudo apt-get install -y --no-install-recommends libjpeg-dev",
-  "sudo apt-get install -y --no-install-recommends zlib1g-dev",
-  "sudo apt-get install -y --no-install-recommends libfreetype6-dev",
-  "sudo apt-get install -y --no-install-recommends liblcms2-dev",
-  "sudo apt-get install -y --no-install-recommends libopenjpeg-dev",
-  "sudo apt-get install -y --no-install-recommends libtiff5-dev",
-  "sudo apt-get install -y --no-install-recommends libwebp-dev"
 ]
 
 [phases.python_install]
