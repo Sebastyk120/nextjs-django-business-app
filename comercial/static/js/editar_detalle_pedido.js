@@ -12,7 +12,7 @@ $(document).ready(function () {
         itemId = removeDots($(this).data('detallepedido-id'));
         pedidoId = removeDots($(this).data('pedido-id'));
         $.ajax({
-            url: '/comercial/detalle_pedido_editar',  // URL sin barra al final
+            url: '/comercial/detalle_pedido_editar',
             type: 'get',
             data: {
                 'detallepedido_id': itemId,
@@ -21,8 +21,7 @@ $(document).ready(function () {
             success: function (data) {
                 $('#moverItemModal .modal-content').html(data.form);
                 $('#moverItemModal').modal('show');
-                initializeForm(itemId, pedidoId); // Inicializar la lógica del formulario al cargar el modal
-                $('#id_referencia').prop('disabled', true); // Deshabilitar el campo referencia inicialmente
+                initializeForm(pedidoId); // Inicializar la lógica del formulario al cargar el modal
             }
         });
     });
@@ -35,23 +34,31 @@ $(document).ready(function () {
         $(document).off('submit', '#moverItemForm'); // Desvincular eventos al cerrar el modal
     });
 
+    // Asignar evento para abrir el modal de eliminación
+    $('.eliminar-button').click(function () {
+        itemId = removeDots($(this).data('detallepedido-id'));
+        pedidoId = removeDots($(this).data('pedido-id'));
+        $('#eliminarModal').modal('show');
+    });
+
+    // Limpiar el contenido del modal de eliminación cuando se cierra
+    $('#eliminarModal').on('hidden.bs.modal', function () {
+        itemId = null;
+        pedidoId = null;
+    });
+
     // Inicializar eventos de formulario
-    function initializeForm(itemId, pedidoId) {
-        $('#moverItemForm input[name="detallepedido_id"]').val(itemId); // Establecer el detallepedido_id
-        $('#moverItemForm input[name="pedido_id"]').val(pedidoId); // Establecer el pedido_id
-        $('#moverItemForm').attr('action', '/comercial/detalle_pedido_editar'); // Establecer la acción correcta del formulario
+    function initializeForm(pedidoId) {
         initializeFrutaSelect(pedidoId);
         initializePresentacionSelect(pedidoId);
 
         // Asignar evento de submit para el formulario dentro del modal
         $(document).on('submit', '#moverItemForm', function (event) {
             event.preventDefault();
-            var form = $(this);
-            var serializedData = form.serialize();
-
+            var serializedData = $(this).serialize() + '&detallepedido_id=' + itemId + '&pedido_id=' + pedidoId;
             console.log(serializedData); // Imprimir los datos serializados
             $.ajax({
-                url: form.attr('action'), // Usar la URL del formulario
+                url: '/comercial/detalle_pedido_editar',
                 type: 'post',
                 data: serializedData,
                 success: function (data) {
@@ -60,8 +67,8 @@ $(document).ready(function () {
                         location.reload();
                     } else {
                         console.log(data);
-                        var errorMessage = data.html;
-                        $('#errores').html(errorMessage); // Mostrar los errores en el modal
+                        var errorMessage = data.error;
+                        $('#errores').html('<div class="alert alert-danger">' + errorMessage + '</div>');
                     }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
@@ -75,7 +82,6 @@ $(document).ready(function () {
         $(document).on('change', '.fruta-select', function () {
             var frutaId = $(this).val();
             if (frutaId) {
-                $('#id_referencia').prop('disabled', false); // Habilitar el campo referencia al cambiar la fruta
                 $.ajax({
                     url: '/comercial/filtrar_presentaciones',
                     data: {
@@ -106,7 +112,6 @@ $(document).ready(function () {
         $(document).on('change', '.presentacion-select', function () {
             var presentacionId = $(this).val();
             if (presentacionId) {
-                $('#id_referencia').prop('disabled', false); // Habilitar el campo referencia al cambiar la presentación
                 $.ajax({
                     url: '/comercial/ajax/load-referencias',
                     data: {

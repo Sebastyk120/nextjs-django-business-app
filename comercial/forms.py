@@ -76,7 +76,8 @@ class PedidoForm(forms.ModelForm):
 
     class Meta:
         model = Pedido
-        fields = ['cliente', 'intermediario', 'fecha_solicitud', 'fecha_entrega', 'fecha_llegada', 'exportadora', 'subexportadora',
+        fields = ['cliente', 'intermediario', 'fecha_solicitud', 'fecha_entrega', 'fecha_llegada', 'exportadora',
+                  'subexportadora',
                   'awb', 'destino', 'numero_factura', 'descuento', 'nota_credito_no', 'motivo_nota_credito',
                   'documento_cobro_utilidad', 'fecha_pago_utilidad', 'observaciones']
 
@@ -118,7 +119,6 @@ class EditarPedidoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
 
 
 # ------------------------------------ Formulario Eliminar Pedido ---------------------------------------------
@@ -217,9 +217,6 @@ class EditarDetallePedidoForm(forms.ModelForm):
         # Filtrar las frutas según el cliente del pedido
         self.fields['fruta'].queryset = Fruta.objects.filter(clientepresentacion__cliente=pedido.cliente).distinct()
 
-        # Inicialmente, la presentación debe estar vacía
-        self.fields['presentacion'].queryset = Presentacion.objects.none()
-
         if 'fruta' in self.data:
             try:
                 fruta_id = int(self.data.get('fruta'))
@@ -232,13 +229,18 @@ class EditarDetallePedidoForm(forms.ModelForm):
                 clientepresentacion__cliente=pedido.cliente, clientepresentacion__fruta=self.instance.fruta
             )
 
-        # Filtrar las referencias según el exportador del pedido
-        self.fields['referencia'].queryset = Referencias.objects.filter(exportador=pedido.exportadora)
+        # Filtrar las referencias según el exportador del pedido y la presentación inicializada
+        if self.instance.pk:
+            self.fields['referencia'].queryset = Referencias.objects.filter(
+                exportador=pedido.exportadora,
+                presentacionreferencia__presentacion=self.instance.presentacion
+            )
+        else:
+            self.fields['referencia'].queryset = Referencias.objects.filter(exportador=pedido.exportadora)
 
         # Añadir clases CSS a los widgets
         self.fields['fruta'].widget.attrs.update({'class': 'fruta-select'})
         self.fields['presentacion'].widget.attrs.update({'class': 'presentacion-select'})
-
 
 
 # -------------------------- Formulario Eliminar  Detalle  De Pedido ---------------------------------------------
