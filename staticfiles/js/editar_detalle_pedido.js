@@ -96,44 +96,46 @@ $(document).ready(function () {
                         $.each(data.presentaciones, function (key, value) {
                             presentacionSelect.append('<option value="' + value.id + '">' + value.nombre + ' (' + value.kilos + ' kg)</option>');
                         });
-                        presentacionSelect.trigger('change'); // Disparar el cambio para actualizar las referencias
+                        // Actualizar las referencias después de cambiar la presentación
+                        updateReferencias();
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
                         console.log("AJAX error: ", textStatus, errorThrown);
                     }
                 });
-            } else {
-                $('#id_referencia').prop('disabled', true); // Deshabilitar el campo referencia si no hay fruta seleccionada
             }
         });
     }
 
     function initializePresentacionSelect(pedidoId) {
         $(document).on('change', '.presentacion-select', function () {
-            var presentacionId = $(this).val();
-            if (presentacionId) {
-                $.ajax({
-                    url: '/comercial/ajax/load-referencias',
-                    data: {
-                        'presentacion_id': presentacionId,
-                        'pedido_id': pedidoId
-                    },
-                    dataType: 'json',
-                    success: function (data) {
-                        var referenciaSelect = $('#id_referencia');
-                        referenciaSelect.empty();
-                        referenciaSelect.append('<option value="">Seleccione una referencia</option>');
-                        $.each(data.referencias, function (key, value) {
-                            referenciaSelect.append('<option value="' + value.id + '">' + value.nombre + '</option>');
-                        });
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        console.log("AJAX error: ", textStatus, errorThrown);
-                    }
-                });
-            } else {
-                $('#id_referencia').prop('disabled', true); // Deshabilitar el campo referencia si no hay presentación seleccionada
-            }
+            updateReferencias();
         });
+    }
+
+    function updateReferencias() {
+        var presentacionId = $('#id_presentacion').val();
+        var pedidoId = $('input[name="pedido_id"]').val();
+        if (presentacionId) {
+            $.ajax({
+                url: '/comercial/ajax/load-referencias',
+                data: {
+                    'presentacion_id': presentacionId,
+                    'pedido_id': pedidoId
+                },
+                dataType: 'json',
+                success: function (data) {
+                    var referenciaSelect = $('#id_referencia');
+                    referenciaSelect.empty();
+                    referenciaSelect.append('<option value="">Seleccione una referencia</option>');
+                    $.each(data.referencias, function (key, value) {
+                        referenciaSelect.append('<option value="' + value.id + '">' + value.nombre + '</option>');
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log("AJAX error: ", textStatus, errorThrown);
+                }
+            });
+        }
     }
 });

@@ -1984,8 +1984,11 @@ class DetallePedidoUpdateView(UpdateView):
         else:
             return self.form_invalid(form, context)
 
+    @transaction.atomic
     def form_valid(self, form, pedido_id):
         self.object = form.save()
+        messages.success(self.request,
+                         f"El detalle para el pedido {pedido_id} se ha editado exitosamente.")
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
         else:
