@@ -12,7 +12,7 @@ $(document).ready(function () {
         itemId = removeDots($(this).data('detallepedido-id'));
         pedidoId = removeDots($(this).data('pedido-id'));
         $.ajax({
-            url: '/comercial/detalle_pedido_editar',
+            url: '/comercial/detalle_pedido_editar',  // URL sin barra al final
             type: 'get',
             data: {
                 'detallepedido_id': itemId,
@@ -60,8 +60,8 @@ $(document).ready(function () {
                         location.reload();
                     } else {
                         console.log(data);
-                        var errorMessage = data.error;
-                        $('#errores').html('<div class="alert alert-danger">' + errorMessage + '</div>');
+                        var errorMessage = data.html;
+                        $('#errores').html(errorMessage); // Mostrar los errores en el modal
                     }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {

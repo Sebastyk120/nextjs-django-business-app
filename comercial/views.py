@@ -1996,8 +1996,8 @@ class DetallePedidoUpdateView(UpdateView):
 
     def form_invalid(self, form, context):
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse(
-                {'success': False, 'html': render_to_string(self.template_name, context, request=self.request)})
+            form_html = render_to_string(self.template_name, context, request=self.request)
+            return JsonResponse({'success': False, 'html': form_html})
         else:
             return self.render_to_response(context)
 

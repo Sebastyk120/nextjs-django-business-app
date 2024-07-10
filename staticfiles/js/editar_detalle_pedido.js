@@ -12,7 +12,7 @@ $(document).ready(function () {
         itemId = removeDots($(this).data('detallepedido-id'));
         pedidoId = removeDots($(this).data('pedido-id'));
         $.ajax({
-            url: '/comercial/detalle_pedido_editar',
+            url: '/comercial/detalle_pedido_editar',  // URL sin barra al final
             type: 'get',
             data: {
                 'detallepedido_id': itemId,
@@ -21,7 +21,7 @@ $(document).ready(function () {
             success: function (data) {
                 $('#moverItemModal .modal-content').html(data.form);
                 $('#moverItemModal').modal('show');
-                initializeForm(pedidoId); // Inicializar la lógica del formulario al cargar el modal
+                initializeForm(itemId, pedidoId); // Inicializar la lógica del formulario al cargar el modal
                 $('#id_referencia').prop('disabled', true); // Deshabilitar el campo referencia inicialmente
             }
         });
@@ -36,17 +36,22 @@ $(document).ready(function () {
     });
 
     // Inicializar eventos de formulario
-    function initializeForm(pedidoId) {
+    function initializeForm(itemId, pedidoId) {
+        $('#moverItemForm input[name="detallepedido_id"]').val(itemId); // Establecer el detallepedido_id
+        $('#moverItemForm input[name="pedido_id"]').val(pedidoId); // Establecer el pedido_id
+        $('#moverItemForm').attr('action', '/comercial/detalle_pedido_editar'); // Establecer la acción correcta del formulario
         initializeFrutaSelect(pedidoId);
         initializePresentacionSelect(pedidoId);
 
         // Asignar evento de submit para el formulario dentro del modal
         $(document).on('submit', '#moverItemForm', function (event) {
             event.preventDefault();
-            var serializedData = $(this).serialize() + '&detallepedido_id=' + itemId + '&pedido_id=' + pedidoId;
+            var form = $(this);
+            var serializedData = form.serialize();
+
             console.log(serializedData); // Imprimir los datos serializados
             $.ajax({
-                url: '/comercial/detalle_pedido_editar',
+                url: form.attr('action'), // Usar la URL del formulario
                 type: 'post',
                 data: serializedData,
                 success: function (data) {
@@ -55,8 +60,8 @@ $(document).ready(function () {
                         location.reload();
                     } else {
                         console.log(data);
-                        var errorMessage = data.error;
-                        $('#errores').html('<div class="alert alert-danger">' + errorMessage + '</div>');
+                        var errorMessage = data.html;
+                        $('#errores').html(errorMessage); // Mostrar los errores en el modal
                     }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
