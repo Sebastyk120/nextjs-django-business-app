@@ -21,7 +21,9 @@
                 <i class="bi bi-bag-plus-fill"></i> Agregar
             </button>
             <a type="button" class="btn btn-danger" name="volver" id="volver" role="button"
-               onclick="history.back();"><i class="bi bi-reply-fill"></i> Pedidos</a>
+               href="{% url 'redirect_based_on_group' %}">
+                <i class="bi bi-reply-fill"></i> Pedidos
+            </a>
         </div>
     </div>
     <div class="container-fluid">

@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('redirect_based_on_group', views.redirect_based_on_group_pedidos, name='redirect_based_on_group'),
     path('pedido_detalles/<int:pedido_id>', views.DetallePedidoListView.as_view(), name='pedido_detalle_list'),
     path('pedido_list_general', views.PedidoListView.as_view(), name='pedido_list_general'),
     path('seguimiento_pedido_list_general', views.SeguimientosPedidosListView.as_view(), name='seguimiento_pedido_list_general'),

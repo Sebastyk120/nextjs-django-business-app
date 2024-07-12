@@ -44,6 +44,22 @@ def es_miembro_del_grupo(nombre_grupo):
     return es_miembro
 
 
+@login_required
+def redirect_based_on_group_pedidos(request):
+    user = request.user
+    if user.groups.filter(name='Heavens').exists():
+        return redirect('seguimiento_pedido_list_general')
+    elif user.groups.filter(name='Fieldex').exists():
+        return redirect('pedido_list_fieldex')
+    elif user.groups.filter(name='Etnico').exists():
+        return redirect('pedido_list_etnico')
+    elif user.groups.filter(name='Juan_Matas').exists():
+        return redirect('pedido_list_juan')
+    else:
+        # Redirigir a una vista por defecto si el usuario no pertenece a ninguno de los grupos
+        return redirect('default_view')
+
+
 # ----------------- Resumen Exportaciones Table View -------------------------------------
 
 @method_decorator(login_required, name='dispatch')
