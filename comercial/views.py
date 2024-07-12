@@ -48,7 +48,7 @@ def es_miembro_del_grupo(nombre_grupo):
 def redirect_based_on_group_pedidos(request):
     user = request.user
     if user.groups.filter(name='Heavens').exists():
-        return redirect('seguimiento_pedido_list_general')
+        return redirect('pedido_list_general')
     elif user.groups.filter(name='Fieldex').exists():
         return redirect('pedido_list_fieldex')
     elif user.groups.filter(name='Etnico').exists():
@@ -57,7 +57,7 @@ def redirect_based_on_group_pedidos(request):
         return redirect('pedido_list_juan')
     else:
         # Redirigir a una vista por defecto si el usuario no pertenece a ninguno de los grupos
-        return redirect('default_view')
+        return redirect('home')
 
 
 # ----------------- Resumen Exportaciones Table View -------------------------------------
