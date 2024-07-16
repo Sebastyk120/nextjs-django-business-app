@@ -180,7 +180,7 @@ def exportar_utilidades_excel(request):
 
     # Encabezados
     columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Estado Factura', 'T Cajas Enviadas', 'Trm Monetizacion',
+               'Valor Total Factura USD', 'Valor Pagado Cliente', 'Estado Factura', 'T Cajas Enviadas', 'Trm Monetizacion',
                'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
                'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
     for col_num, column_title in enumerate(columns, start=1):
@@ -236,6 +236,7 @@ def exportar_utilidades_excel(request):
             pedido.fecha_pago,
             pedido.numero_factura,
             pedido.valor_total_factura_usd,
+            pedido.valor_pagado_cliente_usd,
             pedido.estado_factura,
             pedido.total_cajas_enviadas,
             pedido.trm_monetizacion,
@@ -325,7 +326,8 @@ def exportar_utilidades_etnico(request):
 
     # Encabezados
     columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Estado Factura', 'T Cajas Enviadas', 'Trm Monetizacion',
+               'Valor Total Factura USD', 'Valor Pagado Cliente', 'Estado Factura', 'T Cajas Enviadas',
+               'Trm Monetizacion',
                'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
                'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
     for col_num, column_title in enumerate(columns, start=1):
@@ -380,6 +382,7 @@ def exportar_utilidades_etnico(request):
                 pedido.fecha_pago,
                 pedido.numero_factura,
                 pedido.valor_total_factura_usd,
+                pedido.valor_pagado_cliente_usd,
                 pedido.estado_factura,
                 pedido.total_cajas_enviadas,
                 pedido.trm_monetizacion,
@@ -469,7 +472,8 @@ def exportar_utilidades_fieldex(request):
 
     # Encabezados
     columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Estado Factura', 'T Cajas Enviadas', 'Trm Monetizacion',
+               'Valor Total Factura USD', 'Valor Pagado Cliente', 'Estado Factura', 'T Cajas Enviadas',
+               'Trm Monetizacion',
                'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
                'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
     for col_num, column_title in enumerate(columns, start=1):
@@ -523,6 +527,7 @@ def exportar_utilidades_fieldex(request):
             pedido.fecha_pago,
             pedido.numero_factura,
             pedido.valor_total_factura_usd,
+            pedido.valor_pagado_cliente_usd,
             pedido.estado_factura,
             pedido.total_cajas_enviadas,
             pedido.trm_monetizacion,
@@ -613,7 +618,8 @@ def exportar_utilidades_juan(request):
 
     # Encabezados
     columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Estado Factura', 'T Cajas Enviadas', 'Trm Monetizacion',
+               'Valor Total Factura USD', 'Valor Pagado Cliente', 'Estado Factura', 'T Cajas Enviadas',
+               'Trm Monetizacion',
                'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
                'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
     for col_num, column_title in enumerate(columns, start=1):
@@ -667,6 +673,7 @@ def exportar_utilidades_juan(request):
             pedido.fecha_pago,
             pedido.numero_factura,
             pedido.valor_total_factura_usd,
+            pedido.valor_pagado_cliente_usd,
             pedido.estado_factura,
             pedido.total_cajas_enviadas,
             pedido.trm_monetizacion,

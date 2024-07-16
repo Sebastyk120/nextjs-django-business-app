@@ -256,7 +256,7 @@ class UtilidadPedidoTable(tables.Table):
         order_by = ('cliente',)
         fields = ("id", "cobro_utilidad", "fecha_entrega",
                   "cliente", "exportadora", "awb", "fecha_entrega_personalizada", "numero_factura",
-                  "valor_total_factura_usd", "diferencia_por_abono", "trm_monetizacion",
+                  "valor_total_factura_usd", "valor_pagado_cliente_usd", "diferencia_por_abono", "trm_monetizacion",
                   "tasa_representativa_usd_diaria", "estado_factura", "total_cajas_enviadas",
                   "valor_total_utilidad_usd", "valor_utilidad_pesos", "documento_cobro_utilidad", "fecha_pago_utilidad",
                   "estado_utilidad")
