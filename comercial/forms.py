@@ -54,10 +54,6 @@ class PedidoForm(forms.ModelForm):
     fecha_entrega = forms.DateField(
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
     )
-    fecha_llegada = forms.DateField(
-        required=False,
-        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-    )
     fecha_pago_utilidad = forms.DateField(
         required=False,
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
@@ -85,10 +81,6 @@ class PedidoForm(forms.ModelForm):
 
 class EditarPedidoForm(forms.ModelForm):
     fecha_entrega = forms.DateField(
-        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-    )
-    fecha_llegada = forms.DateField(
-        required=False,
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
     )
     fecha_pago_utilidad = forms.DateField(
