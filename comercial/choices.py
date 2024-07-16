@@ -1,6 +1,7 @@
 motivo_nota = (
     ('Calidad', 'Calidad'),
     ('Faltantes', 'Faltantes'),
+    ('Error En Documentos', 'Error En Documentos'),
     ('Precio', 'Precio'),
 )
 
