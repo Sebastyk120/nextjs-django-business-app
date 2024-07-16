@@ -323,6 +323,8 @@ class Pedido(models.Model):
                 self.total_cajas_solicitadas = 0
                 self.total_piezas_solicitadas = 0
                 self.total_piezas_enviadas = 0
+            elif pedido_anterior.fecha_entrega != self.fecha_entrega:
+                self.estado_pedido = "Reprogramado"
         # Campos Calculados
         if self.fecha_entrega is not None:
             self.semana = self.fecha_entrega.isocalendar()[1]
