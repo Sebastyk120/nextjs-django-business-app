@@ -36,14 +36,19 @@
                     {{ form.eta.label_tag }} {{ form.eta }}
                 </div>
                 <div class="col-md-6">
-                    {{ form.peso_awb.label_tag }} {{ form.peso_awb }}
+                    {{ form.fecha_llegada.label_tag }} {{ form.fecha_llegada }}
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-6">
-                    {{ form.estado_documentos.label_tag }} {{ form.estado_documentos }}
+                    {{ form.peso_awb.label_tag }} {{ form.peso_awb }}
                 </div>
                 <div class="col-md-6">
+                    {{ form.estado_documentos.label_tag }} {{ form.estado_documentos }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
                     {{ form.observaciones_tracking.label_tag }} {{ form.observaciones_tracking }}
                 </div>
             </div>
@@ -54,4 +59,3 @@
         <button type="submit" class="btn btn-success">Editar</button>
     </div>
 </form>
-
