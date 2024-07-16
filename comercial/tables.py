@@ -391,7 +391,7 @@ class SeguimienosResumenTable(tables.Table):
         template_name = "django_tables2/bootstrap5-responsive.html"
         fields = ["id", "semana",
                   "cliente", "destino", "total_cajas_solicitadas", "total_piezas_solicitadas",
-                  "total_peso_bruto_solicitado",
+                  "total_peso_bruto_solicitado", "total_cajas_enviadas",
                   "fecha_entrega", "variedades", "responsable_reserva", "estatus_reserva", "awb", "aerolinea",
                   "exportadora", "agencia_carga", "estado_pedido", "estado_documentos"]
         row_attrs = {
