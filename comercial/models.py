@@ -311,6 +311,8 @@ class Pedido(models.Model):
             except Aerolinea.DoesNotExist:
                 # Si no se encuentra la aerolínea, dejar el campo en blanco
                 self.aerolinea = None
+        else:
+            self.aerolinea = None
         # Comprobación de cambio de exportador y eliminación de detalles de pedido:
         if self.pk is not None:
             # Obtener el pedido anterior (o sea no es una instancia nueva, mejor dicho pedido nuevo)
