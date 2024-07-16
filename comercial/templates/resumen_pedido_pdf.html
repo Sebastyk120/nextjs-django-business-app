@@ -11,56 +11,75 @@
             size: A3 landscape;
             margin: 1cm;
         }
+
         body {
             font-family: Arial, sans-serif;
-            font-size: 10px;
+            font-size: 14px;
             margin: 20px;
         }
+
         h1 {
             text-align: center;
             font-family: Arial, sans-serif;
             color: #ffffff;
             background-color: #000000;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .container, .header-table, .details-table {
             width: 100%;
             margin-bottom: 20px;
             border-collapse: collapse;
         }
+
         .header-table th, .header-table td, .details-table th, .details-table td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 5px;
             text-align: left;
         }
+
         .header-table th, .details-table th {
             background-color: #f2f2f2;
             font-weight: bold;
         }
+
         .responsive-table__container {
             margin: 20px;
         }
+
         .table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
             font-size: 10px;
         }
+
         .table thead th {
             background-color: #036098;
             color: #ffffff;
         }
+
         .table thead th a {
             color: #ffffff;
             text-decoration: none;
         }
+
+        .table td, .table th {
+            vertical-align: middle;
+        }
+
+        table tr td:nth-child(1), table tr td:nth-child(2), table tr td:nth-child(8) {
+            text-align: justify;
+        }
+
         .table th, .table td {
             border: 1px solid #ddd;
             padding: 4px;
             text-align: center;
         }
+
         .table th {
             font-weight: bold;
         }
