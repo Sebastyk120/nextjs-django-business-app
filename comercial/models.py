@@ -210,7 +210,7 @@ class Pedido(models.Model):
     subexportadora = models.ForeignKey(SubExportadora, on_delete=models.CASCADE, verbose_name="Subexportadora",
                                        null=True, blank=True)
     dias_cartera = models.IntegerField(verbose_name="Dias Cartera", editable=False, null=True, blank=True)
-    awb = models.CharField(max_length=50, verbose_name="AWB", null=True, blank=True)
+    awb = models.CharField(max_length=12, verbose_name="AWB", null=True, blank=True)
     destino = models.ForeignKey(Iata, on_delete=models.CASCADE, verbose_name="Destino", null=True, blank=True)
     numero_factura = models.CharField(max_length=50, verbose_name="Factura", null=True, blank=True)
     total_cajas_solicitadas = models.IntegerField(verbose_name="Cajas Solicitadas", null=True, blank=True,
