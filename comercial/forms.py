@@ -98,7 +98,7 @@ class EditarPedidoForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        fecha_solicitud = cleaned_data.get('fecha_solicitud')
+        fecha_solicitud = datetime.datetime.now()
         fecha_entrega = cleaned_data.get('fecha_entrega')
 
         if fecha_entrega and fecha_entrega < fecha_solicitud:
@@ -119,22 +119,18 @@ class EditarPedidoForm(forms.ModelForm):
 
 # ------------------------------------ Formulario Eliminar Pedido ---------------------------------------------
 class EliminarPedidoForm(forms.ModelForm):
-    fecha_solicitud = forms.DateField(
-        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-    )
     fecha_entrega = forms.DateField(
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
     )
 
     class Meta:
         model = Pedido
-        fields = ['cliente', 'fecha_solicitud', 'fecha_entrega', 'exportadora', 'awb',
+        fields = ['cliente', 'fecha_entrega', 'exportadora', 'awb',
                   'numero_factura']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['cliente'].disabled = True
-        self.fields['fecha_solicitud'].disabled = True
         self.fields['fecha_entrega'].disabled = True
         self.fields['exportadora'].disabled = True
         self.fields['awb'].disabled = True
