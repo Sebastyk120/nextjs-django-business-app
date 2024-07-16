@@ -14,6 +14,7 @@ estatus_reserva_list = (
 
 estado_documentos_list = (
     ('Enviado Al Cliente', 'Enviado Al Cliente'),
+    ('Con Problemas En Destino', 'Con Problemas En Destino'),
     ('Pendiente CO', 'Pendiente CO'),
     ('Pendiente Correcion De Documentos', 'Pendiente Correcion De Documentos'),
     ('Pendiente Envio De Documentos Al Cliente', 'Pendiente Envio De Documentos Al Cliente'),
