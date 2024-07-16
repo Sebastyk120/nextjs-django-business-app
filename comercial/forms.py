@@ -291,7 +291,7 @@ class EditarReferenciaForm(forms.ModelForm):
 
 class EditarPedidoSeguimientoForm(forms.ModelForm):
     fecha_llegada = forms.DateField(
-        label=Pedido._meta.get_field('Fecha Llegada').verbose_name,
+        label=Pedido._meta.get_field('fecha_llegada').verbose_name,
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}), required=False
     )
     class Meta:
