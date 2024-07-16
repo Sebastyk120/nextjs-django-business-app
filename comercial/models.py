@@ -423,6 +423,7 @@ class Pedido(models.Model):
             hoy = datetime.now().date()
 
             self.dias_de_vencimiento = (hoy - fecha_entrega).days
+
         if self.fecha_pago is None and (self.valor_pagado_cliente_usd is None or self.valor_pagado_cliente_usd == 0):
             self.estado_utilidad = "Pendiente Pago Cliente"
         elif self.estado_factura == "Abono":
@@ -435,15 +436,17 @@ class Pedido(models.Model):
             self.estado_utilidad = "Pagada"
         else:
             self.estado_utilidad = "Pendiente Pago Cliente"
+
         # Estado pedido:
         if self.estado_cancelacion == "autorizado":
             self.estado_pedido = "Cancelado"
-        elif self.awb and self.numero_factura is not None:
+        elif self.awb and self.numero_factura:
             self.estado_pedido = "Despachado"
         elif self.estado_utilidad == "Pagada" and self.estado_factura == "Pagada":
             self.estado_pedido = "Finalizado"
         elif self.awb is None and self.numero_factura is None:
             self.estado_pedido = "En Proceso"
+
         self.save()
 
     def actualizar_tasa_representativa(self):
