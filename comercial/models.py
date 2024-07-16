@@ -203,7 +203,7 @@ class Pedido(models.Model):
     intermediario = models.ForeignKey(Intermediario, on_delete=models.CASCADE, verbose_name="Intermediario", null=True,
                                       blank=True)
     semana = models.IntegerField(verbose_name="Semana", null=True, blank=True, editable=False)
-    fecha_solicitud = models.DateField(verbose_name="Fecha Solicitud")
+    fecha_solicitud = models.DateField(verbose_name="Fecha Solicitud", auto_now_add=True)
     fecha_entrega = models.DateField(verbose_name="Fecha Entrega")
     fecha_llegada = models.DateField(verbose_name="Fecha Llegada Estimada", blank=True, null=True)
     exportadora = models.ForeignKey(Exportador, on_delete=models.CASCADE, verbose_name="Exportador")

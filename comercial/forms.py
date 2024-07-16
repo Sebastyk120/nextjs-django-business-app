@@ -1,3 +1,5 @@
+import datetime
+
 from django import forms
 from django.forms import DateInput
 from django.core.exceptions import ValidationError
@@ -49,9 +51,6 @@ class PedidoForm(forms.ModelForm):
         to_field_name="nombre",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-    fecha_solicitud = forms.DateField(
-        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-    )
     fecha_entrega = forms.DateField(
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
     )
@@ -66,17 +65,17 @@ class PedidoForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        fecha_solicitud = cleaned_data.get('fecha_solicitud')
+        fecha_solicitud = datetime.datetime.now()
         fecha_entrega = cleaned_data.get('fecha_entrega')
 
-        if fecha_entrega and fecha_solicitud and fecha_entrega < fecha_solicitud:
+        if fecha_entrega and fecha_entrega < fecha_solicitud:
             self.add_error('fecha_entrega', 'La fecha de entrega no puede ser anterior a la fecha de solicitud.')
 
         return cleaned_data
 
     class Meta:
         model = Pedido
-        fields = ['cliente', 'intermediario', 'fecha_solicitud', 'fecha_entrega', 'fecha_llegada', 'exportadora',
+        fields = ['cliente', 'intermediario', 'fecha_entrega', 'exportadora',
                   'subexportadora',
                   'awb', 'destino', 'numero_factura', 'descuento', 'nota_credito_no', 'motivo_nota_credito',
                   'documento_cobro_utilidad', 'fecha_pago_utilidad', 'observaciones']
@@ -85,9 +84,6 @@ class PedidoForm(forms.ModelForm):
 # ------------------------------------ Formulario Editar Pedido ---------------------------------------------
 
 class EditarPedidoForm(forms.ModelForm):
-    fecha_solicitud = forms.DateField(
-        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-    )
     fecha_entrega = forms.DateField(
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
     )
@@ -105,14 +101,14 @@ class EditarPedidoForm(forms.ModelForm):
         fecha_solicitud = cleaned_data.get('fecha_solicitud')
         fecha_entrega = cleaned_data.get('fecha_entrega')
 
-        if fecha_entrega and fecha_solicitud and fecha_entrega < fecha_solicitud:
+        if fecha_entrega and fecha_entrega < fecha_solicitud:
             self.add_error('fecha_entrega', 'La fecha de entrega no puede ser anterior a la fecha de solicitud.')
 
         return cleaned_data
 
     class Meta:
         model = Pedido
-        fields = ['cliente', 'intermediario', 'fecha_solicitud', 'fecha_entrega', 'fecha_llegada', 'exportadora',
+        fields = ['cliente', 'intermediario', 'fecha_entrega', 'exportadora',
                   'subexportadora',
                   'awb', 'destino', 'numero_factura', 'descuento', 'nota_credito_no', 'motivo_nota_credito',
                   'documento_cobro_utilidad', 'fecha_pago_utilidad', 'observaciones']
@@ -309,6 +305,7 @@ class EditarPedidoSeguimientoForm(forms.ModelForm):
     class Meta:
         model = Pedido
         fields = [
+            'fecha_llegada',
             'responsable_reserva',
             'estatus_reserva',
             'agencia_carga',

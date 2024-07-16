@@ -1749,17 +1749,13 @@ class PedidoUpdateView(UpdateView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        formatted_fecha_solicitud = self.object.fecha_solicitud.strftime(
-            '%Y-%m-%d') if self.object.fecha_solicitud else ''
         formatted_fecha_entrega = self.object.fecha_entrega.strftime('%Y-%m-%d') if self.object.fecha_entrega else ''
-        formatted_fecha_llegada = self.object.fecha_llegada.strftime('%Y-%m-%d') if self.object.fecha_llegada else ''
         formatted_fecha_pago_utilidad = self.object.fecha_pago_utilidad.strftime(
             '%Y-%m-%d') if self.object.fecha_pago_utilidad else ''
 
         form = self.form_class(
             instance=self.object,
-            initial={'fecha_solicitud': formatted_fecha_solicitud, 'fecha_entrega': formatted_fecha_entrega,
-                     'fecha_llegada': formatted_fecha_llegada, 'fecha_pago_utilidad': formatted_fecha_pago_utilidad}
+            initial={'fecha_entrega': formatted_fecha_entrega, 'fecha_pago_utilidad': formatted_fecha_pago_utilidad}
         )
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -1884,13 +1880,13 @@ class PedidoUpdateSebguimientoView(UpdateView):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-
+        formatted_fecha_llegada = self.object.etd.strftime('%Y-%m-%d') if self.object.etd else ''
         formatted_etd = self.object.etd.strftime('%Y-%m-%dT%H:%M') if self.object.etd else ''
         formatted_eta = self.object.eta.strftime('%Y-%m-%dT%H:%M') if self.object.eta else ''
 
         form = self.form_class(
             instance=self.object,
-            initial={'etd': formatted_etd, 'eta': formatted_eta}
+            initial={'fecha_llegada': formatted_fecha_llegada, 'etd': formatted_etd, 'eta': formatted_eta}
         )
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
