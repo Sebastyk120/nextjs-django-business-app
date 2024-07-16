@@ -67,7 +67,7 @@ h1 {
     text-decoration: none;
 }
 
-table tr td:nth-child(1), table tr td:nth-child(19) {
+table tr td:nth-child(1), table tr td:nth-child(20) {
     background-color: #6aeadd
 }
 
