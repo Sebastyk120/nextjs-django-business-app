@@ -59,16 +59,6 @@ class PedidoForm(forms.ModelForm):
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
     )
 
-    def clean(self):
-        cleaned_data = super().clean()
-        fecha_solicitud = datetime.datetime.now()
-        fecha_entrega = cleaned_data.get('fecha_entrega')
-
-        if fecha_entrega and fecha_entrega < fecha_solicitud:
-            self.add_error('fecha_entrega', 'La fecha de entrega no puede ser anterior a la fecha de solicitud.')
-
-        return cleaned_data
-
     class Meta:
         model = Pedido
         fields = ['cliente', 'intermediario', 'fecha_entrega', 'exportadora',
@@ -87,16 +77,6 @@ class EditarPedidoForm(forms.ModelForm):
         required=False,
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
     )
-
-    def clean(self):
-        cleaned_data = super().clean()
-        fecha_solicitud = datetime.datetime.now()
-        fecha_entrega = cleaned_data.get('fecha_entrega')
-
-        if fecha_entrega and fecha_entrega < fecha_solicitud:
-            self.add_error('fecha_entrega', 'La fecha de entrega no puede ser anterior a la fecha de solicitud.')
-
-        return cleaned_data
 
     class Meta:
         model = Pedido
