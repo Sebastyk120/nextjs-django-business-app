@@ -2867,9 +2867,9 @@ def autorizar_cancelacion(request, autorizacion_id):
                 pedido.descuento = 0
                 pedido.dias_de_vencimiento = 0
                 pedido.diferencia_por_abono = 0
-                pedido.documento_cobro_utilidad = '-'
-                pedido.estado_utilidad = '-'
-                pedido.numero_factura = '-'
+                pedido.documento_cobro_utilidad = 'Pedido Cancelado'
+                pedido.estado_utilidad = 'Pedido Cancelado'
+                pedido.numero_factura = 'Pedido Cancelado'
                 pedido.tasa_representativa_usd_diaria = 0
                 pedido.total_cajas_enviadas = 0
                 pedido.total_peso_bruto = 0
