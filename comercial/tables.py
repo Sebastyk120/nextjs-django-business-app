@@ -163,6 +163,13 @@ class PedidoExportadorTable(tables.Table):
                   "valor_total_utilidad_usd", "valor_utilidad_pesos", "documento_cobro_utilidad", "fecha_pago_utilidad",
                   "estado_utilidad", "variedades", "estado_pedido", "estado_cancelacion", "observaciones", "detalle",
                   "editar", "inf")
+        row_attrs = {
+            "style": lambda record: ("background-color: #f8d7da;" if record.estado_cancelacion == "autorizado" else
+                                     ("background-color: #d4edda;" if record.estado_pedido == "Finalizado" else
+                                      (
+                                          "background-color: #fff3cd;" if record.estado_cancelacion == "pendiente" else ""))
+                                     )
+        }
 
     def render_dias_de_vencimiento(self, value):
         if value <= 0:
