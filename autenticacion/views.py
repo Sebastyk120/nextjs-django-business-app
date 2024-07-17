@@ -1,3 +1,5 @@
+import os
+import tempfile
 from django.contrib import messages
 from django.contrib.admin.views.decorators import user_passes_test
 from django.contrib.auth import login, authenticate, logout
@@ -88,3 +90,25 @@ class CustomPasswordResetView(PasswordResetView):
         context = super().get_context_data(**kwargs)
         context['site_name'] = "Administración Heavens Fruits"
         return context
+
+
+class BackupDataView(View):
+    def get(self, request, *args, **kwargs):
+        # Crear un archivo temporal para almacenar el backup
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
+        try:
+            # Llamar a 'dumpdata' y redirigir la salida al archivo temporal
+            call_command('dumpdata', stdout=temp_file)
+            temp_file.close()
+
+            # Leer el contenido del archivo temporal
+            with open(temp_file.name, 'rb') as backup_file:
+                response = HttpResponse(backup_file.read(), content_type='application/json')
+                response['Content-Disposition'] = f'attachment; filename="db_backup.json"'
+                return response
+        finally:
+            os.remove(temp_file.name)  # Eliminar el archivo temporal después de la respuesta
+
+    def post(self, request, *args, **kwargs):
+        # Renderizar la plantilla
+        return render(request, 'backup.html')
