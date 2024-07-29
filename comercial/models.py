@@ -5,7 +5,7 @@ from importlib import import_module
 import pandas as pd
 import requests
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MinValueValidator, MaxLengthValidator, MaxValueValidator
 from django.db import models
 from django.db.models import Sum
@@ -149,12 +149,14 @@ class ClientePresentacion(models.Model):
 class PresentacionReferencia(models.Model):
     presentacion = models.ForeignKey(Presentacion, on_delete=models.CASCADE)
     referencia = models.ForeignKey(Referencias, on_delete=models.CASCADE)
+    fruta = models.ForeignKey(Fruta, on_delete=models.CASCADE)
+    tipo_caja = models.ForeignKey(TipoCaja, on_delete=models.CASCADE)
 
     class Meta:
-        ordering = ['referencia__nombre']
+        ordering = ['fruta']
 
     def __str__(self):
-        return f"Presentacion: {self.presentacion} -- Referencia: {self.referencia}"
+        return f"Refe: {self.referencia} Presen: {self.presentacion} -Marca: {self.tipo_caja} -Fruta {self.fruta}"
 
 
 class AgenciaCarga(models.Model):
@@ -198,21 +200,42 @@ class Intermediario(models.Model):
         return self.nombre
 
 
+def validate_awb(value):
+    if len(value) != 12:
+        raise ValidationError(
+            'El AWB debe tener exactamente 12 caracteres.',
+            params={'value': value},
+        )
+    if ' ' in value:
+        raise ValidationError(
+            'El AWB no puede contener espacios.',
+            params={'value': value},
+        )
+
+
+# Los Campos editable=True Se deben cambiar una vez desplegado a produccion, lo mismo para el caso de reprogramado.
 class Pedido(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, verbose_name="Cliente")
     intermediario = models.ForeignKey(Intermediario, on_delete=models.CASCADE, verbose_name="Intermediario", null=True,
                                       blank=True)
     semana = models.IntegerField(verbose_name="Semana", null=True, blank=True, editable=False)
-    fecha_solicitud = models.DateField(verbose_name="Fecha Solicitud", auto_now_add=True)
+    fecha_solicitud = models.DateField(verbose_name="Fecha Solicitud", auto_now_add=True, editable=True)
     fecha_entrega = models.DateField(verbose_name="Fecha Entrega")
     fecha_llegada = models.DateField(verbose_name="Fecha Llegada Estimada", blank=True, null=True)
     exportadora = models.ForeignKey(Exportador, on_delete=models.CASCADE, verbose_name="Exportador")
     subexportadora = models.ForeignKey(SubExportadora, on_delete=models.CASCADE, verbose_name="Subexportadora",
                                        null=True, blank=True)
     dias_cartera = models.IntegerField(verbose_name="Dias Cartera", editable=False, null=True, blank=True)
-    awb = models.CharField(max_length=12, verbose_name="AWB", null=True, blank=True)
+    awb = models.CharField(
+        max_length=12,
+        verbose_name="AWB",
+        null=True,
+        blank=True,
+        default=None,
+        validators=[validate_awb]
+    )
     destino = models.ForeignKey(Iata, on_delete=models.CASCADE, verbose_name="Destino", null=True, blank=True)
-    numero_factura = models.CharField(max_length=50, verbose_name="Factura", null=True, blank=True)
+    numero_factura = models.CharField(max_length=50, verbose_name="Factura", null=True, blank=True, default=None)
     total_cajas_solicitadas = models.IntegerField(verbose_name="Cajas Solicitadas", null=True, blank=True,
                                                   editable=False)
     total_cajas_enviadas = models.IntegerField(verbose_name="Cajas Enviadas", null=True, blank=True, editable=False)
@@ -225,9 +248,9 @@ class Pedido(models.Model):
                                                    editable=False)
     total_piezas_enviadas = models.IntegerField(verbose_name="Total Piezas Enviadas", null=True, blank=True,
                                                 editable=False)
-    nota_credito_no = models.CharField(max_length=50, verbose_name="Nota Crédito", null=True, blank=True)
+    nota_credito_no = models.CharField(max_length=50, verbose_name="Nota Crédito", null=True, blank=True, default=None)
     motivo_nota_credito = models.CharField(max_length=20, choices=motivo_nota, verbose_name="Motivo Nota Crédito",
-                                           null=True, blank=True)
+                                           null=True, blank=True, default=None)
     descuento = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
                                     verbose_name="$Descuento C", null=True, blank=True,
                                     default=0)
@@ -256,9 +279,10 @@ class Pedido(models.Model):
                                                   null=True, blank=True, editable=False, default=0)
     valor_total_utilidad_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Utilidades USD",
                                                    null=True, blank=True, editable=False, default=0)
-    valor_utilidad_pesos = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Utilidades Pesos",
+    valor_utilidad_pesos = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="$Utilidades Pesos",
                                                null=True, blank=True, editable=False, default=0)
-    documento_cobro_utilidad = models.CharField(max_length=50, verbose_name="Doc Cobro Utilidad", null=True, blank=True)
+    documento_cobro_utilidad = models.CharField(max_length=50, verbose_name="Doc Cobro Utilidad", null=True, blank=True,
+                                                default=None)
     fecha_pago_utilidad = models.DateField(verbose_name="Fecha Pago Utilidad", null=True, blank=True)
     estado_utilidad = models.CharField(max_length=50, verbose_name="Estado Utilidad", editable=False)
     estado_pedido = models.CharField(max_length=20, verbose_name="Estado Pedido", editable=False, null=True, blank=True,
@@ -270,7 +294,7 @@ class Pedido(models.Model):
                                               ('autorizado', 'Autorizado'),
                                               ('no_autorizado', 'No Autorizado')
                                           ],
-                                          default='sin_solicitud', editable=False, verbose_name="Estado Cancelación")
+                                          default='sin_solicitud', editable=True, verbose_name="Estado Cancelación")
     observaciones = models.TextField(verbose_name="Observaciones", validators=[MaxLengthValidator(300)], blank=True,
                                      null=True)
     # -------------------------------------- Campos Para Tracking ----------------------------------------------
@@ -293,6 +317,11 @@ class Pedido(models.Model):
                                          null=True, blank=True)
     observaciones_tracking = models.TextField(validators=[MaxLengthValidator(300)],
                                               verbose_name="Observaciones Tracking", blank=True, null=True)
+    eta_real = models.DateTimeField(verbose_name="Real Final Eta", null=True, blank=True)
+    diferencia_peso_factura_awb = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Kg Invoice / AWB",
+                                                      null=True,
+                                                      blank=True, editable=False)
+    termo = models.CharField(max_length=20, verbose_name="Termo", null=True, blank=True, default=None)
     history = HistoricalRecords()
 
     @property
@@ -300,33 +329,29 @@ class Pedido(models.Model):
         return self.autorizacioncancelacion_set.first()  # Asume que solo hay una autorización por pedido
 
     def save(self, *args, **kwargs):
-        # Agregacion de campo aerolinea:
+        # Agregación de campo aerolinea:
         if self.awb:
-            # Extraer los primeros 3 dígitos del AWB
             codigo_aerolinea = self.awb[:3]
             try:
-                # Buscar la aerolínea correspondiente
                 aerolinea = Aerolinea.objects.get(codigo=codigo_aerolinea)
                 self.aerolinea = aerolinea
             except Aerolinea.DoesNotExist:
-                # Si no se encuentra la aerolínea, dejar el campo en blanco
                 self.aerolinea = None
         else:
             self.aerolinea = None
+
         # Comprobación de cambio de exportador y eliminación de detalles de pedido:
-        if self.pk is not None:
-            # Obtener el pedido anterior (o sea no es una instancia nueva, mejor dicho pedido nuevo)
+        """if self.pk is not None:
             pedido_anterior = Pedido.objects.get(pk=self.pk)
-            # Verificar si el exportador ha cambiado
             if pedido_anterior.exportadora != self.exportadora:
-                # Eliminar todos los detalles del pedido
                 DetallePedido.objects.filter(pedido=self).delete()
                 self.total_cajas_enviadas = 0
                 self.total_cajas_solicitadas = 0
                 self.total_piezas_solicitadas = 0
                 self.total_piezas_enviadas = 0
-            elif pedido_anterior.fecha_entrega != self.fecha_entrega:
-                self.estado_pedido = "Reprogramado"
+            if pedido_anterior.fecha_entrega != self.fecha_entrega:
+                self.estado_pedido = "Reprogramado"""
+
         # Campos Calculados
         if self.fecha_entrega is not None:
             self.semana = self.fecha_entrega.isocalendar()[1]
@@ -341,14 +366,12 @@ class Pedido(models.Model):
         if self.valor_pagado_cliente_usd == 0:
             if self.estado_cancelacion == "autorizado":
                 self.estado_factura = "Cancelada"
-            # Caso cuando el valor pagado por el cliente es 0
             elif (
                     self.valor_total_nota_credito_usd + self.descuento) >= self.valor_total_factura_usd and self.valor_total_factura_usd > 0:
                 self.estado_factura = "Pagada"
             else:
                 self.estado_factura = "Pendiente Pago"
         else:
-            # Caso cuando hay algún valor pagado por el cliente
             total_restante = self.valor_total_factura_usd - self.valor_total_nota_credito_usd - self.utilidad_bancaria_usd - self.descuento
             if self.valor_pagado_cliente_usd < total_restante:
                 self.estado_factura = "Abono"
@@ -362,21 +385,22 @@ class Pedido(models.Model):
         if self.fecha_pago is not None:
             self.dias_de_vencimiento = 0
         else:
-            # Comprobar si self.fecha_entrega es un objeto datetime.datetime
             if isinstance(self.fecha_entrega, datetime):
                 fecha_entrega = self.fecha_entrega.date()
             elif isinstance(self.fecha_entrega, date):
-                # No se necesita conversión si ya es un objeto datetime.date
                 fecha_entrega = self.fecha_entrega
             else:
-                # Manejar otros casos o lanzar un error según sea necesario
                 raise ValueError("Tipo de fecha no soportado")
 
             fecha_entrega += timedelta(days=self.dias_cartera)
             hoy = datetime.now().date()
-
             self.dias_de_vencimiento = (hoy - fecha_entrega).days
-
+        # Cálculo diferencia_peso_factura_awb:
+        if self.peso_awb:
+            if self.total_peso_bruto_enviado > 0:
+                self.diferencia_peso_factura_awb = self.peso_awb - self.total_peso_bruto_enviado
+            else:
+                self.diferencia_peso_factura_awb = None
         # Estado Utilidad:
         if self.fecha_pago is None and (self.valor_pagado_cliente_usd is None or self.valor_pagado_cliente_usd == 0):
             self.estado_utilidad = "Pendiente Pago Cliente"
@@ -390,6 +414,7 @@ class Pedido(models.Model):
             self.estado_utilidad = "Pagada"
         else:
             self.estado_utilidad = "Pendiente Pago Cliente"
+
         # Estado pedido:
         if self.estado_cancelacion == "autorizado":
             self.estado_pedido = "Cancelado"
@@ -397,8 +422,9 @@ class Pedido(models.Model):
             self.estado_pedido = "Despachado"
         elif self.estado_utilidad == "Pagada" and self.estado_factura == "Pagada":
             self.estado_pedido = "Finalizado"
-        elif self.awb is None and self.numero_factura is None:
+        elif self.awb is None or self.numero_factura is None:
             self.estado_pedido = "En Proceso"
+
         # Llama al método save de la clase base para realizar el guardado
         super().save(*args, **kwargs)
 
@@ -409,19 +435,6 @@ class Pedido(models.Model):
         self.save()
 
     def actualizar_dias_de_vencimiento(self):
-        if self.fecha_pago is None and (self.valor_pagado_cliente_usd is None or self.valor_pagado_cliente_usd == 0):
-            self.estado_utilidad = "Pendiente Pago Cliente"
-        elif self.estado_factura == "Abono":
-            self.estado_utilidad = "Factura en abono"
-        elif self.fecha_pago is not None and self.estado_factura == "Pagada" and self.documento_cobro_utilidad is None:
-            self.estado_utilidad = "Por Facturar"
-        elif self.fecha_pago is not None and self.documento_cobro_utilidad is not None and self.fecha_pago_utilidad is None:
-            self.estado_utilidad = "Facturada"
-        elif self.fecha_pago_utilidad is not None and self.documento_cobro_utilidad is not None and self.fecha_pago is not None:
-            self.estado_utilidad = "Pagada"
-        else:
-            self.estado_utilidad = "Pendiente Pago Cliente"
-
         if self.fecha_pago is not None:
             self.dias_de_vencimiento = 0
         else:
@@ -513,7 +526,8 @@ class DetallePedido(models.Model):
                                            blank=True, default=0)
     valor_x_producto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Por Producto", null=True,
                                            blank=True, editable=False)
-    no_cajas_nc = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="No Cajas NC", null=True, blank=True)
+    no_cajas_nc = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="No Cajas NC", null=True,
+                                      blank=True)
     valor_nota_credito_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Nota Crédito USD",
                                                  null=True, blank=True, editable=False)
     afecta_utilidad = models.BooleanField(choices=[(True, "Sí"), (False, "No"), (None, "Descuento")],
@@ -614,7 +628,7 @@ class DetallePedido(models.Model):
             return cajas_enviadas / self.referencia.cantidad_pallet_sin_contenedor
 
     class Meta:
-        ordering = ['pedido']
+        ordering = ['pedido', 'fruta']
 
     def __str__(self):
         return f"Detalle Pedido - {self.pedido} - {self.fruta} - {self.presentacion}"

@@ -4,6 +4,8 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
+
+import pandas as pd
 from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth.decorators import user_passes_test, login_required
@@ -18,17 +20,18 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django_tables2 import SingleTableView
 from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.workbook import Workbook
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from xhtml2pdf import pisa
-
 from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
     EliminarDetallePedidoForm, EditarPedidoExportadorForm, EditarDetallePedidoForm, EditarReferenciaForm, \
-    EditarPedidoSeguimientoForm, FiltroSemanaExportadoraForm, SearchFormReferencias
-from .models import Pedido, DetallePedido, Referencias, AutorizacionCancelacion, Presentacion, Exportador
-from .resources import obtener_datos_con_totales, crear_archivo_excel, obtener_datos_con_totales_etnico, \
-    obtener_datos_con_totales_fieldex, obtener_datos_con_totales_juan
+    EditarPedidoSeguimientoForm, FiltroSemanaExportadoraForm, SearchFormReferencias, EditarPedidoFormDos, \
+    EditarPedidoFormCartera, EditarPedidoFormUtilidades, EditarDetallePedidoDosForm, EditarDetallePedidoTresForm, \
+    ExportSearchForm, ExportSearchFormSeguimientos
+from .models import Pedido, DetallePedido, Referencias, AutorizacionCancelacion, Presentacion, Exportador, Cliente
+from .resources import obtener_datos_con_totales_cliente, crear_archivo_excel_cliente
 from .tables import PedidoTable, DetallePedidoTable, PedidoExportadorTable, CarteraPedidoTable, UtilidadPedidoTable, \
     ResumenPedidoTable, ReferenciasTable, SeguimienosTable, SeguimienosResumenTable
 
@@ -55,6 +58,22 @@ def redirect_based_on_group_pedidos(request):
         return redirect('pedido_list_etnico')
     elif user.groups.filter(name='Juan_Matas').exists():
         return redirect('pedido_list_juan')
+    else:
+        # Redirigir a una vista por defecto si el usuario no pertenece a ninguno de los grupos
+        return redirect('home')
+
+
+@login_required
+def redirect_based_on_group_cartera(request):
+    user = request.user
+    if user.groups.filter(name='Heavens').exists():
+        return redirect('cartera_list_heavens')
+    elif user.groups.filter(name='Fieldex').exists():
+        return redirect('cartera_list_fieldex')
+    elif user.groups.filter(name='Etnico').exists():
+        return redirect('cartera_list_etnico')
+    elif user.groups.filter(name='Juan_Matas').exists():
+        return redirect('cartera_list_juan')
     else:
         # Redirigir a una vista por defecto si el usuario no pertenece a ninguno de los grupos
         return redirect('home')
@@ -178,9 +197,13 @@ def exportar_utilidades_excel(request):
     total_fill = PatternFill(start_color="2196F3", end_color="2196F3", fill_type="solid")
     total_align = Alignment(horizontal="center")
 
+    # Definir el color de relleno rojo suave
+    fill_red_soft = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+
     # Encabezados
     columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Valor Pagado Cliente', 'Estado Factura', 'T Cajas Enviadas', 'Trm Monetizacion',
+               'Valor Total Factura USD', 'Valor Pagado Cliente', 'Estado Factura', 'T Cajas Enviadas',
+               'Trm Monetizacion',
                'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
                'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
     for col_num, column_title in enumerate(columns, start=1):
@@ -252,8 +275,11 @@ def exportar_utilidades_excel(request):
         for col_num, cell_value in enumerate(row, start=1):
             cell = worksheet1.cell(row=row_num, column=col_num, value=cell_value)
             # Aplicar formato de moneda a las columnas específicas
-            if col_num in [8, 11, 12, 13, 14, 17]:
+            if col_num in [8, 9, 11, 12, 13, 14, 17]:
                 cell.number_format = '$#,##0.00'
+            # Pintar la fila si el numero_factura es 'Pedido Cancelado'
+            if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
+                cell.fill = fill_red_soft
 
     # Hoja 2: Totales por Exportadora
     worksheet2 = workbook.create_sheet(title='Totales por Exportadora')
@@ -323,6 +349,8 @@ def exportar_utilidades_etnico(request):
     total_font = Font(bold=True, color="FFFFFF")
     total_fill = PatternFill(start_color="3580e0", end_color="3580e0", fill_type="solid")
     total_align = Alignment(horizontal="center")
+    # Definir el color de relleno rojo suave
+    fill_red_soft = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
 
     # Encabezados
     columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
@@ -398,8 +426,11 @@ def exportar_utilidades_etnico(request):
             for col_num, cell_value in enumerate(row, start=1):
                 cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
                 # Aplicar formato de moneda a las columnas específicas
-                if col_num in [8, 11, 12, 13, 14, 17]:
+                if col_num in [8, 9, 11, 12, 13, 14, 17]:
                     cell.number_format = '$#,##0.00'
+                # Pintar la fila si el numero_factura es 'Pedido Cancelado'
+                if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
+                    cell.fill = fill_red_soft
 
     def aplicar_estilo_total(fila):  # Funcion APara Dar Estilo A Los Totales.
         for col in range(1, len(columns) + 1):
@@ -469,6 +500,8 @@ def exportar_utilidades_fieldex(request):
     total_font = Font(bold=True, color="FFFFFF")
     total_fill = PatternFill(start_color="3580e0", end_color="3580e0", fill_type="solid")
     total_align = Alignment(horizontal="center")
+    # Definir el color de relleno rojo suave
+    fill_red_soft = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
 
     # Encabezados
     columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
@@ -543,8 +576,11 @@ def exportar_utilidades_fieldex(request):
         for col_num, cell_value in enumerate(row, start=1):
             cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
             # Aplicar formato de moneda a las columnas específicas
-            if col_num in [8, 11, 12, 13, 14, 17]:
+            if col_num in [8, 9, 11, 12, 13, 14, 17]:
                 cell.number_format = '$#,##0.00'
+            # Pintar la fila si el numero_factura es 'Pedido Cancelado'
+            if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
+                cell.fill = fill_red_soft
 
     # Agregar los totales al final de la hoja de trabajo
 
@@ -615,6 +651,8 @@ def exportar_utilidades_juan(request):
     total_font = Font(bold=True, color="FFFFFF")
     total_fill = PatternFill(start_color="3580e0", end_color="3580e0", fill_type="solid")
     total_align = Alignment(horizontal="center")
+    # Definir el color de relleno rojo suave
+    fill_red_soft = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
 
     # Encabezados
     columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
@@ -689,8 +727,11 @@ def exportar_utilidades_juan(request):
         for col_num, cell_value in enumerate(row, start=1):
             cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
             # Aplicar formato de moneda a las columnas específicas
-            if col_num in [8, 11, 12, 13, 14, 17]:
+            if col_num in [8, 9, 11, 12, 13, 14, 17]:
                 cell.number_format = '$#,##0.00'
+            # Pintar la fila si el numero_factura es 'Pedido Cancelado'
+            if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
+                cell.fill = fill_red_soft
 
     # Agregar los totales al final de la hoja de trabajo
 
@@ -1335,138 +1376,59 @@ def exportar_pedidos_juan(request):
 
 
 # -------------------------- Funciones De Exportacion Cartera General--------------------------------------------------
-
-# Vista De Fechas Exportacion Cartera Heavens --- Pendiente
-class ExportarCarteraView(TemplateView):
-    template_name = 'export_cartera_general.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
-# Exportación Cartera:
-@login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
-def export_cartera_clientes(request):
-    # Obtener los datos y los totales
-    fecha_inicial_str = request.POST.get('fecha_inicial', None)
-    fecha_final_str = request.POST.get('fecha_final', None)
-
-    fecha_inicial = datetime.strptime(fecha_inicial_str, "%Y-%m-%d") if fecha_inicial_str else None
-    fecha_final = datetime.strptime(fecha_final_str, "%Y-%m-%d") if fecha_final_str else None
-
-    # Obtener los datos y los totales con el filtro de fecha
-    pedidos, totales = obtener_datos_con_totales(fecha_inicial, fecha_final)
-
-    # Crear el archivo Excel
-    ruta_archivo = 'estado_cuenta_clientes.xlsx'
-    crear_archivo_excel(pedidos, totales, ruta_archivo)
-
-    # Leer el archivo y preparar la respuesta
-    with open(ruta_archivo, 'rb') as archivo_excel:
-        response = HttpResponse(archivo_excel.read(),
-                                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="estado_cuenta_clientes.xlsx"'
-
-    return response
-
-
-# -------------------------- Exportacion Cartera Etnico -------------------------------------------------------
-
-# Vista De Fechas Exportacion Cartera Heavens --- Pendiente
-class ExportarCarteraEtnicoView(TemplateView):
-    template_name = 'export_cartera_etnico.html'
+# ------------------ Exportacion De Cartera Por cliente --------------------------------------------------------------
+class ExportarCarteraClienteView(TemplateView):
+    template_name = 'export_cartera_cliente.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
+        context['form'] = ExportSearchForm()
         return context
 
+    def post(self, request, *args, **kwargs):
+        form = ExportSearchForm(request.POST)
+        if form.is_valid():
+            cliente = form.cleaned_data.get('cliente', None)
+            intermediario = form.cleaned_data.get('intermediario', None)
+            fecha_inicial_str = request.POST.get('fecha_inicial', None)
+            fecha_final_str = request.POST.get('fecha_final', None)
 
-# Exportación Cartera:
-@login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Etnico'), login_url='home'))
-def export_cartera_etnico(request):
-    # Obtener los datos y los totales
-    pedidos, totales = obtener_datos_con_totales_etnico()
+            fecha_inicial = datetime.strptime(fecha_inicial_str, "%Y-%m-%d") if fecha_inicial_str else None
+            fecha_final = datetime.strptime(fecha_final_str, "%Y-%m-%d") if fecha_final_str else None
 
-    # Crear el archivo Excel
-    ruta_archivo = 'etnico_cuenta_clientes.xlsx'
-    crear_archivo_excel(pedidos, totales, ruta_archivo)
+            # Determinar el grupo del usuario
+            grupo = None
+            if es_miembro_del_grupo('Heavens')(request.user):
+                grupo = 'Heavens'
+            elif es_miembro_del_grupo('Etnico')(request.user):
+                grupo = 'Etnico'
+            elif es_miembro_del_grupo('Fieldex')(request.user):
+                grupo = 'Fieldex'
+            elif es_miembro_del_grupo('Juan_Matas')(request.user):
+                grupo = 'Juan_Matas'
 
-    # Leer el archivo y preparar la respuesta
-    with open(ruta_archivo, 'rb') as archivo_excel:
-        response = HttpResponse(archivo_excel.read(),
-                                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="etnico_cuenta_clientes.xlsx"'
+            # Obtener los datos y los totales con el filtro de fecha, cliente, intermediario y grupo
+            pedidos, totales = obtener_datos_con_totales_cliente(fecha_inicial, fecha_final, cliente, intermediario,
+                                                                 grupo)
 
-    return response
+            # Crear el archivo Excel
+            ruta_archivo = 'estado_cuenta_clientes.xlsx'
+            crear_archivo_excel_cliente(pedidos, totales, ruta_archivo)
 
+            # Leer el archivo y preparar la respuesta
+            with open(ruta_archivo, 'rb') as archivo_excel:
+                response = HttpResponse(archivo_excel.read(),
+                                        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename="estado_cuenta_clientes.xlsx"'
 
-# -------------------------- Exportacion Cartera Fieldex -------------------------------------------------------
-# Vista De Fechas Exportacion Cartera Heavens --- Pendiente
-class ExportarCarteraFieldexView(TemplateView):
-    template_name = 'export_cartera_fieldex.html'
+            return response
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
-# Exportación Cartera:
-
-@login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Fieldex'), login_url='home'))
-def export_cartera_fieldex(request):
-    # Obtener los datos y los totales
-    pedidos, totales = obtener_datos_con_totales_fieldex()
-
-    # Crear el archivo Excel
-    ruta_archivo = 'fieldex_cuenta_clientes.xlsx'
-    crear_archivo_excel(pedidos, totales, ruta_archivo)
-
-    # Leer el archivo y preparar la respuesta
-    with open(ruta_archivo, 'rb') as archivo_excel:
-        response = HttpResponse(archivo_excel.read(),
-                                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="fieldex_cuenta_clientes.xlsx"'
-
-    return response
+        context = self.get_context_data(**kwargs)
+        context['form'] = form
+        return self.render_to_response(context)
 
 
-# -------------------------- Exportacion Cartera Juan Matas -------------------------------------------------------
-
-# Vista De Fechas Exportacion Cartera Heavens --- Pendiente
-class ExportarCarteraJuanView(TemplateView):
-    template_name = 'export_cartera_juan.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
-# Exportación Cartera:
-@login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Juan_Matas'), login_url='home'))
-def export_cartera_juan(request):
-    # Obtener los datos y los totales
-    pedidos, totales = obtener_datos_con_totales_juan()
-
-    # Crear el archivo Excel
-    ruta_archivo = 'juan_cuenta_clientes.xlsx'
-    crear_archivo_excel(pedidos, totales, ruta_archivo)
-
-    # Leer el archivo y preparar la respuesta
-    with open(ruta_archivo, 'rb') as archivo_excel:
-        response = HttpResponse(archivo_excel.read(),
-                                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="juan_cuenta_clientes.xlsx"'
-
-    return response
+# ------------------ Finalizacion Exportacion De Cartera Por cliente --------------------------------------------
 
 
 # -------------------------------- Tabla De Pedidos General  ----------------------------------------------------
@@ -1481,33 +1443,40 @@ class PedidoListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset().prefetch_related('autorizacioncancelacion_set')
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
-                        queryset = queryset.none()  # No results if ID is not an integer
+                        queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
         context['es_autorizador'] = self.request.user.groups.filter(name='Autorizadores').exists()
         return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False).distinct()
 
 
 # -------------------------------- Tabla De Pedidos Seguimientos ----------------------------------------------
@@ -1595,32 +1564,39 @@ class PedidoEtnicoListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Etnico')
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
-                        queryset = queryset.none()  # No results if ID is not an integer
+                        queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
         return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False).distinct()
 
 
 # -------------------------------- Tabla De Pedidos Fieldex  ----------------------------------------------------
@@ -1635,32 +1611,39 @@ class PedidoFieldexListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Fieldex')
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
-                        queryset = queryset.none()  # No results if ID is not an integer
+                        queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
         return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False).distinct()
 
 
 # -------------------------------- Tabla De Pedidos Juan Matas  ----------------------------------------------------
@@ -1675,32 +1658,39 @@ class PedidoJuanListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Juan_Matas')
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
-                        queryset = queryset.none()  # No results if ID is not an integer
+                        queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
         return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False).distinct()
 
 
 # -------------------------------  Formulario - Crear Pedido General - Modal (General) ----------------------------
@@ -1734,6 +1724,213 @@ class PedidoUpdateView(UpdateView):
     form_class = EditarPedidoForm
     template_name = 'pedido_editar.html'
     success_url = '/pedido_list_general/'
+
+    def get_object(self, queryset=None):
+        pedido_id = int(self.request.POST.get('pedido_id').replace(".", "")) if self.request.POST.get(
+            'pedido_id') else int(self.request.GET.get('pedido_id').replace(".", ""))
+        pedido = get_object_or_404(Pedido, id=pedido_id)
+        return pedido
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pedido'] = self.object
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        formatted_fecha_entrega = self.object.fecha_entrega.strftime('%Y-%m-%d') if self.object.fecha_entrega else ''
+        formatted_fecha_pago_utilidad = self.object.fecha_pago_utilidad.strftime(
+            '%Y-%m-%d') if self.object.fecha_pago_utilidad else ''
+
+        form = self.form_class(
+            instance=self.object,
+            initial={'fecha_entrega': formatted_fecha_entrega, 'fecha_pago_utilidad': formatted_fecha_pago_utilidad}
+        )
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            form_html = render_to_string(self.template_name, {'form': form, 'pedido': self.object}, request=request)
+            return JsonResponse({'form': form_html})
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = self.object
+        return kwargs
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.form_class(request.POST, instance=self.object)
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        messages.success(self.request, f"El pedido ha sido editado exitosamente.")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        else:
+            return super().form_valid(form)
+
+    def form_invalid(self, form):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False,
+                                 'html': render_to_string(self.template_name, {'form': form, 'pedido': self.object},
+                                                          request=self.request)})
+        else:
+            return super().form_invalid(form)
+
+
+# -------------------------------  Formulario - Editar Pedido Segunda parte - Modal (General) ----------------------------
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
+class PedidoUpdateViewDos(UpdateView):
+    model = Pedido
+    form_class = EditarPedidoFormDos
+    template_name = 'pedido_editar2.html'
+    success_url = '/pedido_list_general/'
+
+    def get_object(self, queryset=None):
+        pedido_id = int(self.request.POST.get('pedido_id').replace(".", "")) if self.request.POST.get(
+            'pedido_id') else int(self.request.GET.get('pedido_id').replace(".", ""))
+        pedido = get_object_or_404(Pedido, id=pedido_id)
+        return pedido
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pedido'] = self.object
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        formatted_fecha_entrega = self.object.fecha_entrega.strftime('%Y-%m-%d') if self.object.fecha_entrega else ''
+        formatted_fecha_pago_utilidad = self.object.fecha_pago_utilidad.strftime(
+            '%Y-%m-%d') if self.object.fecha_pago_utilidad else ''
+
+        form = self.form_class(
+            instance=self.object,
+            initial={'fecha_entrega': formatted_fecha_entrega, 'fecha_pago_utilidad': formatted_fecha_pago_utilidad}
+        )
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            form_html = render_to_string(self.template_name, {'form': form, 'pedido': self.object}, request=request)
+            return JsonResponse({'form': form_html})
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = self.object
+        return kwargs
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.form_class(request.POST, instance=self.object)
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        messages.success(self.request, f"El pedido ha sido editado exitosamente.")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        else:
+            return super().form_valid(form)
+
+    def form_invalid(self, form):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False,
+                                 'html': render_to_string(self.template_name, {'form': form, 'pedido': self.object},
+                                                          request=self.request)})
+        else:
+            return super().form_invalid(form)
+
+
+# -------------------------------  Formulario - Editar Pedido Cartera - Modal (General) ----------------------------
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
+class PedidoUpdateViewCartera(UpdateView):
+    model = Pedido
+    form_class = EditarPedidoFormCartera
+    template_name = 'pedido_editar_cartera.html'
+    success_url = '/cartera_list_heavens'
+
+    def get_object(self, queryset=None):
+        pedido_id = int(self.request.POST.get('pedido_id').replace(".", "")) if self.request.POST.get(
+            'pedido_id') else int(self.request.GET.get('pedido_id').replace(".", ""))
+        pedido = get_object_or_404(Pedido, id=pedido_id)
+        return pedido
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pedido'] = self.object
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        formatted_fecha_entrega = self.object.fecha_entrega.strftime('%Y-%m-%d') if self.object.fecha_entrega else ''
+        formatted_fecha_pago_utilidad = self.object.fecha_pago_utilidad.strftime(
+            '%Y-%m-%d') if self.object.fecha_pago_utilidad else ''
+
+        form = self.form_class(
+            instance=self.object,
+            initial={'fecha_entrega': formatted_fecha_entrega, 'fecha_pago_utilidad': formatted_fecha_pago_utilidad}
+        )
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            form_html = render_to_string(self.template_name, {'form': form, 'pedido': self.object}, request=request)
+            return JsonResponse({'form': form_html})
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = self.object
+        return kwargs
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.form_class(request.POST, instance=self.object)
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    @transaction.atomic
+    def form_valid(self, form):
+        self.object = form.save()
+        messages.success(self.request, f"El pedido ha sido editado exitosamente.")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        else:
+            return super().form_valid(form)
+
+    def form_invalid(self, form):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False,
+                                 'html': render_to_string(self.template_name, {'form': form, 'pedido': self.object},
+                                                          request=self.request)})
+        else:
+            return super().form_invalid(form)
+
+
+# --------------------------------------- Editar pedido Utilidades -------------------------------------------------
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
+class PedidoUpdateViewUtilidades(UpdateView):
+    model = Pedido
+    form_class = EditarPedidoFormUtilidades
+    template_name = 'pedido_editar_utilidades.html'
+    success_url = '/utilidad_list_heavens/'
 
     def get_object(self, queryset=None):
         pedido_id = int(self.request.POST.get('pedido_id').replace(".", "")) if self.request.POST.get(
@@ -1883,11 +2080,12 @@ class PedidoUpdateSebguimientoView(UpdateView):
         formatted_fecha_llegada = self.object.etd.strftime('%Y-%m-%d') if self.object.etd else ''
         formatted_etd = self.object.etd.strftime('%Y-%m-%dT%H:%M') if self.object.etd else ''
         formatted_eta = self.object.eta.strftime('%Y-%m-%dT%H:%M') if self.object.eta else ''
+        formatted_eta_real = self.object.eta_real.strftime('%Y-%m-%dT%H:%M') if self.object.eta_real else ''
 
         form = self.form_class(
             instance=self.object,
-            initial={'fecha_llegada': formatted_fecha_llegada, 'etd': formatted_etd, 'eta': formatted_eta}
-        )
+            initial={'fecha_llegada': formatted_fecha_llegada, 'etd': formatted_etd, 'eta': formatted_eta,
+                     'eta_real': formatted_eta_real})
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             form_html = render_to_string(self.template_name, {'form': form, 'pedido': self.object}, request=request)
@@ -1966,7 +2164,7 @@ class PedidoDeleteView(UpdateView):
     def form_valid(self, form):
         pedido = form.save(commit=False)
         pedido.delete()
-        messages.success(self.request,
+        messages.warning(self.request,
                          f"El pedido para el cliente {form.cleaned_data['cliente']} se ha eliminado exitosamente.")
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
@@ -2053,13 +2251,14 @@ class DetallePedidoCreateView(CreateView):
 
 
 # ---------------------------- Formulario Editar Detalle De Pedido --------------------------------------------
+
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
 class DetallePedidoUpdateView(UpdateView):
     model = DetallePedido
     form_class = EditarDetallePedidoForm
     template_name = 'detalle_pedido_editar.html'
-    success_url = reverse_lazy('pedido_detalle_list')  # Ajusta esta URL según tu configuración
+    success_url = reverse_lazy('pedido_detalle_list')
 
     def get_object(self, queryset=None):
         detallepedido_id = self.request.GET.get('detallepedido_id') or self.request.POST.get('detallepedido_id')
@@ -2103,7 +2302,131 @@ class DetallePedidoUpdateView(UpdateView):
     def form_invalid(self, form, context):
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             form_html = render_to_string(self.template_name, context, request=self.request)
-            return JsonResponse({'success': False, 'html': form_html})
+            return JsonResponse({'success': False, 'form_html': form_html})
+        else:
+            return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pedido_id'] = self.request.GET.get('pedido_id') or self.request.POST.get('pedido_id')
+        return context
+
+
+# --------------------------- Formulario Editar Momento 2 Detalle De Pedido ------------------------------------------
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
+class DetallePedidoUpdateDosView(UpdateView):
+    model = DetallePedido
+    form_class = EditarDetallePedidoDosForm
+    template_name = 'detalle_pedido_editar2.html'
+    success_url = reverse_lazy('pedido_detalle_list')
+
+    def get_object(self, queryset=None):
+        detallepedido_id = self.request.GET.get('detallepedido_id') or self.request.POST.get('detallepedido_id')
+        if not detallepedido_id:
+            raise ValueError("No se proporcionó 'detallepedido_id'")
+        return get_object_or_404(DetallePedido, id=int(detallepedido_id))
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        pedido_id = request.GET.get('pedido_id')
+        form = self.form_class(instance=self.object, pedido_id=pedido_id)
+        context = self.get_context_data(form=form)
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            form_html = render_to_string(self.template_name, context, request=request)
+            return JsonResponse({'form': form_html})
+        else:
+            return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        pedido_id = request.POST.get('pedido_id')
+        form = self.form_class(request.POST, instance=self.object, pedido_id=pedido_id)
+        context = self.get_context_data(form=form)
+
+        if form.is_valid():
+            return self.form_valid(form, pedido_id)
+        else:
+            return self.form_invalid(form, context)
+
+    @transaction.atomic
+    def form_valid(self, form, pedido_id):
+        self.object = form.save()
+        messages.success(self.request,
+                         f"El detalle para el pedido {pedido_id} se ha editado exitosamente.")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        else:
+            return super().form_valid(form)
+
+    def form_invalid(self, form, context):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            form_html = render_to_string(self.template_name, context, request=self.request)
+            return JsonResponse({'success': False, 'form_html': form_html})
+        else:
+            return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pedido_id'] = self.request.GET.get('pedido_id') or self.request.POST.get('pedido_id')
+        return context
+
+
+# --------------------------- Formulario Editar Momento 3 Detalle De Pedido ------------------------------------------
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
+class DetallePedidoUpdateTresView(UpdateView):
+    model = DetallePedido
+    form_class = EditarDetallePedidoTresForm
+    template_name = 'detalle_pedido_editar3.html'
+    success_url = reverse_lazy('pedido_detalle_list')
+
+    def get_object(self, queryset=None):
+        detallepedido_id = self.request.GET.get('detallepedido_id') or self.request.POST.get('detallepedido_id')
+        if not detallepedido_id:
+            raise ValueError("No se proporcionó 'detallepedido_id'")
+        return get_object_or_404(DetallePedido, id=int(detallepedido_id))
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        pedido_id = request.GET.get('pedido_id')
+        form = self.form_class(instance=self.object, pedido_id=pedido_id)
+        context = self.get_context_data(form=form)
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            form_html = render_to_string(self.template_name, context, request=request)
+            return JsonResponse({'form': form_html})
+        else:
+            return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        pedido_id = request.POST.get('pedido_id')
+        form = self.form_class(request.POST, instance=self.object, pedido_id=pedido_id)
+        context = self.get_context_data(form=form)
+
+        if form.is_valid():
+            return self.form_valid(form, pedido_id)
+        else:
+            return self.form_invalid(form, context)
+
+    @transaction.atomic
+    def form_valid(self, form, pedido_id):
+        self.object = form.save()
+        messages.success(self.request,
+                         f"El detalle para el pedido {pedido_id} se ha editado exitosamente.")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        else:
+            return super().form_valid(form)
+
+    def form_invalid(self, form, context):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            form_html = render_to_string(self.template_name, context, request=self.request)
+            return JsonResponse({'success': False, 'form_html': form_html})
         else:
             return self.render_to_response(context)
 
@@ -2160,7 +2483,7 @@ class DetallePedidoDeleteiew(UpdateView):
     def form_valid(self, form):
         detallepedido = form.save(commit=False)
         detallepedido.delete()
-        messages.success(self.request,
+        messages.warning(self.request,
                          f"El detalle de {form.cleaned_data['pedido']} se ha eliminado exitosamente.")
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
@@ -2187,32 +2510,39 @@ class CarteraHeavensListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
                         queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
         return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False).distinct()
 
 
 # ------------------------- CARTERA /// Table mostrar cartera de pedidos Etnico ///  ---------------------------
@@ -2762,8 +3092,8 @@ def exportar_referencias_juan(request):
 def actualizar_dias_de_vencimiento_todos(request):
     pedidos = Pedido.objects.all()
     for pedido in pedidos:
-        pedido.actualizar_dias_de_vencimiento()
-    messages.success(request, 'Días de vencimiento actualizados para todos los pedidos.')
+        pedido.save()  # Esto llamará a tu método save personalizado
+    messages.success(request, "Todos los pedidos se han actualizado correctamente.")
     return redirect('pedido_list_general')
 
 
@@ -2841,7 +3171,7 @@ def solicitar_cancelacion(request, pedido_id):
             pedido.estado_cancelacion = 'pendiente'
             pedido.observaciones = observaciones
             pedido.save()
-        messages.success(request, f'Se ha enviado la solicitud de cancelación para el pedido: {pedido.id}')
+        messages.warning(request, f'Se ha enviado la solicitud de cancelación para el pedido: {pedido.id}')
         return redirect('pedido_list_general')  # Redirigir a la lista de pedidos o a donde sea necesario
 
     return render(request, 'solicitar_cancelacion.html', {'pedido': pedido})
@@ -2887,14 +3217,14 @@ def autorizar_cancelacion(request, autorizacion_id):
                 pedido.valor_utilidad_pesos = 0
             elif accion == 'no_autorizar':
                 pedido.estado_cancelacion = 'no_autorizado'
-                messages.success(request, f' Se ha anulado la cancelación para el pedido: {pedido.id}')
+                messages.info(request, f' Se ha anulado la cancelación para el pedido: {pedido.id}')
             pedido.observaciones = observaciones
             pedido.save()
 
             # Eliminar todos los detalles del pedido asociado si autorizado
             if accion == 'autorizar':
                 DetallePedido.objects.filter(pedido=pedido).delete()
-                messages.success(request, f' Se ha cancelado correctamente el pedido: {pedido.id}')
+                messages.warning(request, f' Se ha cancelado correctamente el pedido: {pedido.id}')
         return redirect('pedido_list_general')
     return render(request, 'autorizar_cancelacion.html', {'autorizacion': autorizacion})
 
@@ -2917,12 +3247,16 @@ def filtrar_presentaciones(request):
 def load_referencias(request):
     presentacion_id = request.GET.get('presentacion_id')
     pedido_id = request.GET.get('pedido_id')
+    tipo_caja_id = request.GET.get('tipo_caja_id')
+    fruta_id = request.GET.get('fruta_id')
 
-    if presentacion_id and pedido_id:
+    if presentacion_id and tipo_caja_id and fruta_id and pedido_id:
         try:
             pedido = Pedido.objects.get(id=pedido_id)
             referencias = Referencias.objects.filter(
                 presentacionreferencia__presentacion_id=presentacion_id,
+                presentacionreferencia__tipo_caja_id=tipo_caja_id,
+                presentacionreferencia__fruta_id=fruta_id,
                 exportador=pedido.exportadora
             ).distinct()
         except Pedido.DoesNotExist:
@@ -2940,6 +3274,11 @@ def export_pdf_resumen_semana(request):
     # Obtener los parámetros de filtro
     semana = request.GET.get('semana')
     exportador_id = request.GET.get('exportadora')
+
+    # Verificar que los parámetros no estén vacíos
+    if not semana:
+        messages.error(request, 'Debe seleccionar por lo menos una semana.')
+        return redirect('resumen_seguimiento_list_heavens')
 
     # Filtrar los datos basados en los parámetros
     pedidos = Pedido.objects.all()
@@ -3045,3 +3384,180 @@ def exportar_pdf_resumen_pedido(request, pedido_id):
         end_time = time.time()
         print(f"Tiempo total: {end_time - start_time:.2f} segundos")
         return response
+
+# -------------------- Vista para filtro de exportacion Seguimiento o Tracking -----------------------------------------
+
+
+@login_required
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home'))
+def exportar_excel_seguimiento_tracking(request):
+    if request.method == 'POST':
+        form = ExportSearchFormSeguimientos(request.POST)
+        if form.is_valid():
+            cliente = form.cleaned_data.get('cliente')
+            intermediario = form.cleaned_data.get('intermediario')
+            fecha_inicial = form.cleaned_data.get('fecha_inicial')
+            fecha_final = form.cleaned_data.get('fecha_final')
+
+            pedidos = Pedido.objects.all()
+
+            if cliente:
+                pedidos = pedidos.filter(cliente=cliente)
+            if intermediario:
+                pedidos = pedidos.filter(intermediario=intermediario)
+            if fecha_inicial:
+                pedidos = pedidos.filter(fecha_entrega__gte=fecha_inicial)
+            if fecha_final:
+                pedidos = pedidos.filter(fecha_entrega__lte=fecha_final)
+
+            data = []
+            for pedido in pedidos:
+                data.append({
+                    'Week': pedido.semana,
+                    'Order No.': pedido.id,
+                    'Exporter': pedido.exportadora.nombre if pedido.exportadora else '',
+                    'Customer': pedido.cliente.nombre if pedido.cliente else '',
+                    'Destination': pedido.destino.codigo if pedido.destino else '',
+                    'Products': pedido.variedades,
+                    'Requested Boxes': pedido.total_cajas_solicitadas,
+                    'Shipped Boxes': pedido.total_cajas_enviadas,
+                    'Requested Pallets': pedido.total_piezas_solicitadas,
+                    'Delivery Date': pedido.fecha_entrega.strftime('%d/%m/%Y') if pedido.fecha_entrega else '',
+                    'Booking Responsible': pedido.responsable_reserva.nombre if pedido.responsable_reserva else '',
+                    'Reserve Status': pedido.estatus_reserva,
+                    'Airline': pedido.aerolinea.nombre if pedido.aerolinea else '',
+                    'Cargo Agency': pedido.agencia_carga.nombre if pedido.agencia_carga else '',
+                    'Order Status': pedido.estado_pedido,
+                    'Document Status': pedido.estado_documentos,
+                    'Tracking Observations': pedido.observaciones_tracking,
+                })
+
+            df = pd.DataFrame(data)
+
+            wb = Workbook()
+            ws = wb.active
+
+            fill_red_soft = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+
+            for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
+                for c_idx, value in enumerate(row, 1):
+                    cell = ws.cell(row=r_idx, column=c_idx, value=value)
+                    if r_idx == 1:
+                        cell.font = Font(bold=True)
+                        cell.alignment = Alignment(horizontal='center', vertical='center')
+                    else:
+                        cell.alignment = Alignment(horizontal='left', vertical='center')
+                        if row[df.columns.get_loc('Order Status')] == 'Cancelado':
+                            cell.fill = fill_red_soft
+
+            for col in ws.columns:
+                max_length = 0
+                column = col[0].column_letter
+                for cell in col:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(cell.value)
+                    except:
+                        pass
+                adjusted_width = (max_length + 2)
+                ws.column_dimensions[column].width = adjusted_width
+
+            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response['Content-Disposition'] = 'attachment; filename=seguimiento_pedidos.xlsx'
+            wb.save(response)
+
+            return response
+    else:
+        form = ExportSearchForm()
+
+    return render(request, 'export_pedidos_tracking.html', {'form': form})
+
+# -------------------- Exportacion Explicita de Excel Del resumen de exportaciones Por semana -------------------------
+
+@login_required
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home'))
+def exportar_excel_seguimiento_resumen(request):
+    semana = request.GET.get('semana')
+    exportador_id = request.GET.get('exportadora')
+
+    # Verificar que los parámetros no estén vacíos
+    if not semana:
+        messages.error(request, 'Debe seleccionar por lo menos una semana.')
+        return redirect('resumen_seguimiento_list_heavens')
+
+    # Filtrar los datos basados en los parámetros
+    pedidos = Pedido.objects.all()
+    if semana:
+        pedidos = pedidos.filter(semana=semana)
+    if exportador_id:
+        pedidos = pedidos.filter(exportadora_id=exportador_id)
+        try:
+            exportador_nombre = Exportador.objects.get(id=exportador_id).nombre
+        except Exportador.DoesNotExist:
+            exportador_nombre = "Unknown"
+    else:
+        exportador_nombre = "Unknown"
+
+    # Preparar los datos para el DataFrame
+    data = []
+    for pedido in pedidos:
+        data.append({
+            'Week': pedido.semana,
+            'Order No.': pedido.id,
+            'Exporter': pedido.exportadora.nombre if pedido.exportadora else '',
+            'Customer': pedido.cliente.nombre if pedido.cliente else '',
+            'Destination': pedido.destino.codigo if pedido.destino else '',
+            'Products': pedido.variedades,
+            'Requested Boxes': pedido.total_cajas_solicitadas,
+            'Shipped Boxes': pedido.total_cajas_enviadas,
+            'Requested Pallets': pedido.total_piezas_solicitadas,
+            'Delivery Date': pedido.fecha_entrega.strftime('%d/%m/%Y') if pedido.fecha_entrega else '',
+            'Booking Responsible': pedido.responsable_reserva.nombre if pedido.responsable_reserva else '',
+            'Reserve Status': pedido.estatus_reserva,
+            'Airline': pedido.aerolinea.nombre if pedido.aerolinea else '',
+            'Cargo Agency': pedido.agencia_carga.nombre if pedido.agencia_carga else '',
+            'Order Status': pedido.estado_pedido,
+            'Document Status': pedido.estado_documentos,
+            'Tracking Observations': pedido.observaciones_tracking,
+        })
+
+    df = pd.DataFrame(data)
+
+    # Crear el archivo Excel con estilo
+    wb = Workbook()
+    ws = wb.active
+
+    # Definir el color de relleno rojo suave
+    fill_red_soft = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+
+    # Agregar el DataFrame al archivo Excel
+    for r_idx, row in enumerate(dataframe_to_rows(df, index=False, header=True), 1):
+        for c_idx, value in enumerate(row, 1):
+            cell = ws.cell(row=r_idx, column=c_idx, value=value)
+            if r_idx == 1:  # Si es el encabezado
+                cell.font = Font(bold=True)
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+            else:
+                cell.alignment = Alignment(horizontal='left', vertical='center')
+                # Pintar la fila si el estado del pedido es 'cancelado'
+                if row[df.columns.get_loc('Order Status')] == 'Cancelado':
+                    cell.fill = fill_red_soft
+
+    # Ajustar el ancho de las columnas
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter  # Obtener la letra de la columna
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column].width = adjusted_width
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=summary_week_{semana}_exporter_{exportador_nombre}.xlsx'
+    wb.save(response)
+
+    return response

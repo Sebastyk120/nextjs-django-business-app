@@ -1,4 +1,5 @@
-{% extends 'comercialbase.html' %} {% block content %}
+{% extends 'comercialbase.html' %}
+{% block content %}
     {% load static %}
     {% load django_tables2 %}
     <!DOCTYPE html>
@@ -7,20 +8,32 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="{% static 'css/pedido_items.css' %}"/>
-        <title>Pedidos Fieldex</title>
+        <title>Pedidos Etnico</title>
     </head>
     <body>
-    <h1 class="align-center">Base Pedidos Fieldex <i class="bi bi-clipboard2-check-fill"></i></h1>
+    <h1 class="align-center">
+        <img src="{% static 'img/fieldex.png' %}" alt="Logo de la Empresa" class="logo-empresa" style="vertical-align:middle; margin-right:5px;"/>
+        Base Pedidos Fieldex <i class="bi bi-clipboard2-check-fill"></i>
+    </h1>
 
     <form method="get" class="d-flex" id="searchForm">
-        <select name="metodo_busqueda" class="form-control" required>
+        <select name="metodo_busqueda" class="form-control">
             <option value="" disabled selected>Modo De Búsqueda</option>
             <option value="awb">AWB</option>
             <option value="numero_factura">Número de Factura</option>
-            <option value="cliente">Cliente</option>
             <option value="id">Número De Pedido</option>
+            <option value="intermediario">Intermediario</option>
         </select>
-        <input type="text" name="item_busqueda" placeholder="Ingrese búsqueda" class="form-control" required/>
+        <input type="text" name="item_busqueda" placeholder="Ingrese búsqueda" class="form-control"/>
+
+        <select name="cliente" class="form-control">
+            <option value="" disabled selected>Filtro Cliente</option>
+            {% for cliente in form.fields.cliente.queryset %}
+                <option value="{{ cliente.id }}"
+                        {% if form.cleaned_data.cliente == cliente %}selected{% endif %}>{{ cliente.nombre }}</option>
+            {% endfor %}
+        </select>
+
         <div class="ml-auto">
             <button class="btn btn-secondary btn-sm" type="submit"><i class="bi bi-search"></i></button>
             <button class="btn btn-danger btn-sm me-md-5" id="clearFilters" type="button"><i class="bi bi-x-circle"></i>

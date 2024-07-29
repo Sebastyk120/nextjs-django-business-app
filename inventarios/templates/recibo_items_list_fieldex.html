@@ -2,7 +2,10 @@
     {% load static %}
     {% load django_tables2 %}
     <link rel="stylesheet" href="{% static 'css/recibo_items.css' %}"/>
-    <h1 class="align-center">Movimientos De Insumos Fieldex</h1>
+    <h1 class="align-center">
+        <img src="{% static 'img/fieldex.png' %}" alt="Logo de la Empresa" class="logo-empresa" style="vertical-align:middle; margin-right:5px;"/>
+        Movimientos Inventario Fieldex <i class="bi bi-nintendo-switch"></i>
+    </h1>
     <div class="container my-4">
         <form method="get" class="d-flex justify-content-center mb-3">
             <input type="text" name="item_busqueda" placeholder="Buscar Referencia..." class="form-control w-25"/>

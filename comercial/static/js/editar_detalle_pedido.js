@@ -2,12 +2,10 @@ $(document).ready(function () {
     var itemId = null;
     var pedidoId = null;
 
-    // Función para eliminar puntos de un número
     function removeDots(number) {
         return number ? number.toString().replace(/\./g, '') : '';
     }
 
-    // Asignar evento para abrir el modal de edición
     $('.mover-button').click(function () {
         itemId = removeDots($(this).data('detallepedido-id'));
         pedidoId = removeDots($(this).data('pedido-id'));
@@ -21,54 +19,66 @@ $(document).ready(function () {
             success: function (data) {
                 $('#moverItemModal .modal-content').html(data.form);
                 $('#moverItemModal').modal('show');
-                initializeForm(pedidoId); // Inicializar la lógica del formulario al cargar el modal
+                initializeForm(pedidoId);
             }
         });
     });
 
-    // Limpiar el contenido del modal cuando se cierra
     $('#moverItemModal').on('hidden.bs.modal', function () {
-        $(this).find('.modal-content').html(''); // Limpiar el contenido del modal
-        $(document).off('change', '.fruta-select'); // Desvincular eventos al cerrar el modal
-        $(document).off('change', '.presentacion-select'); // Desvincular eventos al cerrar el modal
-        $(document).off('submit', '#moverItemForm'); // Desvincular eventos al cerrar el modal
+        $(this).find('.modal-content').html('');
+        $(document).off('change', '.fruta-select');
+        $(document).off('change', '.presentacion-select');
+        $(document).off('change', '.tipo-caja-select');
+        $(document).off('submit', '#moverItemForm');
     });
 
-    // Asignar evento para abrir el modal de eliminación
     $('.eliminar-button').click(function () {
         itemId = removeDots($(this).data('detallepedido-id'));
         pedidoId = removeDots($(this).data('pedido-id'));
         $('#eliminarModal').modal('show');
     });
 
-    // Limpiar el contenido del modal de eliminación cuando se cierra
     $('#eliminarModal').on('hidden.bs.modal', function () {
         itemId = null;
         pedidoId = null;
     });
 
-    // Inicializar eventos de formulario
     function initializeForm(pedidoId) {
         initializeFrutaSelect(pedidoId);
         initializePresentacionSelect(pedidoId);
+        initializeTipoCajaSelect(pedidoId);
 
-        // Asignar evento de submit para el formulario dentro del modal
         $(document).on('submit', '#moverItemForm', function (event) {
             event.preventDefault();
-            var serializedData = $(this).serialize() + '&detallepedido_id=' + itemId + '&pedido_id=' + pedidoId;
-            console.log(serializedData); // Imprimir los datos serializados
+            var form = $(this);
+            var serializedData = form.serialize();
+            var additionalData = '';
+
+            if (!form.find('input[name="pedido_id"]').length) {
+                additionalData += '&pedido_id=' + pedidoId;
+            }
+
+            if (!form.find('input[name="detallepedido_id"]').length) {
+                additionalData += '&detallepedido_id=' + itemId;
+            }
+
+            serializedData += additionalData;
+            console.log(serializedData);
             $.ajax({
                 url: '/comercial/detalle_pedido_editar',
                 type: 'post',
                 data: serializedData,
+                headers: {
+                    'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+                },
                 success: function (data) {
                     if (data.success) {
                         $('#moverItemModal').modal('hide');
                         location.reload();
                     } else {
                         console.log(data);
-                        var errorMessage = data.error;
-                        $('#errores').html('<div class="alert alert-danger">' + errorMessage + '</div>');
+                        $('#moverItemModal .modal-content').html(data.form_html);
+                        initializeForm(pedidoId);
                     }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
@@ -96,7 +106,6 @@ $(document).ready(function () {
                         $.each(data.presentaciones, function (key, value) {
                             presentacionSelect.append('<option value="' + value.id + '">' + value.nombre + ' (' + value.kilos + ' kg)</option>');
                         });
-                        // Actualizar las referencias después de cambiar la presentación
                         updateReferencias();
                     },
                     error: function (jqXHR, textStatus, errorThrown) {
@@ -113,14 +122,24 @@ $(document).ready(function () {
         });
     }
 
+    function initializeTipoCajaSelect(pedidoId) {
+        $(document).on('change', '.tipo-caja-select', function () {
+            updateReferencias();
+        });
+    }
+
     function updateReferencias() {
         var presentacionId = $('#id_presentacion').val();
+        var tipoCajaId = $('#id_tipo_caja').val();
+        var frutaId = $('#id_fruta').val();
         var pedidoId = $('input[name="pedido_id"]').val();
-        if (presentacionId) {
+        if (presentacionId && tipoCajaId && frutaId) {
             $.ajax({
                 url: '/comercial/ajax/load-referencias',
                 data: {
                     'presentacion_id': presentacionId,
+                    'tipo_caja_id': tipoCajaId,
+                    'fruta_id': frutaId,
                     'pedido_id': pedidoId
                 },
                 dataType: 'json',

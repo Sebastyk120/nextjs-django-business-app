@@ -13,21 +13,25 @@ admin.site.index_title = "Bienvenido al Portal de Administración Heavens"
 
 @admin.register(Item)
 class MyModelAdmin(ImportExportModelAdmin):
+    import_error_display = ("message", "row", "traceback")
     resource_class = ItemResource
 
 
 @admin.register(Movimiento)
 class MyModelAdmin(ImportExportModelAdmin):
+    import_error_display = ("message", "row", "traceback")
     resource_class = MovimientoResource
 
 
 @admin.register(Bodega)
 class MyModelAdmin(ImportExportModelAdmin):
+    import_error_display = ("message", "row", "traceback")
     resource_class = BodegaResource
 
 
 @admin.register(Proveedor)
 class MyModelAdmin(ImportExportModelAdmin):
+    import_error_display = ("message", "row", "traceback")
     resource_class = ProveedorResource
 
 
@@ -38,6 +42,7 @@ admin.site.unregister(User)
 # Registrar de nuevo el modelo User con la clase personalizada
 @admin.register(User)
 class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
+    import_error_display = ("message", "row", "traceback")
     resource_class = UserResource
 
 
@@ -48,6 +53,7 @@ admin.site.unregister(Group)
 # Registrar de nuevo el modelo Group con la clase personalizada
 @admin.register(Group)
 class GroupAdmin(ImportExportModelAdmin, BaseGroupAdmin):
+    import_error_display = ("message", "row", "traceback")
     resource_class = GroupResource
 
 

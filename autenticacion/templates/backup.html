@@ -3,12 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backup Data</title>
+    <title>Backup and Restore Data</title>
 </head>
 <body>
-    <h1>Backup Data</h1>
-    <form method="get" action="{% url 'backup_data' %}">
+    <h1>Backup and Restore Data</h1>
+
+    <!-- Formulario para descargar el backup -->
+    <h2>Download Backup</h2>
+    <form method="post" action="{% url 'backup_data' %}">
+        {% csrf_token %}
         <button type="submit">Download Backup</button>
+    </form>
+
+    <!-- Formulario para restaurar el backup -->
+    <h2>Restore Backup</h2>
+    <form method="post" action="{% url 'restore_data' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="backup_file" accept=".json" required>
+        <button type="submit">Restore Backup</button>
     </form>
 </body>
 </html>

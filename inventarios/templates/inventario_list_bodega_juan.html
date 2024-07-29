@@ -1,32 +1,31 @@
-{% extends 'comercialbase.html' %} {% block content %}
+{% extends 'comercialbase.html' %}
+{% block content %}
     {% load static %}
     {% load django_tables2 %}
     <link rel="stylesheet" href="{% static 'css/inventario_bodega.css' %}"/>
-    <h1 class="align-center">Inventario Por Bodegas Juan Matas</h1>
-    <div class="container my-4">
+    <div class="container my-4 text-white" style="background-color: #1c1c1c; border-radius: 8px; padding: 20px;">
+        <h1 class="align-center">
+            <img src="{% static 'img/fieldex.png' %}" alt="Logo de la Empresa" class="logo-empresa"
+                 style="vertical-align:middle; margin-right:5px;"/>
+            Inventario Bodegas Juan Matas <i class="bi bi-database-gear"></i>
+        </h1>
         <form method="get" class="d-flex justify-content-center mb-3">
             <input type="text" name="item_busqueda" placeholder="Buscar Referencia..." class="form-control w-25"/>
             <button class="btn btn-secondary ms-2" type="submit"><i class="bi bi-search"></i></button>
-            <button class="btn btn-danger ms-2" id="clearFilters" type="button"><i class="bi bi-x-circle"></i>
-            </button>
-        </form>
-        <div class="d-flex justify-content-center mb-4">
+            <button class="btn btn-danger ms-2" id="clearFilters" type="button"><i class="bi bi-x-circle"></i></button>
             <a class="btn btn-success mx-2" href="{% url 'exportar_inventario_juan' %}" name="exportar">
                 <i class="bi bi-filetype-xlsx"></i> Exportar
             </a>
-            <button class="btn btn-danger mx-2" id="export"><i class="bi bi-x-circle"></i> Cancelar</button>
-        </div>
-        <div class="container">
+        </form>
+        <div class="container-fluid">
             {% render_table table %}
         </div>
     </div>
+
     <script>
         document.getElementById('clearFilters').addEventListener('click', function () {
-            // Obtener la URL actual sin los parámetros de búsqueda
             const url = new URL(window.location.href);
             url.search = '';
-
-            // Recargar la página con la URL sin parámetros de búsqueda
             window.location.href = url.href;
         });
     </script>

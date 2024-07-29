@@ -8,53 +8,67 @@
     <style>
         @page {
             size: A3 landscape;
-            margin: 1cm;
+            margin: 0.2cm;
         }
+
         body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            background: none;
+            font-family: 'Helvetica', Arial, sans-serif;
+            margin: 5px;
+            padding: 5px;
+            background-color: #c0b1f3;
+            color: #333;
+            vertical-align: center;
         }
-        .responsive-table__container {
-            margin: 20px;
+
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 5px;
         }
+
         h1 {
             text-align: center;
-            font-family: Arial, sans-serif;
-            color: #ffffff;
-            background-color: #000000;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin: 5px 0;
+            font-size: 16px;
+            color: black;
         }
+
         .table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin: 10px 0;
             font-size: 10px;
+            vertical-align: middle;
+            table-layout: auto;
         }
-        .table thead th {
-            background-color: #036098;
-            color: #ffffff;
-        }
-        .table thead th a {
-            color: #ffffff;
-            text-decoration: none;
-        }
+
         .table th, .table td {
             border: 1px solid #ddd;
-            padding: 4px;
+            padding: 2px;
             text-align: center;
+            vertical-align: middle;
         }
+
         .table th {
-            font-weight: bold;
+            background-color: #027fe9;
+            color: white;
+            vertical-align: middle;
         }
+
+        table thead th a {
+            color: #ffffff;
+            text-decoration: none;
+            vertical-align: middle;
+        }
+
     </style>
 </head>
 <body>
-    <div class="responsive-table__container">
-        <h1>Resumen Exportaciones Semana: {{ semana }}  Exportador: {{ exportador }}</h1>
+<div style="width: 100%;">
+    <h1>Resumen Exportaciones Semana: {{ semana }} Exportador: {{ exportador }}</h1>
+    <div>
         {% render_table table %}
     </div>
+</div>
 </body>
 </html>

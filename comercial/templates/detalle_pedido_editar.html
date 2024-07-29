@@ -1,7 +1,8 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/detalle_pedido_crear.css' %}">
 <div class="modal-header">
-    <h5 class="modal-title" id="moverItemModalLabel">Editar Detalle De Pedido: {{ pedido_id }} <i class="bi bi-pencil-fill"></i></h5>
+    <h5 class="modal-title" id="moverItemModalLabel">Editar Detalle De Pedido: {{ pedido_id }} <i
+            class="bi bi-pencil-fill"></i></h5>
 </div>
 <form id="moverItemForm" method="post">
     {% csrf_token %}
@@ -33,42 +34,31 @@
             </div>
             <div class="row mb-3">
                 <div class="col-md-6">
-                    {{ form.cajas_enviadas.label_tag }} {{ form.cajas_enviadas }}
-                </div>
-                <div class="col-md-6">
                     {{ form.tipo_caja.label_tag }} {{ form.tipo_caja }}
                 </div>
-            </div>
-            <div class="row mb-3">
                 <div class="col-md-6">
                     {{ form.referencia.label_tag }} {{ form.referencia }}
                 </div>
+            </div>
+            <div class="row mb-3">
                 <div class="col-md-6">
                     {{ form.lleva_contenedor.label_tag }} {{ form.lleva_contenedor }}
                 </div>
-            </div>
-            <div class="row mb-3">
                 <div class="col-md-6">
                     {{ form.tarifa_utilidad.label_tag }} {{ form.tarifa_utilidad }}
                 </div>
+            </div>
+            <div class="row mb-3">
                 <div class="col-md-6">
                     {{ form.valor_x_caja_usd.label_tag }} {{ form.valor_x_caja_usd }}
                 </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.no_cajas_nc.label_tag }} {{ form.no_cajas_nc }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.afecta_utilidad.label_tag }} {{ form.afecta_utilidad }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.observaciones.label_tag }} {{ form.observaciones }}
-                </div>
                 <div class="col-md-6">
                     {{ form.precio_proforma.label_tag }} {{ form.precio_proforma }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    {{ form.observaciones.label_tag }} {{ form.observaciones }}
                 </div>
             </div>
         </div>

@@ -1,0 +1,7 @@
+{% if record.estado_cancelacion == 'sin_solicitud' or record.estado_cancelacion == 'pendiente' or record.estado_cancelacion == 'no_autorizado' %}
+    {% if not record.awb and not record.numero_factura %}
+    <button type="button" class="btn btn-success mover-button2" id="editar" data-pedido-id="{{ record.pk }}">
+        <i class="bi bi-airplane-fill"></i>
+    </button>
+    {% endif %}
+{% endif %}

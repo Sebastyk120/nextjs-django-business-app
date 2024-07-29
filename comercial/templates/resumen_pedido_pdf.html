@@ -9,119 +9,139 @@
     <style>
         @page {
             size: A3 landscape;
-            margin: 1cm;
+            margin: 0.2cm;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            margin: 20px;
+            font-family: 'Helvetica', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e0daf7;
+            color: #333;
+            vertical-align: center;
+        }
+
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 5px;
         }
 
         h1 {
             text-align: center;
-            font-family: Arial, sans-serif;
-            color: #ffffff;
-            background-color: #000000;
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 5px 0;
+            font-size: 16px;
+            color: black;
         }
 
-        .container, .header-table, .details-table {
+        .details-table {
             width: 100%;
-            margin-bottom: 20px;
             border-collapse: collapse;
+            margin: 5px 0;
         }
 
-        .header-table th, .header-table td, .details-table th, .details-table td {
-            border: 1px solid #ddd;
+        .details-table td {
+            border: 2px solid #ccc;
+            padding: 10px;
+            vertical-align: middle;
+            width: 33.33%;
+        }
+
+        .card-header {
+            background-color: #5015bd;
+            color: white;
             padding: 5px;
-            text-align: left;
+            text-align: center;
+            font-size: 16px;
+            font-weight: lighter;
         }
 
-        .header-table th, .details-table th {
-            background-color: #f2f2f2;
+        .card-body {
+            padding: 0px;
+            text-align: center;
+            vertical-align: middle;
             font-weight: bold;
-        }
-
-        .responsive-table__container {
-            margin: 20px;
+            font-size: 14px;
         }
 
         .table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
-            font-size: 10px;
-        }
-
-        .table thead th {
-            background-color: #036098;
-            color: #ffffff;
-        }
-
-        .table thead th a {
-            color: #ffffff;
-            text-decoration: none;
-        }
-
-        .table td, .table th {
+            margin: 10px 0;
+            font-size: 12px;
             vertical-align: middle;
-        }
-
-        table tr td:nth-child(1), table tr td:nth-child(2), table tr td:nth-child(8) {
-            text-align: justify;
         }
 
         .table th, .table td {
             border: 1px solid #ddd;
             padding: 4px;
             text-align: center;
+            vertical-align: middle;
         }
 
         .table th {
-            font-weight: bold;
+            background-color: #027fe9;
+            color: white;
+            vertical-align: middle;
+        }
+
+        table thead th a {
+            color: #ffffff;
+            text-decoration: none;
+            vertical-align: middle;
         }
     </style>
 </head>
 <body>
-<h1>Resumen Pedido No: {{ pedido.id }}</h1>
 <div class="container">
-    <!-- Tabla para los detalles del pedido -->
-    <table class="header-table">
+    <h1>Resumen Para El Pedido: #{{ pedido.id }}</h1>
+
+    <table class="details-table">
         <tr>
-            <th>Exportador</th>
-            <td>{{ pedido.exportadora.nombre }}</td>
+            <td>
+                <div class="card-header">Exportador</div>
+                <div class="card-body">{{ pedido.exportadora.nombre }}</div>
+            </td>
+            <td>
+                <div class="card-header">Cliente</div>
+                <div class="card-body">{{ pedido.cliente.nombre }}</div>
+            </td>
+            <td>
+                <div class="card-header">Intermediario</div>
+                <div class="card-body">
+                    {% if pedido.intermediario %}{{ pedido.intermediario.nombre }}{% else %}--{% endif %}</div>
+            </td>
+            <td>
+                <div class="card-header">Fecha De Entrega Final</div>
+                <div class="card-body">{{ pedido.fecha_entrega }}</div>
+            </td>
         </tr>
         <tr>
-            <th>Cliente</th>
-            <td>{{ pedido.cliente.nombre }}</td>
-        </tr>
-        <tr>
-            <th>Fecha De Entrega Final</th>
-            <td>{{ pedido.fecha_entrega }}</td>
+            <td>
+                <div class="card-header">Total Peso Bruto</div>
+                <div class="card-body">{{ total_peso_bruto }}</div>
+            </td>
+            <td>
+                <div class="card-header">Número De Piezas</div>
+                <div class="card-body">{{ total_piezas }}</div>
+            </td>
+            <td>
+                <div class="card-header">Total De Cajas Pedido</div>
+                <div class="card-body">{{ total_cajas_solicitadas }}</div>
+            </td>
+            <td>
+                <div class="card-header">Destino</div>
+                <div class="card-body">{{ pedido.destino }}</div>
+            </td>
         </tr>
     </table>
 
-    <!-- Tabla para los totales -->
-    <table class="details-table">
-        <tr>
-            <th>Total Peso Bruto</th>
-            <td>{{ total_peso_bruto }}</td>
-        </tr>
-        <tr>
-            <th>Numero De Piezas</th>
-            <td>{{ total_piezas }}</td>
-        </tr>
-        <tr>
-            <th>Total De Cajas Pedido</th>
-            <td>{{ total_cajas_solicitadas }}</td>
-        </tr>
-    </table>
-</div>
-<div class="responsive-table__container">
-    {% render_table table %}
+    <!-- Tabla de detalles del pedido -->
+    <div style="width: 100%;">
+        <div>
+            {% render_table table %}
+        </div>
+    </div>
 </div>
 </body>
 </html>

@@ -1,0 +1,7 @@
+{% if record.estado_cancelacion == 'sin_solicitud' or record.estado_cancelacion == 'pendiente' or record.estado_cancelacion == 'no_autorizado' %}
+    {% if record.estado_factura != 'Pagada' %}
+        <button type="button" class="btn btn-primary mover-button3" id="editar" data-pedido-id="{{ record.pk }}">
+            <i class="bi bi-pencil-fill"></i>
+        </button>
+    {% endif %}
+{% endif %}

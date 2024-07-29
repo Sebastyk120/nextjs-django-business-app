@@ -1,9 +1,8 @@
-import datetime
-
 from django import forms
-from django.forms import DateInput
 from django.core.exceptions import ValidationError
-from .models import Pedido, Cliente, DetallePedido, Referencias, Presentacion, Exportador, Fruta
+from django.forms import DateInput
+
+from .models import Pedido, Cliente, DetallePedido, Referencias, Presentacion, Exportador, Fruta, Intermediario
 
 
 class SearchFormReferencias(forms.Form):
@@ -17,7 +16,7 @@ class FiltroSemanaExportadoraForm(forms.Form):
     semana = forms.ChoiceField(
         choices=[('', 'Seleccione una semana')] + WEEK_CHOICES,
         label='Semana',
-        required=False,
+        required=True,
         widget=forms.Select(attrs={
             'class': 'form-control'
         })
@@ -32,15 +31,34 @@ class FiltroSemanaExportadoraForm(forms.Form):
     )
 
 
+# --------------------------- Formulario con filtro Cliente -------------------------------------------------------
 class SearchForm(forms.Form):
-    SEARCH_CHOICES = [
+    METODO_BUSQUEDA_CHOICES = [
         ('awb', 'AWB'),
         ('numero_factura', 'Número de Factura'),
-        ('cliente', 'Cliente'),
-        ('id', 'No Pedido')
+        ('id', 'Número De Pedido'),
+        ('intermediario', 'Intermediario'),
     ]
-    metodo_busqueda = forms.ChoiceField(choices=SEARCH_CHOICES, required=True)
-    item_busqueda = forms.CharField(max_length=255, required=True)
+    metodo_busqueda = forms.ChoiceField(choices=METODO_BUSQUEDA_CHOICES, required=False, label="Modo De Búsqueda")
+    item_busqueda = forms.CharField(max_length=100, required=False, label="Ingrese búsqueda")
+    cliente = forms.ModelChoiceField(queryset=Cliente.objects.none(), required=False, label="Cliente")
+
+    def __init__(self, *args, **kwargs):
+        clientes = kwargs.pop('clientes', None)
+        super(SearchForm, self).__init__(*args, **kwargs)
+        if clientes is not None:
+            self.fields['cliente'].queryset = clientes
+
+
+class ExportSearchForm(forms.Form):
+    cliente = forms.ModelChoiceField(queryset=Cliente.objects.filter(pedido__isnull=False).distinct(), required=False, label="Seleccione un cliente")
+    intermediario = forms.ModelChoiceField(queryset=Intermediario.objects.filter(pedido__isnull=False).distinct(), required=False, label="Seleccione un intermediario")
+
+class ExportSearchFormSeguimientos(forms.Form):
+    cliente = forms.ModelChoiceField(queryset=Cliente.objects.filter(pedido__isnull=False).distinct(), required=False, label="Seleccione un cliente")
+    intermediario = forms.ModelChoiceField(queryset=Intermediario.objects.filter(pedido__isnull=False).distinct(), required=False, label="Seleccione un intermediario")
+    fecha_inicial = forms.DateField(required=False, label="Fecha Inicial")
+    fecha_final = forms.DateField(required=False, label="Fecha Final")
 
 
 # ------------------------------------ Formulario Crear Pedido ---------------------------------------------
@@ -54,22 +72,31 @@ class PedidoForm(forms.ModelForm):
     fecha_entrega = forms.DateField(
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
     )
-    fecha_pago_utilidad = forms.DateField(
-        required=False,
+
+    class Meta:
+        model = Pedido
+        fields = ['cliente', 'intermediario', 'fecha_entrega', 'exportadora',
+                  'subexportadora', 'destino', 'observaciones']
+
+
+# ------------------------------------ Formulario Editar Pedido ---------------------------------------------
+
+class EditarPedidoForm(forms.ModelForm):
+    fecha_entrega = forms.DateField(
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
     )
 
     class Meta:
         model = Pedido
         fields = ['cliente', 'intermediario', 'fecha_entrega', 'exportadora',
-                  'subexportadora',
-                  'awb', 'destino', 'numero_factura', 'descuento', 'nota_credito_no', 'motivo_nota_credito',
-                  'documento_cobro_utilidad', 'fecha_pago_utilidad', 'observaciones']
+                  'subexportadora', 'destino', 'observaciones']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
-# ------------------------------------ Formulario Editar Pedido ---------------------------------------------
-
-class EditarPedidoForm(forms.ModelForm):
+# ------------------------ Fomrulario Editar Pedido 2 -------------------------------------------------------------
+class EditarPedidoFormDos(forms.ModelForm):
     fecha_entrega = forms.DateField(
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
     )
@@ -81,12 +108,69 @@ class EditarPedidoForm(forms.ModelForm):
     class Meta:
         model = Pedido
         fields = ['cliente', 'intermediario', 'fecha_entrega', 'exportadora',
-                  'subexportadora',
-                  'awb', 'destino', 'numero_factura', 'descuento', 'nota_credito_no', 'motivo_nota_credito',
-                  'documento_cobro_utilidad', 'fecha_pago_utilidad', 'observaciones']
+                  'subexportadora', 'destino', 'awb', 'numero_factura', 'descuento', 'observaciones']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['cliente'].disabled = True
+        self.fields['intermediario'].disabled = True
+        self.fields['fecha_entrega'].disabled = True
+        self.fields['exportadora'].disabled = True
+        self.fields['subexportadora'].disabled = True
+        self.fields['destino'].disabled = True
+
+
+# ------------------------ Fomrulario Editar Pedido Cartera -------------------------------------------------------------
+class EditarPedidoFormCartera(forms.ModelForm):
+    fecha_entrega = forms.DateField(
+        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+    )
+    fecha_pago_utilidad = forms.DateField(
+        required=False,
+        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+    )
+
+    class Meta:
+        model = Pedido
+        fields = ['cliente', 'intermediario', 'fecha_entrega', 'exportadora',
+                  'subexportadora', 'destino', 'nota_credito_no', 'motivo_nota_credito', 'observaciones']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cliente'].disabled = True
+        self.fields['intermediario'].disabled = True
+        self.fields['fecha_entrega'].disabled = True
+        self.fields['exportadora'].disabled = True
+        self.fields['subexportadora'].disabled = True
+        self.fields['destino'].disabled = True
+
+
+# ------------------------ Fomrulario Editar Pedido Utilidades ---------------------------------------------------------
+class EditarPedidoFormUtilidades(forms.ModelForm):
+    fecha_entrega = forms.DateField(
+        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+    )
+    fecha_pago_utilidad = forms.DateField(
+        required=False,
+        widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+    )
+
+    class Meta:
+        model = Pedido
+        fields = ['cliente', 'intermediario', 'fecha_entrega', 'exportadora',
+                  'subexportadora', 'destino', 'nota_credito_no', 'motivo_nota_credito', 'documento_cobro_utilidad',
+                  'fecha_pago_utilidad', 'observaciones']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cliente'].disabled = True
+        self.fields['intermediario'].disabled = True
+        self.fields['fecha_entrega'].disabled = True
+        self.fields['exportadora'].disabled = True
+        self.fields['subexportadora'].disabled = True
+        self.fields['destino'].disabled = True
+        self.fields['nota_credito_no'].disabled = True
+        self.fields['motivo_nota_credito'].disabled = True
 
 
 # ------------------------------------ Formulario Eliminar Pedido ---------------------------------------------
@@ -113,9 +197,8 @@ class EliminarPedidoForm(forms.ModelForm):
 class DetallePedidoForm(forms.ModelForm):
     class Meta:
         model = DetallePedido
-        fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'cajas_enviadas',
-                  'tipo_caja', 'referencia', 'lleva_contenedor', 'tarifa_utilidad',
-                  'valor_x_caja_usd', 'no_cajas_nc', 'afecta_utilidad', 'observaciones', 'precio_proforma']
+        fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'tipo_caja', 'referencia', 'lleva_contenedor',
+                  'tarifa_utilidad', 'valor_x_caja_usd', 'observaciones', 'precio_proforma']
 
     def __init__(self, *args, **kwargs):
         pedido_id = kwargs.pop('pedido_id', None)
@@ -130,30 +213,59 @@ class DetallePedidoForm(forms.ModelForm):
         except Pedido.DoesNotExist:
             raise ValidationError(f"No se encontró el pedido con id {pedido_id}")
 
-        # Filtrar las frutas según el cliente del pedido
-        self.fields['fruta'].queryset = Fruta.objects.filter(clientepresentacion__cliente=pedido.cliente).distinct()
+        cliente = pedido.cliente
 
-        # Inicialmente, la presentación debe estar vacía
-        self.fields['presentacion'].queryset = Presentacion.objects.none()
+        # Filtrar las frutas según el cliente del pedido
+        self.fields['fruta'].queryset = Fruta.objects.filter(clientepresentacion__cliente=cliente).distinct()
 
         if 'fruta' in self.data:
             try:
                 fruta_id = int(self.data.get('fruta'))
                 self.fields['presentacion'].queryset = Presentacion.objects.filter(
-                    clientepresentacion__cliente=pedido.cliente, clientepresentacion__fruta_id=fruta_id)
+                    clientepresentacion__cliente=cliente, clientepresentacion__fruta_id=fruta_id)
             except (ValueError, TypeError):
                 pass  # Invalid input; ignore and fallback to empty queryset
         elif self.instance.pk:
             self.fields['presentacion'].queryset = Presentacion.objects.filter(
-                clientepresentacion__cliente=pedido.cliente, clientepresentacion__fruta=self.instance.fruta
+                clientepresentacion__cliente=cliente, clientepresentacion__fruta=self.instance.fruta
             )
 
-        # Filtrar las referencias según el exportador del pedido
-        self.fields['referencia'].queryset = Referencias.objects.filter(exportador=pedido.exportadora)
+        if 'presentacion' in self.data and 'tipo_caja' in self.data:
+            try:
+                presentacion_id = int(self.data.get('presentacion'))
+                tipo_caja_id = int(self.data.get('tipo_caja'))
+                fruta_id = int(self.data.get('fruta'))
+                self.fields['referencia'].queryset = Referencias.objects.filter(
+                    presentacionreferencia__presentacion_id=presentacion_id,
+                    presentacionreferencia__tipo_caja_id=tipo_caja_id,
+                    presentacionreferencia__fruta_id=fruta_id,
+                    exportador=pedido.exportadora
+                )
+            except (ValueError, TypeError):
+                pass  # Invalid input; ignore and fallback to empty queryset
+        elif self.instance.pk:
+            self.fields['referencia'].queryset = Referencias.objects.filter(
+                presentacionreferencia__presentacion=self.instance.presentacion,
+                presentacionreferencia__tipo_caja=self.instance.tipo_caja,
+                presentacionreferencia__fruta=self.instance.fruta,
+                exportador=pedido.exportadora
+            )
 
         # Añadir clases CSS a los widgets
         self.fields['fruta'].widget.attrs.update({'class': 'fruta-select'})
         self.fields['presentacion'].widget.attrs.update({'class': 'presentacion-select'})
+        self.fields['tipo_caja'].widget.attrs.update({'class': 'tipo-caja-select'})
+
+    def clean(self):
+        cleaned_data = super().clean()
+        referencia = cleaned_data.get("referencia")
+        lleva_contenedor = cleaned_data.get("lleva_contenedor")
+
+        if referencia:
+            if referencia.cantidad_pallet_con_contenedor in [0, None] and lleva_contenedor:
+                self.add_error('lleva_contenedor',
+                               "No puede seleccionar Si porque la referencia no permite contenedor.")
+        return cleaned_data
 
 
 # ------------------------------------ Formulario editar Detalle Pedido ---------------------------------------
@@ -161,9 +273,8 @@ class DetallePedidoForm(forms.ModelForm):
 class EditarDetallePedidoForm(forms.ModelForm):
     class Meta:
         model = DetallePedido
-        fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'cajas_enviadas',
-                  'tipo_caja', 'referencia', 'lleva_contenedor', 'tarifa_utilidad',
-                  'valor_x_caja_usd', 'no_cajas_nc', 'afecta_utilidad', 'observaciones', 'precio_proforma']
+        fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'tipo_caja', 'referencia', 'lleva_contenedor',
+                  'tarifa_utilidad', 'valor_x_caja_usd', 'observaciones', 'precio_proforma']
 
     def __init__(self, *args, **kwargs):
         pedido_id = kwargs.pop('pedido_id', None)
@@ -178,33 +289,232 @@ class EditarDetallePedidoForm(forms.ModelForm):
         except Pedido.DoesNotExist:
             raise ValidationError(f"No se encontró el pedido con id {pedido_id}")
 
+        cliente = pedido.cliente
+
         # Filtrar las frutas según el cliente del pedido
-        self.fields['fruta'].queryset = Fruta.objects.filter(clientepresentacion__cliente=pedido.cliente).distinct()
+        self.fields['fruta'].queryset = Fruta.objects.filter(clientepresentacion__cliente=cliente).distinct()
 
         if 'fruta' in self.data:
             try:
                 fruta_id = int(self.data.get('fruta'))
                 self.fields['presentacion'].queryset = Presentacion.objects.filter(
-                    clientepresentacion__cliente=pedido.cliente, clientepresentacion__fruta_id=fruta_id)
+                    clientepresentacion__cliente=cliente, clientepresentacion__fruta_id=fruta_id)
             except (ValueError, TypeError):
                 pass  # Invalid input; ignore and fallback to empty queryset
         elif self.instance.pk:
             self.fields['presentacion'].queryset = Presentacion.objects.filter(
-                clientepresentacion__cliente=pedido.cliente, clientepresentacion__fruta=self.instance.fruta
+                clientepresentacion__cliente=cliente, clientepresentacion__fruta=self.instance.fruta
             )
 
-        # Filtrar las referencias según el exportador del pedido y la presentación inicializada
-        if self.instance.pk:
+        if 'presentacion' in self.data and 'tipo_caja' in self.data:
+            try:
+                presentacion_id = int(self.data.get('presentacion'))
+                tipo_caja_id = int(self.data.get('tipo_caja'))
+                fruta_id = int(self.data.get('fruta'))
+                self.fields['referencia'].queryset = Referencias.objects.filter(
+                    presentacionreferencia__presentacion_id=presentacion_id,
+                    presentacionreferencia__tipo_caja_id=tipo_caja_id,
+                    presentacionreferencia__fruta_id=fruta_id,
+                    exportador=pedido.exportadora
+                )
+            except (ValueError, TypeError):
+                pass  # Invalid input; ignore and fallback to empty queryset
+        elif self.instance.pk:
             self.fields['referencia'].queryset = Referencias.objects.filter(
-                exportador=pedido.exportadora,
-                presentacionreferencia__presentacion=self.instance.presentacion
+                presentacionreferencia__presentacion=self.instance.presentacion,
+                presentacionreferencia__tipo_caja=self.instance.tipo_caja,
+                presentacionreferencia__fruta=self.instance.fruta,
+                exportador=pedido.exportadora
             )
-        else:
-            self.fields['referencia'].queryset = Referencias.objects.filter(exportador=pedido.exportadora)
 
         # Añadir clases CSS a los widgets
         self.fields['fruta'].widget.attrs.update({'class': 'fruta-select'})
         self.fields['presentacion'].widget.attrs.update({'class': 'presentacion-select'})
+        self.fields['tipo_caja'].widget.attrs.update({'class': 'tipo-caja-select'})
+
+    def clean(self):
+        cleaned_data = super().clean()
+        referencia = cleaned_data.get("referencia")
+        lleva_contenedor = cleaned_data.get("lleva_contenedor")
+
+        if referencia:
+            if referencia.cantidad_pallet_con_contenedor in [0, None] and lleva_contenedor:
+                self.add_error('lleva_contenedor',
+                               "No puedes seleccionar Si en el campo Lleva contenedor porque la referencia no "
+                               "permite contenedor.")
+        return cleaned_data
+
+
+# ------------------------------  Editar Detalle De Pedido, Cajas enviadas momento 2 -------------------------
+class EditarDetallePedidoDosForm(forms.ModelForm):
+    class Meta:
+        model = DetallePedido
+        fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'tipo_caja', 'referencia', 'lleva_contenedor',
+                  'tarifa_utilidad', 'valor_x_caja_usd', 'observaciones', 'precio_proforma', 'cajas_enviadas']
+
+    def __init__(self, *args, **kwargs):
+        pedido_id = kwargs.pop('pedido_id', None)
+        if not pedido_id:
+            raise ValidationError("El pedido_id es requerido")
+
+        super(EditarDetallePedidoDosForm, self).__init__(*args, **kwargs)
+        self.fields['pedido'].disabled = True
+        self.fields['fruta'].disabled = True
+        self.fields['presentacion'].disabled = True
+        self.fields['cajas_solicitadas'].disabled = True
+        self.fields['tipo_caja'].disabled = True
+        self.fields['referencia'].disabled = True
+        self.fields['lleva_contenedor'].disabled = True
+        self.fields['tarifa_utilidad'].disabled = True
+        self.fields['valor_x_caja_usd'].disabled = True
+        self.fields['precio_proforma'].disabled = True
+
+        try:
+            pedido = Pedido.objects.get(id=pedido_id)
+        except Pedido.DoesNotExist:
+            raise ValidationError(f"No se encontró el pedido con id {pedido_id}")
+
+        cliente = pedido.cliente
+
+        # Filtrar las frutas según el cliente del pedido
+        self.fields['fruta'].queryset = Fruta.objects.filter(clientepresentacion__cliente=cliente).distinct()
+
+        if 'fruta' in self.data:
+            try:
+                fruta_id = int(self.data.get('fruta'))
+                self.fields['presentacion'].queryset = Presentacion.objects.filter(
+                    clientepresentacion__cliente=cliente, clientepresentacion__fruta_id=fruta_id)
+            except (ValueError, TypeError):
+                pass  # Invalid input; ignore and fallback to empty queryset
+        elif self.instance.pk:
+            self.fields['presentacion'].queryset = Presentacion.objects.filter(
+                clientepresentacion__cliente=cliente, clientepresentacion__fruta=self.instance.fruta
+            )
+
+        if 'presentacion' in self.data and 'tipo_caja' in self.data:
+            try:
+                presentacion_id = int(self.data.get('presentacion'))
+                tipo_caja_id = int(self.data.get('tipo_caja'))
+                fruta_id = int(self.data.get('fruta'))
+                self.fields['referencia'].queryset = Referencias.objects.filter(
+                    presentacionreferencia__presentacion_id=presentacion_id,
+                    presentacionreferencia__tipo_caja_id=tipo_caja_id,
+                    presentacionreferencia__fruta_id=fruta_id,
+                    exportador=pedido.exportadora
+                )
+            except (ValueError, TypeError):
+                pass  # Invalid input; ignore and fallback to empty queryset
+        elif self.instance.pk:
+            self.fields['referencia'].queryset = Referencias.objects.filter(
+                presentacionreferencia__presentacion=self.instance.presentacion,
+                presentacionreferencia__tipo_caja=self.instance.tipo_caja,
+                presentacionreferencia__fruta=self.instance.fruta,
+                exportador=pedido.exportadora
+            )
+
+        # Añadir clases CSS a los widgets
+        self.fields['fruta'].widget.attrs.update({'class': 'fruta-select'})
+        self.fields['presentacion'].widget.attrs.update({'class': 'presentacion-select'})
+        self.fields['tipo_caja'].widget.attrs.update({'class': 'tipo-caja-select'})
+
+    def clean(self):
+        cleaned_data = super().clean()
+        referencia = cleaned_data.get("referencia")
+        lleva_contenedor = cleaned_data.get("lleva_contenedor")
+
+        if referencia:
+            if referencia.cantidad_pallet_con_contenedor in [0, None] and lleva_contenedor:
+                self.add_error('lleva_contenedor',
+                               "No puedes seleccionar Si en el campo Lleva contenedor porque la referencia no "
+                               "permite contenedor.")
+        return cleaned_data
+
+
+# ------------------------------  Editar Detalle De Pedido, Cajas enviadas momento 3 -------------------------
+class EditarDetallePedidoTresForm(forms.ModelForm):
+    class Meta:
+        model = DetallePedido
+        fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'cajas_enviadas',
+                  'tipo_caja', 'referencia', 'lleva_contenedor', 'tarifa_utilidad',
+                  'valor_x_caja_usd', 'no_cajas_nc', 'afecta_utilidad', 'observaciones', 'precio_proforma']
+
+    def __init__(self, *args, **kwargs):
+        pedido_id = kwargs.pop('pedido_id', None)
+        if not pedido_id:
+            raise ValidationError("El pedido_id es requerido")
+
+        super(EditarDetallePedidoTresForm, self).__init__(*args, **kwargs)
+        self.fields['pedido'].disabled = True
+        self.fields['fruta'].disabled = True
+        self.fields['presentacion'].disabled = True
+        self.fields['cajas_solicitadas'].disabled = True
+        self.fields['cajas_enviadas'].disabled = True
+        self.fields['tipo_caja'].disabled = True
+        self.fields['referencia'].disabled = True
+        self.fields['lleva_contenedor'].disabled = True
+        self.fields['tarifa_utilidad'].disabled = True
+        self.fields['valor_x_caja_usd'].disabled = True
+        self.fields['precio_proforma'].disabled = True
+
+        try:
+            pedido = Pedido.objects.get(id=pedido_id)
+        except Pedido.DoesNotExist:
+            raise ValidationError(f"No se encontró el pedido con id {pedido_id}")
+
+        cliente = pedido.cliente
+
+        # Filtrar las frutas según el cliente del pedido
+        self.fields['fruta'].queryset = Fruta.objects.filter(clientepresentacion__cliente=cliente).distinct()
+
+        if 'fruta' in self.data:
+            try:
+                fruta_id = int(self.data.get('fruta'))
+                self.fields['presentacion'].queryset = Presentacion.objects.filter(
+                    clientepresentacion__cliente=cliente, clientepresentacion__fruta_id=fruta_id)
+            except (ValueError, TypeError):
+                pass  # Invalid input; ignore and fallback to empty queryset
+        elif self.instance.pk:
+            self.fields['presentacion'].queryset = Presentacion.objects.filter(
+                clientepresentacion__cliente=cliente, clientepresentacion__fruta=self.instance.fruta
+            )
+
+        if 'presentacion' in self.data and 'tipo_caja' in self.data:
+            try:
+                presentacion_id = int(self.data.get('presentacion'))
+                tipo_caja_id = int(self.data.get('tipo_caja'))
+                fruta_id = int(self.data.get('fruta'))
+                self.fields['referencia'].queryset = Referencias.objects.filter(
+                    presentacionreferencia__presentacion_id=presentacion_id,
+                    presentacionreferencia__tipo_caja_id=tipo_caja_id,
+                    presentacionreferencia__fruta_id=fruta_id,
+                    exportador=pedido.exportadora
+                )
+            except (ValueError, TypeError):
+                pass  # Invalid input; ignore and fallback to empty queryset
+        elif self.instance.pk:
+            self.fields['referencia'].queryset = Referencias.objects.filter(
+                presentacionreferencia__presentacion=self.instance.presentacion,
+                presentacionreferencia__tipo_caja=self.instance.tipo_caja,
+                presentacionreferencia__fruta=self.instance.fruta,
+                exportador=pedido.exportadora
+            )
+
+        # Añadir clases CSS a los widgets
+        self.fields['fruta'].widget.attrs.update({'class': 'fruta-select'})
+        self.fields['presentacion'].widget.attrs.update({'class': 'presentacion-select'})
+        self.fields['tipo_caja'].widget.attrs.update({'class': 'tipo-caja-select'})
+
+    def clean(self):
+        cleaned_data = super().clean()
+        referencia = cleaned_data.get("referencia")
+        lleva_contenedor = cleaned_data.get("lleva_contenedor")
+
+        if referencia:
+            if referencia.cantidad_pallet_con_contenedor in [0, None] and lleva_contenedor:
+                self.add_error('lleva_contenedor',
+                               "No puedes seleccionar Si en el campo Lleva contenedor porque la referencia no "
+                               "permite contenedor.")
+        return cleaned_data
 
 
 # -------------------------- Formulario Eliminar  Detalle  De Pedido ---------------------------------------------
@@ -274,6 +584,7 @@ class EditarPedidoSeguimientoForm(forms.ModelForm):
         label=Pedido._meta.get_field('fecha_llegada').verbose_name,
         widget=DateInput(attrs={'type': 'date', 'class': 'form-control'}), required=False
     )
+
     class Meta:
         model = Pedido
         fields = [
@@ -284,10 +595,13 @@ class EditarPedidoSeguimientoForm(forms.ModelForm):
             'etd',
             'eta',
             'peso_awb',
+            'eta_real',
+            'termo',
             'estado_documentos',
             'observaciones_tracking'
         ]
         widgets = {
             'etd': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'eta': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'eta_real': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }

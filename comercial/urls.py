@@ -3,14 +3,21 @@ from . import views
 
 urlpatterns = [
     path('redirect_based_on_group', views.redirect_based_on_group_pedidos, name='redirect_based_on_group'),
+    path('redirect_based_on_group_cartera', views.redirect_based_on_group_cartera, name='redirect_based_on_group_cartera'),
+
     path('pedido_detalles/<int:pedido_id>', views.DetallePedidoListView.as_view(), name='pedido_detalle_list'),
     path('pedido_list_general', views.PedidoListView.as_view(), name='pedido_list_general'),
     path('seguimiento_pedido_list_general', views.SeguimientosPedidosListView.as_view(), name='seguimiento_pedido_list_general'),
     path('pedido_crear', views.PedidoCreateView.as_view(), name='pedido_crear'),
     path('pedido_editar', views.PedidoUpdateView.as_view(), name='pedido_editar'),
+    path('pedido_editar2', views.PedidoUpdateViewDos.as_view(), name='pedido_editar2'),
+    path('pedido_editar_cartera', views.PedidoUpdateViewCartera.as_view(), name='pedido_editar_cartera'),
+    path('pedido_editar_utilidades', views.PedidoUpdateViewUtilidades.as_view(), name='pedido_editar_utilidades'),
     path('pedido_eliminar', views.PedidoDeleteView.as_view(), name='pedido_eliminar'),
     path('detalle_pedido_crear/<int:pedido_id>', views.DetallePedidoCreateView.as_view(), name='detalle_pedido_crear'),
     path('detalle_pedido_editar', views.DetallePedidoUpdateView.as_view(), name='detalle_pedido_editar'),
+    path('detalle_pedido_editar2', views.DetallePedidoUpdateDosView.as_view(), name='detalle_pedido_editar2'),
+    path('detalle_pedido_editar3', views.DetallePedidoUpdateTresView.as_view(), name='detalle_pedido_editar3'),
     path('detalle_pedido_eliminar', views.DetallePedidoDeleteiew.as_view(), name='detalle_pedido_eliminar'),
     path('pedido_list_etnico', views.PedidoEtnicoListView.as_view(), name='pedido_list_etnico'),
     path('pedido_list_fieldex', views.PedidoFieldexListView.as_view(), name='pedido_list_fieldex'),
@@ -22,14 +29,13 @@ urlpatterns = [
     path('cartera_list_etnico', views.CarteraEtnicoListView.as_view(), name='cartera_list_etnico'),
     path('cartera_list_fieldex', views.CarteraFieldexListView.as_view(), name='cartera_list_fieldex'),
     path('cartera_list_juan', views.CarteraJuanListView.as_view(), name='cartera_list_juan'),
-    path('exportar_cartera_clientes', views.export_cartera_clientes, name='exportar_cartera_clientes'),
-    path('exportar_cartera_etnico', views.export_cartera_etnico, name='exportar_cartera_etnico'),
-    path('exportar_cartera_fieldex', views.export_cartera_fieldex, name='exportar_cartera_fieldex'),
-    path('exportar_cartera_juan', views.export_cartera_juan, name='exportar_cartera_juan'),
+    path('exportar_cartera_cliente', views.ExportarCarteraClienteView.as_view(), name='exportar_cartera_cliente'),
     path('exportar_pedidos_excel', views.exportar_pedidos_excel, name='exportar_pedidos_excel'),
     path('exportar_pedidos_etnico', views.exportar_pedidos_etnico, name='exportar_pedidos_etnico'),
     path('exportar_pedidos_fieldex', views.exportar_pedidos_fieldex, name='exportar_pedidos_fieldex'),
     path('exportar_pedidos_juan', views.exportar_pedidos_juan, name='exportar_pedidos_juan'),
+    path('exportar_excel_seguimiento_tracking', views.exportar_excel_seguimiento_tracking, name='exportar_excel_seguimiento_tracking'),
+
     path('utilidad_list_heavens', views.UtilidadHeavensListView.as_view(), name='utilidad_list_heavens'),
     path('utilidad_list_etnico', views.UtilidadEtnicoListView.as_view(), name='utilidad_list_etnico'),
     path('utilidad_list_fieldex', views.UtilidadFiedexListView.as_view(), name='utilidad_list_fieldex'),
@@ -63,10 +69,7 @@ urlpatterns = [
     path('exportar_referencias_etnico', views.exportar_referencias_etnico, name='exportar_referencias_etnico'),
     path('exportar_referencias_fieldex', views.exportar_referencias_fieldex, name='exportar_referencias_fieldex'),
     path('exportar_referencias_juan', views.exportar_referencias_juan, name='exportar_referencias_juan'),
-    path('exportar_cartera_view', views.ExportarCarteraView.as_view(), name='exportar_cartera_view'),
-    path('exportar_cartera_etnico_view', views.ExportarCarteraEtnicoView.as_view(), name='exportar_cartera_etnico_view'),
-    path('exportar_cartera_fieldex_view', views.ExportarCarteraFieldexView.as_view(), name='exportar_cartera_fieldex_view'),
-    path('exportar_cartera_juan_view', views.ExportarCarteraJuanView.as_view(), name='exportar_cartera_juan_view'),
+
     path('actualizar_vencimiento_general/', views.actualizar_dias_de_vencimiento_todos, name='actualizar_dias_de_vencimiento_todos'),
     path('actualizar_tasas_general/', views.actualizar_tasas, name='actualizar_tasas'),
 
@@ -86,5 +89,6 @@ urlpatterns = [
 
     path('exportar_resumen_semana_pdf/', views.export_pdf_resumen_semana, name='exportar_resumen_semana_pdf'),
     path('pedido_resumen_pdf/<int:pedido_id>', views.exportar_pdf_resumen_pedido, name='pedido_resumen_pdf'),
+    path('exportar_excel_seguimientos_resumen/', views.exportar_excel_seguimiento_resumen, name='exportar_excel_seguimientos_resumen'),
 
 ]

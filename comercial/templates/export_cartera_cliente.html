@@ -1,0 +1,82 @@
+{% extends 'comercialbase.html' %}
+{% load static %}
+{% load crispy_forms_filters %}
+{% block content %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Exportación Cartera Cliente</title>
+    <link rel="stylesheet" href="{% static 'css/exportaciones.css' %}"/>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const clienteField = document.getElementById('id_cliente');
+            const intermediarioField = document.getElementById('id_intermediario');
+
+            function toggleFields() {
+                if (clienteField.value) {
+                    intermediarioField.disabled = true;
+                } else {
+                    intermediarioField.disabled = false;
+                }
+
+                if (intermediarioField.value) {
+                    clienteField.disabled = true;
+                } else {
+                    clienteField.disabled = false;
+                }
+            }
+
+            clienteField.addEventListener('change', toggleFields);
+            intermediarioField.addEventListener('change', toggleFields);
+        });
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="card w-75 bg-dark mx-auto my-5 shadow-lg rounded">
+        <div class="card-body">
+            <h2 class="text-center text-light">Exportación Cartera General</h2>
+            <br>
+            <h5 class="text-center text-light">Debe seleccionar un cliente o un intermediario, no ambos.</h5>
+            <br>
+            <form method="post" class="formulario-blanco">
+                {% csrf_token %}
+                <div class="form-group row">
+                    <label for="intermediario" class="col-sm-2 col-form-label text-light">Intermediario:</label>
+                    <div class="col-sm-10">
+                        {{ form.intermediario|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="cliente" class="col-sm-2 col-form-label text-light">Cliente:</label>
+                    <div class="col-sm-10">
+                        {{ form.cliente|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="fecha_inicial" class="col-sm-2 col-form-label text-light">Fecha Inicial:</label>
+                    <div class="col-sm-4">
+                        <input type="date" id="fecha_inicial" name="fecha_inicial" class="form-control bg-dark text-light">
+                    </div>
+                    <label for="fecha_final" class="col-sm-2 col-form-label text-light">Fecha Final:</label>
+                    <div class="col-sm-4">
+                        <input type="date" id="fecha_final" name="fecha_final" class="form-control bg-dark text-light">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between mt-4 align-items-center">
+                    <a href="{% url 'redirect_based_on_group_cartera' %}" class="btn btn-danger btn-lg" role="button">Volver</a>
+                    <span class="text-light">Para exportar toda la cartera omita todos los campos.</span>
+                    <button type="submit" class="btn btn-success btn-lg">Exportar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<footer class="footer">
+    <p>Heavens Fruit. - Todos los derechos reservados ©</p>
+</footer>
+</body>
+</html>
+{% endblock %}

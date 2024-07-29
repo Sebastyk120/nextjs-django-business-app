@@ -1,0 +1,81 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/detalle_pedido_crear.css' %}">
+<div class="modal-header">
+    <h5 class="modal-title" id="moverItemModalLabel">Confirmar Cajas Nota Crédito Detalle De Pedido: {{ pedido_id }} <i
+            class="bi bi-pencil-fill"></i></h5>
+</div>
+<form id="moverItemForm3" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="pedido_id" value="{{ pedido_id }}">
+    <div class="modal-body">
+        <div id="errores">
+            {% for field, error_list in form.errors.items %}
+                {% for error in error_list %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="container">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.pedido.label_tag }} {{ form.pedido }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.fruta.label_tag }} {{ form.fruta }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.presentacion.label_tag }} {{ form.presentacion }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.cajas_solicitadas.label_tag }} {{ form.cajas_solicitadas }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.cajas_enviadas.label_tag }} {{ form.cajas_enviadas }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.tipo_caja.label_tag }} {{ form.tipo_caja }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.referencia.label_tag }} {{ form.referencia }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.lleva_contenedor.label_tag }} {{ form.lleva_contenedor }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.tarifa_utilidad.label_tag }} {{ form.tarifa_utilidad }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.valor_x_caja_usd.label_tag }} {{ form.valor_x_caja_usd }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.no_cajas_nc.label_tag }} {{ form.no_cajas_nc }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.afecta_utilidad.label_tag }} {{ form.afecta_utilidad }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.precio_proforma.label_tag }} {{ form.precio_proforma }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.observaciones.label_tag }} {{ form.observaciones }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">Cerrar</button>
+        <button type="submit" class="btn btn-success">Editar</button>
+    </div>
+</form>

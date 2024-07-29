@@ -10,7 +10,11 @@
         <title>Etnico</title>
     </head>
     <body>
-    <h1 class="align-center">Informe De Cartera Etnico <i class="bi bi-cash"></i></h1>
+    <h1 class="align-center">
+        <img src="{% static 'img/Etnico Logo.png' %}" alt="Logo de la Empresa" class="logo-empresa"
+             style="vertical-align:middle; margin-right:5px;"/>Informe De Cartera Etnico <i class="bi bi-cash"></i>
+    </h1>
+    <h1 class="align-center"></h1>
 
     <form method="get" class="d-flex" id="searchForm">
         <select name="metodo_busqueda" class="form-control" required>
@@ -28,19 +32,22 @@
         </div>
     </form>
     <div class="button-container">
-        <a class="nav-link" href="{% url 'exportar_cartera_etnico_view' %}" name="exportardetalle">
-            <button class="btn btn-success btn-sm" id="export">Informe De Cartera <i class="bi bi-filetype-xlsx"></i>
-            </button>
+        <a class="nav-link" href="{% url 'exportar_cartera_cliente' %}" name="exportardetalle">
+            <button class="btn btn-success btn-sm" id="export">Informe De Cartera<i
+                    class="bi bi-file-earmark-spreadsheet-fill"></i></button>
         </a>
-        <a type="button" class="btn btn-danger btn-sm" name="volver" id="volver" role="button"
-           onclick="history.back();"><i class="bi bi-reply-fill"></i></a>
+        <a type="button" class="btn btn-danger" name="volver" id="volver" role="button"
+           href="{% url 'redirect_based_on_group' %}">
+            <i class="bi bi-reply-fill"></i> Pedidos
+        </a>
     </div>
 
     <div class="container-fluid">
         {% render_table table %}
     </div>
     </div>
-    <script src="{% static 'js/editar_pedido_exportador.js' %}"></script>    <script>
+    <script src="{% static 'js/editar_pedido_exportador.js' %}"></script>
+    <script>
         document.getElementById('clearFilters').addEventListener('click', function () {
             // Obtener la URL actual sin los parámetros de búsqueda
             const url = new URL(window.location.href);

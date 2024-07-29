@@ -1,11 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Mulish:wght@300&display=swap');
 
 body {
-    background-image: url(../img/black.webp) !important;
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
     font-family: 'Mulish', serif !important;
     margin-bottom: 100px; /* Asegura espacio para los botones al fondo */
 }

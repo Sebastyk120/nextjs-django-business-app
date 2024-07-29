@@ -1,11 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
 
 body {
-    background-image: url(../img/fondojornadas.webp);
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
     font-family: 'Poppins', sans-serif;
 }
 
@@ -14,7 +9,7 @@ h1 {
     font-family: 'Poppins', sans-serif;
     font-weight: 800 !important;
     font-size: 30px !important;
-    color: #007bff !important;
+    color: #6fb9dc; !important;
 }
 
 input[name="item_busqueda"] {

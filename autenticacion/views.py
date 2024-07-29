@@ -1,5 +1,7 @@
 import os
 import tempfile
+import io
+import json
 from django.contrib import messages
 from django.contrib.admin.views.decorators import user_passes_test
 from django.contrib.auth import login, authenticate, logout
@@ -94,21 +96,59 @@ class CustomPasswordResetView(PasswordResetView):
 
 class BackupDataView(View):
     def get(self, request, *args, **kwargs):
-        # Crear un archivo temporal para almacenar el backup
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
-        try:
-            # Llamar a 'dumpdata' y redirigir la salida al archivo temporal
-            call_command('dumpdata', stdout=temp_file)
-            temp_file.close()
-
-            # Leer el contenido del archivo temporal
-            with open(temp_file.name, 'rb') as backup_file:
-                response = HttpResponse(backup_file.read(), content_type='application/json')
-                response['Content-Disposition'] = f'attachment; filename="db_backup.json"'
-                return response
-        finally:
-            os.remove(temp_file.name)  # Eliminar el archivo temporal después de la respuesta
+        # Renderizar la plantilla con el botón para descargar
+        return render(request, 'backup.html')
 
     def post(self, request, *args, **kwargs):
-        # Renderizar la plantilla
-        return render(request, 'backup.html')
+        # Crear un archivo temporal para almacenar el backup
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+            try:
+                # Usar StringIO para capturar la salida de dumpdata
+                output = io.StringIO()
+                # Obtener la lista de todos los modelos en la aplicación
+                from django.apps import apps
+                models = apps.get_models()
+                # Construir la lista de modelos a excluir que contienen "historical"
+                exclude_models = [model._meta.label_lower for model in models if 'historical' in model._meta.label_lower]
+                # Excluir los modelos históricos durante la exportación
+                call_command('dumpdata', exclude=exclude_models, stdout=output)
+                temp_file.write(output.getvalue().encode('utf-8'))
+                temp_file_name = temp_file.name
+            except Exception as e:
+                return HttpResponse(f'Error during backup: {e}', content_type='text/plain')
+
+        # Leer el contenido del archivo temporal
+        with open(temp_file_name, 'rb') as backup_file:
+            response = HttpResponse(backup_file.read(), content_type='application/json')
+            response['Content-Disposition'] = f'attachment; filename="db_backup.json"'
+
+        # Eliminar el archivo temporal después de la respuesta
+        os.remove(temp_file_name)
+        return response
+
+
+class RestoreDataView(View):
+    def post(self, request, *args, **kwargs):
+        if 'backup_file' not in request.FILES:
+            return HttpResponse('No file uploaded', content_type='text/plain')
+
+        backup_file = request.FILES['backup_file']
+
+        # Guardar el archivo temporalmente
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+            for chunk in backup_file.chunks():
+                temp_file.write(chunk)
+            temp_file_name = temp_file.name
+
+        # Leer el contenido del archivo temporal
+        try:
+            with open(temp_file_name, 'r', encoding='utf-8') as file:
+                data = json.load(file)
+
+            # Restaurar los datos usando loaddata
+            call_command('loaddata', temp_file_name)
+            os.remove(temp_file_name)
+            return HttpResponse('Data restored successfully', content_type='text/plain')
+        except Exception as e:
+            os.remove(temp_file_name)
+            return HttpResponse(f'Error during data restoration: {e}', content_type='text/plain')

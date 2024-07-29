@@ -1,11 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
 
 body {
-    background-image: url(../img/black.webp) !important;
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
     font-family: 'Poppins', serif;
     color: #fff;
 }
@@ -37,6 +32,11 @@ h2 {
     font-weight: bold;
     white-space: inherit;
     text-align: center;
+}
+
+.table tbody tr:hover {
+    background-color: #a3dbf8; /* Color de fondo al pasar el cursor */
+    cursor: auto;
 }
 
 .table thead tr {

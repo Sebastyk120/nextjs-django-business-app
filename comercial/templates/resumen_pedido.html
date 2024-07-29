@@ -24,30 +24,39 @@
         <div class="card mb-6 rounded shadow-sm" style="background-color: #ffe1c9;">
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-4 text-center">
+                    <div class="col-md-3 text-center">
                         <h5 class="card-title">Pedido No:</h5>
                         <h6 class="card-title">{{ pedido.id }}</h6>
                     </div>
-                    <div class="col-md-4 text-center">
+                    <div class="col-md-3 text-center">
                         <h5 class="card-title">Cliente:</h5>
                         <h6 class="card-title">{{ pedido.cliente.nombre }}</h6>
                     </div>
-                    <div class="col-md-4 text-center">
+                    <div class="col-md-3 text-center">
+                        <h5 class="card-title">Destino:</h5>
+                        <h6 class="card-title">{{ pedido.destino }}</h6>
+                    </div>
+                    <div class="col-md-3 text-center">
                         <h5 class="card-title">Fecha De Entrega Final:</h5>
                         <h6 class="card-title">{{ pedido.fecha_entrega }}</h6>
                     </div>
+
                 </div>
                 <br>
                 <div class="row">
-                    <div class="col-md-4 text-center">
+                    <div class="col-md-3 text-center">
+                        <h5 class="card-title">Intermediario</h5>
+                        <h6 class="card-title">{{ pedido.intermediario.nombre }}</h6>
+                    </div>
+                    <div class="col-md-3 text-center">
                         <h5 class="card-title">Total Peso Bruto:</h5>
                         <h6 class="card-title">{{ total_peso_bruto }}</h6>
                     </div>
-                    <div class="col-md-4 text-center">
+                    <div class="col-md-3 text-center">
                         <h5 class="card-title">Numero De Piezas:</h5>
                         <h6 class="card-title">{{ total_piezas }}</h6>
                     </div>
-                    <div class="col-md-4 text-center">
+                    <div class="col-md-3 text-center">
                         <h5 class="card-title">Total De Cajas Pedido:</h5>
                         <h6 class="card-title">{{ total_cajas_solicitadas }}</h6>
                     </div>

@@ -2,11 +2,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
 
 body {
-    background-image: url(../img/fondojornadas.webp);
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
     font-family: 'Poppins', sans-serif !important;
     font-size: 14px !important;
 }
@@ -17,7 +12,7 @@ h1 {
     font-family: 'Poppins', sans-serif;
     font-weight: 800 !important;
     font-size: 30px !important;
-    color: #007bff;
+    color: #6fb9dc;
 }
 
 /* Table styles */
@@ -40,6 +35,11 @@ h1 {
     background-color: #ff8052;
     color: #ffffff;
     text-align: center;
+}
+
+.table tbody tr:hover {
+    background-color: #a3dbf8; /* Color de fondo al pasar el cursor */
+    cursor: auto;
 }
 
 .table tbody tr.active-row {
@@ -67,7 +67,7 @@ h1 {
     text-decoration: none;
 }
 
-table tr td:nth-child(1), table tr td:nth-child(16) {
+table tr td:nth-child(18) {
     background-color: #6aeadd
 }
 

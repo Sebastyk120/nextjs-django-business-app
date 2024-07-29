@@ -1,15 +1,11 @@
 /* Estilos generales del body */
 body {
     height: 100vh;
-    background-image: url(../img/fondojornadas.webp);
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    color: #f8f9fa; /* Color de texto claro */
 }
 
 .container {
@@ -26,8 +22,8 @@ h2 {
 }
 
 .footer {
-    background-color: rgb(54, 54, 54);
-    color: white;
+    background-color: #343a40; /* Color oscuro */
+    color: #f8f9fa;
     text-align: center;
     font-family: 'Noto Sans Display', sans-serif;
     font-size: 15px;
@@ -63,4 +59,10 @@ h2 {
 
 .formulario-blanco {
     color: white;
+}
+
+input[type="date"] {
+    background-color: #343a40; /* Fondo oscuro */
+    color: #f8f9fa; /* Texto claro */
+    border: 1px solid #495057; /* Borde más oscuro */
 }

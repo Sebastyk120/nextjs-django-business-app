@@ -13,14 +13,18 @@
     <body>
     <div class="container">
         <h1 class="align-center">Resumen Exportaciones <i class="bi bi-clipboard-data-fill"></i></h1>
-        <form method="get" class="form-inline my-2 my-lg-0 d-flex align-items-center justify-content-center">
+        <form id="filterForm" method="get" class="form-inline my-2 my-lg-0 d-flex align-items-center justify-content-center">
             {{ form.as_p }}
             <div class="button-container">
                 <button type="submit" class="btn btn-primary">Filtrar</button>
                 <button type="button" id="clearFilters" class="btn btn-secondary">Limpiar Filtros</button>
-                <a class="btn btn-danger btn-md" id="volver" name="exportar"
-                   href="{% url 'exportar_resumen_semana_pdf' %}?{{ request.GET.urlencode }}" target="_blank">
+                <a class="btn btn-danger btn-md" id="exportButton" name="exportar"
+                   href="{% url 'exportar_resumen_semana_pdf' %}?{{ request.GET.urlencode }}" target="_blank" disabled>
                     <i class="bi bi-filetype-pdf"></i>
+                </a>
+                <a class="btn btn-success btn-md" id="exportButton" name="exportar"
+                   href="{% url 'exportar_excel_seguimientos_resumen' %}?{{ request.GET.urlencode }}" target="_blank" disabled>
+                    <i class="bi bi-filetype-xls"></i>
                 </a>
             </div>
         </form>

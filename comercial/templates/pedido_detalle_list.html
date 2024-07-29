@@ -16,10 +16,12 @@
         <h1 class="text-center">Pedido No: {{ pedido.id }}</h1>
         <h2 class="text-center">Cliente: {{ pedido.cliente.nombre }}</h2>
         <div class="d-flex justify-content-center my-3">
-            <button type="button" class="btn btn-primary me-3" name="add" id="add" data-bs-toggle="modal"
-                    data-bs-target="#adddetalleItemModal" href="{% url 'detalle_pedido_crear' pedido.id %}">
-                <i class="bi bi-bag-plus-fill"></i> Agregar
-            </button>
+            {% if not pedido.awb and not pedido.numero_factura %}
+                <button type="button" class="btn btn-primary me-3" name="add" id="add" data-bs-toggle="modal"
+                        data-bs-target="#adddetalleItemModal" href="{% url 'detalle_pedido_crear' pedido.id %}">
+                    <i class="bi bi-bag-plus-fill"></i> Agregar
+                </button>
+            {% endif %}
             <a type="button" class="btn btn-danger" name="volver" id="volver" role="button"
                href="{% url 'redirect_based_on_group' %}">
                 <i class="bi bi-reply-fill"></i> Pedidos
@@ -47,6 +49,22 @@
         </div>
     </div>
 
+    <div class="modal fade text-white" id="moverItemModal2" tabindex="-1" role="dialog"
+         aria-labelledby="moverItemModalLabel2" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content text-white bg-dark">
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade text-white" id="moverItemModal3" tabindex="-1" role="dialog"
+         aria-labelledby="moverItemModalLabel3" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content text-white bg-dark">
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade text-white" id="eliminarItemModal" tabindex="-1" role="dialog"
          aria-labelledby="eliminarItemModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -55,18 +73,10 @@
         </div>
     </div>
     <script src="{% static 'js/editar_detalle_pedido.js' %}"></script>
+    <script src="{% static 'js/editar_detalle_pedido2.js' %}"></script>
+    <script src="{% static 'js/editar_detalle_pedido3.js' %}"></script>
     <script src="{% static 'js/crear_detalle_pedido.js' %}"></script>
     <script src="{% static 'js/eliminar_detalle_pedido.js' %}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    {% if messages %}{% for m in messages %}
-        <script>
-            Swal.fire({
-                title: "Operación Exitosa",
-                text: "{{m}}",
-                icon: "success",
-            });
-        </script>
-    {% endfor %}{% endif %}
     </body>
     </html>
 {% endblock %}

@@ -124,7 +124,8 @@
             <h5 class="offcanvas-title" id="offcanvasExampleLabel">Heavens Corp - Inventarios</h5>
             <br>
             <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="{% url 'historicos' %}"><i class="bi bi-stack"></i> Historico De Movimientos General</a>
+                <a class="nav-link active" aria-current="page" href="{% url 'historicos' %}"><i class="bi bi-stack"></i>
+                    Historico De Movimientos General</a>
             </li>
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
@@ -196,15 +197,16 @@
         integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V"
         crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-{% if messages %}{% for m in messages %}
+{% if messages %}{% for message in messages %}
     <script>
         Swal.fire({
-            title: "Operación Exitosa",
-            text: "{{m}}",
-            icon: "success",
+            title: "{% if message.tags == 'success' %}Operación Exitosa{% elif message.tags == 'error' %}Error{% elif message.tags == 'warning' %}Advertencia{% elif message.tags == 'info' %}Información{% elif message.tags == 'debug' %}Depuración{% else %}Mensaje{% endif %}",
+            text: "{{ message }}",
+            icon: "{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% elif message.tags == 'debug' %}info{% else %}info{% endif %}",
         });
     </script>
 {% endfor %}{% endif %}
-{% block content %} {% endblock %}
+{% block content %}
+{% endblock %}
 </body>
 </html>

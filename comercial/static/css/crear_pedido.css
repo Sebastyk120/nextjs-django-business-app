@@ -52,6 +52,8 @@
 [name="estado_documentos"],
 [name="trm_cotizacion"],
 [name="intermediario"],
+[name="eta_real"],
+[name="termo"],
 textarea[name="observaciones"],
 textarea[name="observaciones_tracking"] {
     width: 100%;
@@ -90,6 +92,8 @@ textarea[name="observaciones_tracking"] {
 [name="estado_documentos"]:disabled,
 [name="trm_cotizacion"]:disabled,
 [name="intermediario"]:disabled,
+[name="eta_real"]:disabled,
+[name="termo"]:disabled,
 textarea[name="observaciones"]:disabled,
 textarea[name="observaciones_tracking"]:disabled {
     background-color: #000000;  /* Fondo cuando estén deshabilitados */

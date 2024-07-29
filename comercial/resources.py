@@ -1,4 +1,11 @@
+import locale
+import logging
+from datetime import timedelta
+from decimal import Decimal, InvalidOperation
+
 import openpyxl
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import models
 from django.db.models import Sum
 from import_export import resources
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
@@ -8,97 +15,11 @@ from .models import Pedido, Cliente, Fruta, Contenedor, DetallePedido, Iata, Pre
     TipoCaja, ClientePresentacion, PresentacionReferencia, AutorizacionCancelacion, Aerolinea, AgenciaCarga, \
     Intermediario, SubExportadora
 
+logger = logging.getLogger(__name__)
+
 
 # ////////////////////////////////////// Exportaciones De Cartera /////////////////////////////////////////////////////
-def obtener_datos_con_totales_juan(fecha_inicial=None, fecha_final=None):
-    pedidos_query = Pedido.objects.filter(exportadora__nombre='Juan_Matas')
-    if fecha_inicial is not None:
-        pedidos_query = pedidos_query.filter(fecha_entrega__gte=fecha_inicial)
-
-    if fecha_final is not None:
-        pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
-    # Obtener los pedidos y sus datos
-    pedidos = pedidos_query.values(
-        'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
-        'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
-        'valor_pagado_cliente_usd', 'utilidad_bancaria_usd', 'fecha_pago', 'estado_factura',
-        'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
-    )
-
-    # Calcular los totales por cliente y exportadora
-    totales_por_cliente_exportadora = pedidos_query.values(
-        'cliente__nombre', 'exportadora__nombre'
-    ).annotate(
-        total_factura=Sum('valor_total_factura_usd'),
-        total_utilidad=Sum('utilidad_bancaria_usd'),
-        total_pagado=Sum('valor_pagado_cliente_usd'),
-        total_nc=Sum('valor_total_nota_credito_usd'),
-        total_descuentos=Sum('descuento')
-    )
-
-    return list(pedidos), list(totales_por_cliente_exportadora)
-
-
-def obtener_datos_con_totales_fieldex(fecha_inicial=None, fecha_final=None):
-    pedidos_query = Pedido.objects.filter(exportadora__nombre='Fieldex')
-    if fecha_inicial is not None:
-        pedidos_query = pedidos_query.filter(fecha_entrega__gte=fecha_inicial)
-
-    if fecha_final is not None:
-        pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
-    # Obtener los pedidos y sus datos
-    pedidos = pedidos_query.values(
-        'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
-        'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
-        'valor_pagado_cliente_usd', 'utilidad_bancaria_usd', 'fecha_pago', 'estado_factura',
-        'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
-    )
-
-    # Calcular los totales por cliente y exportadora
-    totales_por_cliente_exportadora = pedidos_query.values(
-        'cliente__nombre', 'exportadora__nombre'
-    ).annotate(
-        total_factura=Sum('valor_total_factura_usd'),
-        total_utilidad=Sum('utilidad_bancaria_usd'),
-        total_pagado=Sum('valor_pagado_cliente_usd'),
-        total_nc=Sum('valor_total_nota_credito_usd'),
-        total_descuentos=Sum('descuento')
-    )
-
-    return list(pedidos), list(totales_por_cliente_exportadora)
-
-
-def obtener_datos_con_totales_etnico(fecha_inicial=None, fecha_final=None):
-    pedidos_query = Pedido.objects.filter(exportadora__nombre='Etnico')
-
-    if fecha_inicial is not None:
-        pedidos_query = pedidos_query.filter(fecha_entrega__gte=fecha_inicial)
-
-    if fecha_final is not None:
-        pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
-
-    pedidos = pedidos_query.values(
-        'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
-        'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
-        'valor_pagado_cliente_usd', 'utilidad_bancaria_usd', 'fecha_pago', 'estado_factura',
-        'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
-    )
-
-    # Calcular los totales por cliente y exportadora
-    totales_por_cliente_exportadora = pedidos_query.values(
-        'cliente__nombre', 'exportadora__nombre'
-    ).annotate(
-        total_factura=Sum('valor_total_factura_usd'),
-        total_utilidad=Sum('utilidad_bancaria_usd'),
-        total_pagado=Sum('valor_pagado_cliente_usd'),
-        total_nc=Sum('valor_total_nota_credito_usd'),
-        total_descuentos=Sum('descuento')
-    )
-
-    return list(pedidos), list(totales_por_cliente_exportadora)
-
-
-def obtener_datos_con_totales(fecha_inicial=None, fecha_final=None):
+def obtener_datos_con_totales_cliente(fecha_inicial=None, fecha_final=None, cliente=None, intermediario=None, grupo=None):
     pedidos_query = Pedido.objects.all()
 
     if fecha_inicial is not None:
@@ -106,17 +27,34 @@ def obtener_datos_con_totales(fecha_inicial=None, fecha_final=None):
 
     if fecha_final is not None:
         pedidos_query = pedidos_query.filter(fecha_entrega__lte=fecha_final)
+
+    if cliente is not None:
+        pedidos_query = pedidos_query.filter(cliente=cliente)
+
+    if intermediario is not None:
+        pedidos_query = pedidos_query.filter(intermediario=intermediario)
+
+    if grupo and grupo != "Heavens":
+        pedidos_query = pedidos_query.filter(exportadora__nombre=grupo)
+
     # Obtener los pedidos y sus datos
-    pedidos = pedidos_query.values(
-        'id', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
+    pedidos = list(pedidos_query.values(
+        'id', 'intermediario__nombre', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'utilidad_bancaria_usd', 'fecha_pago', 'estado_factura',
-        'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no'
-    )
+        'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no', 'dias_cartera'
+    ))
 
-    # Calcular los totales por cliente y exportadora
-    totales_por_cliente_exportadora = pedidos_query.values(
-        'cliente__nombre', 'exportadora__nombre'
+    # Calcular la fecha esperada de pago
+    for pedido in pedidos:
+        if pedido['fecha_entrega'] and pedido['dias_cartera'] is not None:
+            pedido['fecha_esperada_pago'] = pedido['fecha_entrega'] + timedelta(days=pedido['dias_cartera'])
+        else:
+            pedido['fecha_esperada_pago'] = None
+
+    # Calcular los totales por intermediario, cliente y exportadora
+    totales_por_intermediario_cliente_exportadora = pedidos_query.values(
+        'intermediario__nombre', 'cliente__nombre', 'exportadora__nombre'
     ).annotate(
         total_factura=Sum('valor_total_factura_usd'),
         total_utilidad=Sum('utilidad_bancaria_usd'),
@@ -125,26 +63,31 @@ def obtener_datos_con_totales(fecha_inicial=None, fecha_final=None):
         total_descuentos=Sum('descuento')
     )
 
-    return list(pedidos), list(totales_por_cliente_exportadora)
+    return pedidos, list(totales_por_intermediario_cliente_exportadora)
 
 
-def crear_archivo_excel(pedidos, totales, ruta_archivo):
+# -------------------------------- Crear Archivo Excel Ingles Cliente Especifico ------------------------------------
+
+def crear_archivo_excel_cliente(pedidos, totales, ruta_archivo):
     # Crear un nuevo workbook y seleccionar la hoja activa
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     sheet.title = 'Cartera Clientes'
 
     # Definir y escribir los encabezados de columna
-    encabezados = ['No. Pedido', 'Cliente', 'Exportadora', 'Número Factura', 'Fecha Entrega', 'Días Vencimiento',
-                   'Valor Factura USD', 'Valor Pagado Cliente USD', 'Nota Crédito', 'Total NC', 'Descuento',
-                   'Utilidad Bancaria', 'Fecha Pago Cliente', 'Estado Factura', 'Saldo']
+    encabezados = ['Order No.', 'Intermediary', 'Customer', 'Exporter', 'Invoice Number', 'Delivery Date',
+                   'Days Past Due',
+                   'Expected Payment Date', 'Invoice Value USD', 'Amount Paid by Customer USD', 'Credit Note',
+                   'Total CN',
+                   'Discount', 'Banking Profit', 'Customer Payment Date', 'Invoice Status', 'Balance']
     sheet.append(encabezados)
 
     # Estilo para los encabezados
     for cell in sheet[1]:
-        cell.font = Font(bold=True)
-        cell.alignment = Alignment(horizontal='center')
-        cell.fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.fill = PatternFill(start_color='4F81BD', end_color='4F81BD', fill_type='solid')
+
     # Estilo para las celdas de datos
     thin_border = Border(left=Side(style='thin'),
                          right=Side(style='thin'),
@@ -155,18 +98,16 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
     for pedido in pedidos:
         saldo = pedido['valor_total_factura_usd'] - pedido['valor_pagado_cliente_usd'] - pedido[
             'utilidad_bancaria_usd'] - pedido['valor_total_nota_credito_usd'] - pedido['descuento']
-        # Aplicar formato de moneda a las celdas relevantes
-        moneda_columns = [7, 8, 10, 11, 12, 15]  # Índices de columnas a formatear como moneda
-        for col_idx in moneda_columns:
-            sheet.cell(row=sheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
 
         fila = [
             pedido['id'],
+            pedido['intermediario__nombre'] if pedido['intermediario__nombre'] else '',
             pedido['cliente__nombre'],
             pedido['exportadora__nombre'],
             pedido['numero_factura'],
             pedido['fecha_entrega'].strftime('%Y-%m-%d') if pedido['fecha_entrega'] else '',
             pedido['dias_de_vencimiento'],
+            pedido['fecha_esperada_pago'].strftime('%Y-%m-%d') if pedido['fecha_esperada_pago'] else '',
             pedido['valor_total_factura_usd'],
             pedido['valor_pagado_cliente_usd'],
             pedido['nota_credito_no'],
@@ -178,38 +119,66 @@ def crear_archivo_excel(pedidos, totales, ruta_archivo):
             saldo
         ]
         sheet.append(fila)
+        # Aplicar formato de moneda a las celdas relevantes
+        moneda_columns = [9, 10, 12, 13, 14, 17]  # Índices de columnas a formatear como moneda
+        for col_idx in moneda_columns:
+            sheet.cell(row=sheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
+        # Centrar el contenido
+        for cell in sheet[sheet.max_row]:
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = thin_border
+
+    # Agregar una línea en blanco antes de los totales
+    sheet.append([])
 
     # Escribir los totales
+    totales_encabezado = ['', 'Intermediary', 'Customer', 'Exporter', 'Total Invoices', 'Total Paid by Customer',
+                          'Total Banking Profits', 'Total Credit Notes', 'Total Discounts', 'Balance']
+
+    sheet.append(totales_encabezado)
+
+    # Estilo para los encabezados de la hoja de totales
+    for cell in sheet[sheet.max_row]:
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.fill = PatternFill(start_color='4F81BD', end_color='4F81BD', fill_type='solid')
+
     for total in totales:
         fila_total = [
+            '',
+            total['intermediario__nombre'] if total['intermediario__nombre'] else '',
             total['cliente__nombre'],
             total['exportadora__nombre'],
-            'Total Facturas ->',
             total['total_factura'],
-            'Total Pagado Cliente ->',
             total['total_pagado'],
-            'Total Utilidades Banc ->',
             total['total_utilidad'],
-            'Total Notas Credito ->',
             total['total_nc'],
-            'Total Descuentos ->',
             total['total_descuentos'],
-            'Saldo ->',
             total['total_factura'] - total['total_pagado'] - total['total_utilidad'] - total['total_nc'] - total[
                 'total_descuentos']
         ]
         sheet.append(fila_total)
-        moneda_columns = [4, 6, 8, 10, 12, 14]  # Índices de columnas a formatear como moneda totales
-        for col_idx in moneda_columns:
+        moneda_columns_totales = [5, 6, 7, 8, 9, 10]  # Índices de columnas a formatear como moneda en totales
+        for col_idx in moneda_columns_totales:
             sheet.cell(row=sheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
         for cell in sheet[sheet.max_row]:
             cell.border = thin_border
+            cell.alignment = Alignment(horizontal='center', vertical='center')
             cell.fill = PatternFill(start_color='9ed1b7', end_color='9ed1b7',
                                     fill_type='solid')  # Color diferente para totales
 
-        # Ajustar el ancho de las columnas
-    for col in range(1, len(encabezados) + 1):
-        sheet.column_dimensions[get_column_letter(col)].width = 15
+    # Ajustar el ancho de las columnas para que se acomoden al contenido
+    for col in sheet.columns:
+        max_length = 0
+        column = col[0].column_letter  # Obtener la letra de la columna
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        sheet.column_dimensions[column].width = adjusted_width
 
     # Guardar el archivo
     workbook.save(ruta_archivo)
@@ -237,15 +206,89 @@ class DetallePedidoResource(resources.ModelResource):
 
     def before_import_row(self, row, **kwargs):
         """
-        Elimina o modifica los valores de los campos no editables antes de importar cada fila.
+        Elimina o modifica los valores de los campos no editables antes de importar cada fila,
+        y convierte las claves foráneas y campos decimales.
         """
+        logger.info(f"Importando fila: {row}")
+
         campos_no_editables = [field.name for field in DetallePedido._meta.fields if not field.editable]
+
         for campo in campos_no_editables:
             if campo in row:
-                # Eliminar el campo o establecer un valor predeterminado
+                logger.info(f"Eliminando campo no editable: {campo}")
                 del row[campo]
-                # O establecer un valor predeterminado
-                # row[campo] = valor_predeterminado
+
+        # Convertir claves foráneas
+        foreign_keys = {
+            'pedido': Pedido,
+            'fruta': Fruta,
+            'presentacion': Presentacion,
+            'tipo_caja': TipoCaja,
+            'referencia': Referencias,
+            # Añade aquí otros campos de llaves foráneas si es necesario
+        }
+
+        for campo, modelo in foreign_keys.items():
+            if campo in row:
+                try:
+                    # Si el campo es nulo o vacío, no intentar obtener el objeto
+                    if row[campo] in [None, '']:
+                        row[campo] = None
+                    else:
+                        obj = modelo.objects.get(id=row[campo])
+                        row[campo] = obj.id  # Asegúrate de que solo el ID sea asignado
+                        logger.info(f"{modelo.__name__} encontrado: {obj}")
+                except ObjectDoesNotExist:
+                    logger.error(f"{modelo.__name__} con id {row[campo]} no existe.")
+                    raise ValueError(f"{modelo.__name__} con id {row[campo]} no existe.")
+
+        # Convertir campos decimales
+        campos_decimales = [field.name for field in DetallePedido._meta.fields if
+                            isinstance(field, models.DecimalField)]
+        for campo in campos_decimales:
+            if campo in row and campo not in campos_no_editables:
+                try:
+                    if row[campo] in [None, '']:
+                        row[campo] = None  # Maneja valores vacíos como None
+                    else:
+                        valor = row[campo]
+                        # Convertir el valor a float utilizando la configuración regional
+                        locale.setlocale(locale.LC_NUMERIC, '')
+                        valor = locale.atof(valor)
+                        decimal_value = Decimal(valor)
+                        # Verificar que el valor no exceda el límite permitido
+                        if decimal_value >= Decimal('100000000'):
+                            logger.error(f"El valor del campo {campo} excede el límite permitido: {decimal_value}")
+                            raise ValueError(f"El valor {decimal_value} del campo {campo} excede el límite permitido")
+                        row[campo] = decimal_value
+                        logger.info(f"Convertido valor del campo {campo} a Decimal: {row[campo]}")
+                except (InvalidOperation, TypeError, ValueError) as e:
+                    logger.error(f"Error al convertir el campo {campo} a Decimal: {e}")
+                    raise ValueError(f"El valor del campo {campo} no es válido para Decimal: {row[campo]}")
+
+        # Convertir campos IntegerField
+        campos_enteros = [field.name for field in DetallePedido._meta.fields if isinstance(field, models.IntegerField)]
+        for campo in campos_enteros:
+            if campo in row and campo not in campos_no_editables:
+                try:
+                    if row[campo] in [None, '']:
+                        row[campo] = None  # Maneja valores vacíos como None
+                    else:
+                        valor = row[campo].replace(',', '').replace('.', '')  # Eliminar comas y puntos
+                        row[campo] = int(valor)
+                        logger.info(f"Convertido valor del campo {campo} a Integer: {row[campo]}")
+                except (ValueError, TypeError) as e:
+                    logger.error(f"Error al convertir el campo {campo} a Integer: {e}")
+                    raise ValueError(f"El valor del campo {campo} no es válido para Integer: {row[campo]}")
+
+        # Manejar campos CharField
+        campos_charfield = [field.name for field in DetallePedido._meta.fields if isinstance(field, models.CharField)]
+        for campo in campos_charfield:
+            if campo in row:
+                if row[campo] in [None, '']:
+                    row[campo] = None
+
+        super().before_import_row(row, **kwargs)
 
 
 class ExportadorResource(resources.ModelResource):
@@ -275,15 +318,77 @@ class PedidoResource(resources.ModelResource):
 
     def before_import_row(self, row, **kwargs):
         """
-        Elimina o modifica los valores de los campos no editables antes de importar cada fila.
+        Elimina o modifica los valores de los campos no editables antes de importar cada fila,
+        y convierte las claves foráneas y campos decimales.
         """
+        logger.info(f"Importando fila: {row}")
+
+        # Lista de campos no editables
         campos_no_editables = [field.name for field in Pedido._meta.fields if not field.editable]
+
         for campo in campos_no_editables:
             if campo in row:
-                # Eliminar el campo o establecer un valor predeterminado
+                logger.info(f"Eliminando campo no editable: {campo}")
                 del row[campo]
-                # O establecer un valor predeterminado
-                # row[campo] = valor_predeterminado
+
+        # Convertir claves foráneas
+        foreign_keys = {
+            'cliente': Cliente,
+            'intermediario': Intermediario,
+            'exportadora': Exportador,
+            'subexportadora': SubExportadora,
+            'destino': Iata,
+            'responsable_reserva': Exportador,
+            'agencia_carga': AgenciaCarga,
+            'aerolinea': Aerolinea,
+            # Añade aquí otros campos de llaves foráneas si es necesario
+        }
+
+        for campo, modelo in foreign_keys.items():
+            if campo in row:
+                try:
+                    # Si el campo es nulo o vacío, no intentar obtener el objeto
+                    if row[campo] in [None, '']:
+                        row[campo] = None
+                    else:
+                        obj = modelo.objects.get(id=row[campo])
+                        row[campo] = obj.id  # Asegúrate de que solo el ID sea asignado
+                        logger.info(f"{modelo.__name__} encontrado: {obj}")
+                except ObjectDoesNotExist:
+                    logger.error(f"{modelo.__name__} con id {row[campo]} no existe.")
+                    raise ValueError(f"{modelo.__name__} con id {row[campo]} no existe.")
+
+        # Convertir campos decimales
+        campos_decimales = [field.name for field in Pedido._meta.fields if isinstance(field, models.DecimalField)]
+        for campo in campos_decimales:
+            if campo in row and campo not in campos_no_editables:
+                try:
+                    if row[campo] in [None, '']:
+                        row[campo] = None  # Maneja valores vacíos como None
+                    else:
+                        valor = row[campo]
+                        # Convertir el valor a float utilizando la configuración regional
+                        locale.setlocale(locale.LC_NUMERIC, '')
+                        valor = locale.atof(valor)
+                        decimal_value = Decimal(valor)
+                        # Verificar que el valor no exceda el límite permitido
+                        if decimal_value >= Decimal('100000000'):
+                            logger.error(f"El valor del campo {campo} excede el límite permitido: {decimal_value}")
+                            raise ValueError(f"El valor {decimal_value} del campo {campo} excede el límite permitido")
+                        row[campo] = decimal_value
+                        logger.info(f"Convertido valor del campo {campo} a Decimal: {row[campo]}")
+                except (InvalidOperation, TypeError, ValueError) as e:
+                    logger.error(f"Error al convertir el campo {campo} a Decimal: {e}")
+                    raise ValueError(f"El valor del campo {campo} no es válido para Decimal: {row[campo]}")
+
+        # Convertir campos CharField vacíos a cadenas vacías
+        campos_charfield = [field.name for field in Pedido._meta.fields if isinstance(field, models.CharField)]
+        for campo in campos_charfield:
+            if campo in row:
+                if row[campo] in [None, '']:
+                    row[campo] = None
+
+        super().before_import_row(row, **kwargs)
 
 
 class PresentacionResource(resources.ModelResource):

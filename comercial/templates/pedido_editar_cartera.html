@@ -1,0 +1,62 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/crear_pedido.css' %}"/>
+<div class="modal-header">
+    <h5 class="modal-title" id="moverItemModalLabel4">Editar Cartera Pedido Número: {{ pedido.id }} <i
+            class="bi bi-pencil-fill"></i></h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<form id="moverItemForm3" method="post">
+    {% csrf_token %}
+    <div class="modal-body">
+        <div id="errores">
+            {% for field, error_list in form.errors.items %}
+                {% for error in error_list %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="container">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.cliente.label_tag }} {{ form.cliente }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.fecha_entrega.label_tag }} {{ form.fecha_entrega }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.exportadora.label_tag }} {{ form.exportadora }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.subexportadora.label_tag }} {{ form.subexportadora }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.intermediario.label_tag }} {{ form.intermediario }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.destino.label_tag }} {{ form.destino }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.nota_credito_no.label_tag }} {{ form.nota_credito_no }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.motivo_nota_credito.label_tag }} {{ form.motivo_nota_credito }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    {{ form.observaciones.label_tag }} {{ form.observaciones }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">Cerrar</button>
+        <button type="submit" class="btn btn-success">Editar</button>
+    </div>
+</form>

@@ -33,42 +33,31 @@
             </div>
             <div class="row mb-3">
                 <div class="col-md-6">
-                    {{ form.cajas_enviadas.label_tag }} {{ form.cajas_enviadas }}
-                </div>
-                <div class="col-md-6">
                     {{ form.tipo_caja.label_tag }} {{ form.tipo_caja }}
                 </div>
-            </div>
-            <div class="row mb-3">
                 <div class="col-md-6">
                     {{ form.referencia.label_tag }} {{ form.referencia }}
                 </div>
+            </div>
+            <div class="row mb-3">
                 <div class="col-md-6">
                     {{ form.lleva_contenedor.label_tag }} {{ form.lleva_contenedor }}
                 </div>
-            </div>
-            <div class="row mb-3">
                 <div class="col-md-6">
                     {{ form.tarifa_utilidad.label_tag }} {{ form.tarifa_utilidad }}
                 </div>
+            </div>
+            <div class="row mb-3">
                 <div class="col-md-6">
                     {{ form.valor_x_caja_usd.label_tag }} {{ form.valor_x_caja_usd }}
                 </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.no_cajas_nc.label_tag }} {{ form.no_cajas_nc }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.afecta_utilidad.label_tag }} {{ form.afecta_utilidad }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.observaciones.label_tag }} {{ form.observaciones }}
-                </div>
                 <div class="col-md-6">
                     {{ form.precio_proforma.label_tag }} {{ form.precio_proforma }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    {{ form.observaciones.label_tag }} {{ form.observaciones }}
                 </div>
             </div>
         </div>
@@ -78,11 +67,13 @@
         <button type="submit" class="btn btn-primary">Guardar</button>
     </div>
 </form>
+
 <script>
     $(document).ready(function () {
-        $('.fruta-select').change(function () {
-            var frutaId = $(this).val();
+        function updatePresentaciones() {
+            var frutaId = $('#id_fruta').val();
             var pedidoId = {{ pedido_id }};
+
             if (frutaId) {
                 $.ajax({
                     url: "{% url 'filtrar_presentaciones' %}",
@@ -103,16 +94,21 @@
             } else {
                 $('#id_presentacion').empty();
             }
-        });
+        }
 
-        $('.presentacion-select').change(function () {
-            var presentacionId = $(this).val();
+        function updateReferencias() {
+            var frutaId = $('#id_fruta').val();
+            var presentacionId = $('#id_presentacion').val();
+            var tipoCajaId = $('#id_tipo_caja').val();
             var pedidoId = {{ pedido_id }};
-            if (presentacionId) {
+
+            if (frutaId && presentacionId && tipoCajaId) {
                 $.ajax({
                     url: "{% url 'ajax_load_referencias' %}",
                     data: {
                         'presentacion_id': presentacionId,
+                        'tipo_caja_id': tipoCajaId,
+                        'fruta_id': frutaId,
                         'pedido_id': pedidoId
                     },
                     dataType: 'json',
@@ -128,6 +124,11 @@
             } else {
                 $('#id_referencia').empty();
             }
-        });
+        }
+
+        $('#id_fruta').change(updatePresentaciones);
+        $('#id_presentacion, #id_tipo_caja').change(updateReferencias);
     });
 </script>
+
+

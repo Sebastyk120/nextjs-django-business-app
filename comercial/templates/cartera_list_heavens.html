@@ -1,4 +1,5 @@
-{% extends 'comercialbase.html' %} {% block content %}
+{% extends 'comercialbase.html' %}
+{% block content %}
     {% load static %}
     {% load django_tables2 %}
     <!DOCTYPE html>
@@ -10,17 +11,29 @@
         <title>Heavens</title>
     </head>
     <body>
-    <h1 class="align-center">Informe De Cartera Heavens (General) <i class="bi bi-cash"></i></h1>
+    <h1 class="align-center">
+        <img src="{% static 'img/heavens2.png' %}" alt="Logo de la Empresa" class="logo-empresa"
+             style="vertical-align:middle; margin-right:5px;"/>Informe De Cartera General <i class="bi bi-cash"></i>
+    </h1>
 
     <form method="get" class="d-flex" id="searchForm">
-        <select name="metodo_busqueda" class="form-control" required>
+        <select name="metodo_busqueda" class="form-control">
             <option value="" disabled selected>Modo De Búsqueda</option>
             <option value="awb">AWB</option>
             <option value="numero_factura">Número de Factura</option>
-            <option value="cliente">Cliente</option>
             <option value="id">Número De Pedido</option>
+            <option value="intermediario">Intermediario</option>
         </select>
-        <input type="text" name="item_busqueda" placeholder="Ingrese búsqueda" class="form-control" required/>
+        <input type="text" name="item_busqueda" placeholder="Ingrese búsqueda" class="form-control"/>
+
+        <select name="cliente" class="form-control">
+            <option value="" disabled selected>Filtro Cliente</option>
+            {% for cliente in form.fields.cliente.queryset %}
+                <option value="{{ cliente.id }}"
+                        {% if form.cleaned_data.cliente == cliente %}selected{% endif %}>{{ cliente.nombre }}</option>
+            {% endfor %}
+        </select>
+
         <div class="ml-auto">
             <button class="btn btn-secondary btn-sm" type="submit"><i class="bi bi-search"></i></button>
             <button class="btn btn-danger btn-sm me-md-5" id="clearFilters" type="button"><i class="bi bi-x-circle"></i>
@@ -28,19 +41,28 @@
         </div>
     </form>
     <div class="button-container">
-        <a class="nav-link" href="{% url 'exportar_cartera_view' %}" name="exportardetalle">
-            <button class="btn btn-success btn-sm" id="export">Informe De Cartera <i class="bi bi-filetype-xlsx"></i>
-            </button>
+        <a class="nav-link" href="{% url 'exportar_cartera_cliente' %}" name="exportardetalle">
+            <button class="btn btn-success btn-sm" id="export">Informe De Cartera<i
+                    class="bi bi-file-earmark-spreadsheet-fill"></i></button>
         </a>
-        <a type="button" class="btn btn-danger btn-sm" name="volver" id="volver" role="button"
-           onclick="history.back();"><i class="bi bi-reply-fill"></i></a>
+        <a type="button" class="btn btn-danger" name="volver" id="volver" role="button"
+           href="{% url 'redirect_based_on_group' %}">
+            <i class="bi bi-reply-fill"></i> Pedidos
+        </a>
     </div>
 
     <div class="container-fluid">
         {% render_table table %}
     </div>
+    <div class="modal fade text-white" id="moverItemModal3" tabindex="-1" role="dialog"
+         aria-labelledby="moverItemModalLabel3" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content text-white bg-dark">
+            </div>
+        </div>
     </div>
-    <script src="{% static 'js/editar_pedido_exportador.js' %}"></script>    <script>
+    <script src="{% static 'js/editar_pedido_exportador.js' %}"></script>
+    <script>
         document.getElementById('clearFilters').addEventListener('click', function () {
             // Obtener la URL actual sin los parámetros de búsqueda
             const url = new URL(window.location.href);
@@ -50,6 +72,7 @@
             window.location.href = url.href;
         });
     </script>
+    <script src="{% static 'js/editar_pedido_cartera.js' %}"></script>
     </body>
     </html>
 {% endblock %}

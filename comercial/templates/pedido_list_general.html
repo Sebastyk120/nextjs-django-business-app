@@ -1,4 +1,5 @@
-{% extends 'comercialbase.html' %} {% block content %}
+{% extends 'comercialbase.html' %}
+{% block content %}
     {% load static %}
     {% load django_tables2 %}
     <!DOCTYPE html>
@@ -7,20 +8,32 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="{% static 'css/pedido_items.css' %}"/>
-        <title>Pedidos Heavens</title>
+        <title>Pedidos Etnico</title>
     </head>
     <body>
-    <h1 class="align-center">Base General De Pedidos Heavens <i class="bi bi-clipboard2-check-fill"></i></h1>
+    <h1 class="align-center">
+        <img src="{% static 'img/heavens2.png' %}" alt="Logo de la Empresa" class="logo-empresa" style="vertical-align:middle; margin-right:5px;"/>
+        Base Pedidos General <i class="bi bi-clipboard2-check-fill"></i>
+    </h1>
 
     <form method="get" class="d-flex" id="searchForm">
-        <select name="metodo_busqueda" class="form-control" required>
+        <select name="metodo_busqueda" class="form-control">
             <option value="" disabled selected>Modo De Búsqueda</option>
             <option value="awb">AWB</option>
             <option value="numero_factura">Número de Factura</option>
-            <option value="cliente">Cliente</option>
             <option value="id">Número De Pedido</option>
+            <option value="intermediario">Intermediario</option>
         </select>
-        <input type="text" name="item_busqueda" placeholder="Ingrese búsqueda" class="form-control" required/>
+        <input type="text" name="item_busqueda" placeholder="Ingrese búsqueda" class="form-control"/>
+
+        <select name="cliente" class="form-control">
+            <option value="" disabled selected>Filtro Cliente</option>
+            {% for cliente in form.fields.cliente.queryset %}
+                <option value="{{ cliente.id }}"
+                        {% if form.cleaned_data.cliente == cliente %}selected{% endif %}>{{ cliente.nombre }}</option>
+            {% endfor %}
+        </select>
+
         <div class="ml-auto">
             <button class="btn btn-secondary btn-sm" type="submit"><i class="bi bi-search"></i></button>
             <button class="btn btn-danger btn-sm me-md-5" id="clearFilters" type="button"><i class="bi bi-x-circle"></i>
@@ -31,7 +44,8 @@
 
     <div class="button-container">
         <button type="button" class="btn btn-primary btn-sm" name="add" id="add" data-bs-toggle="modal"
-                data-bs-target="#modalCreateItem" href="{% url 'pedido_crear' %}"><i class="bi bi-clipboard2-plus-fill"></i>
+                data-bs-target="#modalCreateItem" href="{% url 'pedido_crear' %}"><i
+                class="bi bi-clipboard2-plus-fill"></i>
         </button>
         <a class="nav-link" href="{% url 'exportar_pedidos_view' %}" name="exportar">
             <button class="btn btn-success btn-sm" id="export"><i class="bi bi-table"></i> Exportar Pedidos xlsx
@@ -78,8 +92,18 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade text-white" id="moverItemModal2" tabindex="-1" role="dialog"
+         aria-labelledby="moverItemModalLabel2"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content text-white bg-dark">
+            </div>
+        </div>
+    </div>
     <script src="{% static 'js/editar_pedido.js' %}"></script>
     <script src="{% static 'js/crear_pedido.js' %}"></script>
+    <script src="{% static 'js/editar_pedido2.js' %}"></script>
     <script>
         document.getElementById('clearFilters').addEventListener('click', function () {
             // Obtener la URL actual sin los parámetros de búsqueda
