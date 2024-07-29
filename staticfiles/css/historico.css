@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+h1 {
+    justify-content: center;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800 !important;
+    font-size: 30px !important;
+}
+
+label {
+
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    margin: 10px;
+}
+
+
+input[name="item_busqueda"] {
+    width: 10%;
+    border-radius: 4px;
+    border: none;
+    padding: 8px 12px;
+    background-color: #e4e4e4;
+    font-family: 'Montserrat', sans-serif;
+    transition: 0.3s;
+    margin-right: 5px;
+    margin-left: 120px;
+}
+
+input[name="item_busqueda"]:active,
+input[name="item_busqueda"]:focus {
+    width: 20%;
+}
+
+[name="volver"] {
+
+    position: absolute;
+    display: flex;
+    left: 90%;
+
+}
+
+/*          Custom Table Boostrap       */
+
+.table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.8em;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    background-color: rgb(255, 255, 255);
+    font-family: 'Poppins', sans-serif;
+    font-weight: bold;
+    text-align: center;
+}
+
+.table thead tr {
+    background-color: #006098;
+    color: #ffffff;
+    text-align: center;
+
+}
+
+.table thead tr {
+    background-color: #006098;
+    color: #ffffff;
+    text-align: center;
+
+}
+
+.table thead tr {
+    background-color: #006098;
+    color: #ffffff;
+    text-align: center;
+
+}
+
+.table tbody tr.active-row {
+    font-weight: bold;
+    color: #006098;
+}
+
+a:link {
+    color: rgb(255, 255, 255);
+    text-decoration: none
+}
+
+a:hover {
+    color: rgb(255, 255, 255);
+    text-decoration: none
+}
+
+a:visited {
+    color: rgb(243, 243, 243);
+    text-decoration: none
+}

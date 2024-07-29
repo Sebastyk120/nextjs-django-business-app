@@ -1,0 +1,68 @@
+/* Estilos generales del body */
+body {
+    height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: #f8f9fa; /* Color de texto claro */
+}
+
+.container {
+    margin-top: auto;
+    margin-bottom: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+}
+
+h2 {
+    color: aliceblue;
+}
+
+.footer {
+    background-color: #343a40; /* Color oscuro */
+    color: #f8f9fa;
+    text-align: center;
+    font-family: 'Noto Sans Display', sans-serif;
+    font-size: 15px;
+    padding: 10px 0;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+}
+
+/* Estilos para pantallas más pequeñas */
+@media screen and (max-width: 1366px), screen and (max-height: 900px) {
+    .card {
+        width: 90%;
+        margin: auto;
+    }
+}
+
+#volver {
+    display: inline-block;
+    text-align: center;
+}
+
+.form-group {
+    display: flex;
+    align-items: center;
+}
+
+.btn {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); /* Agrega una sombra para un efecto 3D */
+    border: none; /* Elimina el borde para un look más moderno */
+    padding: 0.5rem 1rem; /* Ajusta el relleno para un tamaño óptimo */
+}
+
+.formulario-blanco {
+    color: white;
+}
+
+input[type="date"] {
+    background-color: #343a40; /* Fondo oscuro */
+    color: #f8f9fa; /* Texto claro */
+    border: 1px solid #495057; /* Borde más oscuro */
+}

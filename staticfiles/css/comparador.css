@@ -1,0 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap');
+
+body {
+    background-image: url(../img/black.webp);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    font-family: 'Montserrat', sans-serif;
+}
+
+h1 {
+    justify-content: center;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800 !important;
+    font-size: 30px !important;
+}
+
+label {
+
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    margin: 10px;
+}
+
+[name="volver"] {
+
+    position: absolute;
+    display: flex;
+    left: 90%;
+
+}
+
+/*          Custom Table Boostrap       */
+
+.table {
+    overflow-x: auto; /* Permite el desplazamiento horizontal */
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0px 0;
+    font-size: 0.8em;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    background-color: #F2F2F2;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    text-align: center;
+}
+.table td {
+    text-align: center; /* Centra el contenido horizontalmente */
+    vertical-align: middle; /* Centra el contenido verticalmente */
+    /* Otros estilos que ya tengas, como el ancho máximo, etc. */
+}
+
+.table thead tr {
+    background-color: #006098;
+    color: #ffffff;
+    text-align: center;
+
+}
+
+.table thead tr {
+    background-color: #006098;
+    color: #ffffff;
+    text-align: center;
+
+}
+
+.table thead tr {
+    background-color: #006098;
+    color: #ffffff;
+    text-align: center;
+
+}
+
+.table tbody tr.active-row {
+    font-weight: bold;
+    color: #006098;
+}
+
+/* Estilos para las celdas y encabezados de la primera columna */
+.table th:first-child, .table td:first-child {
+    position: sticky; /* Fija la primera columna */
+    left: 0; /* Alinea la columna fija a la izquierda */
+    background-color: #006098; /* Fondo para asegurar legibilidad */
+    color: #ffffff;
+    z-index: 1; /* Asegura que la columna fija se superponga a otras al desplazar */
+}
+
+/* Estilos para el encabezado de la tabla */
+.table thead th {
+    top: 0; /* Mantiene el encabezado en la parte superior */
+    background-color: #006098; /* Fondo para mantener la legibilidad */
+    z-index: 2; /* Asegura que el encabezado se mantenga sobre las celdas de datos */
+    width: 150px; /* O el ancho que prefieras */
+    min-width: 150px; /* Esto asegura que el ancho mínimo sea respetado */
+    max-width: 150px; /* Opcionalmente, puedes establecer un ancho máximo */
+}
+
+
+a:link {
+    color: rgb(0, 0, 0);
+    text-decoration: none
+}
+
+a:hover {
+    color: rgb(255, 255, 255);
+    text-decoration: none
+}
+
+a:visited {
+    color: rgb(0, 0, 0);
+    text-decoration: none
+}
+
+
+[name="update"] {
+    position: absolute;
+    left: 90%;
+    top: 145px;
+}

@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+
+body {
+    font-family: 'Poppins', serif;
+    color: #fff;
+}
+
+h1, h2 {
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    color: #ffffff;
+}
+
+h1 {
+    font-weight: 800 !important;
+    font-size: 40px !important;
+}
+
+h2 {
+    font-weight: bold;
+}
+
+.table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.7em;
+    font-family: 'Poppins', sans-serif;
+    width: 100%;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    background-color: #ece9e9;
+    font-weight: bold;
+    white-space: inherit;
+    text-align: center;
+}
+
+.table tbody tr:hover {
+    background-color: #a3dbf8; /* Color de fondo al pasar el cursor */
+    cursor: auto;
+}
+
+.table thead tr {
+    background-color: #006098;
+    color: #ffffff;
+    text-align: center;
+}
+
+.table tbody tr.active-row {
+    font-weight: bold;
+    color: #000000;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+.table thead th a {
+    color: #ffffff; /* Color del texto */
+    text-decoration: none; /* Quitar el subrayado */
+}
+
+input[name="item_busqueda"] {
+    width: 10%;
+    border-radius: 4px;
+    border: none;
+    padding: 8px 12px;
+    background-color: #e4e4e4;
+    font-family: 'Poppins', sans-serif;
+    transition: 0.3s;
+    margin-right: 5px;
+    margin-left: 100px;
+}
+
+input[name="item_busqueda"]:active,
+input[name="item_busqueda"]:focus {
+    width: 20%;
+}
+
+label {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    margin: 10px;
+}
+
+button, .btn {
+    transition: all 300ms ease 0ms;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+button:hover, .btn:hover {
+    background-color: #000000;
+    box-shadow: 0 15px 20px rgba(0, 0, 0, 0.3);
+    transform: translateY(-7px);
+}
+
+@media only screen and (max-width: 600px) {
+    .btn {
+        font-size: 14px;
+        padding: 12px 20px;
+        margin-bottom: 20px;
+    }
+}
+
+.django-tables2 .table td {
+    white-space: nowrap;
+    text-align: right;
+    padding-right: 10px;
+}

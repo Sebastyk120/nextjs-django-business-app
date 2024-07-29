@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+h1 {
+    text-align: center;
+    font-weight: 800 !important;
+    font-size: 30px !important;
+    color: #6fb9dc;
+    margin-bottom: 20px;
+}
+
+.container {
+    border-radius: 8px;
+}
+
+input[name="item_busqueda"] {
+    border-radius: 4px;
+    border: none;
+    padding: 8px 12px;
+    background-color: #e4e4e4;
+    font-family: 'Poppins', sans-serif;
+    transition: 0.3s;
+    width: 200px; /* Tamaño reducido de la barra de búsqueda */
+}
+
+button {
+    font-family: 'Poppins', sans-serif;
+}
+
+.table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.8em;
+    width: 100%;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    background-color: #F2F2F2;
+    font-weight: bold;
+    text-align: center;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+.table thead tr {
+    background-color: #522fed;
+    color: #ffffff;
+    text-align: center;
+}
+
+.table thead a {
+    color: white;
+    text-decoration: none;
+}
+
+.table thead a:hover {
+    color: #6a7870;
+}
+
+.modal-content {
+    padding: 20px;
+}
+
+.modal-content .form-control {
+    margin-bottom: 10px;
+}

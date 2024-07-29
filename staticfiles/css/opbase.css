@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+body {
+
+    font-family: 'Poppins', sans-serif !important;
+
+}
+
+
+.submenu {
+    position: absolute;
+    display: block;
+    width: 100%;
+    background: #ffffff;
+    float: inherit;
+}
+
+.submenu ul li {
+    display: block;
+    width: 100%;
+    z-index: 99;
+}
+
+.submenu {
+    position: absolute;
+    display: none; /* Cambiar sólo este valor */
+    width: 100%;
+    background: #ffffff;
+    float: inherit;
+    z-index: 99;
+}
+
+nav ul li:hover .submenu {
+    display: block;
+}
+
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    height: 2.2%;
+    width: 100%;
+    background-color: rgb(54, 54, 54);
+    color: white;
+    text-align: center;
+    font-family: 'Noto Sans Display', sans-serif;
+    font-size: 15px;
+}
+

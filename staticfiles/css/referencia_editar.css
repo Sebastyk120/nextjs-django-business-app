@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+
+/*         Name of items    */
+
+
+[name="nombre"],
+[name="referencia_nueva"],
+[name="contenedor"],
+[name="cant_contenedor"],
+[name="precio"],
+[name="exportador"] {
+    width: 100%;
+    border-radius: 4px;
+    border: none;
+    padding: 8px 12px;
+    color: black; /* Color por defecto */
+}
+
+/* Estilos específicos para campos deshabilitados */
+[name="nombre"]:disabled,
+[name="referencia_nueva"]:disabled,
+[name="contenedor"]:disabled,
+[name="cant_contenedor"]:disabled,
+[name="precio"]:disabled,
+[name="exportador"]:disabled {
+    color: white; /* Color cuando estén deshabilitados */
+    background-color: black;
+}
+
+
