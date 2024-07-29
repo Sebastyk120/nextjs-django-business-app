@@ -275,7 +275,7 @@ class DetallePedidoResource(resources.ModelResource):
                         row[campo] = None  # Maneja valores vacíos como None
                     else:
                         valor = row[campo]
-                        # Convertir el valor a cadena para asegurar el reemplazo adecuado
+                        # Convertir el valor a cadena para asegurar el reemplazo
                         valor = str(valor).replace('.', '')
                         row[campo] = int(valor)
                         logger.info(f"Convertido valor del campo {campo} a Integer: {row[campo]}")
