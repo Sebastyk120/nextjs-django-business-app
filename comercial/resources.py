@@ -2,7 +2,6 @@ import locale
 import logging
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
-
 import openpyxl
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
@@ -10,7 +9,6 @@ from django.db.models import Sum
 from import_export import resources
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
-
 from .models import Pedido, Cliente, Fruta, Contenedor, DetallePedido, Iata, Presentacion, Referencias, Exportador, \
     TipoCaja, ClientePresentacion, PresentacionReferencia, AutorizacionCancelacion, Aerolinea, AgenciaCarga, \
     Intermediario, SubExportadora
@@ -19,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 # ////////////////////////////////////// Exportaciones De Cartera /////////////////////////////////////////////////////
-def obtener_datos_con_totales_cliente(fecha_inicial=None, fecha_final=None, cliente=None, intermediario=None, grupo=None):
+def obtener_datos_con_totales_cliente(fecha_inicial=None, fecha_final=None, cliente=None, intermediario=None,
+                                      grupo=None):
     pedidos_query = Pedido.objects.all()
 
     if fecha_inicial is not None:
@@ -311,10 +310,6 @@ class IataResource(resources.ModelResource):
         model = Iata
 
 
-import locale
-from decimal import Decimal, InvalidOperation
-from django.core.exceptions import ObjectDoesNotExist
-
 class PedidoResource(resources.ModelResource):
     class Meta:
         model = Pedido
@@ -409,7 +404,6 @@ class PedidoResource(resources.ModelResource):
                     row[campo] = None
 
         super().before_import_row(row, **kwargs)
-
 
 
 class PresentacionResource(resources.ModelResource):
