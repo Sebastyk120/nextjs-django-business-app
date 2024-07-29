@@ -363,7 +363,8 @@ class PedidoResource(resources.ModelResource):
                     raise ValueError(f"{modelo.__name__} con id {row[campo]} no existe.")
 
         # Convertir campos decimales
-        campos_decimales = [field.name for field in Pedido._meta.fields if isinstance(field, models.DecimalField)]
+        campos_decimales = [field.name for field in Pedido._meta.fields if
+                            isinstance(field, models.DecimalField)]
         for campo in campos_decimales:
             if campo in row and campo not in campos_no_editables:
                 try:
@@ -371,8 +372,6 @@ class PedidoResource(resources.ModelResource):
                         row[campo] = None  # Maneja valores vacíos como None
                     else:
                         valor = row[campo]
-                        # Convertir el valor a cadena antes de usar locale.atof
-                        valor = str(valor)
                         # Convertir el valor a float utilizando la configuración regional
                         locale.setlocale(locale.LC_NUMERIC, '')
                         valor = locale.atof(valor)
@@ -386,6 +385,21 @@ class PedidoResource(resources.ModelResource):
                 except (InvalidOperation, TypeError, ValueError) as e:
                     logger.error(f"Error al convertir el campo {campo} a Decimal: {e}")
                     raise ValueError(f"El valor del campo {campo} no es válido para Decimal: {row[campo]}")
+
+        # Convertir campos IntegerField
+        campos_enteros = [field.name for field in Pedido._meta.fields if isinstance(field, models.IntegerField)]
+        for campo in campos_enteros:
+            if campo in row and campo not in campos_no_editables:
+                try:
+                    if row[campo] in [None, '']:
+                        row[campo] = None  # Maneja valores vacíos como None
+                    else:
+                        valor = row[campo].replace(',', '').replace('.', '')  # Eliminar comas y puntos
+                        row[campo] = int(valor)
+                        logger.info(f"Convertido valor del campo {campo} a Integer: {row[campo]}")
+                except (ValueError, TypeError) as e:
+                    logger.error(f"Error al convertir el campo {campo} a Integer: {e}")
+                    raise ValueError(f"El valor del campo {campo} no es válido para Integer: {row[campo]}")
 
         # Convertir campos CharField vacíos a cadenas vacías
         campos_charfield = [field.name for field in Pedido._meta.fields if isinstance(field, models.CharField)]
