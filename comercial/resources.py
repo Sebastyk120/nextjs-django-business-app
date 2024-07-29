@@ -253,8 +253,8 @@ class DetallePedidoResource(resources.ModelResource):
                         # Convertir el valor a cadena para asegurar el reemplazo adecuado
                         #valor = str(valor).replace('.', '').replace(',', '.')
                         # Convertir el valor a float utilizando la configuración regional
-                        locale.setlocale(locale.LC_NUMERIC, '')
-                        valor = locale.atof(valor)
+                        #locale.setlocale(locale.LC_NUMERIC, '')
+                        #valor = locale.atof(valor)
                         decimal_value = Decimal(valor)
                         # Verificar que el valor no exceda el límite permitido
                         if decimal_value >= Decimal('100000000'):
