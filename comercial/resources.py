@@ -8,7 +8,7 @@ from django.db import models
 from django.db.models import Sum
 from import_export import resources
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-from openpyxl.utils import get_column_letter
+
 from .models import Pedido, Cliente, Fruta, Contenedor, DetallePedido, Iata, Presentacion, Referencias, Exportador, \
     TipoCaja, ClientePresentacion, PresentacionReferencia, AutorizacionCancelacion, Aerolinea, AgenciaCarga, \
     Intermediario, SubExportadora
@@ -242,15 +242,16 @@ class DetallePedidoResource(resources.ModelResource):
                     raise ValueError(f"{modelo.__name__} con id {row[campo]} no existe.")
 
         # Convertir campos decimales
-        campos_decimales = [field.name for field in DetallePedido._meta.fields if
-                            isinstance(field, models.DecimalField)]
+        campos_decimales = [field.name for field in DetallePedido._meta.fields if isinstance(field, models.DecimalField)]
         for campo in campos_decimales:
             if campo in row and campo not in campos_no_editables:
                 try:
                     if row[campo] in [None, '', "0,00", "0.00"]:
-                        row[campo] = None  # Maneja valores vacíos como None
+                        row[campo] = Decimal('0')  # Maneja "0,00" y "0.00" específicamente
                     else:
                         valor = row[campo]
+                        # Convertir el valor a cadena para asegurar el reemplazo adecuado
+                        valor = str(valor).replace('.', '').replace(',', '.')
                         # Convertir el valor a float utilizando la configuración regional
                         locale.setlocale(locale.LC_NUMERIC, '')
                         valor = locale.atof(valor)
@@ -447,9 +448,11 @@ class ReferenciasResource(resources.ModelResource):
         for campo in campos_decimales:
             try:
                 if row[campo] in [None, '', "0,00", "0.00"]:
-                    row[campo] = None  # Maneja valores vacíos como None
+                    row[campo] = Decimal('0')  # Maneja "0,00" y "0.00" específicamente
                 else:
                     valor = row[campo]
+                    # Convertir el valor a cadena para asegurar el reemplazo adecuado
+                    valor = str(valor).replace('.', '').replace(',', '.')
                     # Convertir el valor a float utilizando la configuración regional
                     locale.setlocale(locale.LC_NUMERIC, '')
                     valor = locale.atof(valor)
