@@ -251,7 +251,7 @@ class DetallePedidoResource(resources.ModelResource):
                     else:
                         valor = row[campo]
                         # Convertir el valor a cadena para asegurar el reemplazo adecuado
-                        valor = str(valor).replace('.', '').replace(',', '.')
+                        #valor = str(valor).replace('.', '').replace(',', '.')
                         # Convertir el valor a float utilizando la configuración regional
                         locale.setlocale(locale.LC_NUMERIC, '')
                         valor = locale.atof(valor)
