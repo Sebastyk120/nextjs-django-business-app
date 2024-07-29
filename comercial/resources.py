@@ -247,7 +247,7 @@ class DetallePedidoResource(resources.ModelResource):
         for campo in campos_decimales:
             if campo in row and campo not in campos_no_editables:
                 try:
-                    if row[campo] in [None, '']:
+                    if row[campo] in [None, '', "0,00"]:
                         row[campo] = None  # Maneja valores vacíos como None
                     else:
                         valor = row[campo]
@@ -363,7 +363,7 @@ class PedidoResource(resources.ModelResource):
         for campo in campos_decimales:
             if campo in row and campo not in campos_no_editables:
                 try:
-                    if row[campo] in [None, '']:
+                    if row[campo] in [None, '', "0,00"]:
                         row[campo] = None  # Maneja valores vacíos como None
                     else:
                         valor = row[campo]
