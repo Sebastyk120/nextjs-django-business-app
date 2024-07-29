@@ -247,7 +247,7 @@ class DetallePedidoResource(resources.ModelResource):
         for campo in campos_decimales:
             if campo in row and campo not in campos_no_editables:
                 try:
-                    if row[campo] in [None, '', "0,00"]:
+                    if row[campo] in [None, '', "0,00", "0.00"]:
                         row[campo] = None  # Maneja valores vacíos como None
                     else:
                         valor = row[campo]
@@ -358,15 +358,16 @@ class PedidoResource(resources.ModelResource):
                     raise ValueError(f"{modelo.__name__} con id {row[campo]} no existe.")
 
         # Convertir campos decimales
-        campos_decimales = [field.name for field in Pedido._meta.fields if
-                            isinstance(field, models.DecimalField)]
+        campos_decimales = [field.name for field in Pedido._meta.fields if isinstance(field, models.DecimalField)]
         for campo in campos_decimales:
             if campo in row and campo not in campos_no_editables:
                 try:
-                    if row[campo] in [None, '', "0,00"]:
-                        row[campo] = None  # Maneja valores vacíos como None
+                    if row[campo] in [None, '', "0,00", "0.00"]:
+                        row[campo] = Decimal('0')  # Maneja "0,00" y "0.00" específicamente
                     else:
                         valor = row[campo]
+                        # Convertir el valor a cadena para asegurar el reemplazo adecuado
+                        valor = str(valor).replace('.', '').replace(',', '.')
                         # Convertir el valor a float utilizando la configuración regional
                         locale.setlocale(locale.LC_NUMERIC, '')
                         valor = locale.atof(valor)
@@ -445,7 +446,7 @@ class ReferenciasResource(resources.ModelResource):
         campos_decimales = [field.name for field in Referencias._meta.fields if isinstance(field, models.DecimalField)]
         for campo in campos_decimales:
             try:
-                if row[campo] in [None, '']:
+                if row[campo] in [None, '', "0,00", "0.00"]:
                     row[campo] = None  # Maneja valores vacíos como None
                 else:
                     valor = row[campo]
