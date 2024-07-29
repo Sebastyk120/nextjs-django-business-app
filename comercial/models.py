@@ -260,7 +260,7 @@ class Pedido(models.Model):
     tasa_representativa_usd_diaria = models.DecimalField(max_digits=10, decimal_places=2, editable=False,
                                                          verbose_name="$TRM Oficial", null=True, blank=True, default=0)
     trm_cotizacion = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
-                                         editable=False, verbose_name="$TRM Cotización", null=True, blank=True,
+                                         editable=True, verbose_name="$TRM Cotización", null=True, blank=True,
                                          default=0)
     valor_pagado_cliente_usd = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
                                                    verbose_name="$Pagado Cliente", null=True, blank=True, default=0)
