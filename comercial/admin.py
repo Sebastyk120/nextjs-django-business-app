@@ -137,6 +137,8 @@ class ClientePresentacionAdmin(ImportExportModelAdmin):
 @admin.register(AutorizacionCancelacion)
 class MyModelAdmin(ImportExportModelAdmin):
     import_error_display = ("message", "row", "traceback")
+    list_display = ('pedido', 'usuario_solicitante', 'usuario_autorizador', 'autorizado',
+                    'fecha_solicitud', 'fecha_autorizacion')
     resource_class = AutorizacionCancelacionResource
 
 

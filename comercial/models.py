@@ -219,7 +219,7 @@ class Pedido(models.Model):
     intermediario = models.ForeignKey(Intermediario, on_delete=models.CASCADE, verbose_name="Intermediario", null=True,
                                       blank=True)
     semana = models.IntegerField(verbose_name="Semana", null=True, blank=True, editable=False)
-    fecha_solicitud = models.DateField(verbose_name="Fecha Solicitud", auto_now_add=True, editable=True)
+    fecha_solicitud = models.DateField(verbose_name="Fecha Solicitud", auto_now_add=True, editable=False)
     fecha_entrega = models.DateField(verbose_name="Fecha Entrega")
     fecha_llegada = models.DateField(verbose_name="Fecha Llegada Estimada", blank=True, null=True)
     exportadora = models.ForeignKey(Exportador, on_delete=models.CASCADE, verbose_name="Exportador")
@@ -257,10 +257,10 @@ class Pedido(models.Model):
     valor_total_nota_credito_usd = models.DecimalField(max_digits=10, decimal_places=2, editable=False,
                                                        verbose_name="$Total Nota Crédito", null=True, blank=True,
                                                        default=0)
-    tasa_representativa_usd_diaria = models.DecimalField(max_digits=10, decimal_places=2, editable=True,
+    tasa_representativa_usd_diaria = models.DecimalField(max_digits=10, decimal_places=2, editable=False,
                                                          verbose_name="$TRM Oficial", null=True, blank=True, default=0)
     trm_cotizacion = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
-                                         editable=True, verbose_name="$TRM Cotización", null=True, blank=True,
+                                         editable=False, verbose_name="$TRM Cotización", null=True, blank=True,
                                          default=0)
     valor_pagado_cliente_usd = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
                                                    verbose_name="$Pagado Cliente", null=True, blank=True, default=0)
@@ -294,7 +294,7 @@ class Pedido(models.Model):
                                               ('autorizado', 'Autorizado'),
                                               ('no_autorizado', 'No Autorizado')
                                           ],
-                                          default='sin_solicitud', editable=True, verbose_name="Estado Cancelación")
+                                          default='sin_solicitud', editable=False, verbose_name="Estado Cancelación")
     observaciones = models.TextField(verbose_name="Observaciones", validators=[MaxLengthValidator(300)], blank=True,
                                      null=True)
     # -------------------------------------- Campos Para Tracking ----------------------------------------------
@@ -341,7 +341,7 @@ class Pedido(models.Model):
             self.aerolinea = None
 
         # Comprobación de cambio de exportador y eliminación de detalles de pedido:
-        """if self.pk is not None:
+        if self.pk is not None:
             pedido_anterior = Pedido.objects.get(pk=self.pk)
             if pedido_anterior.exportadora != self.exportadora:
                 DetallePedido.objects.filter(pedido=self).delete()
@@ -350,7 +350,7 @@ class Pedido(models.Model):
                 self.total_piezas_solicitadas = 0
                 self.total_piezas_enviadas = 0
             if pedido_anterior.fecha_entrega != self.fecha_entrega:
-                self.estado_pedido = "Reprogramado"""
+                self.estado_pedido = "Reprogramado"
 
         # Campos Calculados
         if self.fecha_entrega is not None:
