@@ -311,6 +311,10 @@ class IataResource(resources.ModelResource):
         model = Iata
 
 
+import locale
+from decimal import Decimal, InvalidOperation
+from django.core.exceptions import ObjectDoesNotExist
+
 class PedidoResource(resources.ModelResource):
     class Meta:
         model = Pedido
@@ -367,6 +371,8 @@ class PedidoResource(resources.ModelResource):
                         row[campo] = None  # Maneja valores vacíos como None
                     else:
                         valor = row[campo]
+                        # Convertir el valor a cadena antes de usar locale.atof
+                        valor = str(valor)
                         # Convertir el valor a float utilizando la configuración regional
                         locale.setlocale(locale.LC_NUMERIC, '')
                         valor = locale.atof(valor)
@@ -391,14 +397,65 @@ class PedidoResource(resources.ModelResource):
         super().before_import_row(row, **kwargs)
 
 
+
 class PresentacionResource(resources.ModelResource):
     class Meta:
         model = Presentacion
+
+    def before_import_row(self, row, **kwargs):
+        # Convertir campos decimales
+        campos_decimales = [field.name for field in Presentacion._meta.fields if isinstance(field, models.DecimalField)]
+        for campo in campos_decimales:
+            try:
+                if row[campo] in [None, '']:
+                    row[campo] = None  # Maneja valores vacíos como None
+                else:
+                    valor = row[campo]
+                    # Convertir el valor a float utilizando la configuración regional
+                    locale.setlocale(locale.LC_NUMERIC, '')
+                    valor = locale.atof(valor)
+                    decimal_value = Decimal(valor)
+                    # Verificar que el valor no exceda el límite permitido
+                    if decimal_value >= Decimal('100000000'):
+                        logger.error(f"El valor del campo {campo} excede el límite permitido: {decimal_value}")
+                        raise ValueError(f"El valor {decimal_value} del campo {campo} excede el límite permitido")
+                    row[campo] = decimal_value
+                    logger.info(f"Convertido valor del campo {campo} a Decimal: {row[campo]}")
+            except (InvalidOperation, TypeError, ValueError) as e:
+                logger.error(f"Error al convertir el campo {campo} a Decimal: {e}")
+                raise ValueError(f"El valor del campo {campo} no es válido para Decimal: {row[campo]}")
+
+        super().before_import_row(row, **kwargs)
 
 
 class ReferenciasResource(resources.ModelResource):
     class Meta:
         model = Referencias
+
+    def before_import_row(self, row, **kwargs):
+        # Convertir campos decimales
+        campos_decimales = [field.name for field in Referencias._meta.fields if isinstance(field, models.DecimalField)]
+        for campo in campos_decimales:
+            try:
+                if row[campo] in [None, '']:
+                    row[campo] = None  # Maneja valores vacíos como None
+                else:
+                    valor = row[campo]
+                    # Convertir el valor a float utilizando la configuración regional
+                    locale.setlocale(locale.LC_NUMERIC, '')
+                    valor = locale.atof(valor)
+                    decimal_value = Decimal(valor)
+                    # Verificar que el valor no exceda el límite permitido
+                    if decimal_value >= Decimal('100000000'):
+                        logger.error(f"El valor del campo {campo} excede el límite permitido: {decimal_value}")
+                        raise ValueError(f"El valor {decimal_value} del campo {campo} excede el límite permitido")
+                    row[campo] = decimal_value
+                    logger.info(f"Convertido valor del campo {campo} a Decimal: {row[campo]}")
+            except (InvalidOperation, TypeError, ValueError) as e:
+                logger.error(f"Error al convertir el campo {campo} a Decimal: {e}")
+                raise ValueError(f"El valor del campo {campo} no es válido para Decimal: {row[campo]}")
+
+        super().before_import_row(row, **kwargs)
 
 
 class ClientePresentacionResource(resources.ModelResource):
