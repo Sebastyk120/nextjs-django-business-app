@@ -228,7 +228,7 @@ class CarteraPedidoTable(tables.Table):
         template_name = "django_tables2/bootstrap5-responsive.html"
         order_by = ('cliente',)
         fields = (
-            "intermediario", "cliente", "exportadora", "AWB", "id", "fecha_entrega_personalizada", "numero_factura",
+            "intermediario", "cliente", "exportadora", "awb", "id", "fecha_entrega_personalizada", "numero_factura",
             "valor_total_factura_usd", "dias_de_vencimiento", "valor_pagado_cliente_usd", "diferencia_por_abono",
             "nota_credito_no", "motivo_nota_credito", "valor_total_nota_credito_usd", "descuento",
             "utilidad_bancaria_usd", "fecha_pago", "estado_factura", "editar")
