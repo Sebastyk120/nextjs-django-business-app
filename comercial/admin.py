@@ -33,6 +33,15 @@ class PedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
 
     view_history.short_description = "Ver Historial"
 
+    def get_import_formats(self):
+        if self.request.user.is_superuser:
+            return [f for f in self.DEFAULT_FORMATS if f().can_import()]
+        return []
+
+    def changelist_view(self, request, extra_context=None):
+        self.request = request
+        return super().changelist_view(request, extra_context)
+
 
 class DetallePedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
     import_error_display = ("message", "row", "traceback")
@@ -57,11 +66,29 @@ class DetallePedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
 
     view_history.short_description = "Ver Historial"
 
+    def get_import_formats(self):
+        if self.request.user.is_superuser:
+            return [f for f in self.DEFAULT_FORMATS if f().can_import()]
+        return []
+
+    def changelist_view(self, request, extra_context=None):
+        self.request = request
+        return super().changelist_view(request, extra_context)
+
 
 @admin.register(Cliente)
 class MyModelAdmin(ImportExportModelAdmin):
     import_error_display = ("message", "row", "traceback")
     resource_class = ClienteResource
+
+    def get_import_formats(self):
+        if self.request.user.is_superuser:
+            return [f for f in self.DEFAULT_FORMATS if f().can_import()]
+        return []
+
+    def changelist_view(self, request, extra_context=None):
+        self.request = request
+        return super().changelist_view(request, extra_context)
 
 
 @admin.register(Exportador)
@@ -104,11 +131,29 @@ class MyModelAdmin(ImportExportModelAdmin):
     search_help_text = 'Buscar por nombre de referencia'
     resource_class = ReferenciasResource
 
+    def get_import_formats(self):
+        if self.request.user.is_superuser:
+            return [f for f in self.DEFAULT_FORMATS if f().can_import()]
+        return []
+
+    def changelist_view(self, request, extra_context=None):
+        self.request = request
+        return super().changelist_view(request, extra_context)
+
 
 @admin.register(TipoCaja)
 class MyModelAdmin(ImportExportModelAdmin):
     import_error_display = ("message", "row", "traceback")
     resource_class = TipoCajaResource
+
+    def get_import_formats(self):
+        if self.request.user.is_superuser:
+            return [f for f in self.DEFAULT_FORMATS if f().can_import()]
+        return []
+
+    def changelist_view(self, request, extra_context=None):
+        self.request = request
+        return super().changelist_view(request, extra_context)
 
 
 class ClienteListFilter(admin.SimpleListFilter):
@@ -133,6 +178,15 @@ class ClientePresentacionAdmin(ImportExportModelAdmin):
     import_error_display = ("message", "row", "traceback")
     resource_class = ClientePresentacionResource
 
+    def get_import_formats(self):
+        if self.request.user.is_superuser:
+            return [f for f in self.DEFAULT_FORMATS if f().can_import()]
+        return []
+
+    def changelist_view(self, request, extra_context=None):
+        self.request = request
+        return super().changelist_view(request, extra_context)
+
 
 @admin.register(AutorizacionCancelacion)
 class MyModelAdmin(ImportExportModelAdmin):
@@ -140,6 +194,15 @@ class MyModelAdmin(ImportExportModelAdmin):
     list_display = ('pedido', 'usuario_solicitante', 'usuario_autorizador', 'autorizado',
                     'fecha_solicitud', 'fecha_autorizacion')
     resource_class = AutorizacionCancelacionResource
+
+    def get_import_formats(self):
+        if self.request.user.is_superuser:
+            return [f for f in self.DEFAULT_FORMATS if f().can_import()]
+        return []
+
+    def changelist_view(self, request, extra_context=None):
+        self.request = request
+        return super().changelist_view(request, extra_context)
 
 
 @admin.register(Aerolinea)
@@ -174,6 +237,15 @@ class MyModelAdmin(ImportExportModelAdmin):
     search_fields = ('referencia__nombre',)
     search_help_text = 'Buscar por nombre de referencia'
     resource_class = PresentacionReferenciaResource
+
+    def get_import_formats(self):
+        if self.request.user.is_superuser:
+            return [f for f in self.DEFAULT_FORMATS if f().can_import()]
+        return []
+
+    def changelist_view(self, request, extra_context=None):
+        self.request = request
+        return super().changelist_view(request, extra_context)
 
 
 admin.site.register(Pedido, PedidoAdmin)
