@@ -38,7 +38,7 @@ def obtener_datos_con_totales_cliente(fecha_inicial=None, fecha_final=None, clie
 
     # Obtener los pedidos y sus datos
     pedidos = list(pedidos_query.values(
-        'id', 'intermediario__nombre', 'cliente__nombre', 'exportadora__nombre', 'numero_factura',
+        'id', 'intermediario__nombre', 'cliente__nombre', 'exportadora__nombre', 'numero_factura', 'awb',
         'fecha_entrega', 'dias_de_vencimiento', 'valor_total_factura_usd',
         'valor_pagado_cliente_usd', 'utilidad_bancaria_usd', 'fecha_pago', 'estado_factura',
         'valor_total_nota_credito_usd', 'descuento', 'nota_credito_no', 'dias_cartera'
@@ -74,7 +74,8 @@ def crear_archivo_excel_cliente(pedidos, totales, ruta_archivo):
     sheet.title = 'Cartera Clientes'
 
     # Definir y escribir los encabezados de columna
-    encabezados = ['Order No.', 'Intermediary', 'Customer', 'Exporter', 'Invoice Number', 'Delivery Date',
+    encabezados = ['Order No.', 'Intermediary', 'Customer', 'Exporter', 'Invoice Number', 'AWB',
+                   'Delivery Date',
                    'Days Past Due',
                    'Expected Payment Date', 'Invoice Value USD', 'Amount Paid by Customer USD', 'Credit Note',
                    'Total CN',
@@ -104,6 +105,7 @@ def crear_archivo_excel_cliente(pedidos, totales, ruta_archivo):
             pedido['cliente__nombre'],
             pedido['exportadora__nombre'],
             pedido['numero_factura'],
+            pedido['awb'],
             pedido['fecha_entrega'].strftime('%Y-%m-%d') if pedido['fecha_entrega'] else '',
             pedido['dias_de_vencimiento'],
             pedido['fecha_esperada_pago'].strftime('%Y-%m-%d') if pedido['fecha_esperada_pago'] else '',
@@ -119,7 +121,7 @@ def crear_archivo_excel_cliente(pedidos, totales, ruta_archivo):
         ]
         sheet.append(fila)
         # Aplicar formato de moneda a las celdas relevantes
-        moneda_columns = [9, 10, 12, 13, 14, 17]  # Índices de columnas a formatear como moneda
+        moneda_columns = [10, 11, 13, 14, 15, 18]  # Índices de columnas a formatear como moneda
         for col_idx in moneda_columns:
             sheet.cell(row=sheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
         # Centrar el contenido
