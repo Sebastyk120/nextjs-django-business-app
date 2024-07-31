@@ -11,7 +11,7 @@ class SearchFormReferencias(forms.Form):
 
 def get_unique_weeks():
     semanas = Pedido.objects.values_list('semana', flat=True).distinct()
-    semanas_tuplas = [(int(s.split('-')[0]), int(s.split('-')[1])) for s in semanas]
+    semanas_tuplas = {(int(s.split('-')[0]), int(s.split('-')[1])) for s in semanas}
     semanas_ordenadas = sorted(semanas_tuplas, key=lambda x: (x[1], x[0]), reverse=True)
     return [(f"{semana[0]}-{semana[1]}", f'Semana {semana[0]}-{semana[1]}') for semana in semanas_ordenadas]
 
