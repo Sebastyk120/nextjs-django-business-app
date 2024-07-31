@@ -555,15 +555,15 @@ class DetallePedido(models.Model):
         # Otros cálculos
         self.valor_x_producto = self.valor_x_caja_usd * self.cajas_enviadas
         # Cálculo de Utilidad
-        if self.afecta_utilidad is True:
+        if self.afecta_utilidad is True: # Osea Seleccione SI
             self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
-        elif self.afecta_utilidad is False:
-            self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
-            self.valor_nota_credito_usd = 0
-        else:  # afecta_utilidad is None
+        elif self.afecta_utilidad is False: # Osea Selecciona NO
             self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
+        else:  # afecta_utilidad is None Es Decir Descuento
+            self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
+            self.valor_nota_credito_usd = 0
 
         # Lógica de contenedor
         if self.lleva_contenedor and self.referencia and self.referencia.contenedor:
