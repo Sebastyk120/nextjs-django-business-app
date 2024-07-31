@@ -218,7 +218,7 @@ class Pedido(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, verbose_name="Cliente")
     intermediario = models.ForeignKey(Intermediario, on_delete=models.CASCADE, verbose_name="Intermediario", null=True,
                                       blank=True)
-    semana = models.IntegerField(verbose_name="Semana", null=True, blank=True, editable=False)
+    semana = models.CharField(verbose_name="Semana", null=True, blank=True, editable=False)
     fecha_solicitud = models.DateField(verbose_name="Fecha Solicitud", auto_now_add=True, editable=False)
     fecha_entrega = models.DateField(verbose_name="Fecha Entrega")
     fecha_llegada = models.DateField(verbose_name="Fecha Llegada Estimada", blank=True, null=True)
@@ -353,7 +353,9 @@ class Pedido(models.Model):
 
         # Campos Calculados
         if self.fecha_entrega is not None:
-            self.semana = self.fecha_entrega.isocalendar()[1]
+            semana_numero = self.fecha_entrega.isocalendar()[1]
+            ano = self.fecha_entrega.year
+            self.semana = f"{semana_numero}-{ano}"
         if self.valor_pagado_cliente_usd is None or self.valor_pagado_cliente_usd == 0:
             self.diferencia_por_abono = 0
         else:

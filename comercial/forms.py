@@ -9,12 +9,13 @@ class SearchFormReferencias(forms.Form):
     item_busqueda = forms.CharField(max_length=256, required=False)
 
 
-WEEK_CHOICES = [(str(i), f'Semana {i}') for i in range(1, 53)]
-
+def get_unique_weeks():
+    semanas = Pedido.objects.values_list('semana', flat=True).distinct()
+    return [(semana, f'Semana {semana}') for semana in semanas]
 
 class FiltroSemanaExportadoraForm(forms.Form):
     semana = forms.ChoiceField(
-        choices=[('', 'Seleccione una semana')] + WEEK_CHOICES,
+        choices=[('', 'Seleccione una semana')] + get_unique_weeks(),
         label='Semana',
         required=True,
         widget=forms.Select(attrs={
