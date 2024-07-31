@@ -902,7 +902,9 @@ def exportar_pedidos_excel(request):
                'Utilidad Bancaria USD', 'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
                'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Utilidad USD',
                'Valor Utilidad Pesos', 'Documento Cobro Utilidad', 'Fecha Pago Utilidad', 'Estado Utilidad',
-               'Estado Cancelacion', 'Estado Documentos', 'Estado Reserva', 'Estado Pedido', 'Observaciones Tracking',
+               'Estado Cancelacion', 'Estado Documentos', 'Estado Reserva', 'Termo', 'Diferencia AWB/Factura',
+               'Eta Real',
+               'Estado Pedido', 'Observaciones Tracking',
                'Observaciones Generales']
 
     for col_num, column_title in enumerate(columns, start=1):
@@ -977,6 +979,9 @@ def exportar_pedidos_excel(request):
             pedido.estado_cancelacion,
             pedido.estado_documentos,
             pedido.estatus_reserva,
+            pedido.termo,
+            pedido.eta_real.replace(tzinfo=None) if pedido.eta else '',
+            pedido.diferencia_peso_factura_awb,
             pedido.estado_pedido,
             pedido.observaciones_tracking,
             pedido.observaciones
@@ -3385,6 +3390,7 @@ def exportar_pdf_resumen_pedido(request, pedido_id):
         print(f"Tiempo total: {end_time - start_time:.2f} segundos")
         return response
 
+
 # -------------------- Vista para filtro de exportacion Seguimiento o Tracking -----------------------------------------
 
 
@@ -3471,6 +3477,7 @@ def exportar_excel_seguimiento_tracking(request):
         form = ExportSearchForm()
 
     return render(request, 'export_pedidos_tracking.html', {'form': form})
+
 
 # -------------------- Exportacion Explicita de Excel Del resumen de exportaciones Por semana -------------------------
 
