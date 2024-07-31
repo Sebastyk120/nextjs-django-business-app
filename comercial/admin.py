@@ -10,7 +10,7 @@ from .resources import ClienteResource, PedidoResource, FrutaResource, DetallePe
     IataResource, PresentacionResource, ReferenciasResource, ExportadorResource, TipoCajaResource, \
     ClientePresentacionResource, AutorizacionCancelacionResource, AgenciaCargaResource, AerolineaResource, \
     IntermediarioResource, SubExportadoraResource, PresentacionReferenciaResource
-from django.contrib import admin
+
 
 admin.site.site_header = "Administración Heavens Fruits"
 admin.site.site_title = "Administración Heavens"
@@ -32,15 +32,6 @@ class PedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
         return format_html('<a href="{}">Historial</a>', url)
 
     view_history.short_description = "Ver Historial"
-
-    def get_import_formats(self):
-        if self.request.user.is_superuser:
-            return [f for f in self.DEFAULT_FORMATS if f().can_import()]
-        return []
-
-    def changelist_view(self, request, extra_context=None):
-        self.request = request
-        return super().changelist_view(request, extra_context)
 
 
 class DetallePedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
