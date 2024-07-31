@@ -11,7 +11,8 @@ class SearchFormReferencias(forms.Form):
 
 def get_unique_weeks():
     semanas = Pedido.objects.values_list('semana', flat=True).distinct()
-    return [(semana, f'Semana {semana}') for semana in semanas]
+    semanas_unicas = sorted(set(semanas))  # Elimina duplicados y ordena
+    return [(semana, f'Semana {semana}') for semana in semanas_unicas]
 
 class FiltroSemanaExportadoraForm(forms.Form):
     semana = forms.ChoiceField(
