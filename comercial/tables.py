@@ -143,7 +143,7 @@ class DetallePedidoTable(tables.Table):
 
 class PedidoExportadorTable(tables.Table):
     detalle = tables.TemplateColumn(template_name='detalle_pedido_button.html', orderable=False)
-    editar = tables.TemplateColumn(template_name='editar_pedido_button.html', orderable=False)
+    editar = tables.TemplateColumn(template_name='editar_pedido_exportador_button.html', orderable=False)
     inf = tables.TemplateColumn(template_name='resumen_pedido_button.html', orderable=False)
     valor_total_utilidad_usd = tables.Column(verbose_name='$Utilidades (USD)', )
     valor_utilidad_pesos = tables.Column(verbose_name='$Utilidades (Pesos)', )

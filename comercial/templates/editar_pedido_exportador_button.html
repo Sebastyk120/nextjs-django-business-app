@@ -1,0 +1,5 @@
+{% if record.estado_pedido != 'Finalizado' %}
+    <button type="button" class="btn btn-primary mover-button" id="editar" data-pedido-id="{{ record.pk }}">
+        <i class="bi bi-pencil-square"></i>
+    </button>
+{% endif %}
