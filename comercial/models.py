@@ -562,7 +562,7 @@ class DetallePedido(models.Model):
             self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
         else:  # afecta_utilidad is None Es Decir Descuento
-            self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
+            self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
             self.valor_nota_credito_usd = 0
 
         # Lógica de contenedor
