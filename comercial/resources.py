@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation
 import openpyxl
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from import_export import resources
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
@@ -191,7 +191,7 @@ def crear_archivo_excel_cliente(pedidos, totales, ruta_archivo):
 
 def obtener_datos_con_totales_enviar_cliente(fecha_inicial=None, fecha_final=None, cliente=None, intermediario=None,
                                       grupo=None):
-    pedidos_query = Pedido.objects.exclude(estado_factura="Pagada")
+    pedidos_query = Pedido.objects.exclude(Q(estado_factura="Pagada") | Q(estado_factura="Cancelada"))
 
     if fecha_inicial is not None:
         pedidos_query = pedidos_query.filter(fecha_entrega__gte=fecha_inicial)
@@ -245,7 +245,7 @@ def crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo):
     encabezados = ['Intermediary', 'Customer', 'Exporter', 'AWB', 'Invoice Date', 'Invoice Number',
                    'Invoice Amount USD',
                    'Payment Date', 'Overdue Days', 'Credit Note Number', 'Credit Note Amount',
-                   'Final Amount', 'Balance']
+                   'Final Amount']
     sheet.append(encabezados)
 
     # Estilo para los encabezados
@@ -294,7 +294,8 @@ def crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo):
     sheet.append([])
 
     # Escribir los totales
-    totales_encabezado = ['', 'Intermediary', 'Customer', 'Exporter', 'Total Invoices', 'Balance']
+    totales_encabezado = ['', 'Intermediary', 'Customer', 'Exporter', 'Total Invoices', 'Total Paid by Customer',
+                          'Total Banking Profits', 'Total Credit Notes', 'Total Discounts', 'Balance']
 
     sheet.append(totales_encabezado)
 
@@ -311,11 +312,15 @@ def crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo):
             total['cliente__nombre'],
             total['exportadora__nombre'],
             total['total_factura'],
+            total['total_pagado'],
+            total['total_utilidad'],
+            total['total_nc'],
+            total['total_descuentos'],
             total['total_factura'] - total['total_pagado'] - total['total_utilidad'] - total['total_nc'] - total[
                 'total_descuentos']
         ]
         sheet.append(fila_total)
-        moneda_columns_totales = [4, 5]  # Índices de columnas a formatear como moneda en totales
+        moneda_columns_totales = [5, 6]  # Índices de columnas a formatear como moneda en totales
         for col_idx in moneda_columns_totales:
             sheet.cell(row=sheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
         for cell in sheet[sheet.max_row]:
