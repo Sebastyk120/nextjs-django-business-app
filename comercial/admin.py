@@ -20,6 +20,8 @@ admin.site.index_title = "Bienvenido al Portal de Administración Heavens"
 class PedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
     import_error_display = ("message", "row", "traceback")
     resource_class = PedidoResource
+    search_fields = ('id',)
+    search_help_text = 'Escribe el número de pedido para filtrar.'
     # Tus campos existentes
     campos_no_editables = [field.name for field in Pedido._meta.fields if not field.editable]
     campos_editables = [field.name for field in Pedido._meta.fields if field.editable]
