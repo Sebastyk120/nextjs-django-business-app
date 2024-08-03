@@ -41,8 +41,11 @@
         </div>
     </form>
     <div class="button-container">
+        <a class="nav-link" href="{% url 'exportar_cartera_cliente_enviar' %}" name="exportardetalle">
+            <button class="btn btn-success btn-sm" id="export">Enviar Cartera Cliente <i class="bi bi-filetype-xls"></i></i></button>
+        </a>
         <a class="nav-link" href="{% url 'exportar_cartera_cliente' %}" name="exportardetalle">
-            <button class="btn btn-success btn-sm" id="export">Informe De Cartera<i
+            <button class="btn btn-success btn-sm" id="export">Informe De Cartera <i
                     class="bi bi-file-earmark-spreadsheet-fill"></i></button>
         </a>
         <a type="button" class="btn btn-danger" name="volver" id="volver" role="button"

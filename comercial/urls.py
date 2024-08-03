@@ -30,6 +30,7 @@ urlpatterns = [
     path('cartera_list_fieldex', views.CarteraFieldexListView.as_view(), name='cartera_list_fieldex'),
     path('cartera_list_juan', views.CarteraJuanListView.as_view(), name='cartera_list_juan'),
     path('exportar_cartera_cliente', views.ExportarCarteraClienteView.as_view(), name='exportar_cartera_cliente'),
+    path('exportar_cartera_cliente_enviar', views.ExportarCarteraClienteEnviarView.as_view(), name='exportar_cartera_cliente_enviar'),
     path('exportar_pedidos_excel', views.exportar_pedidos_excel, name='exportar_pedidos_excel'),
     path('exportar_pedidos_etnico', views.exportar_pedidos_etnico, name='exportar_pedidos_etnico'),
     path('exportar_pedidos_fieldex', views.exportar_pedidos_fieldex, name='exportar_pedidos_fieldex'),

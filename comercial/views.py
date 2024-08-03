@@ -31,7 +31,8 @@ from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm,
     EditarPedidoFormCartera, EditarPedidoFormUtilidades, EditarDetallePedidoDosForm, EditarDetallePedidoTresForm, \
     ExportSearchForm, ExportSearchFormSeguimientos
 from .models import Pedido, DetallePedido, Referencias, AutorizacionCancelacion, Presentacion, Exportador, Cliente
-from .resources import obtener_datos_con_totales_cliente, crear_archivo_excel_cliente
+from .resources import obtener_datos_con_totales_cliente, crear_archivo_excel_cliente, \
+    crear_archivo_excel_enviar_cliente, obtener_datos_con_totales_enviar_cliente
 from .tables import PedidoTable, DetallePedidoTable, PedidoExportadorTable, CarteraPedidoTable, UtilidadPedidoTable, \
     ResumenPedidoTable, ReferenciasTable, SeguimienosTable, SeguimienosResumenTable
 
@@ -1433,7 +1434,57 @@ class ExportarCarteraClienteView(TemplateView):
         return self.render_to_response(context)
 
 
-# ------------------ Finalizacion Exportacion De Cartera Por cliente --------------------------------------------
+# ------------------  Exportacion De Cartera Por cliente  Para Enviar --------------------------------------------
+
+class ExportarCarteraClienteEnviarView(TemplateView):
+    template_name = 'export_cartera_cliente_enviar.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = ExportSearchForm()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = ExportSearchForm(request.POST)
+        if form.is_valid():
+            cliente = form.cleaned_data.get('cliente', None)
+            intermediario = form.cleaned_data.get('intermediario', None)
+            fecha_inicial_str = request.POST.get('fecha_inicial', None)
+            fecha_final_str = request.POST.get('fecha_final', None)
+
+            fecha_inicial = datetime.strptime(fecha_inicial_str, "%Y-%m-%d") if fecha_inicial_str else None
+            fecha_final = datetime.strptime(fecha_final_str, "%Y-%m-%d") if fecha_final_str else None
+
+            # Determinar el grupo del usuario
+            grupo = None
+            if es_miembro_del_grupo('Heavens')(request.user):
+                grupo = 'Heavens'
+            elif es_miembro_del_grupo('Etnico')(request.user):
+                grupo = 'Etnico'
+            elif es_miembro_del_grupo('Fieldex')(request.user):
+                grupo = 'Fieldex'
+            elif es_miembro_del_grupo('Juan_Matas')(request.user):
+                grupo = 'Juan_Matas'
+
+            # Obtener los datos y los totales con el filtro de fecha, cliente, intermediario y grupo
+            pedidos, totales = obtener_datos_con_totales_enviar_cliente(fecha_inicial, fecha_final, cliente, intermediario,
+                                                                 grupo)
+
+            # Crear el archivo Excel
+            ruta_archivo = 'estado_cuenta_clientes.xlsx'
+            crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo)
+
+            # Leer el archivo y preparar la respuesta
+            with open(ruta_archivo, 'rb') as archivo_excel:
+                response = HttpResponse(archivo_excel.read(),
+                                        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                response['Content-Disposition'] = 'attachment; filename="estado_cuenta_clientes.xlsx"'
+
+            return response
+
+        context = self.get_context_data(**kwargs)
+        context['form'] = form
+        return self.render_to_response(context)
 
 
 # -------------------------------- Tabla De Pedidos General  ----------------------------------------------------
