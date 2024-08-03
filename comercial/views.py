@@ -980,7 +980,7 @@ def exportar_pedidos_excel(request):
             pedido.estado_documentos,
             pedido.estatus_reserva,
             pedido.termo,
-            pedido.eta_real.replace(tzinfo=None) if pedido.eta else '',
+            pedido.eta_real.replace(tzinfo=None) if pedido.eta_real else '',
             pedido.diferencia_peso_factura_awb,
             pedido.estado_pedido,
             pedido.observaciones_tracking,

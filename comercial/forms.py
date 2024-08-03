@@ -1,7 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import DateInput
-
 from .models import Pedido, Cliente, DetallePedido, Referencias, Presentacion, Exportador, Fruta, Intermediario
 
 
@@ -14,6 +13,7 @@ def get_unique_weeks():
     semanas_tuplas = {(int(s.split('-')[0]), int(s.split('-')[1])) for s in semanas}
     semanas_ordenadas = sorted(semanas_tuplas, key=lambda x: (x[1], x[0]), reverse=True)
     return [(f"{semana[0]}-{semana[1]}", f'Semana {semana[0]}-{semana[1]}') for semana in semanas_ordenadas]
+
 
 class FiltroSemanaExportadoraForm(forms.Form):
     semana = forms.ChoiceField(
@@ -54,12 +54,17 @@ class SearchForm(forms.Form):
 
 
 class ExportSearchForm(forms.Form):
-    cliente = forms.ModelChoiceField(queryset=Cliente.objects.filter(pedido__isnull=False).distinct(), required=False, label="Seleccione un cliente")
-    intermediario = forms.ModelChoiceField(queryset=Intermediario.objects.filter(pedido__isnull=False).distinct(), required=False, label="Seleccione un intermediario")
+    cliente = forms.ModelChoiceField(queryset=Cliente.objects.filter(pedido__isnull=False).distinct(), required=False,
+                                     label="Seleccione un cliente")
+    intermediario = forms.ModelChoiceField(queryset=Intermediario.objects.filter(pedido__isnull=False).distinct(),
+                                           required=False, label="Seleccione un intermediario")
+
 
 class ExportSearchFormSeguimientos(forms.Form):
-    cliente = forms.ModelChoiceField(queryset=Cliente.objects.filter(pedido__isnull=False).distinct(), required=False, label="Seleccione un cliente")
-    intermediario = forms.ModelChoiceField(queryset=Intermediario.objects.filter(pedido__isnull=False).distinct(), required=False, label="Seleccione un intermediario")
+    cliente = forms.ModelChoiceField(queryset=Cliente.objects.filter(pedido__isnull=False).distinct(), required=False,
+                                     label="Seleccione un cliente")
+    intermediario = forms.ModelChoiceField(queryset=Intermediario.objects.filter(pedido__isnull=False).distinct(),
+                                           required=False, label="Seleccione un intermediario")
     fecha_inicial = forms.DateField(required=False, label="Fecha Inicial")
     fecha_final = forms.DateField(required=False, label="Fecha Final")
 
