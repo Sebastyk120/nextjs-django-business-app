@@ -3500,7 +3500,7 @@ def exportar_excel_seguimiento_tracking(request):
                     'Reserve Status': pedido.estatus_reserva,
                     'Document Status': pedido.estado_documentos,
                     'Order Status': pedido.estado_pedido,
-                    'Observations / Problems': pedido.observaciones_tracking,
+                    'Comments': pedido.observaciones_tracking,
                 })
 
             df = pd.DataFrame(data)
@@ -3590,7 +3590,7 @@ def exportar_excel_seguimiento_resumen(request):
             'Cargo Agency': pedido.agencia_carga.nombre if pedido.agencia_carga else '',
             'Order Status': pedido.estado_pedido,
             'Document Status': pedido.estado_documentos,
-            'Tracking Observations': pedido.observaciones_tracking,
+            'Tracking Comments': pedido.observaciones_tracking,
         })
 
     df = pd.DataFrame(data)

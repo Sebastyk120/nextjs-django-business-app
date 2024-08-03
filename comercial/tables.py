@@ -395,7 +395,7 @@ class SeguimienosTable(tables.Table):
     estado_documentos = tables.Column(verbose_name='Document Status', )
     estatus_reserva = tables.Column(verbose_name='Reserve Status', )
     estado_pedido = tables.Column(verbose_name='Order Status', )
-    observaciones_tracking = tables.Column(verbose_name='Observations / Problems', )
+    observaciones_tracking = tables.Column(verbose_name='Comments', )
 
     class Meta:
         model = Pedido
@@ -466,7 +466,7 @@ class SeguimienosResumenTable(tables.Table):
     total_peso_bruto_solicitado = tables.Column(verbose_name='Requested Gross Weight', )
     estado_pedido = tables.Column(verbose_name='Order Status', )
     estado_documentos = tables.Column(verbose_name='Document Status', )
-    observaciones_tracking = tables.Column(verbose_name='Observations / Problems', )
+    observaciones_tracking = tables.Column(verbose_name='Comments', )
 
     class Meta:
         model = Pedido
