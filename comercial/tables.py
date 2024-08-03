@@ -375,7 +375,7 @@ class SeguimienosTable(tables.Table):
     fecha_solicitud = tables.Column(verbose_name='Request Date', )
     exportadora = tables.Column(verbose_name='Exporter', )
     cliente = tables.Column(verbose_name='Customer', )
-    intermediario = tables.Column(verbose_name='Consignee', )
+    intermediario = tables.Column(verbose_name='Intermediary', )
     destino = tables.Column(verbose_name='Destination', )
     total_cajas_solicitadas = tables.Column(verbose_name='Of Boxes', )
     total_piezas_solicitadas = tables.Column(verbose_name='Of Pallets', )
@@ -404,8 +404,8 @@ class SeguimienosTable(tables.Table):
                   "id",
                   "fecha_solicitud",
                   "exportadora",
-                  "cliente",
                   "intermediario",
+                  "cliente",
                   "destino",
                   "total_cajas_solicitadas",
                   "total_piezas_solicitadas",
