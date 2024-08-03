@@ -263,7 +263,7 @@ def crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo):
     for pedido in pedidos:
         total_nc = pedido['valor_total_nota_credito_usd'] + pedido['descuento']
         saldo = (pedido['valor_total_factura_usd'] - pedido['utilidad_bancaria_usd'] -
-                 pedido['valor_total_nota_credito_usd'] - pedido['descuento'])
+                 pedido['valor_total_nota_credito_usd'] - pedido['descuento'] - pedido['valor_pagado_cliente_usd'])
 
         fila = [
             pedido['intermediario__nombre'] if pedido['intermediario__nombre'] else '',
