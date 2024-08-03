@@ -8,7 +8,6 @@ from django.db import models
 from django.db.models import Sum, Q
 from import_export import resources
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-
 from .models import Pedido, Cliente, Fruta, Contenedor, DetallePedido, Iata, Presentacion, Referencias, Exportador, \
     TipoCaja, ClientePresentacion, PresentacionReferencia, AutorizacionCancelacion, Aerolinea, AgenciaCarga, \
     Intermediario, SubExportadora
@@ -243,7 +242,7 @@ def crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo):
 
     # Definir y escribir los encabezados de columna
     encabezados = ['Intermediary', 'Customer', 'Exporter', 'AWB', 'Invoice Date', 'Invoice Number',
-                   'Invoice Amount USD',
+                   'Invoice Amount USD', 'Amount Paid by Customer USD',
                    'Payment Date', 'Overdue Days', 'Credit Note Number', 'Credit Note Amount',
                    'Final Amount']
     sheet.append(encabezados)
@@ -274,6 +273,7 @@ def crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo):
             pedido['fecha_entrega'].strftime('%Y-%m-%d') if pedido['fecha_entrega'] else '',
             pedido['numero_factura'],
             pedido['valor_total_factura_usd'],
+            pedido['valor_pagado_cliente_usd'],
             pedido['fecha_esperada_pago'].strftime('%Y-%m-%d') if pedido['fecha_esperada_pago'] else '',
             pedido['dias_de_vencimiento'],
             pedido['nota_credito_no'],
@@ -282,7 +282,7 @@ def crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo):
         ]
         sheet.append(fila)
         # Aplicar formato de moneda a las celdas relevantes
-        moneda_columns = [7, 11, 12]  # Índices de columnas a formatear como moneda
+        moneda_columns = [7, 12, 13]  # Índices de columnas a formatear como moneda
         for col_idx in moneda_columns:
             sheet.cell(row=sheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
         # Centrar el contenido
@@ -320,7 +320,7 @@ def crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo):
                 'total_descuentos']
         ]
         sheet.append(fila_total)
-        moneda_columns_totales = [5, 6]  # Índices de columnas a formatear como moneda en totales
+        moneda_columns_totales = [5, 6, 7, 8, 9, 10]  # Índices de columnas formatear como moneda en totales
         for col_idx in moneda_columns_totales:
             sheet.cell(row=sheet.max_row, column=col_idx).number_format = '"$"#,##0.00'
         for cell in sheet[sheet.max_row]:
