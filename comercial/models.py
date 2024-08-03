@@ -316,7 +316,7 @@ class Pedido(models.Model):
                                          null=True, blank=True)
     observaciones_tracking = models.TextField(validators=[MaxLengthValidator(300)],
                                               verbose_name="Observaciones Tracking", blank=True, null=True)
-    eta_real = models.DateTimeField(verbose_name="Real Final Eta", null=True, blank=True)
+    eta_real = models.DateTimeField(verbose_name="Real ETA", null=True, blank=True)
     diferencia_peso_factura_awb = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Kg Invoice / AWB",
                                                       null=True,
                                                       blank=True, editable=False)

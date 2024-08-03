@@ -393,7 +393,7 @@ class SeguimienosTable(tables.Table):
     termo = tables.Column(verbose_name='# Termo', )
     responsable_reserva = tables.Column(verbose_name='Booking Responsible', )
     estado_documentos = tables.Column(verbose_name='Document Status', )
-    estatus_reserva = tables.Column(verbose_name='Reserve Status', )
+    estatus_reserva = tables.Column(verbose_name='Booking Status', )
     estado_pedido = tables.Column(verbose_name='Order Status', )
     observaciones_tracking = tables.Column(verbose_name='Comments', )
 
