@@ -3423,7 +3423,7 @@ def exportar_excel_seguimiento_tracking(request):
                     'Order No.': pedido.id,
                     'Request Date': pedido.fecha_solicitud.strftime('%d/%m/%Y') if pedido.fecha_solicitud else '',
                     'Exporter': pedido.exportadora.nombre if pedido.exportadora else '',
-                    'Intermediary': pedido.intermediario,
+                    'Intermediary': pedido.intermediario.nombre if pedido.intermediario else '',
                     'Customer': pedido.cliente.nombre if pedido.cliente else '',
                     'Destination': pedido.destino.codigo if pedido.destino else '',
                     'Of Boxes': pedido.total_cajas_solicitadas,
