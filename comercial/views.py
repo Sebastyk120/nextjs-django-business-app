@@ -276,7 +276,7 @@ def exportar_utilidades_excel(request):
         for col_num, cell_value in enumerate(row, start=1):
             cell = worksheet1.cell(row=row_num, column=col_num, value=cell_value)
             # Aplicar formato de moneda a las columnas específicas
-            if col_num in [8, 9, 11, 12, 13, 14, 17]:
+            if col_num in [8, 9, 11, 12, 13, 14, 18]:
                 cell.number_format = '$#,##0.00'
             # Pintar la fila si el numero_factura es 'Pedido Cancelado'
             if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
@@ -427,7 +427,7 @@ def exportar_utilidades_etnico(request):
             for col_num, cell_value in enumerate(row, start=1):
                 cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
                 # Aplicar formato de moneda a las columnas específicas
-                if col_num in [8, 9, 11, 12, 13, 14, 17]:
+                if col_num in [8, 9, 11, 12, 13, 14, 18]:
                     cell.number_format = '$#,##0.00'
                 # Pintar la fila si el numero_factura es 'Pedido Cancelado'
                 if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
@@ -577,7 +577,7 @@ def exportar_utilidades_fieldex(request):
         for col_num, cell_value in enumerate(row, start=1):
             cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
             # Aplicar formato de moneda a las columnas específicas
-            if col_num in [8, 9, 11, 12, 13, 14, 17]:
+            if col_num in [8, 9, 11, 12, 13, 14, 18]:
                 cell.number_format = '$#,##0.00'
             # Pintar la fila si el numero_factura es 'Pedido Cancelado'
             if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
@@ -728,7 +728,7 @@ def exportar_utilidades_juan(request):
         for col_num, cell_value in enumerate(row, start=1):
             cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
             # Aplicar formato de moneda a las columnas específicas
-            if col_num in [8, 9, 11, 12, 13, 14, 17]:
+            if col_num in [8, 9, 11, 12, 13, 14, 18]:
                 cell.number_format = '$#,##0.00'
             # Pintar la fila si el numero_factura es 'Pedido Cancelado'
             if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
