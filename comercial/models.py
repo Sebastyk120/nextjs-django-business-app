@@ -341,15 +341,19 @@ class Pedido(models.Model):
 
         # Comprobación de cambio de exportador y eliminación de detalles de pedido:
         if self.pk is not None:
-            pedido_anterior = Pedido.objects.get(pk=self.pk)
-            if pedido_anterior.exportadora != self.exportadora:
-                DetallePedido.objects.filter(pedido=self).delete()
-                self.total_cajas_enviadas = 0
-                self.total_cajas_solicitadas = 0
-                self.total_piezas_solicitadas = 0
-                self.total_piezas_enviadas = 0
-            if pedido_anterior.fecha_entrega != self.fecha_entrega:
-                self.estado_pedido = "Reprogramado"
+            try:
+                pedido_anterior = Pedido.objects.get(pk=self.pk)
+                if pedido_anterior.exportadora != self.exportadora:
+                    DetallePedido.objects.filter(pedido=self).delete()
+                    self.total_cajas_enviadas = 0
+                    self.total_cajas_solicitadas = 0
+                    self.total_piezas_solicitadas = 0
+                    self.total_piezas_enviadas = 0
+                if pedido_anterior.fecha_entrega and self.fecha_entrega and pedido_anterior.fecha_entrega != self.fecha_entrega:
+                    self.estado_pedido = "Reprogramado"
+            except Pedido.DoesNotExist:
+                # Manejar el caso donde el pedido no exista, si es necesario
+                pass
 
         # Campos Calculados
         if self.fecha_entrega is not None:
@@ -555,10 +559,10 @@ class DetallePedido(models.Model):
         # Otros cálculos
         self.valor_x_producto = self.valor_x_caja_usd * self.cajas_enviadas
         # Cálculo de Utilidad
-        if self.afecta_utilidad is True: # Osea Seleccione SI
+        if self.afecta_utilidad is True:  # Osea Seleccione SI
             self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
-        elif self.afecta_utilidad is False: # Osea Selecciona NO
+        elif self.afecta_utilidad is False:  # Osea Selecciona NO
             self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
         else:  # afecta_utilidad is None Es Decir Descuento
