@@ -531,7 +531,7 @@ class DetallePedido(models.Model):
                                            blank=True, default=0)
     valor_x_producto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Por Producto", null=True,
                                            blank=True, editable=False)
-    no_cajas_nc = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="No Cajas NC", null=True,
+    no_cajas_nc = models.DecimalField(max_digits=10, decimal_places=3, verbose_name="No Cajas NC", null=True,
                                       blank=True, default=0)
     valor_nota_credito_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Nota Crédito USD",
                                                  null=True, blank=True, editable=False)
