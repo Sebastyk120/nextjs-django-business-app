@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MinValueValidator, MaxLengthValidator, MaxValueValidator
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, UniqueConstraint
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from simple_history.models import HistoricalRecords
@@ -154,6 +154,11 @@ class PresentacionReferencia(models.Model):
 
     class Meta:
         ordering = ['fruta']
+        constraints = [
+            UniqueConstraint(fields=['presentacion', 'referencia', 'fruta', 'tipo_caja'],
+                             name='unique_presentacion_referencia')
+        ]
+
 
     def __str__(self):
         return f"Refe: {self.referencia} Presen: {self.presentacion} -Marca: {self.tipo_caja} -Fruta {self.fruta}"
