@@ -189,7 +189,7 @@ def crear_archivo_excel_cliente(pedidos, totales, ruta_archivo):
 # /////////////////////////////////////// Formato Para Enviar Cartera Cliente /////////////////////////////////////////
 
 def obtener_datos_con_totales_enviar_cliente(fecha_inicial=None, fecha_final=None, cliente=None, intermediario=None,
-                                      grupo=None):
+                                             grupo=None):
     pedidos_query = Pedido.objects.exclude(Q(estado_factura="Pagada") | Q(estado_factura="Cancelada"))
 
     if fecha_inicial is not None:
@@ -234,6 +234,8 @@ def obtener_datos_con_totales_enviar_cliente(fecha_inicial=None, fecha_final=Non
     )
 
     return pedidos, list(totales_por_intermediario_cliente_exportadora)
+
+
 def crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo):
     # Crear un nuevo workbook y seleccionar la hoja activa
     workbook = openpyxl.Workbook()
