@@ -4,7 +4,7 @@ from .models import Pedido, DetallePedido, Referencias
 
 
 def format_as_currency(value):
-    formatted_value = "${:,.2f}".format(value)
+    formatted_value = "${:2f}".format(value)
     return formatted_value
 
 
