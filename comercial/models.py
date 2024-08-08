@@ -532,7 +532,7 @@ class DetallePedido(models.Model):
     valor_x_producto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Por Producto", null=True,
                                            blank=True, editable=False)
     no_cajas_nc = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="No Cajas NC", null=True,
-                                      blank=True)
+                                      blank=True, default=0)
     valor_nota_credito_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Nota Crédito USD",
                                                  null=True, blank=True, editable=False)
     afecta_utilidad = models.BooleanField(choices=[(True, "Sí"), (False, "No"), (None, "Descuento")],
@@ -542,7 +542,7 @@ class DetallePedido(models.Model):
                                                           verbose_name="$Utilidad X Producto", null=True,
                                                           blank=True, editable=False)
     precio_proforma = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Proforma", null=True,
-                                          blank=True)
+                                          blank=True, default=None)
     observaciones = models.CharField(verbose_name="Observaciones", max_length=100, blank=True, null=True)
     history = HistoricalRecords()
 
