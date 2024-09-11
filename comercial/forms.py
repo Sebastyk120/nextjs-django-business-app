@@ -9,16 +9,16 @@ class SearchFormReferencias(forms.Form):
 
 
 def get_unique_weeks():
+    # Obtenemos las semanas únicas de los pedidos
     semanas = Pedido.objects.values_list('semana', flat=True).distinct()
-    # Cambiamos la lógica para adaptarnos al formato WW-YYYY
+    # Convertimos las semanas en tuplas y las ordenamos en formato WW-YYYY
     semanas_tuplas = {(int(s.split('-')[0]), int(s.split('-')[1])) for s in semanas}
     semanas_ordenadas = sorted(semanas_tuplas, key=lambda x: (x[1], x[0]), reverse=True)
+    # Devolvemos las semanas en el formato correcto
     return [(f"{semana[0]}-{semana[1]}", f'Semana {semana[0]}-{semana[1]}') for semana in semanas_ordenadas]
-
 
 class FiltroSemanaExportadoraForm(forms.Form):
     semana = forms.ChoiceField(
-        choices=[('', 'Seleccione una semana')] + get_unique_weeks(),
         label='Semana',
         required=True,
         widget=forms.Select(attrs={
@@ -34,6 +34,10 @@ class FiltroSemanaExportadoraForm(forms.Form):
         })
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Actualizamos las opciones de semana en cada instancia del formulario
+        self.fields['semana'].choices = [('', 'Seleccione una semana')] + get_unique_weeks()
 
 # --------------------------- Formulario con filtro Cliente -------------------------------------------------------
 class SearchForm(forms.Form):
