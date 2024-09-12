@@ -364,7 +364,16 @@ class Pedido(models.Model):
         if self.fecha_entrega is not None:
             semana_numero = self.fecha_entrega.isocalendar()[1]
             ano = self.fecha_entrega.year
+            if semana_numero == 1 and self.fecha_entrega.month == 12:
+                ano += 1
+
+            # Si la semana es 52 o 53 y el día está en los primeros días de enero,
+            # debemos ajustarlo al año anterior.
+            if semana_numero >= 52 and self.fecha_entrega.month == 1:
+                ano -= 1
+
             self.semana = f"{semana_numero}-{ano}"
+
         if self.valor_pagado_cliente_usd is None or self.valor_pagado_cliente_usd == 0:
             self.diferencia_por_abono = 0
         else:
