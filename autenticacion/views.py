@@ -2,6 +2,8 @@ import os
 import tempfile
 import io
 import json
+from datetime import datetime
+
 from django.contrib import messages
 from django.contrib.admin.views.decorators import user_passes_test
 from django.contrib.auth import login, authenticate, logout
@@ -94,6 +96,7 @@ class CustomPasswordResetView(PasswordResetView):
         return context
 
 
+@login_required
 class BackupDataView(View):
     def get(self, request, *args, **kwargs):
         # Renderizar la plantilla con el botón para descargar
@@ -109,7 +112,8 @@ class BackupDataView(View):
                 from django.apps import apps
                 models = apps.get_models()
                 # Construir la lista de modelos a excluir que contienen "historical"
-                exclude_models = [model._meta.label_lower for model in models if 'historical' in model._meta.label_lower]
+                exclude_models = [model._meta.label_lower for model in models if
+                                  'historical' in model._meta.label_lower]
                 # Excluir los modelos históricos durante la exportación
                 call_command('dumpdata', exclude=exclude_models, stdout=output)
                 temp_file.write(output.getvalue().encode('utf-8'))
@@ -117,16 +121,21 @@ class BackupDataView(View):
             except Exception as e:
                 return HttpResponse(f'Error during backup: {e}', content_type='text/plain')
 
+        # Obtener la fecha y hora actual para incluirla en el nombre del archivo
+        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"copia_heavens{current_time}.json"
+
         # Leer el contenido del archivo temporal
         with open(temp_file_name, 'rb') as backup_file:
             response = HttpResponse(backup_file.read(), content_type='application/json')
-            response['Content-Disposition'] = f'attachment; filename="db_backup.json"'
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
         # Eliminar el archivo temporal después de la respuesta
         os.remove(temp_file_name)
         return response
 
 
+@login_required
 class RestoreDataView(View):
     def post(self, request, *args, **kwargs):
         if 'backup_file' not in request.FILES:
