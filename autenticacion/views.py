@@ -122,7 +122,7 @@ class BackupDataView(View):
 
         # Obtener la fecha y hora actual para incluirla en el nombre del archivo
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = f"copia_heavens{current_time}.json"
+        filename = f"copia_heavens_{current_time}.json"
 
         # Leer el contenido del archivo temporal
         with open(temp_file_name, 'rb') as backup_file:
