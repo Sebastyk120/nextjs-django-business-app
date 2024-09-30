@@ -1,3 +1,5 @@
+from django.shortcuts import render
+from django.conf.urls import handler404
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
@@ -15,3 +17,6 @@ urlpatterns = [
     path('backup/', views.BackupDataView.as_view(), name='backup_data'),
     path('restore/', views.RestoreDataView.as_view(), name='restore_data'),
 ]
+
+
+

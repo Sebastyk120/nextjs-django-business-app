@@ -66,7 +66,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>Copia De Seguridad Heavens Connect</h1>
+    <h1>Copia De Seguridad Heaven's Fruits Connect</h1>
 
     <!-- Formulario para descargar el backup -->
     <h2>Descargar Copia De Seguridad</h2>
@@ -74,7 +74,8 @@
         {% csrf_token %}
         <button type="submit" class="btn btn-primary">Descargar</button>
     </form>
-
+    <br>
+    <br>
     <!-- Formulario para restaurar el backup -->
     <h2>Restaurar Una Copia De Seguridad</h2>
     <form method="post" action="{% url 'restore_data' %}" enctype="multipart/form-data">

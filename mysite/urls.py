@@ -14,6 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.shortcuts import render
 from django.urls import path, include
 from autenticacion import views as principal
 
@@ -25,3 +26,11 @@ urlpatterns = [
     path('cartera/', include('cartera.urls')),
     path('', principal.home, name='home_principal')
 ]
+
+
+def custom_404(request, exception):
+    return render(request, '404.html', status=404)
+
+
+# Asignar el handler para 404
+handler404 = 'mysite.urls.custom_404'

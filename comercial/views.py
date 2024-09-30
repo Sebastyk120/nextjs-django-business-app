@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import pandas as pd
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.utils import timezone
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
@@ -794,13 +795,15 @@ class ExportarDetallesPedidoView(TemplateView):
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
 def exportar_detalles_pedidos_excel(request):
+    # Parámetros de filtrado
+    numero_pedido_inicial = request.POST.get('numero_pedido_inicial')
+    numero_pedido_final = request.POST.get('numero_pedido_final')
+
     # Crear un libro de trabajo de Excel
     output = io.BytesIO()
     workbook = Workbook()
     worksheet = workbook.active
     worksheet.title = 'Detalles De Pedidos General'
-    font = Font(bold=True, color="FFFFFF")
-    fill = PatternFill(start_color="251819", end_color="251819", fill_type="solid")
 
     # Encabezados
     columns = ['Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
@@ -809,57 +812,29 @@ def exportar_detalles_pedidos_excel(request):
                'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
                'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones']
     for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
+        worksheet.cell(row=1, column=col_num, value=column_title)
 
-    # Filtrar datos basado en el rango de número de pedido
-    numero_pedido_inicial = request.POST.get('numero_pedido_inicial')
-    numero_pedido_final = request.POST.get('numero_pedido_final')
-
+    # Filtrar los datos
     queryset = DetallePedido.objects.all()
-
     if numero_pedido_inicial and numero_pedido_final:
         queryset = queryset.filter(pedido__pk__range=(numero_pedido_inicial, numero_pedido_final))
 
-    # Agregar datos al libro de trabajo
-    for row_num, detalle in enumerate(queryset, start=2):
-        row = [
-            detalle.pedido.pk,
-            detalle.pedido.fecha_entrega,
-            detalle.pedido.exportadora.nombre,
-            detalle.pedido.cliente.nombre,
-            detalle.fruta.nombre,
-            detalle.presentacion.nombre,
-            detalle.cajas_solicitadas,
-            detalle.presentacion_peso,
-            detalle.kilos,
-            detalle.cajas_enviadas,
-            detalle.kilos_enviados,
-            detalle.diferencia,
-            detalle.tipo_caja.nombre,
-            detalle.referencia.nombre,
-            detalle.stickers,
-            detalle.lleva_contenedor,
-            detalle.referencia_contenedor,
-            detalle.cantidad_contenedores,
-            detalle.tarifa_utilidad,
-            detalle.valor_x_caja_usd,
-            detalle.valor_x_producto,
-            detalle.no_cajas_nc,
-            detalle.valor_nota_credito_usd,
-            detalle.afecta_utilidad,
-            detalle.valor_total_utilidad_x_producto,
-            detalle.precio_proforma,
-            detalle.observaciones,
-        ]
-        for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+    # Usar paginación
+    paginator = Paginator(queryset, 1000)  # 1000 registros por página
+    row_num = 2
+
+    for page_num in paginator.page_range:
+        page = paginator.page(page_num)
+        for detalle in page:
+            row = [detalle.pedido.pk, detalle.pedido.fecha_entrega, ...]
+            for col_num, cell_value in enumerate(row, start=1):
+                worksheet.cell(row=row_num, column=col_num, value=cell_value)
+            row_num += 1
 
     workbook.save(output)
     output.seek(0)
 
-    # Crear una respuesta HTTP con el archivo de Excel
+    # Crear respuesta HTTP
     response = HttpResponse(output.read(),
                             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename="Detalles_Pedidos.xlsx"'
