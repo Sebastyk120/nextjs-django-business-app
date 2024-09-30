@@ -96,7 +96,6 @@ class CustomPasswordResetView(PasswordResetView):
         return context
 
 
-@login_required
 class BackupDataView(View):
     def get(self, request, *args, **kwargs):
         # Renderizar la plantilla con el botón para descargar
@@ -135,7 +134,6 @@ class BackupDataView(View):
         return response
 
 
-@login_required
 class RestoreDataView(View):
     def post(self, request, *args, **kwargs):
         if 'backup_file' not in request.FILES:
