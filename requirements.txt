@@ -1,11 +1,11 @@
-asgiref==3.7.2
+asgiref==3.8.1
 Babel==2.14.0
 chardet==5.2.0
 crispy-bootstrap5==2023.10
 defusedxml==0.7.1
 diff-match-patch==20230430
 distlib==0.3.8
-Django==5.0.7
+Django==5.1.2
 django-cors-headers==4.4.0
 django-crispy-forms==2.1
 django-extensions==3.2.3
