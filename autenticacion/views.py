@@ -99,22 +99,23 @@ class CustomPasswordResetView(PasswordResetView):
         return context
 
 
-def chunked_models(models, size=3):
-    """Divide la lista de modelos en grupos del tamaño especificado."""
-    it = iter(models)
-    for first in it:
-        yield list(itertools.chain([first], itertools.islice(it, size - 1)))
-
 def stream_backup():
-    """Genera los backups en grupos de modelos."""
+    """Genera un backup de todos los modelos en un solo bloque."""
     # Obtener todos los modelos registrados en Django
     all_models = apps.get_models()
-    # Dividir en grupos de 3 modelos
-    for model_group in chunked_models(all_models, size=3):
-        output = io.StringIO()
-        model_names = [model._meta.label for model in model_group]
-        call_command('dumpdata', *model_names, stdout=output)
-        yield output.getvalue()
+
+    # Crear un StringIO para capturar la salida de dumpdata
+    output = io.StringIO()
+
+    # Obtener los nombres de todos los modelos
+    model_names = [model._meta.label for model in all_models]
+
+    # Usar dumpdata para generar el backup de todos los modelos a la vez
+    call_command('dumpdata', *model_names, stdout=output)
+
+    # Devolver el contenido del backup
+    yield output.getvalue()
+
 
 class BackupDataView(View):
     def get(self, request, *args, **kwargs):
