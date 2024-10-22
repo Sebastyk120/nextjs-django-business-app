@@ -117,6 +117,10 @@ def stream_backup():
         yield output.getvalue()
 
 class BackupDataView(View):
+    def get(self, request, *args, **kwargs):
+        # Renderizar la plantilla con el botón para descargar
+        return render(request, 'backup.html')
+
     def post(self, request, *args, **kwargs):
         current_time = now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f"copia_heavens_{current_time}.json"
