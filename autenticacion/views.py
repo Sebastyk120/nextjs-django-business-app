@@ -101,35 +101,28 @@ class BackupDataView(View):
         return render(request, 'backup.html')
 
     def post(self, request, *args, **kwargs):
-        # Crear un archivo temporal para almacenar el backup
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+        # Crear un archivo temporal en memoria para almacenar el backup
+        with tempfile.TemporaryFile() as temp_file:
             try:
                 # Usar StringIO para capturar la salida de dumpdata
                 output = io.StringIO()
-                # Obtener la lista de todos los modelos en la aplicación
-                from django.apps import apps
-                models = apps.get_models()
-                # Construir la lista de modelos a excluir que contienen "historical"
-                exclude_models = [model._meta.label_lower for model in models if
-                                  'historical' in model._meta.label_lower]
-                # Excluir los modelos históricos durante la exportación
-                call_command('dumpdata', exclude=exclude_models, stdout=output)
+                # No excluir ningún modelo
+                call_command('dumpdata', stdout=output)
+                # Escribir la salida al archivo temporal
                 temp_file.write(output.getvalue().encode('utf-8'))
-                temp_file_name = temp_file.name
+                # Mover el puntero del archivo al inicio para la lectura posterior
+                temp_file.seek(0)
             except Exception as e:
                 return HttpResponse(f'Error during backup: {e}', content_type='text/plain')
 
-        # Obtener la fecha y hora actual para incluirla en el nombre del archivo
-        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        # Obtener la fecha y hora actual para el nombre del archivo
+        current_time = now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f"copia_heavens_{current_time}.json"
 
-        # Leer el contenido del archivo temporal
-        with open(temp_file_name, 'rb') as backup_file:
-            response = HttpResponse(backup_file.read(), content_type='application/json')
-            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        # Crear la respuesta con el archivo temporal
+        response = HttpResponse(temp_file.read(), content_type='application/json')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
-        # Eliminar el archivo temporal después de la respuesta
-        os.remove(temp_file_name)
         return response
 
 
