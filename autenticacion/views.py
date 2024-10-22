@@ -1,8 +1,11 @@
+import itertools
 import os
 import tempfile
 import io
 import json
 from datetime import datetime
+
+from django.apps import apps
 from django.contrib import messages
 from django.contrib.admin.views.decorators import user_passes_test
 from django.contrib.auth import login, authenticate, logout
@@ -13,7 +16,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordResetView
 from django.db import IntegrityError, transaction
 from django.core.management import call_command
-from django.http import HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render, redirect
 from django.utils.timezone import now
 from django.views import View
@@ -96,34 +99,31 @@ class CustomPasswordResetView(PasswordResetView):
         return context
 
 
+def chunked_models(models, size=3):
+    """Divide la lista de modelos en grupos del tamaño especificado."""
+    it = iter(models)
+    for first in it:
+        yield list(itertools.chain([first], itertools.islice(it, size - 1)))
+
+def stream_backup():
+    """Genera los backups en grupos de modelos."""
+    # Obtener todos los modelos registrados en Django
+    all_models = apps.get_models()
+    # Dividir en grupos de 3 modelos
+    for model_group in chunked_models(all_models, size=3):
+        output = io.StringIO()
+        model_names = [model._meta.label for model in model_group]
+        call_command('dumpdata', *model_names, stdout=output)
+        yield output.getvalue()
+
 class BackupDataView(View):
-    def get(self, request, *args, **kwargs):
-        # Renderizar la plantilla con el botón para descargar
-        return render(request, 'backup.html')
-
     def post(self, request, *args, **kwargs):
-        # Crear un archivo temporal en memoria para almacenar el backup
-        with tempfile.TemporaryFile() as temp_file:
-            try:
-                # Usar StringIO para capturar la salida de dumpdata
-                output = io.StringIO()
-                # No excluir ningún modelo
-                call_command('dumpdata', stdout=output)
-                # Escribir la salida al archivo temporal
-                temp_file.write(output.getvalue().encode('utf-8'))
-                # Mover el puntero del archivo al inicio para la lectura posterior
-                temp_file.seek(0)
-            except Exception as e:
-                return HttpResponse(f'Error during backup: {e}', content_type='text/plain')
-
-        # Obtener la fecha y hora actual para el nombre del archivo
         current_time = now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f"copia_heavens_{current_time}.json"
 
-        # Crear la respuesta con el archivo temporal
-        response = HttpResponse(temp_file.read(), content_type='application/json')
+        # Usar StreamingHttpResponse para transmitir los datos en lugar de cargarlos todos a la vez
+        response = StreamingHttpResponse(stream_backup(), content_type='application/json')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
-
         return response
 
 
