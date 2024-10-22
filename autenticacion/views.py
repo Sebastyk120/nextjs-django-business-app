@@ -15,6 +15,7 @@ from django.db import IntegrityError, transaction
 from django.core.management import call_command
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
+from django.utils.timezone import now
 from django.views import View
 
 
