@@ -11,32 +11,33 @@
     </head>
     <body>
     <div class="container">
-        <div class="card w-75 bg-dark mx-auto my-5 shadow-lg rounded"> <!-- Agregar clases para mejor apariencia -->
+        <div class="card w-75 bg-dark mx-auto my-5 shadow-lg rounded">
             <div class="card-body">
-                <h2 class="text-center text-light">Exportación De Pedidos Genera (Todas las exportadoras)</h2>
+                <h2 class="text-center text-light">Exportación De Pedidos General (Todas las exportadoras)</h2>
                 <br>
                 <form method="post" action="{% url 'exportar_pedidos_excel' %}" class="formulario-blanco">
                     {% csrf_token %}
                     <div class="form-group row">
                         <label for="fecha_inicial" class="col-sm-2 col-form-label text-light">Fecha Inicial:</label>
                         <div class="col-sm-4">
-                            <input type="date" id="fecha_inicial" name="fecha_inicial" class="form-control">
+                            <input type="date" id="fecha_inicial" name="fecha_inicial" class="form-control" aria-describedby="filtroFechaDescripcion">
                         </div>
                         <label for="fecha_final" class="col-sm-2 col-form-label text-light">Fecha Final:</label>
                         <div class="col-sm-4">
-                            <input type="date" id="fecha_final" name="fecha_final" class="form-control">
+                            <input type="date" id="fecha_final" name="fecha_final" class="form-control" aria-describedby="filtroFechaDescripcion">
                         </div>
                     </div>
+                    <span id="filtroFechaDescripcion" class="sr-only">Deje el campo vacío si no quiere aplicar el filtro por fecha.</span>
                     <div class="d-flex justify-content-between mt-4 align-items-center">
-                        <a href="{% url 'pedido_list_general' %}" class="btn btn-danger btn-lg" role="button">Volver</a>
+                        <a href="{% url 'pedido_list_general' %}" class="btn btn-danger btn-lg" role="button" aria-label="Volver a la lista de pedidos generales">Volver</a>
                         <span class="text-light">Para exportar todos los pedidos omita los campos. El filtro se aplica con la fecha de factura.</span>
-                        <button type="submit" class="btn btn-success btn-lg">Exportar</button>
+                        <button type="submit" class="btn btn-success btn-lg" aria-label="Exportar pedidos">Exportar</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <footer class="footer">
+    <footer class="footer" role="contentinfo">
         <p>Heavens Fruit. - Todos los derechos reservados ©</p>
     </footer>
     </body>
