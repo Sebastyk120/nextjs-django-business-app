@@ -1,11 +1,14 @@
 import io
 import math
+import os
+import tempfile
 import time
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
 
 import pandas as pd
+from django.conf import settings
 from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth.decorators import user_passes_test, login_required
@@ -792,10 +795,10 @@ class ExportarDetallesPedidoView(TemplateView):
 
 # ------------------ Exportacion de Detalles de Pedidos Excel General -------------------------------------
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def exportar_detalles_pedidos_excel(request):
     # Crear un libro de trabajo de Excel
-    output = io.BytesIO()
+    temp_file_path = os.path.join(tempfile.gettempdir(), 'Detalles_Pedidos.xlsx')
     workbook = Workbook()
     worksheet = workbook.active
     worksheet.title = 'Detalles De Pedidos General'
@@ -803,11 +806,14 @@ def exportar_detalles_pedidos_excel(request):
     fill = PatternFill(start_color="251819", end_color="251819", fill_type="solid")
 
     # Encabezados
-    columns = ['Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
-               'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
-               'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
-               'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
-               'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones']
+    columns = [
+        'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
+        'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
+        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
+        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
+        'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
+    ]
+
     for col_num, column_title in enumerate(columns, start=1):
         cell = worksheet.cell(row=1, column=col_num, value=column_title)
         cell.font = font
@@ -817,10 +823,16 @@ def exportar_detalles_pedidos_excel(request):
     numero_pedido_inicial = request.POST.get('numero_pedido_inicial')
     numero_pedido_final = request.POST.get('numero_pedido_final')
 
-    queryset = DetallePedido.objects.all()
-
-    if numero_pedido_inicial and numero_pedido_final:
-        queryset = queryset.filter(pedido__pk__range=(numero_pedido_inicial, numero_pedido_final))
+    try:
+        # Convertir a enteros, si es posible
+        if numero_pedido_inicial and numero_pedido_final:
+            numero_pedido_inicial = int(numero_pedido_inicial)
+            numero_pedido_final = int(numero_pedido_final)
+            queryset = DetallePedido.objects.filter(pedido__pk__range=(numero_pedido_inicial, numero_pedido_final))
+        else:
+            queryset = DetallePedido.objects.all()
+    except ValueError:
+        return HttpResponse("Número de pedido inválido", status=400)
 
     # Agregar datos al libro de trabajo
     for row_num, detalle in enumerate(queryset, start=2):
@@ -856,13 +868,18 @@ def exportar_detalles_pedidos_excel(request):
         for col_num, cell_value in enumerate(row, start=1):
             worksheet.cell(row=row_num, column=col_num, value=cell_value)
 
-    workbook.save(output)
-    output.seek(0)
-
-    # Crear una respuesta HTTP con el archivo de Excel
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="Detalles_Pedidos.xlsx"'
+    # Guardar el archivo temporalmente y enviar la respuesta
+    try:
+        workbook.save(temp_file_path)
+        with open(temp_file_path, 'rb') as file:
+            response = HttpResponse(
+                file.read(),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = 'attachment; filename="Detalles_Pedidos.xlsx"'
+    finally:
+        # Asegurar que el archivo temporal se elimine
+        os.remove(temp_file_path)
 
     return response
 
