@@ -1,7 +1,7 @@
 # nixpacks.toml
 
 [phases.setup]
-# Instalar Python 3.11 y los paquetes de Nix
+# Instalar Python 3.13 y los paquetes de Nix
 nixPkgs = [
   "python313"
 ]
@@ -9,6 +9,7 @@ nixPkgs = [
 # Instalar paquetes de apt-get si es necesario
 aptPkgs = [
   "build-essential",
+  "python3-dev",
   "libffi-dev",
   "shared-mime-info",
   "libjpeg-dev",
@@ -16,8 +17,11 @@ aptPkgs = [
   "libfreetype6-dev",
   "liblcms2-dev",
   "libtiff5-dev",
-  "libwebp-dev"
+  "libwebp-dev",
+  "libatlas-base-dev",
+  "gfortran"
 ]
+
 
 [phases.python_install]
 dependsOn = ['setup']
