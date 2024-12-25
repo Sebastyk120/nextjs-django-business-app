@@ -80,7 +80,7 @@ class Referencias(models.Model):
         ordering = ['nombre']
 
     def __str__(self):
-        return f"{self.nombre} -N {self.referencia_nueva} - {self.exportador.nombre}"
+        return f"{self.nombre} -N {self.referencia_nueva} - {self.exportador}"
 
 
 class Cliente(models.Model):
