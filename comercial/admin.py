@@ -38,9 +38,24 @@ admin.site.index_title = "Bienvenido al Portal de Administración Heavens"
 class MyModelAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
     import_error_display = ("message", "row", "traceback")
     resource_class = ClienteResource
+    def view_history(self, obj):
+        url = reverse('admin:%s_%s_history' % (obj._meta.app_label, obj._meta.model_name), args=[obj.pk])
+        return format_html('<a href="{}">Historial</a>', url)
+
+    view_history.short_description = "Ver Historial"""
+
+@admin.register(DetallePedido)
+class MyModelAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+    import_error_display = ("message", "row", "traceback")
+    resource_class = ClienteResource
+    def view_history(self, obj):
+        url = reverse('admin:%s_%s_history' % (obj._meta.app_label, obj._meta.model_name), args=[obj.pk])
+        return format_html('<a href="{}">Historial</a>', url)
+
+    view_history.short_description = "Ver Historial"""
 
 
-class DetallePedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+"""class DetallePedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
     import_error_display = ("message", "row", "traceback")
     resource_class = DetallePedidoResource
     campos_no_editables = [field.name for field in DetallePedido._meta.fields if not field.editable]
@@ -61,7 +76,7 @@ class DetallePedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
         url = reverse('admin:%s_%s_history' % (obj._meta.app_label, obj._meta.model_name), args=[obj.pk])
         return format_html('<a href="{}">Historial</a>', url)
 
-    view_history.short_description = "Ver Historial"
+    view_history.short_description = "Ver Historial"""
 
 
 @admin.register(Cliente)
@@ -183,4 +198,4 @@ class MyModelAdmin(ImportExportModelAdmin):
 
 
 #admin.site.register(Pedido, PedidoAdmin)
-admin.site.register(DetallePedido, DetallePedidoAdmin)
+#admin.site.register(DetallePedido, DetallePedidoAdmin)
