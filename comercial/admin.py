@@ -17,7 +17,7 @@ admin.site.index_title = "Bienvenido al Portal de Administración Heavens"
 
 
 def safe_display(field_name):
-    def _display(obj):
+    def _display(admin_self, obj):  # Ahora acepta admin_self y obj
         try:
             value = getattr(obj, field_name)
             # Si es un campo relacionado y tiene un atributo representativo
@@ -35,21 +35,22 @@ def safe_display(field_name):
 class PedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
     import_error_display = ("message", "row", "traceback")
     resource_class = PedidoResource
-    search_fields = ('id',)
+    search_fields = ('id',)  # Busca por ID del pedido
     search_help_text = 'Escribe el número de pedido para filtrar.'
 
     campos_no_editables = [field.name for field in Pedido._meta.fields if not field.editable]
     campos_editables = [field.name for field in Pedido._meta.fields if field.editable]
 
-    exclude_fields = []  # Aquí se listan campos a excluir, si es necesario
+    exclude_fields = []  # Aquí puedes agregar campos a excluir
     dynamic_fields = []
 
+    # Crear funciones dinámicas para los campos y agregarlas al administrador
     for field in campos_editables + campos_no_editables:
         if field not in exclude_fields:
             dynamic_fields.append(field)
-            locals()[f"display_{field}"] = safe_display(field)
+            locals()[f"display_{field}"] = safe_display(field)  # Generamos las funciones dinámicamente
 
-    # Agregar todos los campos dinámicos generados más el historial
+    # Asignamos al list_display todos los campos dinámicos generados, más el historial
     list_display = [f"display_{field}" for field in dynamic_fields] + ['view_history']
 
     def view_history(self, obj):
@@ -60,6 +61,7 @@ class PedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('destino', 'cliente', 'exportadora')
+
 
 
 class DetallePedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
