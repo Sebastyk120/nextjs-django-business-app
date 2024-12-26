@@ -210,61 +210,84 @@ class EliminarPedidoForm(forms.ModelForm):
 class DetallePedidoForm(forms.ModelForm):
     class Meta:
         model = DetallePedido
-        fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'tipo_caja', 'referencia', 'lleva_contenedor',
-                  'tarifa_utilidad', 'valor_x_caja_usd', 'observaciones', 'precio_proforma']
+        fields = [
+            'pedido',
+            'fruta',
+            'presentacion',
+            'cajas_solicitadas',
+            'tipo_caja',
+            'referencia',
+            'lleva_contenedor',
+            'tarifa_utilidad',
+            'valor_x_caja_usd',
+            'observaciones',
+            'precio_proforma'
+        ]
 
     def __init__(self, *args, **kwargs):
-        pedido_id = kwargs.pop('pedido_id', None)
-        if not pedido_id:
-            raise ValidationError("El pedido_id es requerido")
+        """
+        Ahora esperamos un objeto `pedido` en lugar de `pedido_id`.
+        """
+        self.pedido = kwargs.pop('pedido', None)
+        if not self.pedido:
+            raise ValidationError("El objeto 'pedido' es requerido para crear el detalle.")
 
-        super(DetallePedidoForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
+        # Deshabilitamos el campo 'pedido' para que no sea editable
         self.fields['pedido'].disabled = True
+        # Mostramos el pedido en el form (opcional, si quieres que se vea o no)
+        self.fields['pedido'].initial = self.pedido
 
-        try:
-            pedido = Pedido.objects.get(id=pedido_id)
-        except Pedido.DoesNotExist:
-            raise ValidationError(f"No se encontró el pedido con id {pedido_id}")
+        # Filtramos la fruta por el cliente del pedido
+        cliente = self.pedido.cliente
+        self.fields['fruta'].queryset = Fruta.objects.filter(
+            clientepresentacion__cliente=cliente
+        ).distinct()
 
-        cliente = pedido.cliente
-
-        # Filtrar las frutas según el cliente del pedido
-        self.fields['fruta'].queryset = Fruta.objects.filter(clientepresentacion__cliente=cliente).distinct()
-
+        # Si el formulario se está enviando (POST) y el usuario ya seleccionó fruta
         if 'fruta' in self.data:
             try:
                 fruta_id = int(self.data.get('fruta'))
                 self.fields['presentacion'].queryset = Presentacion.objects.filter(
-                    clientepresentacion__cliente=cliente, clientepresentacion__fruta_id=fruta_id)
+                    clientepresentacion__cliente=cliente,
+                    clientepresentacion__fruta_id=fruta_id
+                )
             except (ValueError, TypeError):
-                pass  # Invalid input; ignore and fallback to empty queryset
-        elif self.instance.pk:
+                pass
+        # Si el formulario está en edición (por ejemplo, si hay una instancia o en un
+        # caso de validación fallida), podemos filtrar en base a la fruta asociada
+        elif self.instance.pk and self.instance.fruta:
             self.fields['presentacion'].queryset = Presentacion.objects.filter(
-                clientepresentacion__cliente=cliente, clientepresentacion__fruta=self.instance.fruta
+                clientepresentacion__cliente=cliente,
+                clientepresentacion__fruta=self.instance.fruta
             )
 
+        # Manejo de la referencia según fruta, presentación y tipo de caja
         if 'presentacion' in self.data and 'tipo_caja' in self.data:
             try:
                 presentacion_id = int(self.data.get('presentacion'))
                 tipo_caja_id = int(self.data.get('tipo_caja'))
                 fruta_id = int(self.data.get('fruta'))
+                # Filtramos referencias por presentacion, tipo_caja, fruta y la exportadora del pedido
                 self.fields['referencia'].queryset = Referencias.objects.filter(
                     presentacionreferencia__presentacion_id=presentacion_id,
                     presentacionreferencia__tipo_caja_id=tipo_caja_id,
                     presentacionreferencia__fruta_id=fruta_id,
-                    exportador=pedido.exportadora
+                    exportador=self.pedido.exportadora
                 )
             except (ValueError, TypeError):
-                pass  # Invalid input; ignore and fallback to empty queryset
+                pass
         elif self.instance.pk:
+            # Si ya existe una instancia, filtramos en base a los datos guardados
             self.fields['referencia'].queryset = Referencias.objects.filter(
                 presentacionreferencia__presentacion=self.instance.presentacion,
                 presentacionreferencia__tipo_caja=self.instance.tipo_caja,
                 presentacionreferencia__fruta=self.instance.fruta,
-                exportador=pedido.exportadora
+                exportador=self.pedido.exportadora
             )
 
-        # Añadir clases CSS a los widgets
+        # Opcional: Añadir clases CSS a los widgets
         self.fields['fruta'].widget.attrs.update({'class': 'fruta-select'})
         self.fields['presentacion'].widget.attrs.update({'class': 'presentacion-select'})
         self.fields['tipo_caja'].widget.attrs.update({'class': 'tipo-caja-select'})
@@ -276,8 +299,12 @@ class DetallePedidoForm(forms.ModelForm):
 
         if referencia:
             if referencia.cantidad_pallet_con_contenedor in [0, None] and lleva_contenedor:
-                self.add_error('lleva_contenedor',
-                               "No puede seleccionar Si porque la referencia no permite contenedor.")
+                self.add_error(
+                    'lleva_contenedor',
+                    "No puede seleccionar 'Si' porque la referencia no permite contenedor."
+                )
+        # Aseguramos que el objeto Pedido realmente sea el que estamos usando
+        cleaned_data['pedido'] = self.pedido
         return cleaned_data
 
 

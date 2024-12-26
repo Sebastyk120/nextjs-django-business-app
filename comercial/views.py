@@ -1484,8 +1484,9 @@ class ExportarCarteraClienteEnviarView(TemplateView):
                 grupo = 'Juan_Matas'
 
             # Obtener los datos y los totales con el filtro de fecha, cliente, intermediario y grupo
-            pedidos, totales = obtener_datos_con_totales_enviar_cliente(fecha_inicial, fecha_final, cliente, intermediario,
-                                                                 grupo)
+            pedidos, totales = obtener_datos_con_totales_enviar_cliente(fecha_inicial, fecha_final, cliente,
+                                                                        intermediario,
+                                                                        grupo)
 
             # Crear el archivo Excel
             ruta_archivo = 'estado_cuenta_clientes.xlsx'
@@ -2283,34 +2284,43 @@ class DetallePedidoListView(SingleTableView):
 
 # --------------------------- Formulario Crear  Detalle De Pedido ----------------------------------------------------
 @method_decorator(login_required, name='dispatch')
-@method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'),
+                                   login_url=reverse_lazy('home')),
+                  name='dispatch')
 class DetallePedidoCreateView(CreateView):
     model = DetallePedido
     form_class = DetallePedidoForm
     template_name = 'detalle_pedido_crear.html'
     success_url = '/detalle_pedido_crear/'
 
-    def get_initial(self):
-        initial = super().get_initial()
-        pedido_id = self.kwargs.get('pedido_id') or self.request.GET.get('pedido_id')
-        if pedido_id:
-            initial['pedido'] = pedido_id
-        return initial
-
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        pedido_id = self.kwargs.get('pedido_id')
-        kwargs['pedido_id'] = pedido_id
+
+        pedido_id = self.kwargs.get('pedido_id') or self.request.GET.get('pedido_id')
+        if pedido_id:
+            # Cargamos el pedido usando select_related para traer 'cliente' y 'exportadora'
+            # en la misma consulta y así no hacemos más queries después.
+            pedido = get_object_or_404(
+                Pedido.objects.select_related('cliente', 'exportadora'),
+                pk=pedido_id
+            )
+            # Pasamos el objeto pedido directamente al formulario
+            kwargs['pedido'] = pedido
+
         return kwargs
 
     def form_valid(self, form):
-        pedido_id = self.kwargs.get('pedido_id')
-        if pedido_id:
-            pedido = get_object_or_404(Pedido.objects.select_related('cliente'), pk=pedido_id)
-            form.instance.pedido = pedido
-
+        """
+        Si el formulario es válido, definimos el pedido
+        y guardamos el detalle.
+        """
+        pedido = form.cleaned_data['pedido']  # ya viene cargado en el form
         self.object = form.save()
-        messages.success(self.request, f'El detalle de pedido para el pedido {pedido_id} se ha creado exitosamente.')
+
+        messages.success(
+            self.request,
+            f'El detalle de pedido para el pedido {pedido.id} se ha creado exitosamente.'
+        )
         return JsonResponse({'success': True})
 
     def form_invalid(self, form):
