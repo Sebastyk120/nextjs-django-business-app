@@ -2285,61 +2285,42 @@ class DetallePedidoListView(SingleTableView):
 # --------------------------- Formulario Crear  Detalle De Pedido ----------------------------------------------------
 @method_decorator(login_required, name='dispatch')
 @method_decorator(user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home')), name='dispatch')
-class DetallePedidoUpdateView(UpdateView):
+class DetallePedidoCreateView(CreateView):
     model = DetallePedido
-    form_class = EditarDetallePedidoForm
-    template_name = 'detalle_pedido_editar.html'
-    success_url = reverse_lazy('pedido_detalle_list')
+    form_class = DetallePedidoForm
+    template_name = 'detalle_pedido_crear.html'
+    success_url = '/detalle_pedido_crear/'
 
-    def get_object(self, queryset=None):
-        detallepedido_id = self.request.GET.get('detallepedido_id') or self.request.POST.get('detallepedido_id')
-        if not detallepedido_id:
-            raise ValueError("No se proporcionó 'detallepedido_id'")
-        return get_object_or_404(DetallePedido, id=int(detallepedido_id))
+    def get_initial(self):
+        initial = super().get_initial()
+        pedido_id = self.kwargs.get('pedido_id') or self.request.GET.get('pedido_id')
+        if pedido_id:
+            initial['pedido'] = pedido_id
+        return initial
 
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        pedido_id = request.GET.get('pedido_id')
-        form = self.form_class(instance=self.object, pedido_id=pedido_id)
-        context = self.get_context_data(form=form)
-
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            form_html = render_to_string(self.template_name, context, request=request)
-            return JsonResponse({'form': form_html})
-        else:
-            return self.render_to_response(context)
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        pedido_id = request.POST.get('pedido_id')
-        form = self.form_class(request.POST, instance=self.object, pedido_id=pedido_id)
-        context = self.get_context_data(form=form)
-
-        if form.is_valid():
-            return self.form_valid(form, pedido_id)
-        else:
-            return self.form_invalid(form, context)
+    def get_form_kwargs(self):
+        kwargs = super(DetallePedidoCreateView, self).get_form_kwargs()
+        kwargs['pedido_id'] = self.kwargs.get('pedido_id')
+        return kwargs
 
     @transaction.atomic
-    def form_valid(self, form, pedido_id):
-        self.object = form.save()
-        messages.success(self.request,
-                         f"El detalle para el pedido {pedido_id} se ha editado exitosamente.")
-        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': True})
-        else:
-            return super().form_valid(form)
+    def form_valid(self, form):
+        pedido_id = self.kwargs.get('pedido_id')
+        if pedido_id:
+            pedido = get_object_or_404(Pedido, pk=pedido_id)
+            form.instance.pedido = pedido
 
-    def form_invalid(self, form, context):
-        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            form_html = render_to_string(self.template_name, context, request=self.request)
-            return JsonResponse({'success': False, 'form_html': form_html})
-        else:
-            return self.render_to_response(context)
+        self.object = form.save()
+        messages.success(self.request, f'El detalle de pedido para el pedido {pedido_id} se ha creado exitosamente.')
+        return JsonResponse({'success': True})
+
+    def form_invalid(self, form):
+        errors = form.errors.as_json()
+        return JsonResponse({'success': False, 'error': errors})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['pedido_id'] = self.request.GET.get('pedido_id') or self.request.POST.get('pedido_id')
+        context['pedido_id'] = self.kwargs.get('pedido_id')
         return context
 
 
