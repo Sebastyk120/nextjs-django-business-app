@@ -519,12 +519,12 @@ class Pedido(models.Model):
     class Meta:
         ordering = ['-id']
 
-    """def __str__(self):
-        # Previene error si no hay pk o no hay cliente
-        pedido_id = self.id if self.pk else "N/A"
-        cliente_str = self.cliente.nombre if self.cliente_id else "Sin Cliente"
-        return f"Pedido: {pedido_id} - Cliente: {cliente_str}"""
-
+    def __str__(self):
+        try:
+            cliente_nombre = self.cliente.nombre
+        except (AttributeError, Cliente.DoesNotExist):
+            cliente_nombre = "Sin Cliente"
+        return f"Pedido: {self.id} - Cliente: {cliente_nombre}"
 
 class AutorizacionCancelacion(models.Model):
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, verbose_name="Pedido")
@@ -682,12 +682,23 @@ class DetallePedido(models.Model):
     class Meta:
         ordering = ['pedido', 'fruta']
 
-    """def __str__(self):
-        # Prevenimos error si cualquiera de los FKs no existe
-        pedido_str = f"Pedido {self.pedido_id}" if self.pedido_id else "Sin Pedido"
-        fruta_str = self.fruta.nombre if self.fruta_id else "Sin Fruta"
-        pres_str = self.presentacion.nombre if self.presentacion_id else "Sin Presentación"
-        return f"Detalle Pedido - {pedido_str} - {fruta_str} - {pres_str}"""
+    def __str__(self):
+        try:
+            pedido_id = self.pedido.id
+        except (AttributeError, Pedido.DoesNotExist):
+            pedido_id = "Sin Pedido"
+
+        try:
+            fruta_nombre = self.fruta.nombre
+        except (AttributeError, Fruta.DoesNotExist):
+            fruta_nombre = "Sin Fruta"
+
+        try:
+            presentacion_nombre = self.presentacion.nombre
+        except (AttributeError, Presentacion.DoesNotExist):
+            presentacion_nombre = "Sin Presentación"
+
+        return f"Detalle Pedido - Pedido {pedido_id} - Fruta: {fruta_nombre} - Presentación: {presentacion_nombre}"
 
 
 @receiver(pre_save, sender=DetallePedido)

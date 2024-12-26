@@ -2298,15 +2298,15 @@ class DetallePedidoCreateView(CreateView):
         return initial
 
     def get_form_kwargs(self):
-        kwargs = super(DetallePedidoCreateView, self).get_form_kwargs()
-        kwargs['pedido_id'] = self.kwargs.get('pedido_id')
+        kwargs = super().get_form_kwargs()
+        pedido_id = self.kwargs.get('pedido_id')
+        kwargs['pedido_id'] = pedido_id
         return kwargs
 
-    @transaction.atomic
     def form_valid(self, form):
         pedido_id = self.kwargs.get('pedido_id')
         if pedido_id:
-            pedido = get_object_or_404(Pedido, pk=pedido_id)
+            pedido = get_object_or_404(Pedido.objects.select_related('cliente'), pk=pedido_id)
             form.instance.pedido = pedido
 
         self.object = form.save()
