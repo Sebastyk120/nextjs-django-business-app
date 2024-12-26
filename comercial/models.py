@@ -519,12 +519,12 @@ class Pedido(models.Model):
     class Meta:
         ordering = ['-id']
 
-    def __str__(self):
+    """def __str__(self):
         try:
             cliente_nombre = self.cliente.nombre
         except (AttributeError, Cliente.DoesNotExist):
             cliente_nombre = "Sin Cliente"
-        return f"Pedido: {self.id} - Cliente: {cliente_nombre}"
+        return f"Pedido: {self.id} - Cliente: {cliente_nombre}"""
 
 class AutorizacionCancelacion(models.Model):
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, verbose_name="Pedido")
@@ -682,7 +682,7 @@ class DetallePedido(models.Model):
     class Meta:
         ordering = ['pedido', 'fruta']
 
-    def __str__(self):
+    """def __str__(self):
         try:
             pedido_id = self.pedido.id
         except (AttributeError, Pedido.DoesNotExist):
@@ -698,7 +698,7 @@ class DetallePedido(models.Model):
         except (AttributeError, Presentacion.DoesNotExist):
             presentacion_nombre = "Sin Presentación"
 
-        return f"Detalle Pedido - Pedido {pedido_id} - Fruta: {fruta_nombre} - Presentación: {presentacion_nombre}"
+        return f"Detalle Pedido - Pedido {pedido_id} - Fruta: {fruta_nombre} - Presentación: {presentacion_nombre}"""
 
 
 @receiver(pre_save, sender=DetallePedido)
