@@ -6,7 +6,6 @@
 </div>
 <form action="{% url 'detalle_pedido_crear' pedido_id %}" method="post">
     {% csrf_token %}
-    <input type="hidden" id="pedido_id" name="pedido_id" value="{{ pedido_id }}">
     <div class="modal-body">
         <div id="errores">
             {% for field, error_list in form.errors.items %}
@@ -68,3 +67,68 @@
         <button type="submit" class="btn btn-primary">Guardar</button>
     </div>
 </form>
+
+<script>
+    $(document).ready(function () {
+        function updatePresentaciones() {
+            var frutaId = $('#id_fruta').val();
+            var pedidoId = {{ pedido_id }};
+
+            if (frutaId) {
+                $.ajax({
+                    url: "{% url 'filtrar_presentaciones' %}",
+                    data: {
+                        'fruta_id': frutaId,
+                        'pedido_id': pedidoId
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        var presentacionSelect = $('#id_presentacion');
+                        presentacionSelect.empty();
+                        presentacionSelect.append('<option value="">Seleccione una presentación</option>');
+                        $.each(data.presentaciones, function (key, value) {
+                            presentacionSelect.append('<option value="' + value.id + '">' + value.nombre + ' (' + value.kilos + ' kg)</option>');
+                        });
+                    }
+                });
+            } else {
+                $('#id_presentacion').empty();
+            }
+        }
+
+        function updateReferencias() {
+            var frutaId = $('#id_fruta').val();
+            var presentacionId = $('#id_presentacion').val();
+            var tipoCajaId = $('#id_tipo_caja').val();
+            var pedidoId = {{ pedido_id }};
+
+            if (frutaId && presentacionId && tipoCajaId) {
+                $.ajax({
+                    url: "{% url 'ajax_load_referencias' %}",
+                    data: {
+                        'presentacion_id': presentacionId,
+                        'tipo_caja_id': tipoCajaId,
+                        'fruta_id': frutaId,
+                        'pedido_id': pedidoId
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        var referenciaSelect = $('#id_referencia');
+                        referenciaSelect.empty();
+                        referenciaSelect.append('<option value="">Seleccione una referencia</option>');
+                        $.each(data.referencias, function (key, value) {
+                            referenciaSelect.append('<option value="' + value.id + '">' + value.nombre + '</option>');
+                        });
+                    }
+                });
+            } else {
+                $('#id_referencia').empty();
+            }
+        }
+
+        $('#id_fruta').change(updatePresentaciones);
+        $('#id_presentacion, #id_tipo_caja').change(updateReferencias);
+    });
+</script>
+
+
