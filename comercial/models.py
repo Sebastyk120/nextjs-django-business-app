@@ -60,27 +60,40 @@ class Contenedor(models.Model):
 class Referencias(models.Model):
     nombre = models.CharField(max_length=255, verbose_name="Referencia")
     referencia_nueva = models.CharField(max_length=255, verbose_name="Referencia Nueva", blank=True, null=True)
-    contenedor = models.ForeignKey(Contenedor, on_delete=models.CASCADE, verbose_name="Contenedor", null=True,
-                                   blank=True)
-    cant_contenedor = models.IntegerField(validators=[MinValueValidator(0)],
-                                          verbose_name="Cantidad Cajas En Contenedor", null=True, blank=True)
-    precio = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
-                                 verbose_name="Precio", null=True, blank=True)
+    contenedor = models.ForeignKey(
+        Contenedor, on_delete=models.CASCADE, verbose_name="Contenedor", null=True, blank=True
+    )
+    cant_contenedor = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        verbose_name="Cantidad Cajas En Contenedor", null=True, blank=True
+    )
+    precio = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Precio", null=True, blank=True
+    )
     exportador = models.ForeignKey(Exportador, on_delete=models.CASCADE, verbose_name="Exportador")
-    cantidad_pallet_con_contenedor = models.IntegerField(validators=[MinValueValidator(0)],
-                                                         verbose_name="Cajas Pallet Contenedor", null=True, blank=True)
-    cantidad_pallet_sin_contenedor = models.IntegerField(validators=[MinValueValidator(0)],
-                                                         verbose_name="Cajas Pallet Sin Contenedor", null=True,
-                                                         blank=True)
-    porcentaje_peso_bruto = models.DecimalField(max_digits=5, decimal_places=2,
-                                                validators=[MinValueValidator(0), MaxValueValidator(100)],
-                                                verbose_name="Porcentaje de Peso Bruto", )
+    cantidad_pallet_con_contenedor = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        verbose_name="Cajas Pallet Contenedor", null=True, blank=True
+    )
+    cantidad_pallet_sin_contenedor = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        verbose_name="Cajas Pallet Sin Contenedor", null=True, blank=True
+    )
+    porcentaje_peso_bruto = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name="Porcentaje de Peso Bruto",
+    )
 
     class Meta:
         ordering = ['nombre']
 
     def __str__(self):
-        return f"{self.nombre} -N {self.referencia_nueva} - {self.exportador}"
+        # Verificamos que exista `exportador` (FK)
+        exportador_str = self.exportador.nombre if self.exportador_id else "SIN EXPORTADOR"
+        ref_nueva_str = self.referencia_nueva if self.referencia_nueva else "N/A"
+        return f"{self.nombre} -N {ref_nueva_str} - {exportador_str}"
 
 
 class Cliente(models.Model):
@@ -143,7 +156,11 @@ class ClientePresentacion(models.Model):
         unique_together = ('cliente', 'presentacion', 'fruta')
 
     def __str__(self):
-        return f'{self.cliente.nombre} -P: {self.presentacion.nombre} - {self.presentacion.kilos} - {self.fruta}'
+        # Manejar ausencia de IDs
+        cliente_str = self.cliente.nombre if self.cliente_id else "SIN CLIENTE"
+        pres_str = f"{self.presentacion.nombre} - {self.presentacion.kilos}" if self.presentacion_id else "SIN PRESENTACIÓN"
+        fruta_str = self.fruta.nombre if self.fruta_id else "SIN FRUTA"
+        return f'{cliente_str} -P: {pres_str} - {fruta_str}'
 
 
 class PresentacionReferencia(models.Model):
@@ -155,13 +172,19 @@ class PresentacionReferencia(models.Model):
     class Meta:
         ordering = ['fruta']
         constraints = [
-            UniqueConstraint(fields=['presentacion', 'referencia', 'fruta', 'tipo_caja'],
-                             name='unique_presentacion_referencia')
+            UniqueConstraint(
+                fields=['presentacion', 'referencia', 'fruta', 'tipo_caja'],
+                name='unique_presentacion_referencia'
+            )
         ]
 
-
     def __str__(self):
-        return f"Refe: {self.referencia} Presen: {self.presentacion} -Marca: {self.tipo_caja} -Fruta {self.fruta}"
+        # Chequear todos los FKs para evitar errores
+        ref_str = str(self.referencia) if self.referencia_id else "Sin Ref"
+        pres_str = str(self.presentacion) if self.presentacion_id else "Sin Present."
+        fruta_str = str(self.fruta) if self.fruta_id else "Sin Fruta"
+        caja_str = str(self.tipo_caja) if self.tipo_caja_id else "Sin Caja"
+        return f"Refe: {ref_str} Presen: {pres_str} -Marca: {caja_str} -Fruta {fruta_str}"
 
 
 class AgenciaCarga(models.Model):
@@ -497,7 +520,10 @@ class Pedido(models.Model):
         ordering = ['-id']
 
     def __str__(self):
-        return f'Pedido: {self.id} - Cliente: {self.cliente.nombre}'
+        # Previene error si no hay pk o no hay cliente
+        pedido_id = self.id if self.pk else "N/A"
+        cliente_str = self.cliente.nombre if self.cliente_id else "Sin Cliente"
+        return f"Pedido: {pedido_id} - Cliente: {cliente_str}"
 
 
 class AutorizacionCancelacion(models.Model):
@@ -514,7 +540,14 @@ class AutorizacionCancelacion(models.Model):
         ordering = ['pedido']
 
     def __str__(self):
-        return f'Pedido: {self.pedido.id} - Solicitante: {self.usuario_solicitante} Autorizador: {self.usuario_autorizador}'
+        # Manejo de IDs y campos nulos
+        pedido_str = self.pedido_id if self.pedido_id else "N/A"
+        solic_str = self.usuario_solicitante.username if self.usuario_solicitante_id else "SIN SOLICITANTE"
+        auto_str = (
+            self.usuario_autorizador.username
+            if self.usuario_autorizador_id else "SIN AUTORIZADOR"
+        )
+        return f'Pedido: {pedido_str} - Solicitante: {solic_str} Autorizador: {auto_str}'
 
 
 class DetallePedido(models.Model):
@@ -650,7 +683,11 @@ class DetallePedido(models.Model):
         ordering = ['pedido', 'fruta']
 
     def __str__(self):
-        return f"Detalle Pedido - {self.pedido} - {self.fruta} - {self.presentacion}"
+        # Prevenimos error si cualquiera de los FKs no existe
+        pedido_str = f"Pedido {self.pedido_id}" if self.pedido_id else "Sin Pedido"
+        fruta_str = self.fruta.nombre if self.fruta_id else "Sin Fruta"
+        pres_str = self.presentacion.nombre if self.presentacion_id else "Sin Presentación"
+        return f"Detalle Pedido - {pedido_str} - {fruta_str} - {pres_str}"
 
 
 @receiver(pre_save, sender=DetallePedido)
