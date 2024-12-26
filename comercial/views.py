@@ -6,9 +6,7 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
-
 import pandas as pd
-from django.conf import settings
 from django.contrib import messages
 from django.utils import timezone
 from django.contrib.auth.decorators import user_passes_test, login_required
