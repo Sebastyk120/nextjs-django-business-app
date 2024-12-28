@@ -533,7 +533,7 @@ class AutorizacionCancelacion(models.Model):
     fecha_autorizacion = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ['-id']
+        ordering = ['pedido']
 
     def __str__(self):
         # Manejo de IDs y campos nulos
