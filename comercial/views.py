@@ -918,49 +918,21 @@ class ExportarPedidosView(TemplateView):
 @user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def exportar_pedidos_excel(request):
     """
-    Exporta los Pedidos junto con sus DetallePedido de forma "inline" en el mismo libro de Excel.
+    Exporta los Pedidos junto con sus DetallePedido de forma "inline" en el mismo libro de Excel utilizando iterator() para optimizar el uso de memoria.
     """
-    # 1. Creamos un buffer de memoria para almacenar el archivo Excel
+    # 1. Crear un buffer en memoria para almacenar el archivo Excel
     output = io.BytesIO()
 
-    # 2. Creamos el Workbook en modo write_only para optimizar memoria
+    # 2. Crear el Workbook en modo write_only para optimizar el uso de memoria
     workbook = Workbook(write_only=True)
     ws = workbook.create_sheet(title='Pedidos y Detalles')
 
-    # 3. Definimos estilos para los encabezados
+    # 3. Definir estilos para los encabezados
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill(start_color="1e0c42", end_color="1e0c42", fill_type="solid")
+    sub_header_fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
 
-    # 4. Obtenemos los filtros de fecha desde el formulario (si existen)
-    fecha_inicial_str = request.POST.get('fecha_inicial')
-    fecha_final_str = request.POST.get('fecha_final')
-
-    # 4.1 Convertimos y filtramos
-    if fecha_inicial_str and fecha_final_str:
-        fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-        fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
-        pedidos_qs = (Pedido.objects
-                      .filter(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final)
-                      .prefetch_related('detallepedido_set'))
-    else:
-        pedidos_qs = Pedido.objects.prefetch_related('detallepedido_set').all()
-
-    # 5. Para evitar cargar miles de pedidos en memoria, puedes usar `.iterator()`.
-    #    Sin embargo, hay que tener en cuenta que `iterator()` *NO* es compatible
-    #    con `prefetch_related`. Si tu dataset es muy grande y no quieres saturar
-    #    la memoria, podrías optar por un approach paginado, o bien sacrificar
-    #    el prefetch para reducir la memoria de la lista principal de Pedidos:
-    #
-    #    pedidos_qs = pedidos_qs.iterator()
-    #
-    #    Y luego para cada pedido, si requieres sus detalles, hacer un acceso
-    #    manual: DetallePedido.objects.filter(pedido=pedido)...
-    #
-    #    En este ejemplo, asumamos que `prefetch_related` es importante para no
-    #    disparar consultas repetidas, y que el tamaño de datos es manejable.
-
-    # 6. Definimos los encabezados para Pedido
-    #    (Son los campos que ya usabas en tu export actual)
+    # 4. Definir los encabezados para Pedido y DetallePedido
     pedido_headers = [
         'No', 'Cliente', 'Semana', 'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada',
         'Exportador', 'Subexportadora', 'Intermediario', 'Dias Cartera', 'AWB',
@@ -977,8 +949,6 @@ def exportar_pedidos_excel(request):
         'Observaciones Tracking', 'Observaciones Generales'
     ]
 
-    # 7. Definimos los encabezados para DetallePedido
-    #    (Basados en la vista que tenías para DetallePedido)
     detalle_headers = [
         'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
         'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
@@ -987,17 +957,54 @@ def exportar_pedidos_excel(request):
         'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
     ]
 
-    # 8. Para cada Pedido, escribimos primero una cabecera para “PEDIDO”, luego
-    #    el row con la info del Pedido, luego una cabecera para “DETALLE” y
-    #    finalmente todos los DetallePedido asociados a ese Pedido.
+    # 5. Obtener filtros de fecha desde el formulario (si existen)
+    fecha_inicial_str = request.POST.get('fecha_inicial')
+    fecha_final_str = request.POST.get('fecha_final')
+
+    # 6. Filtrar los pedidos por fecha_entrega dentro del rango o exportar todos
+    try:
+        if fecha_inicial_str and fecha_final_str:
+            fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
+            fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
+            pedidos_qs = Pedido.objects.filter(
+                fecha_entrega__gte=fecha_inicial,
+                fecha_entrega__lte=fecha_final
+            ).select_related(
+                'cliente',
+                'exportadora',
+                'subexportadora',
+                'intermediario',
+                'destino',
+                'aerolinea',
+                'agencia_carga',
+                'responsable_reserva'
+            ).iterator(chunk_size=50)
+        else:
+            pedidos_qs = Pedido.objects.select_related(
+                'cliente',
+                'exportadora',
+                'subexportadora',
+                'intermediario',
+                'destino',
+                'aerolinea',
+                'agencia_carga',
+                'responsable_reserva'
+            ).iterator(chunk_size=50)
+    except ValueError:
+        return HttpResponse("Fecha inválida", status=400)
+
+    # 7. Iterar sobre cada Pedido utilizando iterator()
     for pedido in pedidos_qs:
-        # 8.1 Fila de cabecera para "Pedido" (opcional, para que sea más legible)
+        # 7.1 Escribir una fila de separación para mayor legibilidad (opcional)
+        ws.append([])
+
+        # 7.2 Escribir una fila de cabecera para "Pedido"
         row_header_pedido = [WriteOnlyCell(ws, value='PEDIDO:')]
         row_header_pedido[0].font = Font(bold=True, color='FFFFFF')
         row_header_pedido[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
         ws.append(row_header_pedido)
 
-        # 8.2 Fila de títulos para los campos del Pedido
+        # 7.3 Escribir los encabezados de Pedido
         pedido_header_cells = []
         for titulo in pedido_headers:
             celda = WriteOnlyCell(ws, value=titulo)
@@ -1006,14 +1013,14 @@ def exportar_pedidos_excel(request):
             pedido_header_cells.append(celda)
         ws.append(pedido_header_cells)
 
-        # 8.3 Fila con la información del Pedido
+        # 7.4 Escribir los datos del Pedido
         pedido_data = [
             pedido.pk,
             pedido.cliente.nombre if pedido.cliente else '',
             pedido.semana,
-            pedido.fecha_solicitud,
-            pedido.fecha_entrega,
-            pedido.fecha_llegada,
+            pedido.fecha_solicitud.strftime('%Y-%m-%d') if pedido.fecha_solicitud else '',
+            pedido.fecha_entrega.strftime('%Y-%m-%d') if pedido.fecha_entrega else '',
+            pedido.fecha_llegada.strftime('%Y-%m-%d') if pedido.fecha_llegada else '',
             pedido.exportadora.nombre if pedido.exportadora else '',
             pedido.subexportadora.nombre if pedido.subexportadora else '',
             pedido.intermediario.nombre if pedido.intermediario else '',
@@ -1031,8 +1038,8 @@ def exportar_pedidos_excel(request):
             pedido.total_piezas_solicitadas,
             pedido.total_piezas_enviadas,
             pedido.peso_awb,
-            pedido.eta.replace(tzinfo=None) if pedido.eta else '',
-            pedido.etd.replace(tzinfo=None) if pedido.etd else '',
+            pedido.eta.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta else '',
+            pedido.etd.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.etd else '',
             pedido.variedades,
             pedido.descuento,
             pedido.nota_credito_no,
@@ -1041,9 +1048,9 @@ def exportar_pedidos_excel(request):
             pedido.valor_pagado_cliente_usd,
             pedido.estado_factura,
             pedido.utilidad_bancaria_usd,
-            pedido.fecha_pago,
+            pedido.fecha_pago.strftime('%Y-%m-%d') if pedido.fecha_pago else '',
             pedido.trm_monetizacion,
-            pedido.fecha_monetizacion,
+            pedido.fecha_monetizacion.strftime('%Y-%m-%d') if pedido.fecha_monetizacion else '',
             pedido.tasa_representativa_usd_diaria,
             pedido.trm_cotizacion,
             pedido.diferencia_por_abono,
@@ -1052,27 +1059,27 @@ def exportar_pedidos_excel(request):
             pedido.valor_total_utilidad_usd,
             pedido.valor_utilidad_pesos,
             pedido.documento_cobro_utilidad,
-            pedido.fecha_pago_utilidad,
+            pedido.fecha_pago_utilidad.strftime('%Y-%m-%d') if pedido.fecha_pago_utilidad else '',
             pedido.estado_utilidad,
             pedido.estado_cancelacion,
             pedido.estado_documentos,
             pedido.estatus_reserva,
             pedido.termo,
             pedido.diferencia_peso_factura_awb,
-            pedido.eta_real.replace(tzinfo=None) if pedido.eta_real else '',
+            pedido.eta_real.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta_real else '',
             pedido.estado_pedido,
             pedido.observaciones_tracking,
             pedido.observaciones
         ]
         ws.append(pedido_data)
 
-        # 8.4 Fila de cabecera para "DETALLES" (opcional, para que sea más legible)
+        # 7.5 Escribir una fila de cabecera para "DetallePedido"
         row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
         row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
         row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
         ws.append(row_header_detalle)
 
-        # 8.5 Fila de títulos para los DetallePedido
+        # 7.6 Escribir los encabezados de DetallePedido
         detalle_header_cells = []
         for titulo in detalle_headers:
             celda = WriteOnlyCell(ws, value=titulo)
@@ -1081,16 +1088,21 @@ def exportar_pedidos_excel(request):
             detalle_header_cells.append(celda)
         ws.append(detalle_header_cells)
 
-        # 8.6 Agregamos las filas para cada DetallePedido de este Pedido
-        #     Gracias a `prefetch_related('detallepedido_set')`, ya tenemos
-        #     en memoria los detalles sin necesidad de más consultas. Si en vez
-        #     de prefetch usáramos `iterator()`, podríamos hacer una consulta
-        #     tipo: DetallePedido.objects.filter(pedido=pedido).iterator()
-        detalles = pedido.detallepedido_set.all()
-        for detalle in detalles:
+        # 7.7 Obtener y escribir los DetallePedido asociados al Pedido actual usando iterator()
+        detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
+            'pedido__exportadora',
+            'pedido__cliente',
+            'fruta',
+            'presentacion',
+            'tipo_caja',
+            'referencia'
+            # Agrega otros campos relacionados según sea necesario
+        ).iterator(chunk_size=50)
+
+        for detalle in detalles_qs:
             detalle_row = [
                 detalle.pedido.pk,
-                detalle.pedido.fecha_entrega,
+                detalle.pedido.fecha_entrega.strftime('%Y-%m-%d') if detalle.pedido.fecha_entrega else '',
                 detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
                 detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
                 detalle.fruta.nombre if detalle.fruta else '',
@@ -1119,14 +1131,11 @@ def exportar_pedidos_excel(request):
             ]
             ws.append(detalle_row)
 
-        # (Opcional) Añadir una fila en blanco para separar visualmente
-        ws.append([])
-
-    # 9. Guardamos el Workbook en el buffer
+    # 8. Guardar el Workbook en el buffer
     workbook.save(output)
     output.seek(0)
 
-    # 10. Creamos la respuesta HTTP con el archivo Excel
+    # 9. Crear la respuesta HTTP con el archivo Excel
     response = HttpResponse(
         output,
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
