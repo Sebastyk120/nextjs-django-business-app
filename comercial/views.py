@@ -3162,13 +3162,9 @@ def exportar_referencias_juan(request):
 # ----------------------------- Actualizar los días de Vencimiento ----------------------------------------------------
 
 def actualizar_dias_de_vencimiento_todos(request):
-    """
-    Vista para actualizar 'dias_de_vencimiento' de todos los Pedidos.
-    """
     batch_size = 150  # Tamaño del lote para evitar consumo excesivo de memoria
     pedidos = Pedido.objects.all().iterator(chunk_size=batch_size)
     pedidos_para_actualizar = []
-
     hoy = timezone.now().date()
 
     for pedido in pedidos:
@@ -3222,10 +3218,48 @@ def actualizar_tasas(request):
 
 # --------------------------------- Funciones Etnico  ---------------------------------------------------------
 def actualizar_dias_de_vencimiento_etnico(request):
-    pedidos = Pedido.objects.all()
+    batch_size = 150  # Tamaño del lote para evitar consumo excesivo de memoria
+    pedidos = Pedido.objects.all().iterator(chunk_size=batch_size)
+    pedidos_para_actualizar = []
+    hoy = timezone.now().date()
+
     for pedido in pedidos:
-        pedido.actualizar_dias_de_vencimiento()
-    messages.success(request, 'Días de vencimiento actualizados para todos los pedidos.')
+        if pedido.fecha_pago is not None:
+            pedido.dias_de_vencimiento = 0
+        else:
+            if isinstance(pedido.fecha_entrega, datetime):
+                fecha_entrega = pedido.fecha_entrega.date()
+            elif isinstance(pedido.fecha_entrega, date):
+                fecha_entrega = pedido.fecha_entrega
+            else:
+                # Opcional: Manejar casos inesperados sin detener el proceso completo
+                pedido.dias_de_vencimiento = None
+                pedidos_para_actualizar.append(pedido)
+                continue
+
+            fecha_entrega += timedelta(days=pedido.dias_cartera)
+            pedido.dias_de_vencimiento = (hoy - fecha_entrega).days
+
+        pedidos_para_actualizar.append(pedido)
+
+        # Actualizar en bloque cada 'batch_size' Pedidos
+        if len(pedidos_para_actualizar) >= batch_size:
+            with transaction.atomic():
+                Pedido.objects.bulk_update(
+                    pedidos_para_actualizar,
+                    ['dias_de_vencimiento']
+                )
+            pedidos_para_actualizar = []
+
+    # Actualizar cualquier Pedido restante
+    if pedidos_para_actualizar:
+        with transaction.atomic():
+            Pedido.objects.bulk_update(
+                pedidos_para_actualizar,
+                ['dias_de_vencimiento']
+            )
+
+    messages.success(request, "Todos los pedidos se han actualizado correctamente.")
     return redirect('pedido_list_etnico')
 
 
@@ -3239,10 +3273,48 @@ def actualizar_tasas_etnico(request):
 
 # --------------------------------- Funciones Fieldex  ---------------------------------------------------------
 def actualizar_dias_de_vencimiento_fieldex(request):
-    pedidos = Pedido.objects.all()
+    batch_size = 150  # Tamaño del lote para evitar consumo excesivo de memoria
+    pedidos = Pedido.objects.all().iterator(chunk_size=batch_size)
+    pedidos_para_actualizar = []
+    hoy = timezone.now().date()
+
     for pedido in pedidos:
-        pedido.actualizar_dias_de_vencimiento()
-    messages.success(request, 'Días de vencimiento actualizados para todos los pedidos.')
+        if pedido.fecha_pago is not None:
+            pedido.dias_de_vencimiento = 0
+        else:
+            if isinstance(pedido.fecha_entrega, datetime):
+                fecha_entrega = pedido.fecha_entrega.date()
+            elif isinstance(pedido.fecha_entrega, date):
+                fecha_entrega = pedido.fecha_entrega
+            else:
+                # Opcional: Manejar casos inesperados sin detener el proceso completo
+                pedido.dias_de_vencimiento = None
+                pedidos_para_actualizar.append(pedido)
+                continue
+
+            fecha_entrega += timedelta(days=pedido.dias_cartera)
+            pedido.dias_de_vencimiento = (hoy - fecha_entrega).days
+
+        pedidos_para_actualizar.append(pedido)
+
+        # Actualizar en bloque cada 'batch_size' Pedidos
+        if len(pedidos_para_actualizar) >= batch_size:
+            with transaction.atomic():
+                Pedido.objects.bulk_update(
+                    pedidos_para_actualizar,
+                    ['dias_de_vencimiento']
+                )
+            pedidos_para_actualizar = []
+
+    # Actualizar cualquier Pedido restante
+    if pedidos_para_actualizar:
+        with transaction.atomic():
+            Pedido.objects.bulk_update(
+                pedidos_para_actualizar,
+                ['dias_de_vencimiento']
+            )
+
+    messages.success(request, "Todos los pedidos se han actualizado correctamente.")
     return redirect('pedido_list_fieldex')
 
 
@@ -3256,10 +3328,48 @@ def actualizar_tasas_fieldex(request):
 
 # --------------------------------- Funciones Juan_matas  ---------------------------------------------------------
 def actualizar_dias_de_vencimiento_juan(request):
-    pedidos = Pedido.objects.all()
+    batch_size = 150  # Tamaño del lote para evitar consumo excesivo de memoria
+    pedidos = Pedido.objects.all().iterator(chunk_size=batch_size)
+    pedidos_para_actualizar = []
+    hoy = timezone.now().date()
+
     for pedido in pedidos:
-        pedido.actualizar_dias_de_vencimiento()
-    messages.success(request, 'Días de vencimiento actualizados para todos los pedidos.')
+        if pedido.fecha_pago is not None:
+            pedido.dias_de_vencimiento = 0
+        else:
+            if isinstance(pedido.fecha_entrega, datetime):
+                fecha_entrega = pedido.fecha_entrega.date()
+            elif isinstance(pedido.fecha_entrega, date):
+                fecha_entrega = pedido.fecha_entrega
+            else:
+                # Opcional: Manejar casos inesperados sin detener el proceso completo
+                pedido.dias_de_vencimiento = None
+                pedidos_para_actualizar.append(pedido)
+                continue
+
+            fecha_entrega += timedelta(days=pedido.dias_cartera)
+            pedido.dias_de_vencimiento = (hoy - fecha_entrega).days
+
+        pedidos_para_actualizar.append(pedido)
+
+        # Actualizar en bloque cada 'batch_size' Pedidos
+        if len(pedidos_para_actualizar) >= batch_size:
+            with transaction.atomic():
+                Pedido.objects.bulk_update(
+                    pedidos_para_actualizar,
+                    ['dias_de_vencimiento']
+                )
+            pedidos_para_actualizar = []
+
+    # Actualizar cualquier Pedido restante
+    if pedidos_para_actualizar:
+        with transaction.atomic():
+            Pedido.objects.bulk_update(
+                pedidos_para_actualizar,
+                ['dias_de_vencimiento']
+            )
+
+    messages.success(request, "Todos los pedidos se han actualizado correctamente.")
     return redirect('pedido_list_juan')
 
 

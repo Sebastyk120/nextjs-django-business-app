@@ -513,12 +513,14 @@ class Pedido(models.Model):
         else:
             print("Error al acceder al banco de la republica")
 
-    indexes = [
-        models.Index(fields=['cliente']),
-        models.Index(fields=['exportadora']),
-        models.Index(fields=['awb']),
-        models.Index(fields=['numero_factura']),
-    ]
+    class Meta:
+        ordering = ['-id']
+        indexes = [
+            models.Index(fields=['cliente']),
+            models.Index(fields=['exportadora']),
+            models.Index(fields=['awb']),
+            models.Index(fields=['numero_factura']),
+        ]
 
 class AutorizacionCancelacion(models.Model):
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, verbose_name="Pedido")
