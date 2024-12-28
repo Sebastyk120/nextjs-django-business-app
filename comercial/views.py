@@ -1,14 +1,11 @@
 import io
 import math
-import os
-import tempfile
 import time
+import pandas as pd
 from collections import defaultdict
 from datetime import datetime, timedelta, date
 from decimal import Decimal
-import pandas as pd
 from django.contrib import messages
-from django.utils import timezone
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
 from django.db.models import Q, Sum
@@ -16,10 +13,12 @@ from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django_tables2 import SingleTableView
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.workbook import Workbook
@@ -795,16 +794,19 @@ class ExportarDetallesPedidoView(TemplateView):
 @login_required
 @user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def exportar_detalles_pedidos_excel(request):
-    # Crear un libro de trabajo de Excel
-    temp_file_path = os.path.join(tempfile.gettempdir(), 'Detalles_Pedidos.xlsx')
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Detalles De Pedidos General'
-    font = Font(bold=True, color="FFFFFF")
-    fill = PatternFill(start_color="251819", end_color="251819", fill_type="solid")
+    # Crear un buffer en memoria
+    output = io.BytesIO()
 
-    # Encabezados
-    columns = [
+    # Crear un libro de trabajo en modo write_only
+    workbook = Workbook(write_only=True)
+    worksheet = workbook.create_sheet(title='Detalles De Pedidos General')
+
+    # Definir estilos para los encabezados
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="251819", end_color="251819", fill_type="solid")
+
+    # Definir las columnas
+    columnas = [
         'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
         'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
         'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
@@ -812,29 +814,48 @@ def exportar_detalles_pedidos_excel(request):
         'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
     ]
 
-    for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
+    # Crear la fila de encabezados con estilos
+    encabezado = []
+    for titulo in columnas:
+        celda = WriteOnlyCell(worksheet, value=titulo)
+        celda.font = header_font
+        celda.fill = header_fill
+        encabezado.append(celda)
+    worksheet.append(encabezado)
 
-    # Filtrar datos basado en el rango de número de pedido
+    # Obtener filtros desde el request
     numero_pedido_inicial = request.POST.get('numero_pedido_inicial')
     numero_pedido_final = request.POST.get('numero_pedido_final')
 
     try:
-        # Convertir a enteros, si es posible
         if numero_pedido_inicial and numero_pedido_final:
             numero_pedido_inicial = int(numero_pedido_inicial)
             numero_pedido_final = int(numero_pedido_final)
-            queryset = DetallePedido.objects.filter(pedido__pk__range=(numero_pedido_inicial, numero_pedido_final))
+            queryset = DetallePedido.objects.select_related(
+                'pedido__exportadora',
+                'pedido__cliente',
+                'fruta',
+                'presentacion',
+                'tipo_caja',
+                'referencia',
+                # Agrega otros campos relacionados según sea necesario
+            ).filter(pedido__pk__range=(numero_pedido_inicial, numero_pedido_final))
         else:
-            queryset = DetallePedido.objects.all()
+            queryset = DetallePedido.objects.select_related(
+                'pedido__exportadora',
+                'pedido__cliente',
+                'fruta',
+                'presentacion',
+                'tipo_caja',
+                'referencia',
+                # Agrega otros campos relacionados según sea necesario
+            ).all()
     except ValueError:
         return HttpResponse("Número de pedido inválido", status=400)
 
-    # Agregar datos al libro de trabajo
-    for row_num, detalle in enumerate(queryset, start=2):
-        row = [
+    # Iterar sobre el queryset sin almacenar en caché
+    for detalle in queryset.iterator():
+        fila = [
             detalle.pedido.pk,
             detalle.pedido.fecha_entrega,
             detalle.pedido.exportadora.nombre,
@@ -863,21 +884,18 @@ def exportar_detalles_pedidos_excel(request):
             detalle.precio_proforma,
             detalle.observaciones,
         ]
-        for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+        worksheet.append(fila)
 
-    # Guardar el archivo temporalmente y enviar la respuesta
-    try:
-        workbook.save(temp_file_path)
-        with open(temp_file_path, 'rb') as file:
-            response = HttpResponse(
-                file.read(),
-                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-            response['Content-Disposition'] = 'attachment; filename="Detalles_Pedidos.xlsx"'
-    finally:
-        # Asegurar que el archivo temporal se elimine
-        os.remove(temp_file_path)
+    # Guardar el libro de trabajo en el buffer
+    workbook.save(output)
+    output.seek(0)
+
+    # Crear la respuesta HTTP con el archivo Excel
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="Detalles_Pedidos.xlsx"'
 
     return response
 
@@ -897,55 +915,99 @@ class ExportarPedidosView(TemplateView):
 
 # Exportacion de Pedidos OpenPyXl >
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def exportar_pedidos_excel(request):
-    # Crear un libro de trabajo de Excel
+    """
+    Exporta los Pedidos junto con sus DetallePedido de forma "inline" en el mismo libro de Excel.
+    """
+    # 1. Creamos un buffer de memoria para almacenar el archivo Excel
     output = io.BytesIO()
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Pedidos Totales General'
-    font = Font(bold=True, color="FFFFFF")
-    fill = PatternFill(start_color="1e0c42", end_color="1e0c42", fill_type="solid")
 
-    # Encabezados
-    columns = ['No', 'Cliente', 'Semana',
-               'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada', 'Exportador', 'Subexportadora', 'Intermediario',
-               'Dias Cartera',
-               'AWB', 'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
-               'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado', 'Peso Bruto Enviado',
-               'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB', 'ETA', 'ETD', 'Variedades', 'Descuento Comercial',
-               'No NC', 'Motivo NC', 'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura',
-               'Utilidad Bancaria USD', 'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
-               'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Utilidad USD',
-               'Valor Utilidad Pesos', 'Documento Cobro Utilidad', 'Fecha Pago Utilidad', 'Estado Utilidad',
-               'Estado Cancelacion', 'Estado Documentos', 'Estado Reserva', 'Termo', 'Diferencia AWB/Factura',
-               'Eta Real',
-               'Estado Pedido', 'Observaciones Tracking',
-               'Observaciones Generales']
+    # 2. Creamos el Workbook en modo write_only para optimizar memoria
+    workbook = Workbook(write_only=True)
+    ws = workbook.create_sheet(title='Pedidos y Detalles')
 
-    for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
+    # 3. Definimos estilos para los encabezados
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="1e0c42", end_color="1e0c42", fill_type="solid")
 
+    # 4. Obtenemos los filtros de fecha desde el formulario (si existen)
     fecha_inicial_str = request.POST.get('fecha_inicial')
     fecha_final_str = request.POST.get('fecha_final')
 
-    # Verificar si las fechas están vacías o nulas
+    # 4.1 Convertimos y filtramos
     if fecha_inicial_str and fecha_final_str:
-        # Convertir las cadenas de fecha en objetos datetime
         fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
         fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
-
-        # Filtrar los pedidos por fecha_entrega dentro del rango
-        queryset = Pedido.objects.filter(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final)
+        pedidos_qs = (Pedido.objects
+                      .filter(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final)
+                      .prefetch_related('detallepedido_set'))
     else:
-        # Si las fechas están vacías, exportar todos los pedidos
-        queryset = Pedido.objects.all()
+        pedidos_qs = Pedido.objects.prefetch_related('detallepedido_set').all()
 
-    # Agregar datos al libro de trabajo
-    for row_num, pedido in enumerate(queryset, start=2):
-        row = [
+    # 5. Para evitar cargar miles de pedidos en memoria, puedes usar `.iterator()`.
+    #    Sin embargo, hay que tener en cuenta que `iterator()` *NO* es compatible
+    #    con `prefetch_related`. Si tu dataset es muy grande y no quieres saturar
+    #    la memoria, podrías optar por un approach paginado, o bien sacrificar
+    #    el prefetch para reducir la memoria de la lista principal de Pedidos:
+    #
+    #    pedidos_qs = pedidos_qs.iterator()
+    #
+    #    Y luego para cada pedido, si requieres sus detalles, hacer un acceso
+    #    manual: DetallePedido.objects.filter(pedido=pedido)...
+    #
+    #    En este ejemplo, asumamos que `prefetch_related` es importante para no
+    #    disparar consultas repetidas, y que el tamaño de datos es manejable.
+
+    # 6. Definimos los encabezados para Pedido
+    #    (Son los campos que ya usabas en tu export actual)
+    pedido_headers = [
+        'No', 'Cliente', 'Semana', 'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada',
+        'Exportador', 'Subexportadora', 'Intermediario', 'Dias Cartera', 'AWB',
+        'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
+        'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado',
+        'Peso Bruto Enviado', 'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB',
+        'ETA', 'ETD', 'Variedades', 'Descuento Comercial', 'No NC', 'Motivo NC',
+        'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura', 'Utilidad Bancaria USD',
+        'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
+        'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
+        'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
+        'Fecha Pago Utilidad', 'Estado Utilidad', 'Estado Cancelacion', 'Estado Documentos',
+        'Estado Reserva', 'Termo', 'Diferencia AWB/Factura', 'Eta Real', 'Estado Pedido',
+        'Observaciones Tracking', 'Observaciones Generales'
+    ]
+
+    # 7. Definimos los encabezados para DetallePedido
+    #    (Basados en la vista que tenías para DetallePedido)
+    detalle_headers = [
+        'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
+        'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
+        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
+        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
+        'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
+    ]
+
+    # 8. Para cada Pedido, escribimos primero una cabecera para “PEDIDO”, luego
+    #    el row con la info del Pedido, luego una cabecera para “DETALLE” y
+    #    finalmente todos los DetallePedido asociados a ese Pedido.
+    for pedido in pedidos_qs:
+        # 8.1 Fila de cabecera para "Pedido" (opcional, para que sea más legible)
+        row_header_pedido = [WriteOnlyCell(ws, value='PEDIDO:')]
+        row_header_pedido[0].font = Font(bold=True, color='FFFFFF')
+        row_header_pedido[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+        ws.append(row_header_pedido)
+
+        # 8.2 Fila de títulos para los campos del Pedido
+        pedido_header_cells = []
+        for titulo in pedido_headers:
+            celda = WriteOnlyCell(ws, value=titulo)
+            celda.font = header_font
+            celda.fill = header_fill
+            pedido_header_cells.append(celda)
+        ws.append(pedido_header_cells)
+
+        # 8.3 Fila con la información del Pedido
+        pedido_data = [
             pedido.pk,
             pedido.cliente.nombre if pedido.cliente else '',
             pedido.semana,
@@ -996,23 +1058,80 @@ def exportar_pedidos_excel(request):
             pedido.estado_documentos,
             pedido.estatus_reserva,
             pedido.termo,
-            pedido.eta_real.replace(tzinfo=None) if pedido.eta_real else '',
             pedido.diferencia_peso_factura_awb,
+            pedido.eta_real.replace(tzinfo=None) if pedido.eta_real else '',
             pedido.estado_pedido,
             pedido.observaciones_tracking,
             pedido.observaciones
         ]
-        for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+        ws.append(pedido_data)
 
+        # 8.4 Fila de cabecera para "DETALLES" (opcional, para que sea más legible)
+        row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
+        row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
+        row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+        ws.append(row_header_detalle)
+
+        # 8.5 Fila de títulos para los DetallePedido
+        detalle_header_cells = []
+        for titulo in detalle_headers:
+            celda = WriteOnlyCell(ws, value=titulo)
+            celda.font = header_font
+            celda.fill = header_fill
+            detalle_header_cells.append(celda)
+        ws.append(detalle_header_cells)
+
+        # 8.6 Agregamos las filas para cada DetallePedido de este Pedido
+        #     Gracias a `prefetch_related('detallepedido_set')`, ya tenemos
+        #     en memoria los detalles sin necesidad de más consultas. Si en vez
+        #     de prefetch usáramos `iterator()`, podríamos hacer una consulta
+        #     tipo: DetallePedido.objects.filter(pedido=pedido).iterator()
+        detalles = pedido.detallepedido_set.all()
+        for detalle in detalles:
+            detalle_row = [
+                detalle.pedido.pk,
+                detalle.pedido.fecha_entrega,
+                detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
+                detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
+                detalle.fruta.nombre if detalle.fruta else '',
+                detalle.presentacion.nombre if detalle.presentacion else '',
+                detalle.cajas_solicitadas,
+                detalle.presentacion_peso,
+                detalle.kilos,
+                detalle.cajas_enviadas,
+                detalle.kilos_enviados,
+                detalle.diferencia,
+                detalle.tipo_caja.nombre if detalle.tipo_caja else '',
+                detalle.referencia.nombre if detalle.referencia else '',
+                detalle.stickers,
+                detalle.lleva_contenedor,
+                detalle.referencia_contenedor,
+                detalle.cantidad_contenedores,
+                detalle.tarifa_utilidad,
+                detalle.valor_x_caja_usd,
+                detalle.valor_x_producto,
+                detalle.no_cajas_nc,
+                detalle.valor_nota_credito_usd,
+                detalle.afecta_utilidad,
+                detalle.valor_total_utilidad_x_producto,
+                detalle.precio_proforma,
+                detalle.observaciones,
+            ]
+            ws.append(detalle_row)
+
+        # (Opcional) Añadir una fila en blanco para separar visualmente
+        ws.append([])
+
+    # 9. Guardamos el Workbook en el buffer
     workbook.save(output)
     output.seek(0)
 
-    # Crear una respuesta HTTP con el archivo de Excel
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="pedido_general.xlsx"'
-
+    # 10. Creamos la respuesta HTTP con el archivo Excel
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles.xlsx"'
     return response
 
 
@@ -3549,29 +3668,28 @@ def export_pdf_resumen_semana(request):
 def exportar_pdf_resumen_pedido(request, pedido_id):
     start_time = time.time()
 
+    # Diccionario para almacenar los tiempos de las operaciones
+    tiempos = {}
+
     # Obtener el pedido y los detalles del pedido
     pedido = get_object_or_404(Pedido, pk=pedido_id)
     if not request.user.groups.filter(name=pedido.exportadora.nombre).exists():
         return HttpResponseForbidden("No tienes permiso para ver estos detalles del pedido")
-    step_time = time.time()
-    print(f"Tiempo para verificar permisos y obtener el pedido: {step_time - start_time:.2f} segundos")
+    tiempos['verificar_permisos'] = time.time() - start_time
 
     # Filtrar los detalles del pedido
     detalles = DetallePedido.objects.filter(pedido=pedido).select_related('pedido')
-    step_time_2 = time.time()
-    print(f"Tiempo para filtrar los detalles del pedido: {step_time_2 - step_time:.2f} segundos")
+    tiempos['filtrar_detalles'] = time.time() - start_time - tiempos['verificar_permisos']
 
     # Calcular totales
     total_cajas_solicitadas = detalles.aggregate(Sum('cajas_solicitadas'))['cajas_solicitadas__sum']
     total_peso_bruto = sum(detalle.calcular_peso_bruto() for detalle in detalles)
     total_piezas = math.ceil(sum(detalle.calcular_no_piezas() for detalle in detalles))
-    step_time_3 = time.time()
-    print(f"Tiempo para calcular los totales: {step_time_3 - step_time_2:.2f} segundos")
+    tiempos['calcular_totales'] = time.time() - start_time - tiempos['verificar_permisos'] - tiempos['filtrar_detalles']
 
     # Generar la tabla con los datos filtrados
     table = ResumenPedidoTable(detalles)
-    step_time_4 = time.time()
-    print(f"Tiempo para generar la tabla: {step_time_4 - step_time_3:.2f} segundos")
+    tiempos['generar_tabla'] = time.time() - start_time - tiempos['verificar_permisos'] - tiempos['filtrar_detalles'] - tiempos['calcular_totales']
 
     # Contexto para la plantilla
     context = {
@@ -3584,8 +3702,7 @@ def exportar_pdf_resumen_pedido(request, pedido_id):
 
     # Renderizar la plantilla a HTML
     html_string = render_to_string('resumen_pedido_pdf.html', context, request=request)
-    step_time_5 = time.time()
-    print(f"Tiempo para renderizar la plantilla a HTML: {step_time_5 - step_time_4:.2f} segundos")
+    tiempos['renderizar_html'] = time.time() - start_time - tiempos['verificar_permisos'] - tiempos['filtrar_detalles'] - tiempos['calcular_totales'] - tiempos['generar_tabla']
 
     # Función para convertir HTML a PDF
     def convert_html_to_pdf(source_html, output_filename):
@@ -3596,8 +3713,7 @@ def exportar_pdf_resumen_pedido(request, pedido_id):
 
     # Generar el PDF
     result = convert_html_to_pdf(html_string, 'output.pdf')
-    step_time_6 = time.time()
-    print(f"Tiempo para generar el PDF: {step_time_6 - step_time_5:.2f} segundos")
+    tiempos['generar_pdf'] = time.time() - start_time - tiempos['verificar_permisos'] - tiempos['filtrar_detalles'] - tiempos['calcular_totales'] - tiempos['generar_tabla'] - tiempos['renderizar_html']
 
     if result:
         return HttpResponse("Error al generar el PDF", status=500)
@@ -3605,9 +3721,11 @@ def exportar_pdf_resumen_pedido(request, pedido_id):
     with open('output.pdf', 'rb') as pdf:
         response = HttpResponse(pdf.read(), content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="resumen_pedido_{pedido_id}.pdf"'
-        end_time = time.time()
-        print(f"Tiempo total: {end_time - start_time:.2f} segundos")
-        return response
+        tiempos['tiempo_total'] = time.time() - start_time
+
+    # Opcional: los tiempos se pueden guardar o imprimir al final si es necesario
+    return response
+
 
 
 # -------------------- Vista para filtro de exportacion Seguimiento o Tracking -----------------------------------------

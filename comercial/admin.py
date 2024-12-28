@@ -121,15 +121,12 @@ class DetallePedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
     # Filtro
     list_filter = ('fruta', 'presentacion', 'tipo_caja', 'referencia')
     # Orden
-    ordering = ('pedido__id',)  # Ordena primero por ID de pedido
+    ordering = ('-pedido__id',)  # Ordena primero por ID de pedido
     # Búsqueda
     search_fields = (
         'pedido__id',
-        'fruta__nombre',
-        'presentacion__nombre',
-        'referencia__nombre',
     )
-    search_help_text = 'Buscar por # de pedido, nombre de fruta, presentación o referencia.'
+    search_help_text = 'Buscar únicamente por # de pedido.'
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -151,7 +148,6 @@ class DetallePedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
         return format_html('<a href="{}">Historial</a>', url)
 
     view_history.short_description = "Ver Historial"
-
 
 # ----------------------------------------------------------------------------
 # CLIENTE ADMIN
