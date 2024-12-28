@@ -1128,16 +1128,15 @@ def exportar_pedidos_excel(request):
                 ]
                 ws.append(detalle_row)
             # =============== FIN SECCIÓN DETALLES (CONDICIONAL) ===============
-
-            # 9. Guardar y retornar el archivo
-        workbook.save(output)
-        output.seek(0)
-        response = HttpResponse(
-            output,
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles.xlsx"'
-        return response
+    # 9. Guardar y retornar el archivo
+    workbook.save(output)
+    output.seek(0)
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles.xlsx"'
+    return response
 
 
 # ------------------ Exportacion de Pedidos Excel Etnico --------------------------------------------------------
