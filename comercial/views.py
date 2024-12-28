@@ -917,15 +917,12 @@ class ExportarPedidosView(TemplateView):
 @login_required
 @user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def exportar_pedidos_excel(request):
-    """
-    Exporta los Pedidos junto con sus DetallePedido de forma "inline" en el mismo libro de Excel utilizando iterator() para optimizar el uso de memoria.
-    """
     # 1. Crear un buffer en memoria para almacenar el archivo Excel
     output = io.BytesIO()
 
     # 2. Crear el Workbook en modo write_only para optimizar el uso de memoria
     workbook = Workbook(write_only=True)
-    ws = workbook.create_sheet(title='Pedidos y Detalles')
+    ws = workbook.create_sheet(title='Pedidos')
 
     # 3. Definir estilos para los encabezados
     header_font = Font(bold=True, color="FFFFFF")
@@ -957,11 +954,14 @@ def exportar_pedidos_excel(request):
         'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
     ]
 
-    # 5. Obtener filtros de fecha desde el formulario (si existen)
+    # 5. Verificar si el usuario incluyó detalles
+    incluir_detalles = request.POST.get('incluir_detalles') == 'true'
+
+    # 6. Obtener filtros de fecha desde el formulario (si existen)
     fecha_inicial_str = request.POST.get('fecha_inicial')
     fecha_final_str = request.POST.get('fecha_final')
 
-    # 6. Filtrar los pedidos por fecha_entrega dentro del rango o exportar todos
+    # 7. Filtrar los pedidos (mismo código que ya tienes)
     try:
         if fecha_inicial_str and fecha_final_str:
             fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
@@ -993,7 +993,6 @@ def exportar_pedidos_excel(request):
     except ValueError:
         return HttpResponse("Fecha inválida", status=400)
 
-    # 7. Iterar sobre cada Pedido utilizando iterator()
     for pedido in pedidos_qs:
         # 7.1 Escribir una fila de separación para mayor legibilidad (opcional)
         ws.append([])
@@ -1073,75 +1072,72 @@ def exportar_pedidos_excel(request):
         ]
         ws.append(pedido_data)
 
-        # 7.5 Escribir una fila de cabecera para "DetallePedido"
-        row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
-        row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
-        row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-        ws.append(row_header_detalle)
+        if incluir_detalles:
+            # Sólo si se marca 'incluir_detalles'
+            row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
+            row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
+            row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+            ws.append(row_header_detalle)
 
-        # 7.6 Escribir los encabezados de DetallePedido
-        detalle_header_cells = []
-        for titulo in detalle_headers:
-            celda = WriteOnlyCell(ws, value=titulo)
-            celda.font = header_font
-            celda.fill = header_fill
-            detalle_header_cells.append(celda)
-        ws.append(detalle_header_cells)
+            detalle_header_cells = []
+            for titulo in detalle_headers:
+                celda = WriteOnlyCell(ws, value=titulo)
+                celda.font = header_font
+                celda.fill = header_fill
+                detalle_header_cells.append(celda)
+            ws.append(detalle_header_cells)
 
-        # 7.7 Obtener y escribir los DetallePedido asociados al Pedido actual usando iterator()
-        detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
-            'pedido__exportadora',
-            'pedido__cliente',
-            'fruta',
-            'presentacion',
-            'tipo_caja',
-            'referencia'
-            # Agrega otros campos relacionados según sea necesario
-        ).iterator(chunk_size=50)
+            detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
+                'pedido__exportadora',
+                'pedido__cliente',
+                'fruta',
+                'presentacion',
+                'tipo_caja',
+                'referencia'
+            ).iterator(chunk_size=50)
 
-        for detalle in detalles_qs:
-            detalle_row = [
-                detalle.pedido.pk,
-                detalle.pedido.fecha_entrega.strftime('%Y-%m-%d') if detalle.pedido.fecha_entrega else '',
-                detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
-                detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
-                detalle.fruta.nombre if detalle.fruta else '',
-                detalle.presentacion.nombre if detalle.presentacion else '',
-                detalle.cajas_solicitadas,
-                detalle.presentacion_peso,
-                detalle.kilos,
-                detalle.cajas_enviadas,
-                detalle.kilos_enviados,
-                detalle.diferencia,
-                detalle.tipo_caja.nombre if detalle.tipo_caja else '',
-                detalle.referencia.nombre if detalle.referencia else '',
-                detalle.stickers,
-                detalle.lleva_contenedor,
-                detalle.referencia_contenedor,
-                detalle.cantidad_contenedores,
-                detalle.tarifa_utilidad,
-                detalle.valor_x_caja_usd,
-                detalle.valor_x_producto,
-                detalle.no_cajas_nc,
-                detalle.valor_nota_credito_usd,
-                detalle.afecta_utilidad,
-                detalle.valor_total_utilidad_x_producto,
-                detalle.precio_proforma,
-                detalle.observaciones,
-            ]
-            ws.append(detalle_row)
+            for detalle in detalles_qs:
+                detalle_row = [
+                    detalle.pedido.pk,
+                    detalle.pedido.fecha_entrega.strftime('%Y-%m-%d') if detalle.pedido.fecha_entrega else '',
+                    detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
+                    detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
+                    detalle.fruta.nombre if detalle.fruta else '',
+                    detalle.presentacion.nombre if detalle.presentacion else '',
+                    detalle.cajas_solicitadas,
+                    detalle.presentacion_peso,
+                    detalle.kilos,
+                    detalle.cajas_enviadas,
+                    detalle.kilos_enviados,
+                    detalle.diferencia,
+                    detalle.tipo_caja.nombre if detalle.tipo_caja else '',
+                    detalle.referencia.nombre if detalle.referencia else '',
+                    detalle.stickers,
+                    detalle.lleva_contenedor,
+                    detalle.referencia_contenedor,
+                    detalle.cantidad_contenedores,
+                    detalle.tarifa_utilidad,
+                    detalle.valor_x_caja_usd,
+                    detalle.valor_x_producto,
+                    detalle.no_cajas_nc,
+                    detalle.valor_nota_credito_usd,
+                    detalle.afecta_utilidad,
+                    detalle.valor_total_utilidad_x_producto,
+                    detalle.precio_proforma,
+                    detalle.observaciones,
+                ]
+                ws.append(detalle_row)
+            # =============== FIN SECCIÓN DETALLES (CONDICIONAL) ===============
 
-    # 8. Guardar el Workbook en el buffer
-    workbook.save(output)
-    output.seek(0)
-
-    # 9. Crear la respuesta HTTP con el archivo Excel
-    response = HttpResponse(
-        output,
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles.xlsx"'
-    return response
+            # 9. Guardar y retornar el archivo
+        workbook.save(output)
+        output.seek(0)
+        response = HttpResponse(
+            output,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles.xlsx"'
+        return response
 
 
 # ------------------ Exportacion de Pedidos Excel Etnico --------------------------------------------------------
