@@ -11,6 +11,7 @@ from django.db import models
 from django.db.models import Sum, UniqueConstraint
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
 from simple_history.models import HistoricalRecords
 from .choices import motivo_nota, estatus_reserva_list, estado_documentos_list
 
@@ -470,15 +471,12 @@ class Pedido(models.Model):
         # Llama al método save de la clase base para realizar el guardado
         super().save(*args, **kwargs)
 
-    def actualizar_variedades(self):
-        detalles = self.detallepedido_set.all()
-        frutas = set(detalle.fruta.nombre for detalle in detalles)
-        self.variedades = ", ".join(frutas)
-        self.save()
-
-    def actualizar_dias_de_vencimiento(self):
+    def calcular_dias_de_vencimiento(self):
+        """
+        Calcula el valor de 'dias_de_vencimiento' sin guardar el objeto.
+        """
         if self.fecha_pago is not None:
-            self.dias_de_vencimiento = 0
+            return 0
         else:
             if isinstance(self.fecha_entrega, datetime):
                 fecha_entrega = self.fecha_entrega.date()
@@ -488,10 +486,9 @@ class Pedido(models.Model):
                 raise ValueError("Tipo de fecha no soportado")
 
             fecha_entrega += timedelta(days=self.dias_cartera)
-            hoy = datetime.now().date()
+            hoy = timezone.now().date()
 
-            self.dias_de_vencimiento = (hoy - fecha_entrega).days
-        self.save()
+            return (hoy - fecha_entrega).days
 
     def actualizar_tasa_representativa(self):
         if self.fecha_monetizacion is None:
@@ -516,15 +513,12 @@ class Pedido(models.Model):
         else:
             print("Error al acceder al banco de la republica")
 
-    class Meta:
-        ordering = ['-id']
-
-    """def __str__(self):
-        try:
-            cliente_nombre = self.cliente.nombre
-        except (AttributeError, Cliente.DoesNotExist):
-            cliente_nombre = "Sin Cliente"
-        return f"Pedido: {self.id} - Cliente: {cliente_nombre}"""
+    indexes = [
+        models.Index(fields=['cliente']),
+        models.Index(fields=['exportadora']),
+        models.Index(fields=['awb']),
+        models.Index(fields=['numero_factura']),
+    ]
 
 class AutorizacionCancelacion(models.Model):
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, verbose_name="Pedido")
@@ -594,29 +588,33 @@ class DetallePedido(models.Model):
     history = HistoricalRecords()
 
     def save(self, *args, **kwargs):
-        # Configurar campos de otros modelos:
+        # 1) Guardar detalle antiguo (si existe) para comparar
+        detalle_anterior = None
+        if self.pk:
+            try:
+                detalle_anterior = DetallePedido.objects.get(pk=self.pk)
+            except DetallePedido.DoesNotExist:
+                detalle_anterior = None
+
+        # 2) Cálculos propios del detalle (igual que antes)
         if self.presentacion:
             self.presentacion_peso = self.presentacion.kilos
 
-        # Cálculos de kilos y diferencia
         self.kilos = self.presentacion_peso * self.cajas_solicitadas
         self.kilos_enviados = self.presentacion_peso * self.cajas_enviadas
         self.diferencia = self.cajas_solicitadas - self.cajas_enviadas
 
-        # Otros cálculos
         self.valor_x_producto = self.valor_x_caja_usd * self.cajas_enviadas
-        # Cálculo de Utilidad
-        if self.afecta_utilidad is True:  # Osea Seleccione SI
+        if self.afecta_utilidad is True:  # O sea "Sí"
             self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
-        elif self.afecta_utilidad is False:  # Osea Selecciona NO
+        elif self.afecta_utilidad is False:  # O sea "No"
             self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
-        else:  # afecta_utilidad is None Es Decir Descuento
+        else:  # None = "Descuento"
             self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
             self.valor_nota_credito_usd = 0
 
-        # Lógica de contenedor
         if self.lleva_contenedor and self.referencia and self.referencia.contenedor:
             self.referencia_contenedor = self.referencia.contenedor.nombre
             self.cantidad_contenedores = math.ceil(self.cajas_enviadas / self.referencia.cant_contenedor)
@@ -624,31 +622,143 @@ class DetallePedido(models.Model):
             self.referencia_contenedor = None
             self.cantidad_contenedores = None
 
-        # Lógica de stickers
         self.stickers = self.tipo_caja.nombre if self.tipo_caja else None
 
         super().save(*args, **kwargs)
 
-        # Realizar las totalizaciones al guardar el detalle del pedido
-        self.actualizar_totales_pedido()
+        # 3) Actualizar totales de manera incremental
+        if detalle_anterior is None:
+            # Caso: registro nuevo
+            self._actualizar_totales_incremental('add')
+        else:
+            # Caso: edición de registro existente
+            self._actualizar_totales_incremental('edit', detalle_anterior)
 
     def delete(self, *args, **kwargs):
-        # Realizar las totalizaciones al eliminar el detalle del pedido
-        super().delete(*args, **kwargs)
-        self.actualizar_totales_pedido()
+        # Guardamos valores actuales para restarlos del Pedido
+        detalle_copia = DetallePedido.objects.get(pk=self.pk)
 
-    def actualizar_totales_pedido(self):
+        super().delete(*args, **kwargs)
+
+        # Llamamos la actualización incremental pasando la copia
+        detalle_copia._actualizar_totales_incremental('delete')
+
+    def _incrementar_variedad(self):
+        """Agrega la fruta de este detalle al campo `variedades` del pedido, si aún no existe."""
         pedido = self.pedido
-        detalles = DetallePedido.objects.filter(pedido=pedido)
-        pedido.total_cajas_enviadas = sum(detalle.cajas_enviadas or 0 for detalle in detalles)
-        pedido.total_cajas_solicitadas = sum(detalle.cajas_solicitadas or 0 for detalle in detalles)
-        pedido.valor_total_factura_usd = sum(detalle.valor_x_producto or 0 for detalle in detalles)
-        pedido.valor_total_nota_credito_usd = sum(detalle.valor_nota_credito_usd or 0 for detalle in detalles)
-        pedido.valor_total_utilidad_usd = sum(detalle.valor_total_utilidad_x_producto or 0 for detalle in detalles)
-        pedido.total_piezas_solicitadas = math.ceil(sum(detalle.calcular_no_piezas() or 0 for detalle in detalles))
-        pedido.total_piezas_enviadas = math.ceil(sum(detalle.calcular_no_piezas_final() or 0 for detalle in detalles))
-        pedido.total_peso_bruto_solicitado = sum(detalle.calcular_peso_bruto() or 0 for detalle in detalles)
-        pedido.total_peso_bruto_enviado = sum(detalle.calcular_peso_bruto_final() or 0 for detalle in detalles)
+        fruta_nombre = self.fruta.nombre
+
+        # Convertir el campo `variedades` en un conjunto de frutas
+        if not pedido.variedades:
+            set_frutas = set()
+        else:
+            set_frutas = set(f.strip() for f in pedido.variedades.split(",") if f.strip())
+
+        # Si la fruta no estaba en el conjunto, la añadimos
+        if fruta_nombre not in set_frutas:
+            set_frutas.add(fruta_nombre)
+            # Convertimos el set a string ordenado (opcional, para mantener consistencia)
+            pedido.variedades = ", ".join(sorted(set_frutas))
+            pedido.save()
+
+    def _disminuir_variedad(self):
+        """
+        Elimina la fruta de este detalle del campo `variedades` del pedido
+        solo si no existe otro DetallePedido que la utilice.
+        """
+        pedido = self.pedido
+        fruta_nombre = self.fruta.nombre
+
+        # Verificamos si hay otros detalles usando esta fruta
+        existe_otro = DetallePedido.objects.filter(
+            pedido=pedido,
+            fruta=self.fruta
+        ).exclude(pk=self.pk).exists()
+
+        # Si NO hay más detalles con esta fruta, la removemos de `variedades`
+        if not existe_otro:
+            if not pedido.variedades:
+                return  # Evitamos errores si está vacío
+            set_frutas = set(f.strip() for f in pedido.variedades.split(",") if f.strip())
+            if fruta_nombre in set_frutas:
+                set_frutas.remove(fruta_nombre)
+                pedido.variedades = ", ".join(sorted(set_frutas))
+                pedido.save()
+
+    def _disminuir_variedad_fruta_previa(self, fruta_previa):
+        """
+        Similar a _disminuir_variedad, pero usando la fruta_previa.
+        """
+        pedido = self.pedido
+        fruta_nombre = fruta_previa.nombre
+        existe_otro = DetallePedido.objects.filter(
+            pedido=pedido,
+            fruta=fruta_previa
+        ).exclude(pk=self.pk).exists()
+
+        if not existe_otro:
+            set_frutas = set(f.strip() for f in (pedido.variedades or "").split(",") if f.strip())
+            if fruta_nombre in set_frutas:
+                set_frutas.remove(fruta_nombre)
+                pedido.variedades = ", ".join(sorted(set_frutas))
+                pedido.save()
+
+    def _actualizar_totales_incremental(self, operacion, detalle_anterior=None):
+        """
+        Ajusta los totales del pedido según la operación:
+        - 'add': Nuevo detalle
+        - 'edit': Actualización del detalle
+        - 'delete': Eliminación del detalle
+        """
+        pedido = self.pedido
+
+        # 1) Obtenemos las diferencias (delta) de cada campo
+        cajas_enviadas_delta = self.cajas_enviadas or 0
+        cajas_solicitadas_delta = self.cajas_solicitadas or 0
+        valor_x_producto_delta = self.valor_x_producto or 0
+        valor_nota_delta = self.valor_nota_credito_usd or 0
+        valor_utilidad_delta = self.valor_total_utilidad_x_producto or 0
+        piezas_solicitadas_delta = math.ceil(self.calcular_no_piezas() or 0)
+        piezas_enviadas_delta = math.ceil(self.calcular_no_piezas_final() or 0)
+        peso_bruto_solicitado_delta = self.calcular_peso_bruto()
+        peso_bruto_enviado_delta = self.calcular_peso_bruto_final()
+
+        if operacion == 'edit' and detalle_anterior:
+            # Calculamos la diferencia entre lo nuevo y lo viejo
+            cajas_enviadas_delta -= (detalle_anterior.cajas_enviadas or 0)
+            cajas_solicitadas_delta -= (detalle_anterior.cajas_solicitadas or 0)
+            valor_x_producto_delta -= (detalle_anterior.valor_x_producto or 0)
+            valor_nota_delta -= (detalle_anterior.valor_nota_credito_usd or 0)
+            valor_utilidad_delta -= (detalle_anterior.valor_total_utilidad_x_producto or 0)
+            piezas_solicitadas_delta -= math.ceil(detalle_anterior.calcular_no_piezas() or 0)
+            piezas_enviadas_delta -= math.ceil(detalle_anterior.calcular_no_piezas_final() or 0)
+            peso_bruto_solicitado_delta -= detalle_anterior.calcular_peso_bruto()
+            peso_bruto_enviado_delta -= detalle_anterior.calcular_peso_bruto_final()
+
+        elif operacion == 'delete':
+            # En 'delete', todo lo que era este detalle se resta del Pedido
+            cajas_enviadas_delta = -(self.cajas_enviadas or 0)
+            cajas_solicitadas_delta = -(self.cajas_solicitadas or 0)
+            valor_x_producto_delta = -(self.valor_x_producto or 0)
+            valor_nota_delta = -(self.valor_nota_credito_usd or 0)
+            valor_utilidad_delta = -(self.valor_total_utilidad_x_producto or 0)
+            piezas_solicitadas_delta = -math.ceil(self.calcular_no_piezas() or 0)
+            piezas_enviadas_delta = -math.ceil(self.calcular_no_piezas_final() or 0)
+            peso_bruto_solicitado_delta = -self.calcular_peso_bruto()
+            peso_bruto_enviado_delta = -self.calcular_peso_bruto_final()
+
+        # 2) Aplicamos esos deltas al Pedido
+        pedido.total_cajas_enviadas = (pedido.total_cajas_enviadas or 0) + cajas_enviadas_delta
+        pedido.total_cajas_solicitadas = (pedido.total_cajas_solicitadas or 0) + cajas_solicitadas_delta
+        pedido.valor_total_factura_usd = (pedido.valor_total_factura_usd or 0) + valor_x_producto_delta
+        pedido.valor_total_nota_credito_usd = (pedido.valor_total_nota_credito_usd or 0) + valor_nota_delta
+        pedido.valor_total_utilidad_usd = (pedido.valor_total_utilidad_usd or 0) + valor_utilidad_delta
+        pedido.total_piezas_solicitadas = (pedido.total_piezas_solicitadas or 0) + piezas_solicitadas_delta
+        pedido.total_piezas_enviadas = (pedido.total_piezas_enviadas or 0) + piezas_enviadas_delta
+        pedido.total_peso_bruto_solicitado = (pedido.total_peso_bruto_solicitado or 0) + peso_bruto_solicitado_delta
+        pedido.total_peso_bruto_enviado = (pedido.total_peso_bruto_enviado or 0) + peso_bruto_enviado_delta
+
+        # 3) Guardamos el pedido con los cambios incrementales
         pedido.save()
 
     def calcular_peso_bruto(self):
@@ -681,24 +791,26 @@ class DetallePedido(models.Model):
 
     class Meta:
         ordering = ['pedido', 'fruta']
+        indexes = [
+            models.Index(fields=['pedido']),
+            models.Index(fields=['fruta']),
+            models.Index(fields=['referencia']),
+            models.Index(fields=['presentacion']),
+        ]
 
-    """def __str__(self):
-        try:
-            pedido_id = self.pedido.id
-        except (AttributeError, Pedido.DoesNotExist):
-            pedido_id = "Sin Pedido"
-
-        try:
-            fruta_nombre = self.fruta.nombre
-        except (AttributeError, Fruta.DoesNotExist):
-            fruta_nombre = "Sin Fruta"
-
-        try:
-            presentacion_nombre = self.presentacion.nombre
-        except (AttributeError, Presentacion.DoesNotExist):
-            presentacion_nombre = "Sin Presentación"
-
-        return f"Detalle Pedido - Pedido {pedido_id} - Fruta: {fruta_nombre} - Presentación: {presentacion_nombre}"""
+def actualizar_inventario(referencia):
+    Inventario = import_module('inventarios.models').Inventario
+    inventario, created = Inventario.objects.get_or_create(
+        numero_item=referencia,
+        defaults={'ventas': 0, 'venta_contenedor': 0}
+    )
+    inventario.ventas = DetallePedido.objects.filter(
+        referencia=referencia
+    ).aggregate(Sum('cajas_enviadas'))['cajas_enviadas__sum'] or 0
+    inventario.venta_contenedor = DetallePedido.objects.filter(
+        referencia=referencia
+    ).aggregate(Sum('cantidad_contenedores'))['cantidad_contenedores__sum'] or 0
+    inventario.save()
 
 
 @receiver(pre_save, sender=DetallePedido)
@@ -708,6 +820,14 @@ def almacenar_referencia_antes_de_guardar(sender, instance, **kwargs):
         instance._referencia_previa = referencia_previa.referencia
     except ObjectDoesNotExist:
         instance._referencia_previa = None
+
+@receiver(pre_save, sender=DetallePedido)
+def almacenar_fruta_previa(sender, instance, **kwargs):
+    try:
+        detalle_previo = sender.objects.get(pk=instance.pk)
+        instance._fruta_previa = detalle_previo.fruta
+    except sender.DoesNotExist:
+        instance._fruta_previa = None
 
 
 @receiver(post_save, sender=DetallePedido)
@@ -725,20 +845,24 @@ def actualizar_inventario_despues_de_guardar(sender, instance, **kwargs):
     # Actualizar inventario para la referencia nueva
     actualizar_inventario(referencia_nueva)
 
+@receiver(post_save, sender=DetallePedido)
+def detalle_pedido_post_save(sender, instance, created, **kwargs):
+    """
+    Se llama cada vez que se guarda un DetallePedido.
+    - Si es nuevo, incrementa la fruta directamente.
+    - Si se edita, revisa si cambió la fruta (usando _referencia_previa o algo similar).
+    """
+    if created:
+        # DetallePedido nuevo -> simplemente incrementamos la fruta
+        instance._incrementar_variedad()
+    else:
+        # DetallePedido existente -> verificar si la fruta cambió
+        fruta_previa = getattr(instance, '_fruta_previa', None)
+        if fruta_previa and fruta_previa != instance.fruta:
+            # Disminuimos la fruta anterior, incrementamos la nueva
+            instance._disminuir_variedad_fruta_previa(fruta_previa)
+            instance._incrementar_variedad()
 
-def actualizar_inventario(referencia):
-    Inventario = import_module('inventarios.models').Inventario
-    inventario, created = Inventario.objects.get_or_create(
-        numero_item=referencia,
-        defaults={'ventas': 0, 'venta_contenedor': 0}
-    )
-    inventario.ventas = DetallePedido.objects.filter(
-        referencia=referencia
-    ).aggregate(Sum('cajas_enviadas'))['cajas_enviadas__sum'] or 0
-    inventario.venta_contenedor = DetallePedido.objects.filter(
-        referencia=referencia
-    ).aggregate(Sum('cantidad_contenedores'))['cantidad_contenedores__sum'] or 0
-    inventario.save()
 
 
 @receiver(post_delete, sender=DetallePedido)
@@ -756,9 +880,14 @@ def actualizar_inventario_al_eliminar(sender, instance, **kwargs):
     ).aggregate(Sum('cantidad_contenedores'))['cantidad_contenedores__sum'] or 0
     nuevo_inventario.save()
 
-
-@receiver(post_save, sender=DetallePedido)
 @receiver(post_delete, sender=DetallePedido)
-def actualizar_variedades_pedido(sender, instance, **kwargs):
-    pedido = instance.pedido
-    pedido.actualizar_variedades()
+def detalle_pedido_post_delete(sender, instance, **kwargs):
+    """
+    Se llama al eliminar un DetallePedido -> disminuye la fruta.
+    """
+    instance._disminuir_variedad()
+
+
+
+
+
