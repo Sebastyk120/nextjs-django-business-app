@@ -1,10 +1,9 @@
-import itertools
-import os
-import tempfile
 import io
 import json
-from datetime import datetime
-
+import os
+import subprocess
+import tempfile
+from urllib.parse import urlparse
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.admin.views.decorators import user_passes_test
@@ -14,15 +13,20 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordResetView
-from django.db import IntegrityError, transaction
 from django.core.management import call_command
-from django.http import HttpResponse, StreamingHttpResponse
+from django.db import IntegrityError, transaction
+from django.http import HttpResponse, FileResponse
 from django.shortcuts import render, redirect
 from django.utils.timezone import now
 from django.views import View
 
 
 # Create your views here.
+
+def es_miembro_del_grupo(grupo):
+    def check(user):
+        return user.groups.filter(name=grupo).exists()
+    return check
 
 class MigrateView(LoginRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
@@ -117,19 +121,62 @@ def stream_backup():
     yield output.getvalue()
 
 
-class BackupDataView(View):
-    def get(self, request, *args, **kwargs):
+@login_required
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
+def backup_database(request):
+    if request.method == 'POST':
+        try:
+            # Obtener la URL de la base de datos desde las variables de entorno
+            database_url = os.getenv('DATABASE_URL')
+            if not database_url:
+                return HttpResponse('DATABASE_URL no está configurado en el archivo .env.', status=500)
+
+            # Parsear la URL de la base de datos
+            parsed_url = urlparse(database_url)
+
+            db_user = parsed_url.username
+            db_password = parsed_url.password
+            db_host = parsed_url.hostname
+            db_port = parsed_url.port or '5432'
+            db_name = parsed_url.path.lstrip('/')
+
+            # Crear un archivo temporal para el backup
+            with tempfile.NamedTemporaryFile(delete=True, suffix='.backup') as temp_file:
+                # Comando pg_dump
+                pg_dump_cmd = [
+                    'pg_dump',
+                    '-h', db_host,
+                    '-p', str(db_port),
+                    '-U', db_user,
+                    '-F', 'c',
+                    '-b',
+                    '-v',
+                    '-f', temp_file.name,
+                    db_name
+                ]
+
+                # Configurar las variables de entorno para el subprocess
+                env = os.environ.copy()
+                env['PGPASSWORD'] = db_password
+
+                # Ejecutar pg_dump
+                subprocess.run(pg_dump_cmd, check=True, env=env)
+
+                # Preparar la respuesta para descargar el archivo
+                temp_file.seek(0)
+                response = FileResponse(temp_file, content_type='application/octet-stream')
+                filename = f'backup_heavens_{now().strftime("%Y-%m-%d_%H-%M-%S")}.backup'
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                return response
+        except subprocess.CalledProcessError as e:
+            return HttpResponse(f'Error durante el backup: {e}', status=500)
+        except Exception as e:
+            return HttpResponse(f'Error inesperado: {e}', status=500)
+    elif request.method == 'GET':
         # Renderizar la plantilla con el botón para descargar
         return render(request, 'backup.html')
-
-    def post(self, request, *args, **kwargs):
-        current_time = now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = f"copia_heavens_{current_time}.json"
-
-        # Usar StreamingHttpResponse para transmitir los datos en lugar de cargarlos todos a la vez
-        response = StreamingHttpResponse(stream_backup(), content_type='application/json')
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        return response
+    else:
+        return HttpResponse('Método no permitido', status=405)
 
 
 class RestoreDataView(View):
