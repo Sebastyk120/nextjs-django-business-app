@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Principal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .company-card {
+            transition: transform 0.3s ease-in-out;
+            cursor: pointer;
+            height: 100%;
+        }
+        .company-card:hover {
+            transform: translateY(-5px);
+        }
+        .company-logo {
+            height: 150px;
+            object-fit: contain;
+            margin-bottom: 1rem;
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .menu-item {
+            transition: all 0.3s ease;
+        }
+        .menu-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <h1 class="text-center mb-5 text-primary fw-bold">Panel de Empresas</h1>
+
+        <div class="row g-4">
+            <!-- Heavens Fruit -->
+            <div class="col-md-4 col-lg-4">
+                <div class="card company-card shadow" data-bs-toggle="modal" data-bs-target="#heavensFruitModal">
+                    <div class="card-body text-center">
+                        <img src="/api/placeholder/200/150" alt="Heavens Fruit Logo" class="company-logo">
+                        <h3 class="card-title">Heavens Fruit</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Etnico -->
+            <div class="col-md-4 col-lg-4">
+                <div class="card company-card shadow" data-bs-toggle="modal" data-bs-target="#etnicoModal">
+                    <div class="card-body text-center">
+                        <img src="/api/placeholder/200/150" alt="Etnico Logo" class="company-logo">
+                        <h3 class="card-title">Etnico</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fieldex -->
+            <div class="col-md-4 col-lg-4">
+                <div class="card company-card shadow" data-bs-toggle="modal" data-bs-target="#fieldexModal">
+                    <div class="card-body text-center">
+                        <img src="/api/placeholder/200/150" alt="Fieldex Logo" class="company-logo">
+                        <h3 class="card-title">Fieldex</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Juan Matas -->
+            <div class="col-md-4 col-lg-6">
+                <div class="card company-card shadow" data-bs-toggle="modal" data-bs-target="#juanMatasModal">
+                    <div class="card-body text-center">
+                        <img src="/api/placeholder/200/150" alt="Juan Matas Logo" class="company-logo">
+                        <h3 class="card-title">Juan Matas</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CI Dorado -->
+            <div class="col-md-4 col-lg-6">
+                <div class="card company-card shadow" data-bs-toggle="modal" data-bs-target="#ciDoradoModal">
+                    <div class="card-body text-center">
+                        <img src="/api/placeholder/200/150" alt="CI Dorado Logo" class="company-logo">
+                        <h3 class="card-title">CI Dorado</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modales para cada empresa -->
+    <!-- Modal Heavens Fruit -->
+    <div class="modal fade" id="heavensFruitModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Heavens Fruit - Menú</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Pedidos</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Utilidades</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cartera</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cotizaciones</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Seguimiento Pedidos</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Resumen Semanal Pedidos</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Histórico De Movimientos General</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De Inventario</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Inventario Por Bodegas</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Referencias De cajas</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Administración General</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Etnico -->
+    <div class="modal fade" id="etnicoModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Etnico - Menú</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Pedidos</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Utilidades</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cartera</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cotizaciones</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De Inventario</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Referencia De Cajas</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Administración</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Fieldex -->
+    <div class="modal fade" id="fieldexModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Fieldex - Menú</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Pedidos</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Utilidades</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cartera</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cotizaciones</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De Inventario</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Referencia De Cajas</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Administración</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Juan Matas -->
+    <div class="modal fade" id="juanMatasModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Juan Matas - Menú</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Pedidos</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Utilidades</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cartera</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cotizaciones</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De Inventario</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Referencia De Cajas</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Administración</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal CI Dorado -->
+    <div class="modal fade" id="ciDoradoModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">CI Dorado - Menú</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Pedidos</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Utilidades</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cartera</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cotizaciones</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De Inventario</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Referencia De Cajas</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Administración</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

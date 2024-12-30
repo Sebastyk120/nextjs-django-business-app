@@ -1153,59 +1153,111 @@ class ExportarPedidosEtnicoView(TemplateView):
 
 
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Etnico'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Etnico'), login_url='home')
 def exportar_pedidos_etnico(request):
-    # Crear un libro de trabajo de Excel
+    # 1. Crear un buffer en memoria para almacenar el archivo Excel
     output = io.BytesIO()
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Pedidos Totales Etnico'
-    font = Font(bold=True)
-    fill = PatternFill(start_color="fffaac", end_color="fffaac", fill_type="solid")
 
-    # Encabezados
-    columns = ['No', 'Cliente', 'Semana',
-               'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada', 'Exportador', 'Subexportadora', 'Intermediario',
-               'Dias Cartera',
-               'AWB', 'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
-               'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado', 'Peso Bruto Enviado',
-               'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB', 'ETA', 'ETD', 'Variedades', 'Descuento Comercial',
-               'No NC', 'Motivo NC', 'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura',
-               'Utilidad Bancaria USD', 'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
-               'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Utilidad USD',
-               'Valor Utilidad Pesos', 'Documento Cobro Utilidad', 'Fecha Pago Utilidad', 'Estado Utilidad',
-               'Estado Cancelacion', 'Estado Documentos', 'Estado Reserva', 'Estado Pedido', 'Observaciones Tracking',
-               'Observaciones Generales']
-    for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
+    # 2. Crear el Workbook en modo write_only para optimizar el uso de memoria
+    workbook = Workbook(write_only=True)
+    ws = workbook.create_sheet(title='Pedidos')
 
+    # 3. Definir estilos para los encabezados
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="1E0C42", end_color="1E0C42", fill_type="solid")
+    sub_header_fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+
+    # 4. Definir los encabezados para Pedido y DetallePedido
+    pedido_headers = [
+        'No', 'Cliente', 'Semana', 'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada',
+        'Exportador', 'Subexportadora', 'Intermediario', 'Dias Cartera', 'AWB',
+        'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
+        'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado',
+        'Peso Bruto Enviado', 'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB',
+        'ETA', 'ETD', 'Variedades', 'Descuento Comercial', 'No NC', 'Motivo NC',
+        'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura', 'Utilidad Bancaria USD',
+        'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
+        'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
+        'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
+        'Fecha Pago Utilidad', 'Estado Utilidad', 'Estado Cancelacion', 'Estado Documentos',
+        'Estado Reserva', 'Termo', 'Diferencia AWB/Factura', 'Eta Real', 'Estado Pedido',
+        'Observaciones Tracking', 'Observaciones Generales'
+    ]
+
+    detalle_headers = [
+        'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
+        'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
+        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
+        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
+        'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
+    ]
+
+    # 5. Verificar si el usuario incluyó detalles
+    incluir_detalles = request.POST.get('incluir_detalles') == 'true'
+
+    # 6. Obtener filtros de fecha desde el formulario (si existen)
     fecha_inicial_str = request.POST.get('fecha_inicial')
     fecha_final_str = request.POST.get('fecha_final')
 
-    # Verificar si las fechas están vacías o nulas
-    if fecha_inicial_str and fecha_final_str:
-        # Convertir las cadenas de fecha en objetos datetime
-        fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-        fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
+    # 7. Obtener el ID de la exportadora 'Etnico'
+    exportadora = Exportador.objects.filter(nombre='Etnico').first()
+    if not exportadora:
+        return HttpResponse("Exportadora 'Etnico' no encontrada", status=404)
+    exportadora_id = exportadora.id
 
-        # Filtrar los pedidos por fecha_entrega dentro del rango
-        queryset = Pedido.objects.filter(exportadora__nombre='Etnico', fecha_entrega__gte=fecha_inicial,
-                                         fecha_entrega__lte=fecha_final)
-    else:
-        # Si las fechas están vacías, exportar todos los pedidos de la exportadora 'Etnico'
-        queryset = Pedido.objects.filter(exportadora__nombre='Etnico')
+    # 8. Filtrar los pedidos por exportadora y fechas
+    try:
+        if fecha_inicial_str and fecha_final_str:
+            fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
+            fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
+            pedidos_qs = Pedido.objects.filter(
+                exportadora_id=exportadora_id,
+                fecha_entrega__gte=fecha_inicial,
+                fecha_entrega__lte=fecha_final
+            ).select_related(
+                'cliente',
+                'exportadora',
+                'subexportadora',
+                'intermediario',
+                'destino',
+                'aerolinea',
+                'agencia_carga',
+                'responsable_reserva'
+            ).iterator(chunk_size=50)
+        else:
+            pedidos_qs = Pedido.objects.filter(
+                exportadora_id=exportadora_id
+            ).select_related(
+                'cliente',
+                'exportadora',
+                'subexportadora',
+                'intermediario',
+                'destino',
+                'aerolinea',
+                'agencia_carga',
+                'responsable_reserva'
+            ).iterator(chunk_size=50)
+    except ValueError:
+        return HttpResponse("Fecha inválida", status=400)
 
-    # Agregar datos al libro de trabajo
-    for row_num, pedido in enumerate(queryset, start=2):
-        row = [
+    # 9. Escribir los encabezados de Pedido
+    pedido_header_cells = []
+    for titulo in pedido_headers:
+        celda = WriteOnlyCell(ws, value=titulo)
+        celda.font = header_font
+        celda.fill = header_fill
+        pedido_header_cells.append(celda)
+    ws.append(pedido_header_cells)
+
+    for pedido in pedidos_qs:
+        # 9.1 Escribir los datos del Pedido
+        pedido_data = [
             pedido.pk,
             pedido.cliente.nombre if pedido.cliente else '',
             pedido.semana,
-            pedido.fecha_solicitud,
-            pedido.fecha_entrega,
-            pedido.fecha_llegada,
+            pedido.fecha_solicitud.strftime('%Y-%m-%d') if pedido.fecha_solicitud else '',
+            pedido.fecha_entrega.strftime('%Y-%m-%d') if pedido.fecha_entrega else '',
+            pedido.fecha_llegada.strftime('%Y-%m-%d') if pedido.fecha_llegada else '',
             pedido.exportadora.nombre if pedido.exportadora else '',
             pedido.subexportadora.nombre if pedido.subexportadora else '',
             pedido.intermediario.nombre if pedido.intermediario else '',
@@ -1223,8 +1275,8 @@ def exportar_pedidos_etnico(request):
             pedido.total_piezas_solicitadas,
             pedido.total_piezas_enviadas,
             pedido.peso_awb,
-            pedido.eta.replace(tzinfo=None) if pedido.eta else '',
-            pedido.etd.replace(tzinfo=None) if pedido.etd else '',
+            pedido.eta.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta else '',
+            pedido.etd.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.etd else '',
             pedido.variedades,
             pedido.descuento,
             pedido.nota_credito_no,
@@ -1233,9 +1285,9 @@ def exportar_pedidos_etnico(request):
             pedido.valor_pagado_cliente_usd,
             pedido.estado_factura,
             pedido.utilidad_bancaria_usd,
-            pedido.fecha_pago,
+            pedido.fecha_pago.strftime('%Y-%m-%d') if pedido.fecha_pago else '',
             pedido.trm_monetizacion,
-            pedido.fecha_monetizacion,
+            pedido.fecha_monetizacion.strftime('%Y-%m-%d') if pedido.fecha_monetizacion else '',
             pedido.tasa_representativa_usd_diaria,
             pedido.trm_cotizacion,
             pedido.diferencia_por_abono,
@@ -1244,26 +1296,80 @@ def exportar_pedidos_etnico(request):
             pedido.valor_total_utilidad_usd,
             pedido.valor_utilidad_pesos,
             pedido.documento_cobro_utilidad,
-            pedido.fecha_pago_utilidad,
+            pedido.fecha_pago_utilidad.strftime('%Y-%m-%d') if pedido.fecha_pago_utilidad else '',
             pedido.estado_utilidad,
             pedido.estado_cancelacion,
             pedido.estado_documentos,
             pedido.estatus_reserva,
+            pedido.termo,
+            pedido.diferencia_peso_factura_awb,
+            pedido.eta_real.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta_real else '',
             pedido.estado_pedido,
             pedido.observaciones_tracking,
             pedido.observaciones
         ]
-        for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+        ws.append(pedido_data)
 
+        if incluir_detalles:
+            # 9.2 Escribir los encabezados de DetallePedido
+            detalle_header_cells = []
+            for titulo in detalle_headers:
+                celda = WriteOnlyCell(ws, value=titulo)
+                celda.font = header_font
+                celda.fill = header_fill
+                detalle_header_cells.append(celda)
+            ws.append(detalle_header_cells)
+
+            # 9.3 Filtrar y escribir los detalles del pedido
+            detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
+                'pedido__exportadora',
+                'pedido__cliente',
+                'fruta',
+                'presentacion',
+                'tipo_caja',
+                'referencia'
+            ).iterator(chunk_size=50)
+
+            for detalle in detalles_qs:
+                detalle_row = [
+                    detalle.pedido.pk,
+                    detalle.pedido.fecha_entrega.strftime('%Y-%m-%d') if detalle.pedido.fecha_entrega else '',
+                    detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
+                    detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
+                    detalle.fruta.nombre if detalle.fruta else '',
+                    detalle.presentacion.nombre if detalle.presentacion else '',
+                    detalle.cajas_solicitadas,
+                    detalle.presentacion_peso,
+                    detalle.kilos,
+                    detalle.cajas_enviadas,
+                    detalle.kilos_enviados,
+                    detalle.diferencia,
+                    detalle.tipo_caja.nombre if detalle.tipo_caja else '',
+                    detalle.referencia.nombre if detalle.referencia else '',
+                    detalle.stickers,
+                    detalle.lleva_contenedor,
+                    detalle.referencia_contenedor,
+                    detalle.cantidad_contenedores,
+                    detalle.tarifa_utilidad,
+                    detalle.valor_x_caja_usd,
+                    detalle.valor_x_producto,
+                    detalle.no_cajas_nc,
+                    detalle.valor_nota_credito_usd,
+                    detalle.afecta_utilidad,
+                    detalle.valor_total_utilidad_x_producto,
+                    detalle.precio_proforma,
+                    detalle.observaciones,
+                ]
+                ws.append(detalle_row)
+
+    # 10. Guardar y retornar el archivo
     workbook.save(output)
     output.seek(0)
-
-    # Crear una respuesta HTTP con el archivo de Excel
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="pedidos_etnico.xlsx"'
-
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles_etnico.xlsx"'
     return response
 
 
@@ -1279,59 +1385,111 @@ class ExportarPedidosFieldexView(TemplateView):
 
 
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Fieldex'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Fieldex'), login_url='home')
 def exportar_pedidos_fieldex(request):
-    # Crear un libro de trabajo de Excel
+    # 1. Crear un buffer en memoria para almacenar el archivo Excel
     output = io.BytesIO()
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Pedidos Totales Fieldex'
-    font = Font(bold=True)
-    fill = PatternFill(start_color="fffaac", end_color="fffaac", fill_type="solid")
 
-    # Encabezados
-    columns = ['No', 'Cliente', 'Semana',
-               'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada', 'Exportador', 'Subexportadora', 'Intermediario',
-               'Dias Cartera',
-               'AWB', 'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
-               'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado', 'Peso Bruto Enviado',
-               'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB', 'ETA', 'ETD', 'Variedades', 'Descuento Comercial',
-               'No NC', 'Motivo NC', 'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura',
-               'Utilidad Bancaria USD', 'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
-               'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Utilidad USD',
-               'Valor Utilidad Pesos', 'Documento Cobro Utilidad', 'Fecha Pago Utilidad', 'Estado Utilidad',
-               'Estado Cancelacion', 'Estado Documentos', 'Estado Reserva', 'Estado Pedido', 'Observaciones Tracking',
-               'Observaciones Generales']
-    for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
+    # 2. Crear el Workbook en modo write_only para optimizar el uso de memoria
+    workbook = Workbook(write_only=True)
+    ws = workbook.create_sheet(title='Pedidos')
 
+    # 3. Definir estilos para los encabezados
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="1E0C42", end_color="1E0C42", fill_type="solid")
+    sub_header_fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+
+    # 4. Definir los encabezados para Pedido y DetallePedido
+    pedido_headers = [
+        'No', 'Cliente', 'Semana', 'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada',
+        'Exportador', 'Subexportadora', 'Intermediario', 'Dias Cartera', 'AWB',
+        'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
+        'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado',
+        'Peso Bruto Enviado', 'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB',
+        'ETA', 'ETD', 'Variedades', 'Descuento Comercial', 'No NC', 'Motivo NC',
+        'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura', 'Utilidad Bancaria USD',
+        'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
+        'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
+        'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
+        'Fecha Pago Utilidad', 'Estado Utilidad', 'Estado Cancelacion', 'Estado Documentos',
+        'Estado Reserva', 'Termo', 'Diferencia AWB/Factura', 'Eta Real', 'Estado Pedido',
+        'Observaciones Tracking', 'Observaciones Generales'
+    ]
+
+    detalle_headers = [
+        'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
+        'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
+        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
+        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
+        'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
+    ]
+
+    # 5. Verificar si el usuario incluyó detalles
+    incluir_detalles = request.POST.get('incluir_detalles') == 'true'
+
+    # 6. Obtener filtros de fecha desde el formulario (si existen)
     fecha_inicial_str = request.POST.get('fecha_inicial')
     fecha_final_str = request.POST.get('fecha_final')
 
-    # Verificar si las fechas están vacías o nulas
-    if fecha_inicial_str and fecha_final_str:
-        # Convertir las cadenas de fecha en objetos datetime
-        fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-        fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
+    # 7. Obtener el ID de la exportadora 'Etnico'
+    exportadora = Exportador.objects.filter(nombre='Fieldex').first()
+    if not exportadora:
+        return HttpResponse("Exportadora 'Fieldex' no encontrada", status=404)
+    exportadora_id = exportadora.id
 
-        # Filtrar los pedidos por fecha_entrega dentro del rango
-        queryset = Pedido.objects.filter(exportadora__nombre='Fieldex', fecha_entrega__gte=fecha_inicial,
-                                         fecha_entrega__lte=fecha_final)
-    else:
-        # Si las fechas están vacías, exportar todos los pedidos de la exportadora 'Etnico'
-        queryset = Pedido.objects.filter(exportadora__nombre='Fieldex')
+    # 8. Filtrar los pedidos por exportadora y fechas
+    try:
+        if fecha_inicial_str and fecha_final_str:
+            fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
+            fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
+            pedidos_qs = Pedido.objects.filter(
+                exportadora_id=exportadora_id,
+                fecha_entrega__gte=fecha_inicial,
+                fecha_entrega__lte=fecha_final
+            ).select_related(
+                'cliente',
+                'exportadora',
+                'subexportadora',
+                'intermediario',
+                'destino',
+                'aerolinea',
+                'agencia_carga',
+                'responsable_reserva'
+            ).iterator(chunk_size=50)
+        else:
+            pedidos_qs = Pedido.objects.filter(
+                exportadora_id=exportadora_id
+            ).select_related(
+                'cliente',
+                'exportadora',
+                'subexportadora',
+                'intermediario',
+                'destino',
+                'aerolinea',
+                'agencia_carga',
+                'responsable_reserva'
+            ).iterator(chunk_size=50)
+    except ValueError:
+        return HttpResponse("Fecha inválida", status=400)
 
-    # Agregar datos al libro de trabajo
-    for row_num, pedido in enumerate(queryset, start=2):
-        row = [
+    # 9. Escribir los encabezados de Pedido
+    pedido_header_cells = []
+    for titulo in pedido_headers:
+        celda = WriteOnlyCell(ws, value=titulo)
+        celda.font = header_font
+        celda.fill = header_fill
+        pedido_header_cells.append(celda)
+    ws.append(pedido_header_cells)
+
+    for pedido in pedidos_qs:
+        # 9.1 Escribir los datos del Pedido
+        pedido_data = [
             pedido.pk,
             pedido.cliente.nombre if pedido.cliente else '',
             pedido.semana,
-            pedido.fecha_solicitud,
-            pedido.fecha_entrega,
-            pedido.fecha_llegada,
+            pedido.fecha_solicitud.strftime('%Y-%m-%d') if pedido.fecha_solicitud else '',
+            pedido.fecha_entrega.strftime('%Y-%m-%d') if pedido.fecha_entrega else '',
+            pedido.fecha_llegada.strftime('%Y-%m-%d') if pedido.fecha_llegada else '',
             pedido.exportadora.nombre if pedido.exportadora else '',
             pedido.subexportadora.nombre if pedido.subexportadora else '',
             pedido.intermediario.nombre if pedido.intermediario else '',
@@ -1349,8 +1507,8 @@ def exportar_pedidos_fieldex(request):
             pedido.total_piezas_solicitadas,
             pedido.total_piezas_enviadas,
             pedido.peso_awb,
-            pedido.eta.replace(tzinfo=None) if pedido.eta else '',
-            pedido.etd.replace(tzinfo=None) if pedido.etd else '',
+            pedido.eta.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta else '',
+            pedido.etd.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.etd else '',
             pedido.variedades,
             pedido.descuento,
             pedido.nota_credito_no,
@@ -1359,9 +1517,9 @@ def exportar_pedidos_fieldex(request):
             pedido.valor_pagado_cliente_usd,
             pedido.estado_factura,
             pedido.utilidad_bancaria_usd,
-            pedido.fecha_pago,
+            pedido.fecha_pago.strftime('%Y-%m-%d') if pedido.fecha_pago else '',
             pedido.trm_monetizacion,
-            pedido.fecha_monetizacion,
+            pedido.fecha_monetizacion.strftime('%Y-%m-%d') if pedido.fecha_monetizacion else '',
             pedido.tasa_representativa_usd_diaria,
             pedido.trm_cotizacion,
             pedido.diferencia_por_abono,
@@ -1370,26 +1528,80 @@ def exportar_pedidos_fieldex(request):
             pedido.valor_total_utilidad_usd,
             pedido.valor_utilidad_pesos,
             pedido.documento_cobro_utilidad,
-            pedido.fecha_pago_utilidad,
+            pedido.fecha_pago_utilidad.strftime('%Y-%m-%d') if pedido.fecha_pago_utilidad else '',
             pedido.estado_utilidad,
             pedido.estado_cancelacion,
             pedido.estado_documentos,
             pedido.estatus_reserva,
+            pedido.termo,
+            pedido.diferencia_peso_factura_awb,
+            pedido.eta_real.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta_real else '',
             pedido.estado_pedido,
             pedido.observaciones_tracking,
             pedido.observaciones
         ]
-        for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+        ws.append(pedido_data)
 
+        if incluir_detalles:
+            # 9.2 Escribir los encabezados de DetallePedido
+            detalle_header_cells = []
+            for titulo in detalle_headers:
+                celda = WriteOnlyCell(ws, value=titulo)
+                celda.font = header_font
+                celda.fill = header_fill
+                detalle_header_cells.append(celda)
+            ws.append(detalle_header_cells)
+
+            # 9.3 Filtrar y escribir los detalles del pedido
+            detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
+                'pedido__exportadora',
+                'pedido__cliente',
+                'fruta',
+                'presentacion',
+                'tipo_caja',
+                'referencia'
+            ).iterator(chunk_size=50)
+
+            for detalle in detalles_qs:
+                detalle_row = [
+                    detalle.pedido.pk,
+                    detalle.pedido.fecha_entrega.strftime('%Y-%m-%d') if detalle.pedido.fecha_entrega else '',
+                    detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
+                    detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
+                    detalle.fruta.nombre if detalle.fruta else '',
+                    detalle.presentacion.nombre if detalle.presentacion else '',
+                    detalle.cajas_solicitadas,
+                    detalle.presentacion_peso,
+                    detalle.kilos,
+                    detalle.cajas_enviadas,
+                    detalle.kilos_enviados,
+                    detalle.diferencia,
+                    detalle.tipo_caja.nombre if detalle.tipo_caja else '',
+                    detalle.referencia.nombre if detalle.referencia else '',
+                    detalle.stickers,
+                    detalle.lleva_contenedor,
+                    detalle.referencia_contenedor,
+                    detalle.cantidad_contenedores,
+                    detalle.tarifa_utilidad,
+                    detalle.valor_x_caja_usd,
+                    detalle.valor_x_producto,
+                    detalle.no_cajas_nc,
+                    detalle.valor_nota_credito_usd,
+                    detalle.afecta_utilidad,
+                    detalle.valor_total_utilidad_x_producto,
+                    detalle.precio_proforma,
+                    detalle.observaciones,
+                ]
+                ws.append(detalle_row)
+
+    # 10. Guardar y retornar el archivo
     workbook.save(output)
     output.seek(0)
-
-    # Crear una respuesta HTTP con el archivo de Excel
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="pedidos_fieldex.xlsx"'
-
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles_fieldex.xlsx"'
     return response
 
 
@@ -1404,60 +1616,111 @@ class ExportarPedidosJuanView(TemplateView):
 
 
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Juan_Matas'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Juan_Matas'), login_url='home')
 def exportar_pedidos_juan(request):
-    # Crear un libro de trabajo de Excel
+    # 1. Crear un buffer en memoria para almacenar el archivo Excel
     output = io.BytesIO()
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Pedidos Totales Juan_Matas'
-    font = Font(bold=True)
-    fill = PatternFill(start_color="fffaac", end_color="fffaac", fill_type="solid")
 
-    # Encabezados
-    columns = ['No', 'Cliente', 'Semana',
-               'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada', 'Exportador', 'Subexportadora', 'Intermediario',
-               'Dias Cartera',
-               'AWB', 'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
-               'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado', 'Peso Bruto Enviado',
-               'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB', 'ETA', 'ETD', 'Variedades', 'Descuento Comercial',
-               'No NC', 'Motivo NC', 'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura',
-               'Utilidad Bancaria USD', 'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
-               'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Utilidad USD',
-               'Valor Utilidad Pesos', 'Documento Cobro Utilidad', 'Fecha Pago Utilidad', 'Estado Utilidad',
-               'Estado Cancelacion', 'Estado Documentos', 'Estado Reserva', 'Estado Pedido', 'Observaciones Tracking',
-               'Observaciones Generales']
+    # 2. Crear el Workbook en modo write_only para optimizar el uso de memoria
+    workbook = Workbook(write_only=True)
+    ws = workbook.create_sheet(title='Pedidos')
 
-    for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
+    # 3. Definir estilos para los encabezados
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="1E0C42", end_color="1E0C42", fill_type="solid")
+    sub_header_fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
 
+    # 4. Definir los encabezados para Pedido y DetallePedido
+    pedido_headers = [
+        'No', 'Cliente', 'Semana', 'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada',
+        'Exportador', 'Subexportadora', 'Intermediario', 'Dias Cartera', 'AWB',
+        'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
+        'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado',
+        'Peso Bruto Enviado', 'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB',
+        'ETA', 'ETD', 'Variedades', 'Descuento Comercial', 'No NC', 'Motivo NC',
+        'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura', 'Utilidad Bancaria USD',
+        'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
+        'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
+        'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
+        'Fecha Pago Utilidad', 'Estado Utilidad', 'Estado Cancelacion', 'Estado Documentos',
+        'Estado Reserva', 'Termo', 'Diferencia AWB/Factura', 'Eta Real', 'Estado Pedido',
+        'Observaciones Tracking', 'Observaciones Generales'
+    ]
+
+    detalle_headers = [
+        'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
+        'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
+        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
+        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
+        'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
+    ]
+
+    # 5. Verificar si el usuario incluyó detalles
+    incluir_detalles = request.POST.get('incluir_detalles') == 'true'
+
+    # 6. Obtener filtros de fecha desde el formulario (si existen)
     fecha_inicial_str = request.POST.get('fecha_inicial')
     fecha_final_str = request.POST.get('fecha_final')
 
-    # Verificar si las fechas están vacías o nulas
-    if fecha_inicial_str and fecha_final_str:
-        # Convertir las cadenas de fecha en objetos datetime
-        fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-        fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
+    # 7. Obtener el ID de la exportadora 'Etnico'
+    exportadora = Exportador.objects.filter(nombre='Juan_Matas').first()
+    if not exportadora:
+        return HttpResponse("Exportadora 'Juan_Matas' no encontrada", status=404)
+    exportadora_id = exportadora.id
 
-        # Filtrar los pedidos por fecha_entrega dentro del rango
-        queryset = Pedido.objects.filter(exportadora__nombre='Juan_Matas', fecha_entrega__gte=fecha_inicial,
-                                         fecha_entrega__lte=fecha_final)
-    else:
-        # Si las fechas están vacías, exportar todos los pedidos de la exportadora 'Etnico'
-        queryset = Pedido.objects.filter(exportadora__nombre='Juan_Matas')
+    # 8. Filtrar los pedidos por exportadora y fechas
+    try:
+        if fecha_inicial_str and fecha_final_str:
+            fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
+            fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
+            pedidos_qs = Pedido.objects.filter(
+                exportadora_id=exportadora_id,
+                fecha_entrega__gte=fecha_inicial,
+                fecha_entrega__lte=fecha_final
+            ).select_related(
+                'cliente',
+                'exportadora',
+                'subexportadora',
+                'intermediario',
+                'destino',
+                'aerolinea',
+                'agencia_carga',
+                'responsable_reserva'
+            ).iterator(chunk_size=50)
+        else:
+            pedidos_qs = Pedido.objects.filter(
+                exportadora_id=exportadora_id
+            ).select_related(
+                'cliente',
+                'exportadora',
+                'subexportadora',
+                'intermediario',
+                'destino',
+                'aerolinea',
+                'agencia_carga',
+                'responsable_reserva'
+            ).iterator(chunk_size=50)
+    except ValueError:
+        return HttpResponse("Fecha inválida", status=400)
 
-    # Agregar datos al libro de trabajo
-    for row_num, pedido in enumerate(queryset, start=2):
-        row = [
+    # 9. Escribir los encabezados de Pedido
+    pedido_header_cells = []
+    for titulo in pedido_headers:
+        celda = WriteOnlyCell(ws, value=titulo)
+        celda.font = header_font
+        celda.fill = header_fill
+        pedido_header_cells.append(celda)
+    ws.append(pedido_header_cells)
+
+    for pedido in pedidos_qs:
+        # 9.1 Escribir los datos del Pedido
+        pedido_data = [
             pedido.pk,
             pedido.cliente.nombre if pedido.cliente else '',
             pedido.semana,
-            pedido.fecha_solicitud,
-            pedido.fecha_entrega,
-            pedido.fecha_llegada,
+            pedido.fecha_solicitud.strftime('%Y-%m-%d') if pedido.fecha_solicitud else '',
+            pedido.fecha_entrega.strftime('%Y-%m-%d') if pedido.fecha_entrega else '',
+            pedido.fecha_llegada.strftime('%Y-%m-%d') if pedido.fecha_llegada else '',
             pedido.exportadora.nombre if pedido.exportadora else '',
             pedido.subexportadora.nombre if pedido.subexportadora else '',
             pedido.intermediario.nombre if pedido.intermediario else '',
@@ -1475,8 +1738,8 @@ def exportar_pedidos_juan(request):
             pedido.total_piezas_solicitadas,
             pedido.total_piezas_enviadas,
             pedido.peso_awb,
-            pedido.eta.replace(tzinfo=None) if pedido.eta else '',
-            pedido.etd.replace(tzinfo=None) if pedido.etd else '',
+            pedido.eta.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta else '',
+            pedido.etd.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.etd else '',
             pedido.variedades,
             pedido.descuento,
             pedido.nota_credito_no,
@@ -1485,9 +1748,9 @@ def exportar_pedidos_juan(request):
             pedido.valor_pagado_cliente_usd,
             pedido.estado_factura,
             pedido.utilidad_bancaria_usd,
-            pedido.fecha_pago,
+            pedido.fecha_pago.strftime('%Y-%m-%d') if pedido.fecha_pago else '',
             pedido.trm_monetizacion,
-            pedido.fecha_monetizacion,
+            pedido.fecha_monetizacion.strftime('%Y-%m-%d') if pedido.fecha_monetizacion else '',
             pedido.tasa_representativa_usd_diaria,
             pedido.trm_cotizacion,
             pedido.diferencia_por_abono,
@@ -1496,26 +1759,80 @@ def exportar_pedidos_juan(request):
             pedido.valor_total_utilidad_usd,
             pedido.valor_utilidad_pesos,
             pedido.documento_cobro_utilidad,
-            pedido.fecha_pago_utilidad,
+            pedido.fecha_pago_utilidad.strftime('%Y-%m-%d') if pedido.fecha_pago_utilidad else '',
             pedido.estado_utilidad,
             pedido.estado_cancelacion,
             pedido.estado_documentos,
             pedido.estatus_reserva,
+            pedido.termo,
+            pedido.diferencia_peso_factura_awb,
+            pedido.eta_real.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta_real else '',
             pedido.estado_pedido,
             pedido.observaciones_tracking,
             pedido.observaciones
         ]
-        for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+        ws.append(pedido_data)
 
+        if incluir_detalles:
+            # 9.2 Escribir los encabezados de DetallePedido
+            detalle_header_cells = []
+            for titulo in detalle_headers:
+                celda = WriteOnlyCell(ws, value=titulo)
+                celda.font = header_font
+                celda.fill = header_fill
+                detalle_header_cells.append(celda)
+            ws.append(detalle_header_cells)
+
+            # 9.3 Filtrar y escribir los detalles del pedido
+            detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
+                'pedido__exportadora',
+                'pedido__cliente',
+                'fruta',
+                'presentacion',
+                'tipo_caja',
+                'referencia'
+            ).iterator(chunk_size=50)
+
+            for detalle in detalles_qs:
+                detalle_row = [
+                    detalle.pedido.pk,
+                    detalle.pedido.fecha_entrega.strftime('%Y-%m-%d') if detalle.pedido.fecha_entrega else '',
+                    detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
+                    detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
+                    detalle.fruta.nombre if detalle.fruta else '',
+                    detalle.presentacion.nombre if detalle.presentacion else '',
+                    detalle.cajas_solicitadas,
+                    detalle.presentacion_peso,
+                    detalle.kilos,
+                    detalle.cajas_enviadas,
+                    detalle.kilos_enviados,
+                    detalle.diferencia,
+                    detalle.tipo_caja.nombre if detalle.tipo_caja else '',
+                    detalle.referencia.nombre if detalle.referencia else '',
+                    detalle.stickers,
+                    detalle.lleva_contenedor,
+                    detalle.referencia_contenedor,
+                    detalle.cantidad_contenedores,
+                    detalle.tarifa_utilidad,
+                    detalle.valor_x_caja_usd,
+                    detalle.valor_x_producto,
+                    detalle.no_cajas_nc,
+                    detalle.valor_nota_credito_usd,
+                    detalle.afecta_utilidad,
+                    detalle.valor_total_utilidad_x_producto,
+                    detalle.precio_proforma,
+                    detalle.observaciones,
+                ]
+                ws.append(detalle_row)
+
+    # 10. Guardar y retornar el archivo
     workbook.save(output)
     output.seek(0)
-
-    # Crear una respuesta HTTP con el archivo de Excel
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="pedidos_juan.xlsx"'
-
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles_juan.xlsx"'
     return response
 
 
