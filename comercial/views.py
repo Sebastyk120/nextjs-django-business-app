@@ -1311,7 +1311,12 @@ def exportar_pedidos_etnico(request):
         ws.append(pedido_data)
 
         if incluir_detalles:
-            # 9.2 Escribir los encabezados de DetallePedido
+            # Sólo si se marca 'incluir_detalles'
+            row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
+            row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
+            row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+            ws.append(row_header_detalle)
+
             detalle_header_cells = []
             for titulo in detalle_headers:
                 celda = WriteOnlyCell(ws, value=titulo)
@@ -1320,7 +1325,6 @@ def exportar_pedidos_etnico(request):
                 detalle_header_cells.append(celda)
             ws.append(detalle_header_cells)
 
-            # 9.3 Filtrar y escribir los detalles del pedido
             detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
                 'pedido__exportadora',
                 'pedido__cliente',
@@ -1361,8 +1365,8 @@ def exportar_pedidos_etnico(request):
                     detalle.observaciones,
                 ]
                 ws.append(detalle_row)
-
-    # 10. Guardar y retornar el archivo
+            # =============== FIN SECCIÓN DETALLES (CONDICIONAL) ===============
+    # 9. Guardar y retornar el archivo
     workbook.save(output)
     output.seek(0)
     response = HttpResponse(
@@ -1543,7 +1547,12 @@ def exportar_pedidos_fieldex(request):
         ws.append(pedido_data)
 
         if incluir_detalles:
-            # 9.2 Escribir los encabezados de DetallePedido
+            # Sólo si se marca 'incluir_detalles'
+            row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
+            row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
+            row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+            ws.append(row_header_detalle)
+
             detalle_header_cells = []
             for titulo in detalle_headers:
                 celda = WriteOnlyCell(ws, value=titulo)
@@ -1552,7 +1561,6 @@ def exportar_pedidos_fieldex(request):
                 detalle_header_cells.append(celda)
             ws.append(detalle_header_cells)
 
-            # 9.3 Filtrar y escribir los detalles del pedido
             detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
                 'pedido__exportadora',
                 'pedido__cliente',
@@ -1593,8 +1601,8 @@ def exportar_pedidos_fieldex(request):
                     detalle.observaciones,
                 ]
                 ws.append(detalle_row)
-
-    # 10. Guardar y retornar el archivo
+            # =============== FIN SECCIÓN DETALLES (CONDICIONAL) ===============
+    # 9. Guardar y retornar el archivo
     workbook.save(output)
     output.seek(0)
     response = HttpResponse(
@@ -1774,7 +1782,12 @@ def exportar_pedidos_juan(request):
         ws.append(pedido_data)
 
         if incluir_detalles:
-            # 9.2 Escribir los encabezados de DetallePedido
+            # Sólo si se marca 'incluir_detalles'
+            row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
+            row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
+            row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+            ws.append(row_header_detalle)
+
             detalle_header_cells = []
             for titulo in detalle_headers:
                 celda = WriteOnlyCell(ws, value=titulo)
@@ -1783,7 +1796,6 @@ def exportar_pedidos_juan(request):
                 detalle_header_cells.append(celda)
             ws.append(detalle_header_cells)
 
-            # 9.3 Filtrar y escribir los detalles del pedido
             detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
                 'pedido__exportadora',
                 'pedido__cliente',
@@ -1824,8 +1836,8 @@ def exportar_pedidos_juan(request):
                     detalle.observaciones,
                 ]
                 ws.append(detalle_row)
-
-    # 10. Guardar y retornar el archivo
+            # =============== FIN SECCIÓN DETALLES (CONDICIONAL) ===============
+    # 9. Guardar y retornar el archivo
     workbook.save(output)
     output.seek(0)
     response = HttpResponse(
