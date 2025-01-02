@@ -1164,7 +1164,7 @@ def exportar_pedidos_etnico(request):
 
     # 3. Definir estilos para los encabezados
     header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill(start_color="1E0C42", end_color="1E0C42", fill_type="solid")
+    header_fill = PatternFill(start_color="1e0c42", end_color="1e0c42", fill_type="solid")
     sub_header_fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
 
     # 4. Definir los encabezados para Pedido y DetallePedido
@@ -1241,16 +1241,26 @@ def exportar_pedidos_etnico(request):
         return HttpResponse("Fecha inválida", status=400)
 
     # 9. Escribir los encabezados de Pedido
-    pedido_header_cells = []
-    for titulo in pedido_headers:
-        celda = WriteOnlyCell(ws, value=titulo)
-        celda.font = header_font
-        celda.fill = header_fill
-        pedido_header_cells.append(celda)
-    ws.append(pedido_header_cells)
-
     for pedido in pedidos_qs:
-        # 9.1 Escribir los datos del Pedido
+        # 7.1 Escribir una fila de separación para mayor legibilidad (opcional)
+        ws.append([])
+
+        # 7.2 Escribir una fila de cabecera para "Pedido"
+        row_header_pedido = [WriteOnlyCell(ws, value='PEDIDO:')]
+        row_header_pedido[0].font = Font(bold=True, color='FFFFFF')
+        row_header_pedido[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+        ws.append(row_header_pedido)
+
+        # 7.3 Escribir los encabezados de Pedido
+        pedido_header_cells = []
+        for titulo in pedido_headers:
+            celda = WriteOnlyCell(ws, value=titulo)
+            celda.font = header_font
+            celda.fill = header_fill
+            pedido_header_cells.append(celda)
+        ws.append(pedido_header_cells)
+
+        # 7.4 Escribir los datos del Pedido
         pedido_data = [
             pedido.pk,
             pedido.cliente.nombre if pedido.cliente else '',
@@ -1476,17 +1486,26 @@ def exportar_pedidos_fieldex(request):
     except ValueError:
         return HttpResponse("Fecha inválida", status=400)
 
-    # 9. Escribir los encabezados de Pedido
-    pedido_header_cells = []
-    for titulo in pedido_headers:
-        celda = WriteOnlyCell(ws, value=titulo)
-        celda.font = header_font
-        celda.fill = header_fill
-        pedido_header_cells.append(celda)
-    ws.append(pedido_header_cells)
-
     for pedido in pedidos_qs:
-        # 9.1 Escribir los datos del Pedido
+        # 7.1 Escribir una fila de separación para mayor legibilidad (opcional)
+        ws.append([])
+
+        # 7.2 Escribir una fila de cabecera para "Pedido"
+        row_header_pedido = [WriteOnlyCell(ws, value='PEDIDO:')]
+        row_header_pedido[0].font = Font(bold=True, color='FFFFFF')
+        row_header_pedido[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+        ws.append(row_header_pedido)
+
+        # 7.3 Escribir los encabezados de Pedido
+        pedido_header_cells = []
+        for titulo in pedido_headers:
+            celda = WriteOnlyCell(ws, value=titulo)
+            celda.font = header_font
+            celda.fill = header_fill
+            pedido_header_cells.append(celda)
+        ws.append(pedido_header_cells)
+
+        # 7.4 Escribir los datos del Pedido
         pedido_data = [
             pedido.pk,
             pedido.cliente.nombre if pedido.cliente else '',
@@ -1711,17 +1730,26 @@ def exportar_pedidos_juan(request):
     except ValueError:
         return HttpResponse("Fecha inválida", status=400)
 
-    # 9. Escribir los encabezados de Pedido
-    pedido_header_cells = []
-    for titulo in pedido_headers:
-        celda = WriteOnlyCell(ws, value=titulo)
-        celda.font = header_font
-        celda.fill = header_fill
-        pedido_header_cells.append(celda)
-    ws.append(pedido_header_cells)
-
     for pedido in pedidos_qs:
-        # 9.1 Escribir los datos del Pedido
+        # 7.1 Escribir una fila de separación para mayor legibilidad (opcional)
+        ws.append([])
+
+        # 7.2 Escribir una fila de cabecera para "Pedido"
+        row_header_pedido = [WriteOnlyCell(ws, value='PEDIDO:')]
+        row_header_pedido[0].font = Font(bold=True, color='FFFFFF')
+        row_header_pedido[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+        ws.append(row_header_pedido)
+
+        # 7.3 Escribir los encabezados de Pedido
+        pedido_header_cells = []
+        for titulo in pedido_headers:
+            celda = WriteOnlyCell(ws, value=titulo)
+            celda.font = header_font
+            celda.fill = header_fill
+            pedido_header_cells.append(celda)
+        ws.append(pedido_header_cells)
+
+        # 7.4 Escribir los datos del Pedido
         pedido_data = [
             pedido.pk,
             pedido.cliente.nombre if pedido.cliente else '',
