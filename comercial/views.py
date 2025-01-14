@@ -22,8 +22,6 @@ from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.workbook import Workbook
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from xhtml2pdf import pisa
 from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
     EliminarDetallePedidoForm, EditarPedidoExportadorForm, EditarDetallePedidoForm, EditarReferenciaForm, \
@@ -35,10 +33,6 @@ from .resources import obtener_datos_con_totales_cliente, crear_archivo_excel_cl
     crear_archivo_excel_enviar_cliente, obtener_datos_con_totales_enviar_cliente
 from .tables import PedidoTable, DetallePedidoTable, PedidoExportadorTable, CarteraPedidoTable, UtilidadPedidoTable, \
     ResumenPedidoTable, ReferenciasTable, SeguimienosTable, SeguimienosResumenTable
-
-
-# from .resources import CarteraPedidoResource
-
 
 # -----------Funcion para permisos por grupo ---------------------
 def es_miembro_del_grupo(nombre_grupo):
@@ -119,55 +113,7 @@ class ResumenPedidoListView(SingleTableView):
 
 
 # ---------------------------------Resumen Exportaciones PDF -----------------------------------------------------
-def exportar_detalle_pedido_a_pdf(request):
-    # Crear una respuesta HTTP para un documento PDF
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="detalle_pedido.pdf"'
 
-    # Crear un objeto canvas de ReportLab para dibujar el PDF
-    p = canvas.Canvas(response, pagesize=letter)
-
-    # Inicializar la posición vertical para dibujar en la página
-    y = 750
-
-    # Encabezados de las columnas
-    encabezados = [
-        "Fruta", "Presentación", "Cajas Solicitadas", "Peso Caja", "Kilos", "Cajas Enviadas",
-        "Marca Caja", "Referencia", "Stickers", "Lleva Contenedor", "Referencia Contenedor",
-        "$Utilidad Por Caja", "$Por Caja USD", "$Por Producto"
-    ]
-
-    # Dibujar los encabezados de las columnas
-    for encabezado in encabezados:
-        p.drawString(30, y, encabezado)
-        y -= 20
-
-    # Resetear la posición Y para los datos
-    y = 700
-
-    # Obtener y dibujar los datos
-    for detalle in DetallePedido.objects.filter(pedido_id=166):
-        datos = [
-            str(detalle.fruta), str(detalle.presentacion), detalle.cajas_solicitadas,
-            detalle.presentacion_peso, detalle.kilos, detalle.cajas_enviadas,
-            str(detalle.tipo_caja), str(detalle.referencia), detalle.stickers,
-            "Sí" if detalle.lleva_contenedor else "No", detalle.referencia_contenedor,
-            detalle.tarifa_utilidad, detalle.valor_x_caja_usd, detalle.valor_x_producto
-        ]
-
-        for dato in datos:
-            p.drawString(30, y, str(dato))
-            y -= 20
-            if y < 50:  # Cambiar de página si es necesario
-                p.showPage()
-                y = 750
-
-    # Finalizar el PDF
-    p.showPage()
-    p.save()
-
-    # Devolver la respuesta
-    return response
 
 
 # ------------------ Exportacion de Utilidades Excel General --------------------------------------------------------

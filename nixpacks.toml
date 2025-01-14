@@ -1,12 +1,11 @@
 # nixpacks.toml
 
 [phases.setup]
-# Instalar Python 3.11 y los paquetes de Nix
+
 nixPkgs = [
   "python312"
 ]
 
-# Instalar paquetes de apt-get si es necesario
 aptPkgs = [
   "build-essential",
   "libffi-dev",

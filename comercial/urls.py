@@ -80,9 +80,6 @@ urlpatterns = [
     path('actualizar_tasas_fieldex/', views.actualizar_tasas_fieldex, name='actualizar_tasas_fieldex'),
     path('actualizar_vencimiento_juan/', views.actualizar_dias_de_vencimiento_juan, name='actualizar_vencimiento_juan'),
     path('actualizar_tasas_juan/', views.actualizar_tasas_juan, name='actualizar_tasas_juan'),
-
-
-
     path('pedido/<int:pedido_id>/cancelacion/', views.solicitar_cancelacion, name='solicitar_cancelacion'),
     path('autorizacion/<int:autorizacion_id>/autorizar/', views.autorizar_cancelacion, name='autorizar_cancelacion'),
     path('filtrar_presentaciones/', views.filtrar_presentaciones, name='filtrar_presentaciones'),
