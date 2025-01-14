@@ -61,7 +61,6 @@ urlpatterns = [
          name='exportar_utilidades_fieldex_view'),
     path('exportar_utilidades_juan_view', views.ExportarUtilidadesJuanView.as_view(),
          name='exportar_utilidades_juan_view'),
-    path('exportar_detallepedido_pdf', views.exportar_detalle_pedido_a_pdf, name='exportar_detallepedido_pdf'),
     path('pedido_resumen/<int:pedido_id>', views.ResumenPedidoListView.as_view(), name='pedido_resumen'),
     path('referencia_list_etnico', views.ReferenciasEtnicoListView.as_view(), name='referencia_list_etnico'),
     path('referencia_list_fieldex', views.ReferenciasFieldexListView.as_view(), name='referencia_list_fieldex'),
