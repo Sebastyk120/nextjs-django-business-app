@@ -1,42 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
-
-body {
-    background-color: #1c1c1c;
-    font-family: 'Poppins', sans-serif;
-}
-
-h1 {
-    text-align: center;
-    font-weight: 800;
-    font-size: 30px;
-    color: #6fb9dc;
-    margin-bottom: 20px;
-}
-
-.container {
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 8px;
-    padding: 20px;
-}
-
-input[name="item_busqueda"] {
-    border-radius: 4px;
-    border: none;
-    padding: 8px 12px;
-    background-color: #e4e4e4;
-    font-family: 'Poppins', sans-serif;
-    transition: 0.3s;
-    width: 200px;
-}
-
-button {
-    font-family: 'Poppins', sans-serif;
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: none;
-}
-
-.table {
+/* Asegúrate de que tus estilos solo afecten las tablas dentro de la plantilla de inventarios */
+.container-inventarios .table {
     border-collapse: collapse;
     margin: 25px 0;
     font-size: 0.9em;
@@ -48,39 +11,40 @@ button {
     overflow: hidden;
 }
 
-.table thead tr {
+.container-inventarios .table thead tr {
     background-color: #522fed;
     color: #ffffff;
     text-align: center;
     font-weight: bold;
 }
 
-.table th, .table td {
+.container-inventarios .table th, 
+.container-inventarios .table td {
     padding: 12px 15px;
     border: 1px solid #dddddd;
     text-align: center;
 }
 
-.table tbody tr {
+.container-inventarios .table tbody tr {
     border-bottom: 1px solid #dddddd;
 }
 
-.table tbody tr:nth-of-type(even) {
+.container-inventarios .table tbody tr:nth-of-type(even) {
     background-color: #f3f3f3;
 }
 
-.table tbody tr:last-of-type {
-    border-bottom: 2px solid #522fed;
-}
-
-.table tbody tr:hover {
+.container-inventarios .table tbody tr:hover {
     background-color: #f1f1f1;
 }
 
-.modal-content {
-    padding: 20px;
+/* Botón y barra de búsqueda */
+.container-inventarios input[name="item_busqueda"], 
+.container-inventarios button {
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin: 5px;
 }
 
-.modal-content .form-control {
-    margin-bottom: 10px;
+.container-inventarios input[name="item_busqueda"] {
+    width: 250px;
 }
