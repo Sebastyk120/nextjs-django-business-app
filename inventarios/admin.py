@@ -57,4 +57,20 @@ class GroupAdmin(ImportExportModelAdmin, BaseGroupAdmin):
     resource_class = GroupResource
 
 
-admin.site.register(Inventario)
+class InventarioAdmin(admin.ModelAdmin):
+    list_display = (
+        'numero_item', 
+        'compras_efectivas', 
+        'saldos_iniciales', 
+        'salidas', 
+        'traslado_propio', 
+        'traslado_remisionado', 
+        'ventas', 
+        'venta_contenedor'
+    )
+    list_filter = ('numero_item',)  # Agrega un filtro por referencia
+    search_fields = ('numero_item__nombre', 'numero_item__exportador__nombre')  # Búsqueda por campos relacionados
+    ordering = ('numero_item',)  # Ordena por el campo definido en Meta
+
+# Registra el modelo y su configuración
+admin.site.register(Inventario, InventarioAdmin)
