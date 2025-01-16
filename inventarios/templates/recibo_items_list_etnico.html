@@ -1,61 +1,102 @@
-{% extends 'comercialbase.html' %} {% block content %}
-    {% load static %}
-    {% load django_tables2 %}
-    <link rel="stylesheet" href="{% static 'css/recibo_items.css' %}"/>
-    <h1 class="align-center">
-        <img src="{% static 'img/Etnico Logo.png' %}" alt="Logo de la Empresa" class="logo-empresa" style="vertical-align:middle; margin-right:5px;"/>
-        Movimientos Inventario Etnico <i class="bi bi-nintendo-switch"></i>
-    </h1>
-    <div class="container my-4">
-        <form method="get" class="d-flex justify-content-center mb-3">
-            <input type="text" name="item_busqueda" placeholder="Buscar Referencia..." class="form-control w-25"/>
-            <button class="btn btn-secondary ms-2" type="submit"><i class="bi bi-search"></i></button>
-        </form>
-        <div class="d-flex justify-content-center mb-4">
-            <button type="button" class="btn btn-primary mx-2" name="add" id="add" data-bs-toggle="modal"
-                    data-bs-target="#modalCreateItem" href="{% url 'reciboitemscreateetnico' %}">
-                <i class="bi bi-database-fill-add"></i> Añadir
-            </button>
-            <a class="btn btn-success mx-2" href="{% url 'exportar_items_etnico' %}" name="exportar">
-                <i class="bi bi-filetype-xlsx"></i> Exportar
-            </a>
-            <a class="btn btn-danger mx-2" name="volver" id="volver" role="button" onclick="history.back();">
-                <i class="bi bi-reply-fill"></i> Volver
-            </a>
+{% extends 'comercialbase.html' %}
+{% block content %}
+{% load static %}
+{% load django_tables2 %}
+
+<link rel="stylesheet" href="{% static 'css/recibo_items.css' %}"/>
+
+<div class="dashboard-container">
+    <!-- Header Section -->
+    <header class="dashboard-header">
+        <div class="logo-container">
+            <img src="{% static 'img/Etnico Logo.png' %}" alt="Logo de la Empresa" class="company-logo"/>
+            <h1>Movimientos Inventario Etnico <i class="bi bi-nintendo-switch"></i></h1>
         </div>
-    </div>
-    <div class="container-fluid">
-        {% render_table table %}
+    </header>
+
+    <!-- Search and Actions Section -->
+    <div class="actions-container">
+        <div class="search-box">
+            <form method="get" class="search-form">
+                <div class="search-input-group">
+                    <i class="bi bi-search search-icon"></i>
+                    <input
+                        type="text"
+                        name="item_busqueda"
+                        placeholder="Buscar Referencia..."
+                        class="search-input"
+                    />
+                </div>
+            </form>
+        </div>
+
+        <div class="action-buttons">
+            <button
+                type="button"
+                class="action-btn add-btn"
+                name="add"
+                id="add"
+                data-bs-toggle="modal"
+                data-bs-target="#modalCreateItem"
+                href="{% url 'reciboitemscreateetnico' %}"
+            >
+                <i class="bi bi-database-fill-add"></i>
+                <span>Añadir</span>
+            </button>
+
+            <a
+                class="action-btn export-btn"
+                href="{% url 'exportar_items_etnico' %}"
+                name="exportar"
+            >
+                <i class="bi bi-filetype-xlsx"></i>
+                <span>Exportar</span>
+            </a>
+
+            <button
+                class="action-btn return-btn"
+                name="volver"
+                id="volver"
+                onclick="history.back();"
+            >
+                <i class="bi bi-reply-fill"></i>
+                <span>Volver</span>
+            </button>
+        </div>
     </div>
 
-    <!-- Crear Item Modal -->
-    <div class="modal fade text-white" id="modalCreateItem" tabindex="-1" aria-labelledby="modalCreateItemLabel"
-         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content text-white bg-dark">
-                <!-- Modal content here -->
-            </div>
+    <!-- Table Section -->
+    <div class="table-container">
+        {% render_table table %}
+    </div>
+</div>
+
+<!-- Modales -->
+<div class="modal fade" id="modalCreateItem" tabindex="-1" aria-labelledby="modalCreateItemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <!-- Modal content here -->
         </div>
     </div>
-    <!-- Editar Item Modal -->
-    <div class="modal fade text-white" id="moverItemModal" tabindex="-1" role="dialog"
-         aria-labelledby="moverItemModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content bg-dark">
-                <!-- Modal content here -->
-            </div>
+</div>
+
+<div class="modal fade" id="moverItemModal" tabindex="-1" role="dialog" aria-labelledby="moverItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <!-- Modal content here -->
         </div>
     </div>
-    <!-- Eliminar Item Modal -->
-    <div class="modal fade text-white" id="eliminarItemModal" tabindex="-1" role="dialog"
-         aria-labelledby="eliminarItemModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content bg-dark">
-                <!-- Modal content here -->
-            </div>
+</div>
+
+<div class="modal fade" id="eliminarItemModal" tabindex="-1" role="dialog" aria-labelledby="eliminarItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <!-- Modal content here -->
         </div>
     </div>
-    <script src="{% static 'js/editar_item.js' %}"></script>
-    <script src="{% static 'js/crear_item.js' %}"></script>
-    <script src="{% static 'js/eliminar_item.js' %}"></script>
+</div>
+
+<script src="{% static 'js/editar_item.js' %}"></script>
+<script src="{% static 'js/crear_item.js' %}"></script>
+<script src="{% static 'js/eliminar_item.js' %}"></script>
 {% endblock %}
