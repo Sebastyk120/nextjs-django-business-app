@@ -53,9 +53,15 @@ button {
     text-align: center;
 }
 
-.table thead a {
-    color: white;
+.table thead th {
+    color: #ffffff; /* Color del texto */
+    background-color: #4f46e5; /* Color de fondo */
     text-decoration: none;
+}
+
+.table thead th a {
+    color: #ffffff; /* Color del texto */
+    text-decoration: none; /* Quitar el subrayado */
 }
 
 .table thead a:hover {
