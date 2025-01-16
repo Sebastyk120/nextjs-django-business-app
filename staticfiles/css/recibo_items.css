@@ -34,31 +34,44 @@ button {
     border-collapse: collapse;
     margin: 25px 0;
     font-size: 0.8em;
+    font-family: 'Poppins', sans-serif;
     width: 100%;
     min-width: 400px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     background-color: #F2F2F2;
     font-weight: bold;
     text-align: center;
+    overflow-x: auto;
+}
+
+.table thead th {
+    color: #ffffff; /* Color del texto */
+    background-color: #4f46e5; /* Color de fondo */
+    text-decoration: none;
+}
+
+.table thead th a {
+    color: #ffffff; /* Color del texto */
+    text-decoration: none; /* Quitar el subrayado */
+}
+
+.table thead th a:hover {
+    color: #6a7870; /* Color del texto al pasar el cursor */
+    text-decoration: underline; /* Subrayado al pasar el cursor */
+}
+
+.table tbody tr:hover {
+    background-color: #a3dbf8; /* Color de fondo al pasar el cursor */
+    cursor: auto;
+}
+
+.table tbody tr.active-row {
+    font-weight: bold;
+    color: #098ad1;
 }
 
 .table td, .table th {
     vertical-align: middle;
-}
-
-.table thead tr {
-    background-color: #522fed;
-    color: #ffffff;
-    text-align: center;
-}
-
-.table thead a {
-    color: white;
-    text-decoration: none;
-}
-
-.table thead a:hover {
-    color: #6a7870;
 }
 
 .modal-content {
