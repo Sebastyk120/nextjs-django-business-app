@@ -1,27 +1,61 @@
 {% extends 'comercialbase.html' %}
+{% load static %}
+{% load django_tables2 %}
 {% block content %}
-    {% load static %}
-    {% load django_tables2 %}
-    <link rel="stylesheet" href="{% static 'css/inventario_bodega.css' %}"/>
-    <div class="container my-4 text-white" style="background-color: #1c1c1c; border-radius: 8px; padding: 20px;">
-        <h1 class="align-center">
-            <img src="{% static 'img/Juan-Matas.png' %}" alt="Logo de la Empresa" class="logo-empresa"
-                 style="vertical-align:middle; margin-right:5px;"/>
-            Inventario Bodegas Juan Matas <i class="bi bi-database-gear"></i>
-        </h1>
-        <form method="get" class="d-flex justify-content-center mb-3">
-            <input type="text" name="item_busqueda" placeholder="Buscar Referencia..." class="form-control w-25"/>
-            <button class="btn btn-secondary ms-2" type="submit"><i class="bi bi-search"></i></button>
-            <button class="btn btn-danger ms-2" id="clearFilters" type="button"><i class="bi bi-x-circle"></i></button>
-            <a class="btn btn-success mx-2" href="{% url 'exportar_inventario_juan' %}" name="exportar">
-                <i class="bi bi-filetype-xlsx"></i> Exportar
-            </a>
-        </form>
-        <div class="container-fluid">
-            {% render_table table %}
+    <link rel="stylesheet" href="{% static 'css/inventario_bodega.css' %}">
+    <div class="inventory-dashboard">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="brand">
+                <img src="{% static 'img/Juan-Matas.png' %}" alt="Logo de la Empresa" class="brand-logo"/>
+                <h1>Inventario Bodegas Juan Matas <i class="bi bi-database-gear"></i></h1>
+            </div>
+
+            <!-- Search and Actions Bar -->
+            <div class="actions-bar">
+                <form method="get" class="search-form">
+                    <div class="search-wrapper">
+                        <i class="bi bi-search search-icon"></i>
+                        <input
+                                type="text"
+                                name="item_busqueda"
+                                placeholder="Buscar Referencia..."
+                                class="search-input"
+                        />
+                    </div>
+                    <div class="buttons-group">
+                        <button class="btn-clear" id="clearFilters" type="button">
+                            <i class="bi bi-x-circle"></i>
+                            <span>Limpiar</span>
+                        </button>
+                        <a class="btn-export" href="{% url 'exportar_inventario_juan' %}">
+                            <i class="bi bi-filetype-xlsx"></i>
+                            <span>Exportar</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </header>
+        <!-- Table Section -->
+        <div class="table-container">
+            <table class="inventory-table">
+                <thead>
+                {% for column in table.columns %}
+                    <th>{{ column.header }}</th>
+                {% endfor %}
+                </thead>
+                <tbody>
+                {% for row in table.rows %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-
     <script>
         document.getElementById('clearFilters').addEventListener('click', function () {
             const url = new URL(window.location.href);
