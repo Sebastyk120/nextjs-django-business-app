@@ -43,8 +43,7 @@ class InventarioTable(tables.Table):
         fields = ("numero_item", "compras_efectivas", "saldos_iniciales", "salidas",
                   "traslado_propio", "traslado_remisionado", "ventas", "venta_contenedor")
         attrs = {
-            'compras_efectivas': {'th': {'style': 'color: red; background-color: #c5e65c;'}},
-            # Agrega más columnas según sea necesario
+            "class": "inventory-table"
         }
 
     def render_stock_actual(self, record):

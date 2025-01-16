@@ -1,56 +1,52 @@
 {% extends 'comercialbase.html' %}
+{% load static %}
+{% load django_tables2 %}
 {% block content %}
-<div class="container-inventarios my-4">
-    <h1 class="align-center">
-        <img src="{% static 'img/Etnico Logo.png' %}" alt="Logo de la Empresa" class="logo-empresa"
-             style="vertical-align:middle; margin-right:5px;"/>
-        Inventario Bodegas Etnico <i class="bi bi-database-gear"></i>
-    </h1>
-    <form method="get" class="d-flex justify-content-center mb-3">
-        <input type="text" name="item_busqueda" placeholder="Buscar Referencia..." class="form-control w-25"/>
-        <button class="btn btn-secondary ms-2" type="submit"><i class="bi bi-search"></i></button>
-        <button class="btn btn-danger ms-2" id="clearFilters" type="button"><i class="bi bi-x-circle"></i></button>
-        <a class="btn btn-success mx-2" href="{% url 'exportar_inventario_etnico' %}" name="exportar">
-            <i class="bi bi-filetype-xlsx"></i> Exportar
-        </a>
-    </form>
-    <div class="container-fluid">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Referencia</th>
-                    <th>Compras Efectivas</th>
-                    <th>Saldos Iniciales</th>
-                    <th>Salidas</th>
-                    <th>Traslado Propio</th>
-                    <th>Traslado Remisionado</th>
-                    <th>Ventas</th>
-                    <th>Venta Contenedor</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in table.data %}
-                <tr>
-                    <td>{{ row.numero_item }}</td>
-                    <td>{{ row.compras_efectivas }}</td>
-                    <td>{{ row.saldos_iniciales }}</td>
-                    <td>{{ row.salidas }}</td>
-                    <td>{{ row.traslado_propio }}</td>
-                    <td>{{ row.traslado_remisionado }}</td>
-                    <td>{{ row.ventas }}</td>
-                    <td>{{ row.venta_contenedor }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+    <link rel="stylesheet" href="{% static 'css/inventario_bodega.css' %}"/>
+    <div class="inventory-dashboard">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="brand">
+                <img src="{% static 'img/Etnico Logo.png' %}" alt="Logo de la Empresa" class="brand-logo"/>
+                <h1>Inventario Bodegas Etnico <i class="bi bi-database-gear"></i></h1>
+            </div>
 
-<script>
-    document.getElementById('clearFilters').addEventListener('click', function () {
-        const url = new URL(window.location.href);
-        url.search = '';
-        window.location.href = url.href;
-    });
-</script>
+            <!-- Search and Actions Bar -->
+            <div class="actions-bar">
+                <form method="get" class="search-form">
+                    <div class="search-wrapper">
+                        <i class="bi bi-search search-icon"></i>
+                        <input
+                                type="text"
+                                name="item_busqueda"
+                                placeholder="Buscar Referencia..."
+                                class="search-input"
+                        />
+                    </div>
+                    <div class="buttons-group">
+                        <button class="btn-clear" id="clearFilters" type="button">
+                            <i class="bi bi-x-circle"></i>
+                            <span>Limpiar</span>
+                        </button>
+                        <a class="btn-export" href="{% url 'exportar_inventario_etnico' %}">
+                            <i class="bi bi-filetype-xlsx"></i>
+                            <span>Exportar</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </header>
+
+        <!-- Table Section -->
+        <div class="table-container">
+            {% render_table table %}
+        </div>
+    </div>
+    <script>
+        document.getElementById('clearFilters').addEventListener('click', function () {
+            const url = new URL(window.location.href);
+            url.search = '';
+            window.location.href = url.href;
+        });
+    </script>
 {% endblock %}
