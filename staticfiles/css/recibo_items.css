@@ -146,11 +146,43 @@ h1 {
 }
 
 /* Table Styles */
-.table-container {
+.table-responsive-container {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    position: relative;
+    left: 50%;
+    right: 50%;
     background-color: white;
-    border-radius: var(--border-radius);
+}
+
+.table-wrapper {
+    width: 98%;
+    margin: 0 auto;
+    overflow-x: auto;
     box-shadow: var(--box-shadow);
-    overflow: hidden;
+    border-radius: var(--border-radius);
+    -webkit-overflow-scrolling: touch; /* Para mejor desempeño en iOS */
+    scrollbar-width: thin; /* Para Firefox */
+}
+
+/* Estilo para la barra de desplazamiento */
+.table-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #4320d5;
 }
 
 .table {
@@ -158,6 +190,39 @@ h1 {
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.95rem;
+    min-width: 1200px; /* Asegura que la tabla tenga un ancho mínimo para todos los campos */
+    table-layout: fixed; /* Mejor control sobre el ancho de las columnas */
+}
+
+/* Ajustes específicos para las columnas basados en tu tables.py */
+.table th[data-field="numero_item"],
+.table th[data-field="cantidad_cajas"] {
+    width: 8%;
+}
+
+.table th[data-field="bodega"],
+.table th[data-field="proveedor"],
+.table th[data-field="propiedad"],
+.table th[data-field="tipo_documento"] {
+    width: 10%;
+}
+
+.table th[data-field="fecha_movimiento"] {
+    width: 12%;
+}
+
+.table th[data-field="documento"],
+.table th[data-field="observaciones"] {
+    width: 15%;
+}
+
+.table th[data-field="user"] {
+    width: 10%;
+}
+
+.table th[data-field="editar"],
+.table th[data-field="eliminar"] {
+    width: 6%;
 }
 
 .table thead tr {
