@@ -1,8 +1,9 @@
 {% extends 'comercialbase.html' %}
 {% load static %}
 {% load django_tables2 %}
+
 {% block content %}
-    <link rel="stylesheet" href="{% static 'css/inventario_bodega.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/inventario_bodega.css' %}">
     <div class="inventory-dashboard">
         <!-- Header Section -->
         <header class="dashboard-header">
@@ -39,7 +40,22 @@
 
         <!-- Table Section -->
         <div class="table-container">
-            {% render_table table %}
+            <table class="inventory-table">
+                <thead>
+                {% for column in table.columns %}
+                    <th>{{ column.header }}</th>
+                {% endfor %}
+                </thead>
+                <tbody>
+                {% for row in table.rows %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
     <script>
