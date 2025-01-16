@@ -1,3 +1,4 @@
+from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin, GroupAdmin as BaseGroupAdmin
 from django.utils.html import format_html
@@ -50,8 +51,9 @@ class MyModelAdmin(ImportExportModelAdmin):
 
 
 @admin.register(Movimiento)
-class MovimientoAdmin(admin.ModelAdmin):
-    # Campos para mostrar en modo tabla
+class MyModelAdmin(ImportExportModelAdmin):
+    import_error_display = ("message", "row", "traceback")
+    resource_class = MovimientoResource
     list_display = (
         "item_historico",
         "cantidad_cajas_h",
@@ -84,8 +86,9 @@ class MovimientoAdmin(admin.ModelAdmin):
 
 
 @admin.register(Bodega)
-class BodegaAdmin(admin.ModelAdmin):
-    # Campos para mostrar en modo tabla
+class MyModelAdmin(ImportExportModelAdmin):
+    import_error_display = ("message", "row", "traceback")
+    resource_class = BodegaResource
     list_display = ("nombre", "exportador_display")
 
     # Campos para búsqueda
@@ -146,3 +149,24 @@ class InventarioAdmin(admin.ModelAdmin):
 
 # Registra el modelo y su configuración
 admin.site.register(Inventario, InventarioAdmin)
+
+@admin.register(LogEntry)
+class LogEntryAdmin(admin.ModelAdmin):
+    # Indicamos qué campos se mostrarán en la lista
+    list_display = (
+        'action_time',
+        'user',
+        'content_type',
+        'object_repr',
+        'action_flag',
+        'change_message',
+    )
+
+    # Opcionalmente, podemos agregar filtros
+    list_filter = ('action_flag', 'content_type', 'user',)
+
+    # Si quieres hacer búsquedas por algún campo
+    search_fields = ('object_repr', 'change_message',)
+
+    # Si quieres que los campos se muestren como solo lectura
+    readonly_fields = [f.name for f in LogEntry._meta.get_fields()]
