@@ -144,18 +144,6 @@ h1 {
 .return-btn:hover {
     background-color: #dc2626;
 }
-
-/* Table Styles */
-.table-responsive-container {
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
-    margin-right: calc(-50vw + 50%);
-    position: relative;
-    left: 50%;
-    right: 50%;
-    background-color: white;
-}
-
 .table-wrapper {
     width: 98%;
     margin: 0 auto;
@@ -190,39 +178,6 @@ h1 {
     border-collapse: separate;
     border-spacing: 0;
     font-size: 0.95rem;
-    min-width: 1200px; /* Asegura que la tabla tenga un ancho mínimo para todos los campos */
-    table-layout: fixed; /* Mejor control sobre el ancho de las columnas */
-}
-
-/* Ajustes específicos para las columnas basados en tu tables.py */
-.table th[data-field="numero_item"],
-.table th[data-field="cantidad_cajas"] {
-    width: 8%;
-}
-
-.table th[data-field="bodega"],
-.table th[data-field="proveedor"],
-.table th[data-field="propiedad"],
-.table th[data-field="tipo_documento"] {
-    width: 10%;
-}
-
-.table th[data-field="fecha_movimiento"] {
-    width: 12%;
-}
-
-.table th[data-field="documento"],
-.table th[data-field="observaciones"] {
-    width: 15%;
-}
-
-.table th[data-field="user"] {
-    width: 10%;
-}
-
-.table th[data-field="editar"],
-.table th[data-field="eliminar"] {
-    width: 6%;
 }
 
 .table thead tr {
