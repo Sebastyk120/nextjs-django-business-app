@@ -156,6 +156,32 @@ class DetallePedidoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
 class ClienteAdmin(ImportExportModelAdmin):
     import_error_display = ("message", "row", "traceback")
     resource_class = ClienteResource
+    list_display = (
+        "nombre",
+        "direccion",
+        "ciudad",
+        "destino_iata",
+        "tax_id",
+        "incoterm",
+        "correo",
+        "telefono",
+        "intermediario",
+        "negociaciones_cartera"
+    )
+    search_fields = (
+        "nombre",
+        "ciudad",
+        "intermediario"
+    )
+    search_help_text = "Buscar por nombre del cliente, intermediario o ciudad."
+    list_filter = (
+        "ciudad",
+        "destino_iata",
+        "incoterm",
+        "negociaciones_cartera"
+    )
+    ordering = ("nombre",)
+    list_per_page = 20
 
 
 # ----------------------------------------------------------------------------
