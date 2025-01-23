@@ -706,61 +706,58 @@ class DetallePedido(models.Model):
                 pedido.save()
 
     def _actualizar_totales_incremental(self, operacion, detalle_anterior=None):
-        """
-        Ajusta los totales del pedido según la operación:
-        - 'add': Nuevo detalle
-        - 'edit': Actualización del detalle
-        - 'delete': Eliminación del detalle
-        """
         pedido = self.pedido
 
-        # 1) Obtenemos las diferencias (delta) de cada campo
+        # 1) Cálculo incremental para cajas, valores monetarios, pesos brutos, etc.
         cajas_enviadas_delta = self.cajas_enviadas or 0
         cajas_solicitadas_delta = self.cajas_solicitadas or 0
         valor_x_producto_delta = self.valor_x_producto or 0
         valor_nota_delta = self.valor_nota_credito_usd or 0
         valor_utilidad_delta = self.valor_total_utilidad_x_producto or 0
-        piezas_solicitadas_delta = math.ceil(self.calcular_no_piezas() or 0)
-        piezas_enviadas_delta = math.ceil(self.calcular_no_piezas_final() or 0)
         peso_bruto_solicitado_delta = self.calcular_peso_bruto()
         peso_bruto_enviado_delta = self.calcular_peso_bruto_final()
 
         if operacion == 'edit' and detalle_anterior:
-            # Calculamos la diferencia entre lo nuevo y lo viejo
             cajas_enviadas_delta -= (detalle_anterior.cajas_enviadas or 0)
             cajas_solicitadas_delta -= (detalle_anterior.cajas_solicitadas or 0)
             valor_x_producto_delta -= (detalle_anterior.valor_x_producto or 0)
             valor_nota_delta -= (detalle_anterior.valor_nota_credito_usd or 0)
             valor_utilidad_delta -= (detalle_anterior.valor_total_utilidad_x_producto or 0)
-            piezas_solicitadas_delta -= math.ceil(detalle_anterior.calcular_no_piezas() or 0)
-            piezas_enviadas_delta -= math.ceil(detalle_anterior.calcular_no_piezas_final() or 0)
             peso_bruto_solicitado_delta -= detalle_anterior.calcular_peso_bruto()
             peso_bruto_enviado_delta -= detalle_anterior.calcular_peso_bruto_final()
 
         elif operacion == 'delete':
-            # En 'delete', todo lo que era este detalle se resta del Pedido
             cajas_enviadas_delta = -(self.cajas_enviadas or 0)
             cajas_solicitadas_delta = -(self.cajas_solicitadas or 0)
             valor_x_producto_delta = -(self.valor_x_producto or 0)
             valor_nota_delta = -(self.valor_nota_credito_usd or 0)
             valor_utilidad_delta = -(self.valor_total_utilidad_x_producto or 0)
-            piezas_solicitadas_delta = -math.ceil(self.calcular_no_piezas() or 0)
-            piezas_enviadas_delta = -math.ceil(self.calcular_no_piezas_final() or 0)
             peso_bruto_solicitado_delta = -self.calcular_peso_bruto()
             peso_bruto_enviado_delta = -self.calcular_peso_bruto_final()
 
-        # 2) Aplicamos esos deltas al Pedido
+        # 2) Aplicamos esos deltas al Pedido (solo para los campos "numéricos" que sí queremos manejar de forma incremental)
         pedido.total_cajas_enviadas = (pedido.total_cajas_enviadas or 0) + cajas_enviadas_delta
         pedido.total_cajas_solicitadas = (pedido.total_cajas_solicitadas or 0) + cajas_solicitadas_delta
         pedido.valor_total_factura_usd = (pedido.valor_total_factura_usd or 0) + valor_x_producto_delta
         pedido.valor_total_nota_credito_usd = (pedido.valor_total_nota_credito_usd or 0) + valor_nota_delta
         pedido.valor_total_utilidad_usd = (pedido.valor_total_utilidad_usd or 0) + valor_utilidad_delta
-        pedido.total_piezas_solicitadas = (pedido.total_piezas_solicitadas or 0) + piezas_solicitadas_delta
-        pedido.total_piezas_enviadas = (pedido.total_piezas_enviadas or 0) + piezas_enviadas_delta
         pedido.total_peso_bruto_solicitado = (pedido.total_peso_bruto_solicitado or 0) + peso_bruto_solicitado_delta
         pedido.total_peso_bruto_enviado = (pedido.total_peso_bruto_enviado or 0) + peso_bruto_enviado_delta
 
-        # 3) Guardamos el pedido con los cambios incrementales
+        # 3) Recalcular total de piezas (solicitadas y enviadas) sumando todos los DetallePedido
+        #    y aplicar math.ceil al TOTAL, en lugar de cada detalle.
+        total_piezas_solicitadas = 0
+        total_piezas_enviadas = 0
+
+        detalles = pedido.detallepedido_set.all()
+        for d in detalles:
+            total_piezas_solicitadas += (d.calcular_no_piezas() or 0)
+            total_piezas_enviadas += (d.calcular_no_piezas_final() or 0)
+
+        pedido.total_piezas_solicitadas = math.ceil(total_piezas_solicitadas)
+        pedido.total_piezas_enviadas = math.ceil(total_piezas_enviadas)
+
+        # 4) Guardar el pedido con todos los cambios
         pedido.save()
 
     def calcular_peso_bruto(self):
