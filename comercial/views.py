@@ -112,9 +112,6 @@ class ResumenPedidoListView(SingleTableView):
         return context
 
 
-# ---------------------------------Resumen Exportaciones PDF -----------------------------------------------------
-
-
 
 # ------------------ Exportacion de Utilidades Excel General --------------------------------------------------------
 class ExportarUtilidadesView(TemplateView):
