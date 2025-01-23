@@ -1,12 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
 
-body {
-    font-family: 'Poppins';
+/* Encapsulación de estilos dentro de .comercialbase-container */
+.comercialbase-container {
+    font-family: 'Poppins', sans-serif;
     background-color: #121212;
     color: #ffffff;
+    /* Puedes añadir más estilos globales específicos aquí si es necesario */
 }
 
-.footer {
+/* Estilos del footer dentro de .comercialbase-container */
+.comercialbase-container .footer {
     position: fixed;
     left: 0;
     bottom: 0;
@@ -19,11 +22,36 @@ body {
     font-size: 15px;
 }
 
-.offcanvas-body .nav-link, .offcanvas-body .dropdown-item {
+/* Estilos de los enlaces del navbar y dropdown dentro de .comercialbase-container */
+.comercialbase-container .offcanvas-body .nav-link,
+.comercialbase-container .offcanvas-body .dropdown-item {
     font-size: 16px;
     color: aqua;
 }
 
-.card-text {
+/* Estilos del texto dentro de las tarjetas en .comercialbase-container */
+.comercialbase-container .card-text {
     font-size: 14px;
+}
+
+/* Estilos específicos para botones dentro de .comercialbase-container */
+.comercialbase-container .btn {
+    /* Añade estilos personalizados para los botones de la plantilla base si es necesario */
+}
+
+/* Estilos específicos para el botón de menú */
+.comercialbase-container .menu-button {
+    /* Ya está definido en la etiqueta <style> del HTML, pero puedes añadir más estilos aquí si es necesario */
+}
+
+/* Evitar que los estilos globales afecten a otros contenedores */
+body {
+    /* Remover estilos globales para evitar interferencias */
+    /* background-color: #121212; */
+    /* color: #ffffff; */
+}
+
+/* Opcional: Estilos adicionales que solo se aplican dentro de .comercialbase-container */
+.comercialbase-container .another-specific-class {
+    /* Tus estilos aquí */
 }
