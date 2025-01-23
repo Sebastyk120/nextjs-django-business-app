@@ -1,58 +1,146 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menú Principal</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="{% static 'img/favicon.png' %}">
+    <!-------Boostrap-------->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
+            integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js"
+            integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V"
+            crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!--custom css-->
+    <link rel="stylesheet" href="{% static 'css/home.css' %}"/>
+
+    <title>Heavens Corp</title>
     <style>
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: #f4f4f4;
         }
+
         .company-card {
-            transition: transform 0.3s ease-in-out;
-            cursor: pointer;
-            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            border-radius: 15px;
+            overflow: hidden;
         }
+
+
         .company-card:hover {
-            transform: translateY(-5px);
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
+
         .company-logo {
-            height: 150px;
-            object-fit: contain;
+            max-width: 100%;
+            height: auto;
+            object-fit: contain; /* opcional */
             margin-bottom: 1rem;
+            display: block;
+            margin: 0 auto; /* Para centrar la imagen */
+            transition: transform 0.3s ease;
+            filter: grayscale(20%) brightness(1.1);
         }
+
+        .company-card:hover .company-logo {
+            transform: scale(1.1);
+        }
+
+
         .modal-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
         }
+
         .menu-item {
             transition: all 0.3s ease;
+            border-radius: 8px;
         }
+
         .menu-item:hover {
-            background-color: #f8f9fa;
-            transform: translateX(10px);
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            transform: translateX(15px);
+        }
+
+        /* Estilos personalizados para Heavens Fruit */
+        .heavens-fruit-card {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            border: 2px solid #ff7e5f;
+        }
+
+        .heavens-fruit-card .card-title {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .heavens-fruit-card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
         }
     </style>
 </head>
-<body>
-    <div class="container py-5">
-        <h1 class="text-center mb-5 text-primary fw-bold">Panel de Empresas</h1>
 
-        <div class="row g-4">
-            <!-- Heavens Fruit -->
-            <div class="col-md-4 col-lg-4">
+{% if user.is_authenticated %}
+
+    <!------------------NavBar with Profile information-------------------->
+
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-md justify-content-end">
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown"
+                   data-bs-auto-close="outside" id="navbarDropdown" aria-expanded="false">
+                    <i class="bi bi-person-circle"></i> {{ request.user.first_name }}
+                </a>
+                <ul class="dropdown-menu">
+                    <li>
+                        <div class="card" style="width: 15.5rem;">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="bi bi-person-check"></i> {{ request.user }}</h5>
+                                <h6 class="card-subtitle mb-2">
+                                    N: {{ request.user.first_name }} {{ request.user.last_name }}</h6>
+                                <p class="card-text" style="font-size:12px;">{{ request.user.email }}</p>
+                            </div>
+                        </div>
+                    </li>
+                    <li><a class="dropdown-item" style="--bs-dropdown-link-active-bg: #a1a5abc9"
+                           href="{% url 'logout' %}">Cerrar Sesión <i class="bi bi-box-arrow-left"></i> </a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <body>
+    <div class="container py-5">
+        <h1 class="text-center mb-5 text-primary fw-bold">Heavens CO</h1>
+
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <!-- Heavens -->
+            <div class="col">
                 <div class="card company-card shadow" data-bs-toggle="modal" data-bs-target="#heavensFruitModal">
                     <div class="card-body text-center">
-                        <img src="/api/placeholder/200/150" alt="Heavens Fruit Logo" class="company-logo">
-                        <h3 class="card-title">Heavens Fruit</h3>
+                        <img src="{% static 'img/heavens.webp' %}" alt="Heavens Logo" class="company-logo">
+                        <h3 class="card-title">Heavens</h3>
                     </div>
                 </div>
             </div>
 
             <!-- Etnico -->
-            <div class="col-md-4 col-lg-4">
+            <div class="col">
                 <div class="card company-card shadow" data-bs-toggle="modal" data-bs-target="#etnicoModal">
                     <div class="card-body text-center">
                         <img src="/api/placeholder/200/150" alt="Etnico Logo" class="company-logo">
@@ -62,7 +150,7 @@
             </div>
 
             <!-- Fieldex -->
-            <div class="col-md-4 col-lg-4">
+            <div class="col">
                 <div class="card company-card shadow" data-bs-toggle="modal" data-bs-target="#fieldexModal">
                     <div class="card-body text-center">
                         <img src="/api/placeholder/200/150" alt="Fieldex Logo" class="company-logo">
@@ -72,7 +160,7 @@
             </div>
 
             <!-- Juan Matas -->
-            <div class="col-md-4 col-lg-6">
+            <div class="col">
                 <div class="card company-card shadow" data-bs-toggle="modal" data-bs-target="#juanMatasModal">
                     <div class="card-body text-center">
                         <img src="/api/placeholder/200/150" alt="Juan Matas Logo" class="company-logo">
@@ -82,11 +170,21 @@
             </div>
 
             <!-- CI Dorado -->
-            <div class="col-md-4 col-lg-6">
+            <div class="col">
                 <div class="card company-card shadow" data-bs-toggle="modal" data-bs-target="#ciDoradoModal">
                     <div class="card-body text-center">
                         <img src="/api/placeholder/200/150" alt="CI Dorado Logo" class="company-logo">
                         <h3 class="card-title">CI Dorado</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin -->
+            <div class="col">
+                <div class="card company-card shadow" data-bs-toggle="modal" data-bs-target="#adminModal">
+                    <div class="card-body text-center">
+                        <img src="/api/placeholder/200/150" alt="Admin Logo" class="company-logo">
+                        <h3 class="card-title">Admin</h3>
                     </div>
                 </div>
             </div>
@@ -95,11 +193,12 @@
 
     <!-- Modales para cada empresa -->
     <!-- Modal Heavens Fruit -->
-    <div class="modal fade" id="heavensFruitModal" tabindex="-1">
+    <div class="modal fade" id="heavensFruitModal" tabindex="-1" aria-labelledby="heavensFruitModalLabel"
+         aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Heavens Fruit - Menú</h5>
+                    <h5 class="modal-title" id="heavensFruitModalLabel">Heavens Fruit - Menú</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -110,8 +209,10 @@
                         <a href="#" class="list-group-item list-group-item-action menu-item">Cotizaciones</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Seguimiento Pedidos</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Resumen Semanal Pedidos</a>
-                        <a href="#" class="list-group-item list-group-item-action menu-item">Histórico De Movimientos General</a>
-                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De Inventario</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Histórico De Movimientos
+                            General</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De
+                            Inventario</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Inventario Por Bodegas</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Referencias De cajas</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Administración General</a>
@@ -122,11 +223,11 @@
     </div>
 
     <!-- Modal Etnico -->
-    <div class="modal fade" id="etnicoModal" tabindex="-1">
+    <div class="modal fade" id="etnicoModal" tabindex="-1" aria-labelledby="etnicoModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Etnico - Menú</h5>
+                    <h5 class="modal-title" id="etnicoModalLabel">Etnico - Menú</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -135,7 +236,8 @@
                         <a href="#" class="list-group-item list-group-item-action menu-item">Utilidades</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Cartera</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Cotizaciones</a>
-                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De Inventario</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De
+                            Inventario</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Referencia De Cajas</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Administración</a>
                     </div>
@@ -145,11 +247,11 @@
     </div>
 
     <!-- Modal Fieldex -->
-    <div class="modal fade" id="fieldexModal" tabindex="-1">
+    <div class="modal fade" id="fieldexModal" tabindex="-1" aria-labelledby="fieldexModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Fieldex - Menú</h5>
+                    <h5 class="modal-title" id="fieldexModalLabel">Fieldex - Menú</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -158,7 +260,8 @@
                         <a href="#" class="list-group-item list-group-item-action menu-item">Utilidades</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Cartera</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Cotizaciones</a>
-                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De Inventario</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De
+                            Inventario</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Referencia De Cajas</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Administración</a>
                     </div>
@@ -168,11 +271,11 @@
     </div>
 
     <!-- Modal Juan Matas -->
-    <div class="modal fade" id="juanMatasModal" tabindex="-1">
+    <div class="modal fade" id="juanMatasModal" tabindex="-1" aria-labelledby="juanMatasModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Juan Matas - Menú</h5>
+                    <h5 class="modal-title" id="juanMatasModalLabel">Juan Matas - Menú</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -181,7 +284,8 @@
                         <a href="#" class="list-group-item list-group-item-action menu-item">Utilidades</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Cartera</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Cotizaciones</a>
-                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De Inventario</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De
+                            Inventario</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Referencia De Cajas</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Administración</a>
                     </div>
@@ -191,11 +295,11 @@
     </div>
 
     <!-- Modal CI Dorado -->
-    <div class="modal fade" id="ciDoradoModal" tabindex="-1">
+    <div class="modal fade" id="ciDoradoModal" tabindex="-1" aria-labelledby="ciDoradoModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">CI Dorado - Menú</h5>
+                    <h5 class="modal-title" id="ciDoradoModalLabel">CI Dorado - Menú</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -204,7 +308,8 @@
                         <a href="#" class="list-group-item list-group-item-action menu-item">Utilidades</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Cartera</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Cotizaciones</a>
-                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De Inventario</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De
+                            Inventario</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Referencia De Cajas</a>
                         <a href="#" class="list-group-item list-group-item-action menu-item">Administración</a>
                     </div>
@@ -213,6 +318,70 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-</body>
+    <!-- Modal Admin -->
+    <div class="modal fade" id="adminModal" tabindex="-1" aria-labelledby="adminModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="admin ModalLabel">Admin - Menú</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Pedidos</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Utilidades</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cartera</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Cotizaciones</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Movimientos De
+                            Inventario</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Referencia De Cajas</a>
+                        <a href="#" class="list-group-item list-group-item-action menu-item">Administración</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <p>Heavens Fruit. - Todos los derechos reservados ©</p>
+    </div>
+    </body>
+
+{% else %}
+
+    <body style="overflow-x:hidden">
+    <header>
+        <div class="header">
+            <!--------------------------------Contenido antes de las olas---------------------->
+            <div class="inner-header flex">
+                <h1 class="pre-title"><img class="logo" src="{% static 'img/logowhite.webp' %}">Heaven's Fruits Connect
+                </h1>
+            </div>
+            <a href="{% url 'login' %}" class="cards_link">
+                <button class="custom-btn btn-1">Iniciar Sesion</button>
+                <!--Container de Olas-->
+                <div>
+                    <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                         viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+                        <defs>
+                            <path id="gentle-wave"
+                                  d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"></path>
+                        </defs>
+                        <g class="parallax">
+                            <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(255,255,255,0.7"></use>
+                            <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(255,255,255,0.5)"></use>
+                            <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(255,255,255,0.3)"></use>
+                            <use xlink:href="#gentle-wave" x="48" y="7" fill="#fff"></use>
+                        </g>
+                    </svg>
+                </div>
+            </a>  <!--Fin de olas-->
+        </div>
+    </header>
+    <div class="footer">
+        <p>Heavens Fruit. - Todos los derechos reservados ©</p>
+    </div>
+    </body>
+{% endif %}
+
+
 </html>
