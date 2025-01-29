@@ -2021,7 +2021,7 @@ class SeguimientosPedidosListView(SingleTableView):
 class ResumenSeguimientosPedidosListView(SingleTableView):
     model = Pedido
     table_class = SeguimienosResumenTable
-    table_pagination = {"per_page": 50}
+    table_pagination = {"per_page": 14}
     template_name = 'resumen_seguimiento_pedido_list_general.html'
     form_class = FiltroSemanaExportadoraForm
 
@@ -2999,7 +2999,7 @@ class DetallePedidoDeleteiew(UpdateView):
 class CarteraHeavensListView(SingleTableView):
     model = Pedido
     table_class = CarteraPedidoTable
-    table_pagination = {"per_page": 14}
+    table_pagination = {"per_page": 15}
     template_name = 'cartera_list_heavens.html'
     form_class = SearchForm
 
@@ -3046,7 +3046,7 @@ class CarteraHeavensListView(SingleTableView):
 class CarteraEtnicoListView(SingleTableView):
     model = Pedido
     table_class = CarteraPedidoTable
-    table_pagination = {"per_page": 14}
+    table_pagination = {"per_page": 15}
     template_name = 'cartera_list_etnico.html'
     form_class = SearchForm
 
@@ -3086,7 +3086,7 @@ class CarteraEtnicoListView(SingleTableView):
 class CarteraFieldexListView(SingleTableView):
     model = Pedido
     table_class = CarteraPedidoTable
-    table_pagination = {"per_page": 14}
+    table_pagination = {"per_page": 15}
     template_name = 'cartera_list_fieldex.html'
     form_class = SearchForm
 
@@ -3126,7 +3126,7 @@ class CarteraFieldexListView(SingleTableView):
 class CarteraJuanListView(SingleTableView):
     model = Pedido
     table_class = CarteraPedidoTable
-    table_pagination = {"per_page": 14}
+    table_pagination = {"per_page": 15}
     template_name = 'cartera_list_juan.html'
     form_class = SearchForm
 
@@ -3166,7 +3166,7 @@ class CarteraJuanListView(SingleTableView):
 class UtilidadHeavensListView(SingleTableView):
     model = Pedido
     table_class = UtilidadPedidoTable
-    table_pagination = {"per_page": 14}
+    table_pagination = {"per_page": 15}
     template_name = 'utilidad_list_heavens.html'
     form_class = SearchForm
 
@@ -3206,7 +3206,7 @@ class UtilidadHeavensListView(SingleTableView):
 class UtilidadEtnicoListView(SingleTableView):
     model = Pedido
     table_class = UtilidadPedidoTable
-    table_pagination = {"per_page": 14}
+    table_pagination = {"per_page": 15}
     template_name = 'utilidad_list_etnico.html'
     form_class = SearchForm
 
@@ -3246,7 +3246,7 @@ class UtilidadEtnicoListView(SingleTableView):
 class UtilidadFiedexListView(SingleTableView):
     model = Pedido
     table_class = UtilidadPedidoTable
-    table_pagination = {"per_page": 14}
+    table_pagination = {"per_page": 15}
     template_name = 'utilidad_list_fieldex.html'
     form_class = SearchForm
 
@@ -3286,7 +3286,7 @@ class UtilidadFiedexListView(SingleTableView):
 class UtilidadJuanListView(SingleTableView):
     model = Pedido
     table_class = UtilidadPedidoTable
-    table_pagination = {"per_page": 14}
+    table_pagination = {"per_page": 15}
     template_name = 'utilidad_list_juan.html'
     form_class = SearchForm
 
