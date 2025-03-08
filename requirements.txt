@@ -10,7 +10,7 @@ django-cors-headers==4.7.0
 django-crispy-forms==2.3
 django-extensions==3.2.3
 django-forms-bootstrap==3.1.0
-django-import-export==4.0.0
+django-import-export==4.3.7
 django-simple-history==3.8.0
 django-tables2==2.7.5
 django-widget-tweaks==1.5.0
@@ -21,7 +21,7 @@ et-xmlfile==2.0.0
 filelock==3.16.1
 gunicorn==23.0.0
 MarkupPy==1.14
-numpy==1.23.5
+numpy==1.26.0
 odfpy==1.4.1
 openpyxl==3.1.5
 pillow==10.4.0
