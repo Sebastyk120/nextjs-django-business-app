@@ -1,70 +1,122 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/crear_pedido.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/modal_pedidos.css' %}"/>
 <div class="modal-header">
-    <h5 class="modal-title" id="moverItemModalLabel4">Editar Cartera Pedido Número: {{ pedido.id }} <i
-            class="bi bi-pencil-fill"></i></h5>
+    <h5 class="modal-title">
+        <i class="fas fa-chart-line"></i> Editar Cartera Pedido Número: {{ pedido.id }}
+    </h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 <form id="moverItemForm4" method="post">
     {% csrf_token %}
     <div class="modal-body">
-        <div id="errores">
+        <div id="errores" class="errores-container">
             {% for field, error_list in form.errors.items %}
                 {% for error in error_list %}
                     <div class="alert alert-danger">{{ error }}</div>
                 {% endfor %}
             {% endfor %}
         </div>
-        <div class="container">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.cliente.label_tag }} {{ form.cliente }}
+        
+        <div class="form-grid">
+            <div class="form-column">
+                <div class="form-field">
+                    <label for="{{ form.cliente.id_for_label }}" class="field-label">
+                        <i class="fas fa-user"></i> {{ form.cliente.label }}
+                        {% if form.cliente.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.cliente }}
                 </div>
-                <div class="col-md-6">
-                    {{ form.fecha_entrega.label_tag }} {{ form.fecha_entrega }}
+                
+                <div class="form-field">
+                    <label for="{{ form.exportadora.id_for_label }}" class="field-label">
+                        <i class="fas fa-ship"></i> {{ form.exportadora.label }}
+                        {% if form.exportadora.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.exportadora }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.intermediario.id_for_label }}" class="field-label">
+                        <i class="fas fa-handshake"></i> {{ form.intermediario.label }}
+                        {% if form.intermediario.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.intermediario }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.nota_credito_no.id_for_label }}" class="field-label">
+                        <i class="fas fa-receipt"></i> {{ form.nota_credito_no.label }}
+                        {% if form.nota_credito_no.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.nota_credito_no }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.documento_cobro_utilidad.id_for_label }}" class="field-label">
+                        <i class="fas fa-file-invoice-dollar"></i> {{ form.documento_cobro_utilidad.label }}
+                        {% if form.documento_cobro_utilidad.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.documento_cobro_utilidad }}
                 </div>
             </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.exportadora.label_tag }} {{ form.exportadora }}
+            
+            <div class="form-column">
+                <div class="form-field">
+                    <label for="{{ form.fecha_entrega.id_for_label }}" class="field-label">
+                        <i class="fas fa-calendar-alt"></i> {{ form.fecha_entrega.label }}
+                        {% if form.fecha_entrega.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.fecha_entrega }}
                 </div>
-                <div class="col-md-6">
-                    {{ form.subexportadora.label_tag }} {{ form.subexportadora }}
+                
+                <div class="form-field">
+                    <label for="{{ form.subexportadora.id_for_label }}" class="field-label">
+                        <i class="fas fa-building"></i> {{ form.subexportadora.label }}
+                        {% if form.subexportadora.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.subexportadora }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.destino.id_for_label }}" class="field-label">
+                        <i class="fas fa-map-marker-alt"></i> {{ form.destino.label }}
+                        {% if form.destino.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.destino }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.motivo_nota_credito.id_for_label }}" class="field-label">
+                        <i class="fas fa-sticky-note"></i> {{ form.motivo_nota_credito.label }}
+                        {% if form.motivo_nota_credito.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.motivo_nota_credito }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.fecha_pago_utilidad.id_for_label }}" class="field-label">
+                        <i class="fas fa-calendar-check"></i> {{ form.fecha_pago_utilidad.label }}
+                        {% if form.fecha_pago_utilidad.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.fecha_pago_utilidad }}
                 </div>
             </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.intermediario.label_tag }} {{ form.intermediario }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.destino.label_tag }} {{ form.destino }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.nota_credito_no.label_tag }} {{ form.nota_credito_no }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.motivo_nota_credito.label_tag }} {{ form.motivo_nota_credito }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.documento_cobro_utilidad.label_tag }} {{ form.documento_cobro_utilidad }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.fecha_pago_utilidad.label_tag }} {{ form.fecha_pago_utilidad }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-12">
-                    {{ form.observaciones.label_tag }} {{ form.observaciones }}
-                </div>
+            
+            <div class="form-field full-width">
+                <label for="{{ form.observaciones.id_for_label }}" class="field-label">
+                    <i class="fas fa-comment-alt"></i> {{ form.observaciones.label }}
+                    {% if form.observaciones.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                </label>
+                {{ form.observaciones }}
             </div>
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-info" data-bs-dismiss="modal">Cerrar</button>
-        <button type="submit" class="btn btn-success">Editar</button>
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Cerrar
+        </button>
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save"></i> Editar
+        </button>
     </div>
 </form>

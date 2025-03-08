@@ -352,6 +352,10 @@ class Pedido(models.Model):
     termo = models.CharField(max_length=20, verbose_name="Termo", null=True, blank=True, default=None)
     history = HistoricalRecords()
 
+    def __str__(self):
+        return str(self.id)
+
+
     @property
     def autorizacion(self):
         return self.autorizacioncancelacion_set.first()  # Asume que solo hay una autorización por pedido
@@ -409,6 +413,8 @@ class Pedido(models.Model):
         if self.valor_pagado_cliente_usd == 0:
             if self.estado_cancelacion == "autorizado":
                 self.estado_factura = "Cancelada"
+            elif self.valor_total_factura_usd == 0:
+                self.estado_factura = "Factura sin valor"
             elif (
                     self.valor_total_nota_credito_usd + self.descuento) >= self.valor_total_factura_usd and self.valor_total_factura_usd > 0:
                 self.estado_factura = "Pagada"
@@ -569,6 +575,9 @@ class DetallePedido(models.Model):
     tarifa_utilidad = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
                                           verbose_name="$Utilidad Por Caja", null=True,
                                           blank=True, default=0)
+    tarifa_recuperacion = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+                                            verbose_name="$ Recuperacion", null=True,
+                                            blank=True, default=0)
     valor_x_caja_usd = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
                                            verbose_name="$Por Caja USD", null=True,
                                            blank=True, default=0)
@@ -584,10 +593,17 @@ class DetallePedido(models.Model):
     valor_total_utilidad_x_producto = models.DecimalField(max_digits=10, decimal_places=2,
                                                           verbose_name="$Utilidad X Producto", null=True,
                                                           blank=True, editable=False)
+    valor_total_recuperacion_x_producto = models.DecimalField(max_digits=10, decimal_places=2,
+                                                          verbose_name="$Recuperación X Producto", null=True,
+                                                          blank=True, editable=False)
     precio_proforma = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Proforma", null=True,
                                           blank=True, default=None)
     observaciones = models.CharField(verbose_name="Observaciones", max_length=100, blank=True, null=True)
     history = HistoricalRecords()
+
+    def get_inline_title(self):
+        """Custom title for inline representation in Unfold admin"""
+        return f"Detalle {self.id}: {self.fruta} - {self.presentacion} ({self.cajas_solicitadas} cajas)"
 
     def save(self, *args, **kwargs):
         # 1) Guardar detalle antiguo (si existe) para comparar
@@ -609,11 +625,14 @@ class DetallePedido(models.Model):
         self.valor_x_producto = self.valor_x_caja_usd * self.cajas_enviadas
         if self.afecta_utilidad is True:  # O sea "Sí"
             self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
+            self.valor_total_recuperacion_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_recuperacion
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
         elif self.afecta_utilidad is False:  # O sea "No"
             self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
+            self.valor_total_recuperacion_x_producto = self.cajas_enviadas * self.tarifa_recuperacion
             self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
         else:  # None = "Descuento"
+            self.valor_total_recuperacion_x_producto =(self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_recuperacion
             self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
             self.valor_nota_credito_usd = 0
 

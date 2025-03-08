@@ -1,0 +1,51 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/crear_item.css' %}"/>
+<div class="modal-header">
+    <h5 class="modal-title">Registrar Movimiento C.I Dorado <i class="bi bi-building-fill-add"></i></h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<form action="{% url 'reciboitemscreateci_dorado' %}" method="post">
+    {% csrf_token %}
+    <div class="modal-body">
+        <div id="errores">
+            {% for field, error_list in form.errors.items %}
+                {% for error in error_list %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="row">
+            <div class="col-md-6 form-group">
+                {{ form.numero_item.label_tag }} {{ form.numero_item }}
+            </div>
+            <div class="col-md-6 form-group">
+                {{ form.tipo_documento.label_tag }} {{ form.tipo_documento }}
+            </div>
+            <div class="col-md-6 form-group">
+                {{ form.cantidad_cajas.label_tag }} {{ form.cantidad_cajas }}
+            </div>
+            <div class="col-md-6 form-group">
+                {{ form.documento.label_tag }} {{ form.documento }}
+            </div>
+            <div class="col-md-6 form-group">
+                {{ form.proveedor.label_tag }} {{ form.proveedor }}
+            </div>
+            <div class="col-md-6 form-group">
+                {{ form.bodega.label_tag }} {{ form.bodega }}
+            </div>
+            <div class="col-md-6 form-group">
+                {{ form.fecha_movimiento.label_tag }} {{ form.fecha_movimiento }}
+            </div>
+            <div class="col-md-6 form-group">
+                {{ form.propiedad.label_tag }} {{ form.propiedad }}
+            </div>
+            <div class="col-md-12 form-group">
+                {{ form.observaciones.label_tag }} {{ form.observaciones }}
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>

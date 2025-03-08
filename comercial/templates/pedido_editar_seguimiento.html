@@ -1,69 +1,122 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/crear_pedido.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/modal_pedidos.css' %}"/>
 <div class="modal-header">
-    <h5 class="modal-title" id="moverItemModalLabel">Seguimiento Para El Pedido {{ pedido.id }} <i class="bi bi-pencil-fill"></i></h5>
+    <h5 class="modal-title">
+        <i class="fas fa-shipping-fast"></i> Seguimiento Para El Pedido {{ pedido.id }}
+    </h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 <form id="moverItemForm" method="post">
     {% csrf_token %}
     <div class="modal-body">
-        <div id="errores">
+        <div id="errores" class="errores-container">
             {% for field, error_list in form.errors.items %}
                 {% for error in error_list %}
                     <div class="alert alert-danger">{{ error }}</div>
                 {% endfor %}
             {% endfor %}
         </div>
-        <div class="container">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.fecha_llegada.label_tag }} {{ form.fecha_llegada }}
+        
+        <div class="form-grid">
+            <div class="form-column">
+                <div class="form-field">
+                    <label for="{{ form.fecha_llegada.id_for_label }}" class="field-label">
+                        <i class="fas fa-plane-arrival"></i> {{ form.fecha_llegada.label }}
+                        {% if form.fecha_llegada.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.fecha_llegada }}
                 </div>
-                <div class="col-md-6">
-                    {{ form.responsable_reserva.label_tag }} {{ form.responsable_reserva }}
+                
+                <div class="form-field">
+                    <label for="{{ form.estatus_reserva.id_for_label }}" class="field-label">
+                        <i class="fas fa-bookmark"></i> {{ form.estatus_reserva.label }}
+                        {% if form.estatus_reserva.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.estatus_reserva }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.etd.id_for_label }}" class="field-label">
+                        <i class="fas fa-plane-departure"></i> {{ form.etd.label }}
+                        {% if form.etd.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.etd }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.peso_awb.id_for_label }}" class="field-label">
+                        <i class="fas fa-weight"></i> {{ form.peso_awb.label }}
+                        {% if form.peso_awb.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.peso_awb }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.termo.id_for_label }}" class="field-label">
+                        <i class="fas fa-thermometer-half"></i> {{ form.termo.label }}
+                        {% if form.termo.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.termo }}
                 </div>
             </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.estatus_reserva.label_tag }} {{ form.estatus_reserva }}
+            
+            <div class="form-column">
+                <div class="form-field">
+                    <label for="{{ form.responsable_reserva.id_for_label }}" class="field-label">
+                        <i class="fas fa-user-tag"></i> {{ form.responsable_reserva.label }}
+                        {% if form.responsable_reserva.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.responsable_reserva }}
                 </div>
-                <div class="col-md-6">
-                    {{ form.agencia_carga.label_tag }} {{ form.agencia_carga }}
+                
+                <div class="form-field">
+                    <label for="{{ form.agencia_carga.id_for_label }}" class="field-label">
+                        <i class="fas fa-truck-loading"></i> {{ form.agencia_carga.label }}
+                        {% if form.agencia_carga.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.agencia_carga }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.eta.id_for_label }}" class="field-label">
+                        <i class="fas fa-calendar-check"></i> {{ form.eta.label }}
+                        {% if form.eta.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.eta }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.eta_real.id_for_label }}" class="field-label">
+                        <i class="fas fa-calendar-day"></i> {{ form.eta_real.label }}
+                        {% if form.eta_real.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.eta_real }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.estado_documentos.id_for_label }}" class="field-label">
+                        <i class="fas fa-file-alt"></i> {{ form.estado_documentos.label }}
+                        {% if form.estado_documentos.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.estado_documentos }}
                 </div>
             </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.etd.label_tag }} {{ form.etd }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.eta.label_tag }} {{ form.eta }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.peso_awb.label_tag }} {{ form.peso_awb }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.eta_real.label_tag }} {{ form.eta_real }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.termo.label_tag }} {{ form.termo }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.estado_documentos.label_tag }} {{ form.estado_documentos }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-12">
-                    {{ form.observaciones_tracking.label_tag }} {{ form.observaciones_tracking }}
-                </div>
+            
+            <div class="form-field full-width">
+                <label for="{{ form.observaciones_tracking.id_for_label }}" class="field-label">
+                    <i class="fas fa-clipboard-list"></i> {{ form.observaciones_tracking.label }}
+                    {% if form.observaciones_tracking.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                </label>
+                {{ form.observaciones_tracking }}
             </div>
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-info" data-bs-dismiss="modal">Cerrar</button>
-        <button type="submit" class="btn btn-success">Editar</button>
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Cerrar
+        </button>
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save"></i> Editar
+        </button>
     </div>
 </form>

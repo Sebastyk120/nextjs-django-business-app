@@ -1,10 +1,1021 @@
+{% load static %}
+{% load custom_filters %}
+{% load humanize %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Comercial</title>
+    <link rel="icon" href="{% static 'img/favicon.png' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard_comercial.css' %}">
 </head>
 <body>
-$END$
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1><i class="fas fa-chart-line"></i> Dashboard Comercial</h1>
+        <div class="actions">
+            <a href="{% url 'dashboard_cliente' %}" class="btn btn-primary">
+                <i class="fas fa-users"></i> Estado De Cuenta Clientes
+            </a>
+            <button class="btn btn-secondary" id="menuBtn">
+                <i class="fas fa-bars"></i> Menú Comercial
+            </button>
+            <button type="button" class="btn btn-secondary" id="resetBtn" form="filterForm">
+                <i class="fas fa-undo"></i> Restablecer
+            </button>
+            <button type="submit" class="btn btn-primary" form="filterForm">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+            <button class="btn btn-secondary" id="refreshBtn">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+        </div>
+    </div>
+
+    <div class="filter-panel">
+        <form class="filter-form" id="filterForm" method="get" action="">
+            <div class="form-group">
+                <label for="fecha_inicio">Fecha Inicio:</label>
+                <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio"
+                       value="{{ fecha_inicio }}">
+            </div>
+            <div class="form-group">
+                <label for="fecha_fin">Fecha Fin:</label>
+                <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}">
+            </div>
+            <div class="form-group">
+                <label for="cliente">Cliente:</label>
+                <select class="form-control" id="cliente" name="cliente">
+                    <option value="">Todos</option>
+                    {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}"
+                                {% if cliente_id == cliente.id|stringformat:"i" %}selected{% endif %}>{{ cliente.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="intermediario">Intermediario:</label>
+                <select class="form-control" id="intermediario" name="intermediario">
+                    <option value="">Todos</option>
+                    {% for intermediario in intermediarios %}
+                        <option value="{{ intermediario.id }}"
+                                {% if intermediario_id == intermediario.id|stringformat:"i" %}selected{% endif %}>{{ intermediario.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="fruta">Fruta:</label>
+                <select class="form-control" id="fruta" name="fruta">
+                    <option value="">Todas</option>
+                    {% for fruta in frutas %}
+                        <option value="{{ fruta.id }}"
+                                {% if fruta_id == fruta.id|stringformat:"i" %}selected{% endif %}>{{ fruta.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="exportador">Exportador:</label>
+                <select class="form-control" id="exportador" name="exportador">
+                    <option value="">Todos</option>
+                    {% for exportador in exportadores %}
+                        <option value="{{ exportador.id }}"
+                                {% if exportador_id == exportador.id|stringformat:"i" %}selected{% endif %}>{{ exportador.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-grid">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">TOTAL KILOS VENDIDOS</span>
+                <div class="card-icon bg-success">
+                    <i class="fas fa-weight-hanging"></i>
+                </div>
+            </div>
+            <div class="card-value">{{ global_total_kilos|floatformat:0|format_number }}</div>
+            <div class="card-description">
+                {% if kilos_prev %}
+                    <span class="{% if kilos_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ kilos_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">TOTAL CAJAS ENVIADAS</span>
+                <div class="card-icon bg-info">
+                    <i class="fas fa-box"></i>
+                </div>
+            </div>
+            <div class="card-value">{{ global_total_cajas|floatformat:0|format_number }}</div>
+            <div class="card-description">
+                {% if cajas_prev %}
+                    <span class="{% if cajas_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ cajas_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">TOTAL FACTURADO USD</span>
+                <div class="card-icon bg-primary">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+            <div class="card-value">{{ global_total_facturado|floatformat:0|format_currency }}</div>
+            <div class="card-description">
+                {% if facturado_prev %}
+                    <span class="{% if facturado_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ facturado_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">TOTAL UTILIDAD USD</span>
+                <div class="card-icon bg-warning">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+            <div class="card-value">{{ global_total_utilidades_usd|floatformat:0|format_currency }}</div>
+            <div class="card-description">
+                {% if utilidad_usd_prev %}
+                    <span class="{% if utilidad_usd_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ utilidad_usd_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">TOTAL NOTAS CRÉDITO USD</span>
+                <div class="card-icon bg-danger">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+            </div>
+            <div class="card-value">{{ global_total_notas_credito|floatformat:0|format_currency }}</div>
+            <div class="card-description">
+                {% if notas_credito_prev %}
+                    <span class="{% if notas_credito_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ notas_credito_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">TOTAL PEDIDOS CANCELADOS</span>
+                <div class="card-icon bg-orange">
+                    <i class="fas fa-ban"></i>
+                </div>
+            </div>
+            <div class="card-value">{{ global_total_cancelados }}</div>
+            <div class="card-description">
+                {% if cancelados_prev %}
+                    <span class="{% if cancelados_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ cancelados_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="charts-row">
+        <div class="chart-wrapper">
+            <h2>Distribución de Utilidad USD</h2>
+            <div class="chart-card">
+                <div class="chart-filter">
+                    <button class="chart-filter-btn active" id="clienteUtilidadBtn">Por Cliente</button>
+                    <button class="chart-filter-btn" id="frutaUtilidadBtn">Por Fruta</button>
+                    <button class="chart-filter-btn" id="exportadorUtilidadBtn">Por Exportador</button>
+                </div>
+                <canvas id="utilidadChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+        <div class="chart-wrapper">
+            <h2>Participación de Kilos por Fruta</h2>
+            <div class="chart-card">
+                <canvas id="kilosChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="chart-wrapper">
+    <h2>Evolución Mensual</h2>
+        <div class="chart-card full-width">
+            <div class="chart-filter">
+                <button class="chart-filter-btn active" id="kilosBtn">Kilos Enviados</button>
+                <button class="chart-filter-btn" id="cajasBtn">Cajas Enviadas</button>
+                <button class="chart-filter-btn" id="utilidadBtn">Utilidad Total</button>
+                <button class="chart-filter-btn" id="ncBtn">Total NC</button>
+            </div>
+            <canvas id="monthlyChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+    <div class="table-container">
+        <h2>Detalle de Clientes</h2>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Pedidos</th>
+                <th>Total Kilos Enviados</th>
+                <th>Total Facturado USD</th>
+                <th>Total Utilidades USD</th>
+                <th>% Participación kilos</th>
+                <th>% Participación utilidades</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in clientes_data %}
+                <tr>
+                    <td>{{ item.cliente__nombre }}</td>
+                    <td>{{ item.num_pedidos }}</td>
+                    <td class="numeric">{{ item.total_kilos|floatformat:0|format_number }}</td>
+                    <td class="numeric">{{ item.total_facturado|floatformat:0|format_currency }}</td>
+                    <td class="numeric">{{ item.total_utilidades|floatformat:0|format_currency }}</td>
+                    <td class="numeric">{{ item.percent_kilos|floatformat:2 }}%</td>
+                    <td class="numeric">{{ item.percent_utilidad|floatformat:2 }}%</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">No hay datos disponibles</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal para el menú de navegación -->
+<div id="menuModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <span class="close" id="closeMenuModal">&times;</span>
+        <h2 style="margin-bottom: 20px;"><i class="fas fa-compass"></i> Navegación</h2>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Inicio</div>
+            <ul class="nav-menu">
+                <li class="nav-menu-item">
+                    <a href="{% url 'home' %}" class="nav-menu-link home">
+                        <i class="fas fa-home"></i> Página Principal
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'dashboard_nacionales' %}" class="nav-menu-link">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard Nacionales
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Pedidos</div>
+            <ul class="nav-menu">
+                <li class="nav-menu-item">
+                    <a href="{% url 'pedido_list_general' %}" class="nav-menu-link">
+                        <i class="fa-solid fa-store"></i> Pedidos General
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'pedido_list_etnico' %}" class="nav-menu-link">
+                        <i class="fa-solid fa-lemon"></i> Pedidos Étnico
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'pedido_list_fieldex' %}" class="nav-menu-link">
+                        <i class="fa-solid fa-leaf"></i> Pedidos Fieldex
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'pedido_list_juan' %}" class="nav-menu-link">
+                        <i class="fa-solid fa-seedling"></i> Pedidos Juan Matas
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'pedido_list_juan' %}" class="nav-menu-link">
+                        <i class="fa-solid fa-apple-whole"></i> Pedidos CI Dorado
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Operaciones</div>
+            <ul class="nav-menu">
+                <li class="nav-menu-item">
+                    <a href="{% url 'resumen_seguimiento_list_heavens' %}" class="nav-menu-link">
+                        <i class="fas fa-calendar-week"></i> Resumen Semanal Pedidos
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'seguimiento_pedido_list_general' %}" class="nav-menu-link">
+                        <i class="fas fa-search-location"></i> Seguimiento Pedidos
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Utilidades</div>
+            <ul class="nav-menu">
+                <li class="nav-menu-item">
+                    <a href="{% url 'utilidad_list_heavens' %}" class="nav-menu-link">
+                        <i class="fas fa-chart-pie"></i> Utilidades General
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Cartera</div>
+            <ul class="nav-menu">
+                <li class="nav-menu-item">
+                    <a href="{% url 'cartera_list_heavens' %}" class="nav-menu-link">
+                        <i class="fas fa-wallet"></i> Cartera General
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+    // Establecer fechas por defecto
+    document.addEventListener('DOMContentLoaded', function () {
+        // Configurar fechas por defecto solo si no están ya configuradas
+        const fechaFin = document.getElementById('fecha_fin');
+        const fechaInicio = document.getElementById('fecha_inicio');
+
+        // Obtener los valores de la URL si existen
+        const urlParams = new URLSearchParams(window.location.search);
+        const fechaInicioParam = urlParams.get('fecha_inicio');
+        const fechaFinParam = urlParams.get('fecha_fin');
+
+        // Usar los valores de la URL si están disponibles
+        if (fechaInicioParam) {
+            fechaInicio.value = fechaInicioParam;
+        } else if (!fechaInicio.value) {
+            // Solo establecer fecha por defecto si no hay valor en la URL ni en el input
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(new Date().getDate() - 30);
+            fechaInicio.valueAsDate = thirtyDaysAgo;
+        }
+
+        if (fechaFinParam) {
+            fechaFin.value = fechaFinParam;
+        } else if (!fechaFin.value) {
+            // Solo establecer fecha por defecto si no hay valor en la URL ni en el input
+            const today = new Date();
+            fechaFin.valueAsDate = today;
+        }
+
+        // Botón de restablecer filtros
+        document.getElementById('resetBtn').addEventListener('click', function () {
+            window.location.href = window.location.pathname;
+        });
+
+        // Inicializar gráficos
+        inicializarGraficos();
+
+        // Botón de actualizar
+        document.getElementById('refreshBtn').addEventListener('click', function () {
+            window.location.reload();
+        });
+
+        // Botones de filtro de gráfico
+        document.getElementById('clienteUtilidadBtn').addEventListener('click', function () {
+            document.getElementById('clienteUtilidadBtn').classList.add('active');
+            document.getElementById('frutaUtilidadBtn').classList.remove('active');
+            document.getElementById('exportadorUtilidadBtn').classList.remove('active');
+            mostrarUtilidadPorCliente();
+        });
+
+        document.getElementById('frutaUtilidadBtn').addEventListener('click', function () {
+            document.getElementById('frutaUtilidadBtn').classList.add('active');
+            document.getElementById('clienteUtilidadBtn').classList.remove('active');
+            document.getElementById('exportadorUtilidadBtn').classList.remove('active');
+            mostrarUtilidadPorFruta();
+        });
+
+        document.getElementById('exportadorUtilidadBtn').addEventListener('click', function () {
+            document.getElementById('exportadorUtilidadBtn').classList.add('active');
+            document.getElementById('clienteUtilidadBtn').classList.remove('active');
+            document.getElementById('frutaUtilidadBtn').classList.remove('active');
+            mostrarUtilidadPorExportador();
+        });
+
+        // Modal de menú de navegación
+        const menuModal = document.getElementById('menuModal');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeMenuModal = document.getElementById('closeMenuModal');
+
+        // Abrir modal de menú
+        menuBtn.onclick = function () {
+            menuModal.style.display = "block";
+        }
+
+        // Cerrar modal de menú
+        closeMenuModal.onclick = function () {
+            menuModal.style.display = "none";
+        }
+
+        // Cerrar modales al hacer clic fuera de ellos
+        window.onclick = function (event) {
+            if (event.target == menuModal) {
+                menuModal.style.display = "none";
+            }
+        }
+    });
+
+    let utilidadChart;
+    let kilosChart;
+    let monthlyChart;
+
+    function inicializarGraficos() {
+        // Inicializar gráfico de kilos
+        const kilosCtx = document.getElementById('kilosChart').getContext('2d');
+        const kilosLabels = [{% for item in kilos_por_fruta %}'{{ item.fruta__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const kilosData = [{% for item in kilos_por_fruta %}{{ item.total_kilos|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+        kilosChart = new Chart(kilosCtx, {
+            type: 'doughnut',
+            data: {
+                labels: kilosLabels,
+                datasets: [{
+                    data: kilosData,
+                    backgroundColor: [
+                        'rgba(52, 152, 219, 0.7)',  // Azul claro
+                        'rgba(46, 204, 113, 0.7)',  // Verde claro
+                        'rgba(26, 188, 156, 0.7)',  // Turquesa
+                        'rgba(155, 89, 182, 0.7)',  // Morado
+                        'rgba(241, 196, 15, 0.7)',  // Amarillo
+                        'rgba(231, 76, 60, 0.7)',   // Rojo
+                        'rgba(52, 73, 94, 0.7)',    // Gris azulado
+                        'rgba(230, 126, 34, 0.7)',  // Naranja
+                        'rgba(142, 68, 173, 0.7)',  // Púrpura oscuro
+                        'rgba(39, 174, 96, 0.7)'    // Verde esmeralda
+                    ],
+                    borderColor: [
+                        'rgba(52, 152, 219, 1)',
+                        'rgba(46, 204, 113, 1)',
+                        'rgba(26, 188, 156, 1)',
+                        'rgba(155, 89, 182, 1)',
+                        'rgba(241, 196, 15, 1)',
+                        'rgba(231, 76, 60, 1)',
+                        'rgba(52, 73, 94, 1)',
+                        'rgba(230, 126, 34, 1)',
+                        'rgba(142, 68, 173, 1)',
+                        'rgba(39, 174, 96, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                cutout: '45%',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.label + ': ' + context.parsed.toLocaleString() + ' kg';
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'left',
+                        labels: {font: {size: 10}}
+                    },
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true,
+                    duration: 1000
+                }
+            }
+        });
+
+        // Por defecto mostramos utilidad por cliente
+        mostrarUtilidadPorCliente();
+        
+        // Inicializar el gráfico mensual
+        inicializarGraficoMensual();
+    }
+    
+    function inicializarGraficoMensual() {
+        // Obtener datos para el gráfico mensual
+        const datosMensuales = [
+            {% for item in datos_mensuales %}
+                {
+                    fecha: '{{ item.fecha }}',
+                    mes: '{{ item.nombre_mes }}',
+                    año: {{ item.año }},
+                    totalKilos: {{ item.total_kilos|floatformat:0 }},
+                    totalCajas: {{ item.total_cajas }},
+                    totalUtilidad: {{ item.total_utilidad|floatformat:0 }},
+                    totalNC: {{ item.total_nc|floatformat:0 }}
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        // Preparar datos para el gráfico
+        const labels = datosMensuales.map(item => `${item.mes} ${item.año}`);
+        const kilosData = datosMensuales.map(item => item.totalKilos);
+        
+        // Crear datos para el período anterior con validación
+        const factorCambioKilos = obtenerFactorCambio({{ kilos_percent|default:0|stringformat:"f" }});
+        const kilosDataPrevio = kilosData.map(valor => {
+            return Math.max(0, valor / (1 + factorCambioKilos));
+        });
+        
+        // Crear el gráfico de barras con datos comparativos
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        monthlyChart = new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Kilos Enviados (Período Actual)',
+                        data: kilosData,
+                        backgroundColor: 'rgba(46, 204, 113, 0.7)', // Verde
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Kilos Enviados (Período Anterior)',
+                        data: kilosDataPrevio,
+                        backgroundColor: 'rgba(46, 204, 113, 0.3)', // Verde más claro
+                        borderColor: 'rgba(46, 204, 113, 0.6)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + ' kg';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Evolución Mensual de Kilos Enviados',
+                        font: { size: 18 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.raw.toLocaleString() + ' kg';
+                            }
+                        }
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+        
+        // Event listeners para los botones de filtro
+        document.getElementById('kilosBtn').addEventListener('click', function() {
+            actualizarGraficoMensual('kilos', this);
+        });
+        
+        document.getElementById('cajasBtn').addEventListener('click', function() {
+            actualizarGraficoMensual('cajas', this);
+        });
+        
+        document.getElementById('utilidadBtn').addEventListener('click', function() {
+            actualizarGraficoMensual('utilidad', this);
+        });
+        
+        document.getElementById('ncBtn').addEventListener('click', function() {
+            actualizarGraficoMensual('nc', this);
+        });
+    }
+    
+    function actualizarGraficoMensual(tipo, boton) {
+        // Actualizar clases activas
+        document.querySelectorAll('.chart-filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        boton.classList.add('active');
+        
+        // Obtener datos para el gráfico mensual
+        const datosMensuales = [
+            {% for item in datos_mensuales %}
+                {
+                    fecha: '{{ item.fecha }}',
+                    mes: '{{ item.nombre_mes }}',
+                    año: {{ item.año }},
+                    totalKilos: {{ item.total_kilos|floatformat:0 }},
+                    totalCajas: {{ item.total_cajas }},
+                    totalUtilidad: {{ item.total_utilidad|floatformat:0 }},
+                    totalNC: {{ item.total_nc|floatformat:0 }}
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        // Preparar datos para el gráfico
+        const labels = datosMensuales.map(item => `${item.mes} ${item.año}`);
+        let datos, titulo, etiqueta, unidad, factorCambio;
+        
+        // Colores base por tipo de dato
+        const colorSchemes = {
+            'kilos': {
+                actual: 'rgba(46, 204, 113, 0.7)',
+                previo: 'rgba(46, 204, 113, 0.3)'
+            },
+            'cajas': {
+                actual: 'rgba(52, 152, 219, 0.7)',
+                previo: 'rgba(52, 152, 219, 0.3)'
+            },
+            'utilidad': {
+                actual: 'rgba(241, 196, 15, 0.7)',
+                previo: 'rgba(241, 196, 15, 0.3)'
+            },
+            'nc': {
+                actual: 'rgba(231, 76, 60, 0.7)',
+                previo: 'rgba(231, 76, 60, 0.3)'
+            }
+        };
+        
+        switch(tipo) {
+            case 'kilos':
+                datos = datosMensuales.map(item => item.totalKilos);
+                titulo = 'Evolución Mensual de Kilos Enviados';
+                etiqueta = 'Kilos Enviados';
+                unidad = ' kg';
+                colorBase = colorSchemes.kilos;
+                factorCambio = obtenerFactorCambio({{ kilos_percent|default:0|stringformat:"f" }});
+                break;
+            case 'cajas':
+                datos = datosMensuales.map(item => item.totalCajas);
+                titulo = 'Evolución Mensual de Cajas Enviadas';
+                etiqueta = 'Cajas Enviadas';
+                unidad = '';
+                colorBase = colorSchemes.cajas;
+                factorCambio = obtenerFactorCambio({{ cajas_percent|default:0|stringformat:"f" }});
+                break;
+            case 'utilidad':
+                datos = datosMensuales.map(item => item.totalUtilidad);
+                titulo = 'Evolución Mensual de Utilidad Total';
+                etiqueta = 'Utilidad USD';
+                unidad = ' USD';
+                colorBase = colorSchemes.utilidad;
+                factorCambio = obtenerFactorCambio({{ utilidad_usd_percent|default:0|stringformat:"f" }});
+                break;
+            case 'nc':
+                datos = datosMensuales.map(item => item.totalNC);
+                titulo = 'Evolución Mensual de Notas de Crédito';
+                etiqueta = 'Notas de Crédito USD';
+                unidad = ' USD';
+                colorBase = colorSchemes.nc;
+                factorCambio = obtenerFactorCambio({{ notas_credito_percent|default:0|stringformat:"f" }});
+                break;
+        }
+        
+        // Crear datos para el período anterior (simulados a partir de los porcentajes de cambio globales)
+        const datosPeriodoAnterior = datos.map(valor => {
+            // Usar el porcentaje de cambio global para estimar valores previos
+            return Math.max(0, valor / (1 + factorCambio));
+        });
+        
+        // Actualizar dataset para mostrar barras agrupadas (período actual y anterior)
+        monthlyChart.data.datasets = [
+            {
+                label: `${etiqueta} (Período Actual)`,
+                data: datos,
+                backgroundColor: colorBase.actual,
+                borderColor: colorBase.actual,
+                borderWidth: 1
+            },
+            {
+                label: `${etiqueta} (Período Anterior)`,
+                data: datosPeriodoAnterior,
+                backgroundColor: colorBase.previo,
+                borderColor: colorBase.previo,
+                borderWidth: 1
+            }
+        ];
+        
+        // Actualizar opciones
+        monthlyChart.options.plugins.title.text = titulo;
+        monthlyChart.options.scales.y.ticks.callback = function(value) {
+            return value.toLocaleString() + unidad;
+        };
+        monthlyChart.options.plugins.tooltip.callbacks.label = function(context) {
+            let prefix = '';
+            if (tipo === 'utilidad' || tipo === 'nc') {
+                prefix = '$';
+            }
+            return context.dataset.label + ': ' + prefix + context.raw.toLocaleString() + unidad;
+        };
+        
+        // Actualizar el gráfico
+        monthlyChart.update();
+    }
+
+    function mostrarUtilidadPorCliente() {
+        // Obtener datos para gráfico de utilidad por cliente
+        const clienteLabels = [{% for item in utilidad_por_cliente %}'{{ item.cliente__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const clienteData = [{% for item in utilidad_por_cliente %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+        // Destruir gráfico existente si hay uno
+        if (utilidadChart) {
+            utilidadChart.destroy();
+        }
+
+        // Obtener fechas para el título
+        const fechaInicio = document.getElementById('fecha_inicio').value;
+        const fechaFin = document.getElementById('fecha_fin').value;
+        const rangoFechas = `${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`;
+
+        // Crear datos para el período anterior con validación
+        const factorCambioUtilidad = obtenerFactorCambio({{ utilidad_usd_percent|default:0|stringformat:"f" }});
+        const clienteDataPrevio = clienteData.map(valor => {
+            return Math.max(0, valor / (1 + factorCambioUtilidad));
+        });
+
+        // Crear nuevo gráfico por cliente
+        const utilidadCtx = document.getElementById('utilidadChart').getContext('2d');
+        utilidadChart = new Chart(utilidadCtx, {
+            type: 'bar',
+            data: {
+                labels: clienteLabels,
+                datasets: [
+                    {
+                        label: 'Período Actual',
+                        data: clienteData,
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)', // Azul
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Período Anterior',
+                        data: clienteDataPrevio,
+                        backgroundColor: 'rgba(52, 152, 219, 0.3)', // Azul más claro
+                        borderColor: 'rgba(52, 152, 219, 0.6)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ': $' + context.raw.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function mostrarUtilidadPorFruta() {
+        // Verificar si hay un filtro de cliente aplicado
+        const hayFiltroCliente = {% if cliente_id %} true {% else %} false {% endif %};
+
+        // Obtener datos para gráfico de utilidad por fruta (normal o filtrado por cliente)
+        let frutaLabels, frutaData;
+
+        if (hayFiltroCliente) {
+            // Usar datos filtrados por cliente si hay un filtro de cliente aplicado
+            frutaLabels = [{% for item in utilidad_por_fruta_cliente %}'{{ item.fruta__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+            frutaData = [{% for item in utilidad_por_fruta_cliente %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        } else {
+            // Usar datos generales si no hay filtro de cliente
+            frutaLabels = [{% for item in utilidad_por_fruta %}'{{ item.fruta__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+            frutaData = [{% for item in utilidad_por_fruta %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        }
+
+        // Destruir gráfico existente si hay uno
+        if (utilidadChart) {
+            utilidadChart.destroy();
+        }
+
+        // Obtener fechas para el título
+        const fechaInicio = document.getElementById('fecha_inicio').value;
+        const fechaFin = document.getElementById('fecha_fin').value;
+        const rangoFechas = `${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`;
+
+        // Título del gráfico con cliente y fechas
+        {% if cliente_id %}
+            {% for cliente in clientes %}
+                {% if cliente.id|stringformat:"i" == cliente_id %}
+                    const nombreCliente = '{{ cliente.nombre }}';
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        let tituloGrafico = 'Utilidad USD por Fruta';
+
+        if (hayFiltroCliente) {
+            tituloGrafico += ' para ' + (typeof nombreCliente !== 'undefined' ? nombreCliente : 'Cliente Seleccionado');
+        }
+
+        // Crear datos para el período anterior con validación
+        const factorCambioUtilidad = obtenerFactorCambio({{ utilidad_usd_percent|default:0|stringformat:"f" }});
+        const frutaDataPrevio = frutaData.map(valor => {
+            return Math.max(0, valor / (1 + factorCambioUtilidad));
+        });
+
+        // Crear nuevo gráfico por fruta
+        const utilidadCtx = document.getElementById('utilidadChart').getContext('2d');
+        utilidadChart = new Chart(utilidadCtx, {
+            type: 'bar',
+            data: {
+                labels: frutaLabels,
+                datasets: [
+                    {
+                        label: 'Período Actual',
+                        data: frutaData,
+                        backgroundColor: 'rgba(46, 204, 113, 0.7)', // Verde
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Período Anterior',
+                        data: frutaDataPrevio,
+                        backgroundColor: 'rgba(46, 204, 113, 0.3)', // Verde más claro
+                        borderColor: 'rgba(46, 204, 113, 0.6)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ': $' + context.raw.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function mostrarUtilidadPorExportador() {
+        // Obtener datos para gráfico de utilidad por exportador
+        const exportadorLabels = [{% for item in utilidad_por_exportador %}'{{ item.exportadora__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const exportadorData = [{% for item in utilidad_por_exportador %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+        // Destruir gráfico existente si hay uno
+        if (utilidadChart) {
+            utilidadChart.destroy();
+        }
+
+        // Obtener fechas para el título
+        const fechaInicio = document.getElementById('fecha_inicio').value;
+        const fechaFin = document.getElementById('fecha_fin').value;
+        const rangoFechas = `${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`;
+
+        // Crear datos para el período anterior con validación
+        const factorCambioUtilidad = obtenerFactorCambio({{ utilidad_usd_percent|default:0|stringformat:"f" }});
+        const exportadorDataPrevio = exportadorData.map(valor => {
+            return Math.max(0, valor / (1 + factorCambioUtilidad));
+        });
+
+        // Título del gráfico con cliente y fechas
+        let tituloGrafico = 'Utilidad USD por Exportador';
+
+        {% if cliente_id %}
+            {% for cliente in clientes %}
+                {% if cliente.id|stringformat:"i" == cliente_id %}
+                    tituloGrafico += ' para {{ cliente.nombre }}';
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        // Crear nuevo gráfico por exportador
+        const utilidadCtx = document.getElementById('utilidadChart').getContext('2d');
+        utilidadChart = new Chart(utilidadCtx, {
+            type: 'bar',
+            data: {
+                labels: exportadorLabels,
+                datasets: [
+                    {
+                        label: 'Período Actual',
+                        data: exportadorData,
+                        backgroundColor: 'rgba(155, 89, 182, 0.7)', // Morado
+                        borderColor: 'rgba(155, 89, 182, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Período Anterior',
+                        data: exportadorDataPrevio,
+                        backgroundColor: 'rgba(155, 89, 182, 0.3)', // Morado más claro
+                        borderColor: 'rgba(155, 89, 182, 0.6)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ': $' + context.raw.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Añadir esta función auxiliar para manejar los porcentajes
+    function obtenerFactorCambio(porcentaje) {
+        if (typeof porcentaje === 'undefined' || porcentaje === null || isNaN(parseFloat(porcentaje))) {
+            return 0;
+        }
+        return parseFloat(porcentaje) / 100;
+    }
+
+    // Función para formatear fechas
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+    }
+</script>
 </body>
 </html>

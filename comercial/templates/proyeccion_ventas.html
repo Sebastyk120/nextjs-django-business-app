@@ -1,0 +1,1147 @@
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyección de Ventas | Dashboard</title>
+    <link rel="icon" href="{% static 'img/favicon.png' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/proyeccion_ventas.css' %}">
+    <style>
+        /* Custom styles for projections */
+        .growth-positive {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .growth-negative {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .forecast-card {
+            border-left: 4px solid #4f46e5;
+        }
+        .historical-marker {
+            background: rgba(79, 70, 229, 0.1);
+            border-left: 2px solid #4f46e5;
+            padding-left: 10px;
+        }
+        .forecast-marker {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 2px solid #10b981;
+            padding-left: 10px;
+        }
+        .model-info {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+        .forecast-range {
+            display: inline-block;
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.9rem;
+            color: #0369a1;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Enhanced Title Section with Animation -->
+        <div class="dashboard-title">
+            <div class="title-icon"><i class="fas fa-chart-line"></i></div>
+            <h1>Proyección de Ventas</h1>
+            <div class="title-client">
+                {% if cliente_id %}
+                    {% for cliente in clientes %}
+                        {% if cliente.id|stringformat:"i" == cliente_id %}
+                            <i class="fas fa-building me-2"></i>{{ cliente.nombre }}
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <i class="fas fa-globe me-2"></i>Todos los Clientes
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Redesigned Filter Section -->
+        <div class="filter-section mb-4">
+            <form id="filterForm" method="get" action="">
+                <div class="row g-3">
+                    <div class="col-lg-3 col-md-6">
+                        <label for="fecha_inicio" class="form-label">
+                            <i class="far fa-calendar-alt me-2"></i>Fecha Inicio
+                        </label>
+                        <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio }}">
+                        <div class="form-text">Recomendado: comenzar desde 01-01-2023</div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label for="fecha_fin" class="form-label">
+                            <i class="far fa-calendar-alt me-2"></i>Fecha Fin
+                        </label>
+                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}">
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label for="forecast_months" class="form-label">
+                            <i class="fas fa-calendar-week me-2"></i>Meses a Proyectar
+                        </label>
+                        <select class="form-select" id="forecast_months" name="forecast_months">
+                            <option value="1" {% if forecast_months == 1 %}selected{% endif %}>1 mes</option>
+                            <option value="2" {% if forecast_months == 2 %}selected{% endif %}>2 meses</option>
+                            <option value="3" {% if forecast_months == 3 or not forecast_months %}selected{% endif %}>3 meses</option>
+                            <option value="6" {% if forecast_months == 6 %}selected{% endif %}>6 meses</option>
+                            <option value="12" {% if forecast_months == 12 %}selected{% endif %}>12 meses</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label for="cliente" class="form-label">
+                            <i class="fas fa-user-tie me-2"></i>Cliente
+                        </label>
+                        <select class="form-select" id="cliente" name="cliente">
+                            <option value="">Todos los clientes</option>
+                            {% for cliente in clientes %}
+                                <option value="{{ cliente.id }}" {% if cliente_id == cliente.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ cliente.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label for="fruta" class="form-label">
+                            <i class="fas fa-apple-alt me-2"></i>Fruta
+                        </label>
+                        <select class="form-select" id="fruta" name="fruta">
+                            <option value="">Todas las frutas</option>
+                            {% for fruta in frutas %}
+                                <option value="{{ fruta.id }}" {% if fruta_id == fruta.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ fruta.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label for="exportador" class="form-label">
+                            <i class="fas fa-ship me-2"></i>Exportador
+                        </label>
+                        <select class="form-select" id="exportador" name="exportador">
+                            <option value="">Todos los exportadores</option>
+                            {% for exportador in exportadores %}
+                                <option value="{{ exportador.id }}" {% if exportador_id == exportador.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ exportador.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-6 col-md-12 d-flex align-items-end">
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-calculator"></i> <span class="btn-text">Generar Proyección</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="resetBtn">
+                                <i class="fas fa-undo-alt"></i> <span class="btn-text">Restablecer</span>
+                            </button>
+                            <button type="button" class="btn btn-success" id="downloadBtn">
+                                <i class="fas fa-file-excel"></i> <span class="btn-text">Exportar a Excel</span>
+                            </button>
+                            <a href="{% url 'dashboard_comercial' %}" class="btn btn-info">
+                                <i class="fas fa-tachometer-alt"></i> <span class="btn-text">Dashboard</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Enhanced Projection Range Info -->
+        <div class="alert alert-info mb-4">
+            <i class="fas fa-info-circle fa-lg"></i>
+            <div>
+                <div class="fw-semibold mb-1">Información de Proyección</div>
+                <div><strong>Periodo Histórico:</strong> {{ fecha_inicio }} a {{ fecha_fin }}</div>
+                <div class="mt-1">
+                    <span class="forecast-range">
+                        <i class="fas fa-calendar-alt"></i> Proyección: {{ forecast_start }} a {{ forecast_end }}
+                    </span>
+                </div>
+                <div class="model-info mt-2">
+                    <i class="fas fa-cog me-1"></i> Método de proyección: <strong>seasonal_naive_single</strong> (Personalizado para Heavens) - Optimizado para captar patrones estacionales y tendencias de ventas
+                </div>
+            </div>
+        </div>
+
+        <!-- Redesigned Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-lg-4 col-md-6 mb-4 mb-lg-0">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header card-header-cliente">
+                        <i class="fas fa-weight-hanging"></i>
+                        <h4>Proyección de Kilos</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="summary-card h-100">
+                                    <div class="metric-icon metric-icon-primary">
+                                        <i class="fas fa-history"></i>
+                                    </div>
+                                    <div class="summary-value text-primary">
+                                        {{ summary_metrics.total_hist_kilos|format_number }}
+                                    </div>
+                                    <div class="summary-label">Histórico (kg)</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="summary-card h-100">
+                                    <div class="metric-icon metric-icon-success">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="summary-value text-success">
+                                        {{ summary_metrics.total_forecast_kilos|format_number }}
+                                    </div>
+                                    <div class="summary-label">Proyección (kg)</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <div class="{% if summary_metrics.growth_kilos >= 0 %}growth-positive{% else %}growth-negative{% endif %}">
+                                <i class="fas {% if summary_metrics.growth_kilos >= 0 %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i>
+                                {{ summary_metrics.growth_kilos|floatformat:1 }}% variación mensual
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4 mb-lg-0">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header card-header-pagos">
+                        <i class="fas fa-box"></i>
+                        <h4>Proyección de Cajas</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="summary-card h-100">
+                                    <div class="metric-icon metric-icon-primary">
+                                        <i class="fas fa-history"></i>
+                                    </div>
+                                    <div class="summary-value text-primary">
+                                        {{ summary_metrics.total_hist_cajas|format_number }}
+                                    </div>
+                                    <div class="summary-label">Histórico</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="summary-card h-100">
+                                    <div class="metric-icon metric-icon-success">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="summary-value text-success">
+                                        {{ summary_metrics.total_forecast_cajas|format_number }}
+                                    </div>
+                                    <div class="summary-label">Proyección</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <div class="{% if summary_metrics.growth_cajas >= 0 %}growth-positive{% else %}growth-negative{% endif %}">
+                                <i class="fas {% if summary_metrics.growth_cajas >= 0 %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i>
+                                {{ summary_metrics.growth_cajas|floatformat:1 }}% variación mensual
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-12">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header card-header-facturas">
+                        <i class="fas fa-dollar-sign"></i>
+                        <h4>Proyección Facturación</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="summary-card h-100">
+                                    <div class="metric-icon metric-icon-primary">
+                                        <i class="fas fa-history"></i>
+                                    </div>
+                                    <div class="summary-value text-primary">
+                                        {{ summary_metrics.total_hist_valor|format_currency }}
+                                    </div>
+                                    <div class="summary-label">Histórico (USD)</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="summary-card h-100">
+                                    <div class="metric-icon metric-icon-success">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="summary-value text-success">
+                                        {{ summary_metrics.total_forecast_valor|format_currency }}
+                                    </div>
+                                    <div class="summary-label">Proyección (USD)</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <div class="{% if summary_metrics.growth_valor >= 0 %}growth-positive{% else %}growth-negative{% endif %}">
+                                <i class="fas {% if summary_metrics.growth_valor >= 0 %}fa-arrow-up{% else %}fa-arrow-down{% endif %}"></i>
+                                {{ summary_metrics.growth_valor|floatformat:1 }}% variación mensual
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Enhanced Monthly Projection Chart -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-cliente">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>Proyección Mensual de Ventas</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-filter mb-3">
+                            <button class="chart-filter-btn active" id="kilosChartBtn">Kilos</button>
+                            <button class="chart-filter-btn" id="cajasChartBtn">Cajas</button>
+                            <button class="chart-filter-btn" id="valorChartBtn">Facturación USD</button>
+                        </div>
+                        <div class="chart-container-lg">
+                            <canvas id="forecastChart"></canvas>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="historical-marker p-2 rounded mb-2">
+                                    <i class="fas fa-history me-2"></i> <strong>Datos Históricos:</strong> Ventas reales registradas
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="forecast-marker p-2 rounded">
+                                    <i class="fas fa-chart-line me-2"></i> <strong>Datos Proyectados:</strong> Estimación basada en tendencias históricas
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Enhanced Customer Portfolio Analysis -->
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header card-header-exportadora">
+                        <i class="fas fa-users"></i>
+                        <h4>Análisis de Cartera de Clientes</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="mb-3 fw-bold text-success d-flex align-items-center">
+                            <i class="fas fa-user-plus me-2"></i> Nuevos Clientes
+                        </h5>
+                        <ul class="list-group mb-4 shadow-sm">
+                            {% for cliente in portfolio_changes.new_customers %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span style="font-size: 0.75rem;"><i class="fas fa-building me-2 text-primary"></i>{{ cliente }}</span>
+                                    <span class="badge bg-success rounded-pill" style="font-size: 0.75rem;">Nuevo</span>
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item text-center py-3">
+                                    <i class="fas fa-info-circle me-1 text-muted"></i> No hay nuevos clientes en este período
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        
+                        <h5 class="mb-3 fw-bold text-danger d-flex align-items-center">
+                            <i class="fas fa-user-minus me-2"></i> Clientes Perdidos
+                        </h5>
+                        <ul class="list-group shadow-sm">
+                            {% for cliente in portfolio_changes.lost_customers %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span style="font-size: 0.75rem;"><i class="fas fa-building me-2 text-danger"></i>{{ cliente }}</span>
+                                    <span class="badge bg-danger rounded-pill" style="font-size: 0.75rem;">Perdido</span>
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item text-center py-3">
+                                    <i class="fas fa-info-circle me-1 text-muted"></i> No hay clientes perdidos en este período
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header card-header-cartera">
+                        <i class="fas fa-chart-bar"></i>
+                        <h4>Tendencia de Clientes</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="mb-3 fw-bold text-success d-flex align-items-center">
+                            <i class="fas fa-arrow-trend-up me-2"></i> Clientes en Crecimiento
+                        </h5>
+                        <div class="table-responsive shadow-sm rounded">
+                            <table class="table table-hover table-compact mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Crecimiento</th>
+                                        <th>Kilos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cliente in portfolio_changes.growing_customers %}
+                                        <tr>
+                                            <td><i class="fas fa-building me-2 text-primary"></i>{{ cliente.cliente }}</td>
+                                            <td class="growth-positive">+{{ cliente.growth|floatformat:1 }}%</td>
+                                            <td>{{ cliente.second_kilos|format_number }} kg</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td colspan="3" class="text-center py-3">No hay datos disponibles</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <h5 class="mb-3 fw-bold text-danger mt-4 d-flex align-items-center">
+                            <i class="fas fa-arrow-trend-down me-2"></i> Clientes en Declive
+                        </h5>
+                        <div class="table-responsive shadow-sm rounded">
+                            <table class="table table-hover table-compact mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Declive</th>
+                                        <th>Kilos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cliente in portfolio_changes.declining_customers %}
+                                        <tr>
+                                            <td><i class="fas fa-building me-2 text-danger"></i>{{ cliente.cliente }}</td>
+                                            <td class="growth-negative">{{ cliente.growth|floatformat:1 }}%</td>
+                                            <td>{{ cliente.second_kilos|format_number }} kg</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td colspan="3" class="text-center py-3">No hay datos disponibles</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Enhanced Detailed Forecast Table -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header card-header-resumen">
+                        <i class="fas fa-table"></i>
+                        <h4>Proyección Detallada por Cliente y Fruta</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Improved Table Filters -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label for="table-filter-cliente" class="form-label">Cliente</label>
+                                <select id="table-filter-cliente" class="form-select">
+                                    <option value="">Todos</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="table-filter-fruta" class="form-label">Fruta</label>
+                                <select id="table-filter-fruta" class="form-select">
+                                    <option value="">Todas</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button id="reset-table-filters" class="btn btn-danger">Reset Filtros</button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive shadow-sm rounded">
+                            <table class="table table-hover table-compact" id="detailTable">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Cliente</th>
+                                        <th>Fruta</th>
+                                        <th>Kilos</th>
+                                        <th>Cajas</th>
+                                        <th>Valor USD</th>
+                                        <th>Tipo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailTableBody">
+                                    {% for item in historical_data %}
+                                        <tr class="historical-data" data-cliente="{{ item.cliente }}" data-fruta="{{ item.fruta }}">
+                                            <td><i class="far fa-calendar-alt me-1 text-primary"></i>{{ item.fecha }}</td>
+                                            <td>{{ item.cliente }}</td>
+                                            <td>{{ item.fruta }}</td>
+                                            <td>{{ item.kilos_enviados|format_number}}</td>
+                                            <td>{{ item.cajas_enviadas|floatformat:0|intcomma }}</td>
+                                            <td>{{ item.valor_x_producto|format_currency }}</td>
+                                            <td><span class="badge bg-primary">Histórico</span></td>
+                                        </tr>
+                                    {% endfor %}
+                                    
+                                    {% for item in forecast_data %}
+                                        <tr class="forecast-data" data-cliente="{{ item.cliente }}" data-fruta="{{ item.fruta }}">
+                                            <td><i class="far fa-calendar-alt me-1 text-success"></i>{{ item.fecha }}</td>
+                                            <td>{{ item.cliente }}</td>
+                                            <td>{{ item.fruta }}</td>
+                                            <td>{{ item.kilos_enviados|format_number }}</td>
+                                            <td>{{ item.cajas_enviadas|floatformat:0|intcomma }}</td>
+                                            <td>{{ item.valor_x_producto|format_currency }}</td>
+                                            <td><span class="badge bg-success">Proyección</span></td>
+                                        </tr>
+                                    {% endfor %}
+                                    
+                                    {% if not historical_data and not forecast_data %}
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4">
+                                                <i class="fas fa-info-circle me-2"></i>No hay datos disponibles. Por favor, ajuste los filtros o seleccione un período diferente.
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Enhanced Pagination Controls -->
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div class="pagination-info text-muted">
+                                Mostrando <span id="pagination-start">1</span> a <span id="pagination-end">40</span> de <span id="pagination-total">0</span> registros
+                            </div>
+                            <nav aria-label="Table pagination">
+                                <ul class="pagination" id="table-pagination">
+                                    <li class="page-item disabled" id="pagination-prev">
+                                        <a class="page-link" href="#" aria-label="Previous">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item" id="pagination-next">
+                                        <a class="page-link" href="#" aria-label="Next">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ya se incluyó la parte JavaScript en la respuesta anterior -->
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+    // Datos para gráficos - usando los datos ya serializados en JSON
+    const historicalData = {{ historical_data_json|safe }};
+    const forecastData = {{ forecast_data_json|safe }};
+    
+    // Preparar datos mensuales para gráficos
+    function prepareMonthlyData() {
+        // Agrupar datos históricos por mes
+        const historicalMonthly = {};
+        if (historicalData && historicalData.length) {
+            historicalData.forEach(item => {
+                const monthYear = item.fecha.substring(0, 7); // YYYY-MM
+                if (!historicalMonthly[monthYear]) {
+                    historicalMonthly[monthYear] = { kilos: 0, cajas: 0, valor: 0 };
+                }
+                historicalMonthly[monthYear].kilos += Number(item.kilos_enviados || 0);
+                historicalMonthly[monthYear].cajas += Number(item.cajas_enviadas || 0);
+                historicalMonthly[monthYear].valor += Number(item.valor_x_producto || 0);
+            });
+        }
+        
+        // Agrupar datos de pronóstico por mes
+        const forecastMonthly = {};
+        if (forecastData && forecastData.length) {
+            forecastData.forEach(item => {
+                const monthYear = item.fecha.substring(0, 7); // YYYY-MM
+                if (!forecastMonthly[monthYear]) {
+                    forecastMonthly[monthYear] = { kilos: 0, cajas: 0, valor: 0 };
+                }
+                forecastMonthly[monthYear].kilos += Number(item.kilos_enviados || 0);
+                forecastMonthly[monthYear].cajas += Number(item.cajas_enviadas || 0);
+                forecastMonthly[monthYear].valor += Number(item.valor_x_producto || 0);
+            });
+        }
+        
+        return { historicalMonthly, forecastMonthly };
+    }
+    
+    // Variables para los gráficos
+    let forecastChart;
+    
+    // Inicializar gráficos al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar el gráfico de proyección
+        initForecastChart('kilos');
+        
+        // Configurar eventos para filtros y botones
+        document.getElementById('resetBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = window.location.pathname;
+        });
+        
+        document.getElementById('kilosChartBtn').addEventListener('click', function() {
+            updateChartData('kilos');
+            setActiveButton(this);
+        });
+        
+        document.getElementById('cajasChartBtn').addEventListener('click', function() {
+            updateChartData('cajas');
+            setActiveButton(this);
+        });
+        
+        document.getElementById('valorChartBtn').addEventListener('click', function() {
+            updateChartData('valor');
+            setActiveButton(this);
+        });
+        
+        document.getElementById('downloadBtn').addEventListener('click', exportToExcel);
+        
+        // Initialize table pagination and filters
+        initTablePagination();
+        initTableFilters();
+    });
+    
+    // Establecer botón activo
+    function setActiveButton(button) {
+        document.querySelectorAll('.chart-filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        button.classList.add('active');
+    }
+    
+    // Inicializar el gráfico de proyección
+    function initForecastChart(dataType) {
+        const { historicalMonthly, forecastMonthly } = prepareMonthlyData();
+        
+        // Combinar y ordenar todas las fechas
+        const allMonths = [
+            ...Object.keys(historicalMonthly), 
+            ...Object.keys(forecastMonthly)
+        ].filter((v, i, a) => a.indexOf(v) === i).sort();
+        
+        // Formatear las fechas para etiquetas
+        const formattedLabels = allMonths.map(month => {
+            const year = parseInt(month.substring(0, 4));
+            const monthNum = parseInt(month.substring(5, 7));
+            const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            return `${monthNames[monthNum-1]} ${year}`;
+        });
+        
+        // Preparar datos según el tipo
+        let historicalValues, forecastValues, yTitle;
+        
+        switch(dataType) {
+            case 'cajas':
+                historicalValues = allMonths.map(month => month in historicalMonthly ? historicalMonthly[month].cajas : null);
+                forecastValues = allMonths.map(month => month in forecastMonthly ? forecastMonthly[month].cajas : null);
+                yTitle = 'Cajas';
+                break;
+            case 'valor':
+                historicalValues = allMonths.map(month => month in historicalMonthly ? historicalMonthly[month].valor : null);
+                forecastValues = allMonths.map(month => month in forecastMonthly ? forecastMonthly[month].valor : null);
+                yTitle = 'USD';
+                break;
+            case 'kilos':
+            default:
+                historicalValues = allMonths.map(month => month in historicalMonthly ? historicalMonthly[month].kilos : null);
+                forecastValues = allMonths.map(month => month in forecastMonthly ? forecastMonthly[month].kilos : null);
+                yTitle = 'Kilos';
+                break;
+        }
+        
+        // Crear el gráfico
+        const ctx = document.getElementById('forecastChart').getContext('2d');
+        
+        // Destruir gráfico existente si hay uno
+        if (forecastChart) {
+            forecastChart.destroy();
+        }
+        
+        forecastChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: formattedLabels,
+                datasets: [
+                    {
+                        label: 'Histórico',
+                        data: historicalValues,
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Proyección',
+                        data: forecastValues,
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: yTitle
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                if (dataType === 'valor') {
+                                    return '$' + value.toLocaleString();
+                                }
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Mes'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (dataType === 'valor') {
+                                    return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                                } else if (dataType === 'kilos') {
+                                    return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' kg';
+                                } else {
+                                    return context.dataset.label + ': ' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                    },
+                    annotation: {
+                        annotations: {
+                            line1: {
+                                type: 'line',
+                                mode: 'vertical',
+                                scaleID: 'x',
+                                value: historicalValues.filter(v => v !== null).length - 1,
+                                borderColor: 'rgba(255, 99, 132, 0.5)',
+                                borderWidth: 2,
+                                label: {
+                                    display: true,
+                                    content: 'Proyección comienza',
+                                    position: 'center'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Actualizar datos del gráfico
+    function updateChartData(dataType) {
+        initForecastChart(dataType);
+    }
+    
+    // Exportar a Excel
+    function exportToExcel() {
+        // Preparar los datos para la exportación
+        const exportData = [];
+        
+        // Encabezados
+        exportData.push(['Tipo', 'Fecha', 'Cliente', 'Fruta', 'Kilos', 'Cajas', 'Valor USD', 'Modelo']);
+        
+        // Datos históricos
+        historicalData.forEach(item => {
+            exportData.push([
+                'Histórico', 
+                item.fecha, 
+                item.cliente, 
+                item.fruta, 
+                item.kilos_enviados, 
+                item.cajas_enviadas, 
+                item.valor_x_producto, 
+                ''
+            ]);
+        });
+        
+        // Datos de pronóstico
+        forecastData.forEach(item => {
+            exportData.push([
+                'Proyección', 
+                item.fecha, 
+                item.cliente, 
+                item.fruta, 
+                item.kilos_enviados, 
+                item.cajas_enviadas, 
+                item.valor_x_producto, 
+                item.modelo
+            ]);
+        });
+        
+        // Crear libro de trabajo
+        const ws = XLSX.utils.aoa_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Proyección Ventas");
+        
+        // Guardar archivo
+        const fechaActual = new Date().toISOString().slice(0,10);
+        XLSX.writeFile(wb, `Proyeccion_Ventas_${fechaActual}.xlsx`);
+    }
+    
+    // ---------- NEW FUNCTIONS FOR TABLE PAGINATION AND FILTERING ----------
+    
+    // Initialize table pagination
+    function initTablePagination() {
+        // Variables
+        const RECORDS_PER_PAGE = 40;
+        let currentPage = 1;
+        let totalRows = 0;
+        let filteredRows = [];
+        
+        const tableBody = document.getElementById('detailTableBody');
+        const paginationStart = document.getElementById('pagination-start');
+        const paginationEnd = document.getElementById('pagination-end');
+        const paginationTotal = document.getElementById('pagination-total');
+        const paginationPrev = document.getElementById('pagination-prev');
+        const paginationNext = document.getElementById('pagination-next');
+        const paginationContainer = document.getElementById('table-pagination');
+        
+        // Count and store all table rows
+        const allRows = tableBody.querySelectorAll('tr');
+        filteredRows = Array.from(allRows);
+        totalRows = filteredRows.length;
+        
+        // Display total count
+        paginationTotal.textContent = totalRows;
+        
+        // Generate pagination buttons
+        generatePaginationButtons();
+        
+        // Show first page
+        showPage(1);
+        
+        // Add event listeners for navigation
+        paginationPrev.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentPage > 1) {
+                showPage(currentPage - 1);
+            }
+        });
+        
+        paginationNext.addEventListener('click', function(e) {
+            e.preventDefault();
+            const totalPages = Math.ceil(filteredRows.length / RECORDS_PER_PAGE);
+            if (currentPage < totalPages) {
+                showPage(currentPage + 1);
+            }
+        });
+        
+        // Function to show a specific page
+        function showPage(page) {
+            // Hide all rows
+            filteredRows.forEach(row => row.style.display = 'none');
+            
+            // Calculate start and end indexes
+            const startIndex = (page - 1) * RECORDS_PER_PAGE;
+            const endIndex = Math.min(startIndex + RECORDS_PER_PAGE, filteredRows.length);
+            
+            // Show rows for current page
+            for (let i = startIndex; i < endIndex; i++) {
+                filteredRows[i].style.display = '';
+            }
+            
+            // Update pagination indicators
+            currentPage = page;
+            updatePaginationControls();
+            
+            // Update page info
+            paginationStart.textContent = filteredRows.length > 0 ? startIndex + 1 : 0;
+            paginationEnd.textContent = endIndex;
+            paginationTotal.textContent = filteredRows.length;
+            
+            // Update previous/next button states
+            paginationPrev.classList.toggle('disabled', currentPage === 1);
+            paginationNext.classList.toggle('disabled', currentPage === Math.ceil(filteredRows.length / RECORDS_PER_PAGE));
+        }
+        
+        // Function to generate pagination buttons
+        function generatePaginationButtons() {
+            const totalPages = Math.ceil(filteredRows.length / RECORDS_PER_PAGE);
+            
+            // Clear existing page buttons (except prev/next)
+            const pageButtons = paginationContainer.querySelectorAll('.page-item:not(#pagination-prev):not(#pagination-next)');
+            pageButtons.forEach(button => button.remove());
+            
+            // Add max 5 page buttons
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(startPage + 4, totalPages);
+            
+            // Reference node (insert before next button)
+            const nextButton = document.getElementById('pagination-next');
+            
+            // Add numbered page buttons
+            for (let i = startPage; i <= endPage; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                
+                const a = document.createElement('a');
+                a.className = 'page-link';
+                a.href = '#';
+                a.textContent = i;
+                a.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showPage(i);
+                });
+                
+                li.appendChild(a);
+                paginationContainer.insertBefore(li, nextButton);
+            }
+            
+            // If many pages, add ellipsis indicators
+            if (startPage > 1) {
+                // Add first page and ellipsis
+                const firstPageLi = document.createElement('li');
+                firstPageLi.className = 'page-item';
+                const firstPageA = document.createElement('a');
+                firstPageA.className = 'page-link';
+                firstPageA.href = '#';
+                firstPageA.textContent = '1';
+                firstPageA.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showPage(1);
+                });
+                firstPageLi.appendChild(firstPageA);
+                
+                const ellipsisLi = document.createElement('li');
+                ellipsisLi.className = 'page-item disabled';
+                const ellipsisSpan = document.createElement('span');
+                ellipsisSpan.className = 'page-link';
+                ellipsisSpan.textContent = '...';
+                ellipsisLi.appendChild(ellipsisSpan);
+                
+                paginationContainer.insertBefore(firstPageLi, paginationContainer.querySelector('.page-item:not(#pagination-prev)'));
+                paginationContainer.insertBefore(ellipsisLi, paginationContainer.querySelector('.page-item:not(#pagination-prev)').nextSibling);
+            }
+            
+            if (endPage < totalPages) {
+                // Add ellipsis and last page
+                const ellipsisLi = document.createElement('li');
+                ellipsisLi.className = 'page-item disabled';
+                const ellipsisSpan = document.createElement('span');
+                ellipsisSpan.className = 'page-link';
+                ellipsisSpan.textContent = '...';
+                ellipsisLi.appendChild(ellipsisSpan);
+                
+                const lastPageLi = document.createElement('li');
+                lastPageLi.className = 'page-item';
+                const lastPageA = document.createElement('a');
+                lastPageA.className = 'page-link';
+                lastPageA.href = '#';
+                lastPageA.textContent = totalPages;
+                lastPageA.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showPage(totalPages);
+                });
+                lastPageLi.appendChild(lastPageA);
+                
+                paginationContainer.insertBefore(ellipsisLi, nextButton);
+                paginationContainer.insertBefore(lastPageLi, nextButton);
+            }
+        }
+        
+        // Function to update pagination controls when filtering
+        function updatePaginationControls() {
+            generatePaginationButtons();
+        }
+        
+        // Expose functions needed for filtering
+        window.tablePagination = {
+            updateFilteredRows: function(newFilteredRows) {
+                filteredRows = newFilteredRows;
+                totalRows = filteredRows.length;
+                generatePaginationButtons();
+                showPage(1);
+            }
+        };
+    }
+    
+    // Initialize table filters
+    function initTableFilters() {
+        // Get filter elements
+        const clienteFilter = document.getElementById('table-filter-cliente');
+        const frutaFilter = document.getElementById('table-filter-fruta');
+        const resetButton = document.getElementById('reset-table-filters');
+        const tableBody = document.getElementById('detailTableBody');
+        const allRows = Array.from(tableBody.querySelectorAll('tr'));
+        
+        // Debug info - check how many rows we found
+        console.log(`Table has ${allRows.length} rows to filter`);
+        
+        // Check if rows have the required data attributes
+        const sampleRow = allRows[0];
+        if (sampleRow) {
+            console.log('Sample data attributes:', {
+                cliente: sampleRow.getAttribute('data-cliente'),
+                fruta: sampleRow.getAttribute('data-fruta')
+            });
+        }
+        
+        // Populate filter options
+        populateFilterOptions();
+        
+        // Add event listeners
+        clienteFilter.addEventListener('change', applyFilters);
+        frutaFilter.addEventListener('change', applyFilters);
+        resetButton.addEventListener('click', resetFilters);
+        
+        // Function to populate filter options
+        function populateFilterOptions() {
+            const clientes = new Set();
+            const frutas = new Set();
+            
+            // Extract unique values from table
+            allRows.forEach(row => {
+                const clienteVal = row.getAttribute('data-cliente');
+                const frutaVal = row.getAttribute('data-fruta');
+                
+                if (clienteVal) clientes.add(clienteVal);
+                if (frutaVal) frutas.add(frutaVal);
+            });
+            
+            console.log(`Found ${clientes.size} unique clientes and ${frutas.size} unique frutas`);
+            
+            // Clear existing options (except the default)
+            while (clienteFilter.options.length > 1) {
+                clienteFilter.remove(1);
+            }
+            
+            while (frutaFilter.options.length > 1) {
+                frutaFilter.remove(1);
+            }
+            
+            // Add options to cliente filter
+            Array.from(clientes).sort().forEach(cliente => {
+                if (!cliente) return; // Skip empty values
+                const option = document.createElement('option');
+                option.value = cliente;
+                option.textContent = cliente;
+                clienteFilter.appendChild(option);
+            });
+            
+            // Add options to fruta filter
+            Array.from(frutas).sort().forEach(fruta => {
+                if (!fruta) return; // Skip empty values
+                const option = document.createElement('option');
+                option.value = fruta;
+                option.textContent = fruta;
+                frutaFilter.appendChild(option);
+            });
+        }
+        
+        // Function to apply filters
+        function applyFilters() {
+            const selectedCliente = clienteFilter.value;
+            const selectedFruta = frutaFilter.value;
+            
+            console.log(`Applying filters: Cliente="${selectedCliente}", Fruta="${selectedFruta}"`);
+            
+            try {
+                // Filter rows based on selections
+                const filteredRows = allRows.filter(row => {
+                    const rowCliente = row.getAttribute('data-cliente') || '';
+                    const rowFruta = row.getAttribute('data-fruta') || '';
+                    
+                    const clienteMatch = !selectedCliente || rowCliente === selectedCliente;
+                    const frutaMatch = !selectedFruta || rowFruta === selectedFruta;
+                    
+                    // For debugging
+                    if (!clienteMatch || !frutaMatch) {
+                        // console.log(`Row filtered out: Cliente=${rowCliente}, Fruta=${rowFruta}`);
+                    }
+                    
+                    return clienteMatch && frutaMatch;
+                });
+                
+                console.log(`Filter applied: ${filteredRows.length} of ${allRows.length} rows match`);
+                
+                // First update the DOM directly for immediate visual feedback
+                allRows.forEach(row => {
+                    const rowCliente = row.getAttribute('data-cliente') || '';
+                    const rowFruta = row.getAttribute('data-fruta') || '';
+                    
+                    const clienteMatch = !selectedCliente || rowCliente === selectedCliente;
+                    const frutaMatch = !selectedFruta || rowFruta === selectedFruta;
+                    
+                    // Show/hide based on filter match
+                    row.style.display = (clienteMatch && frutaMatch) ? '' : 'none';
+                });
+                
+                // Then update pagination with filtered rows
+                if (window.tablePagination && typeof window.tablePagination.updateFilteredRows === 'function') {
+                    window.tablePagination.updateFilteredRows(filteredRows);
+                } else {
+                    console.error('Pagination interface not found or updateFilteredRows is not a function');
+                }
+            } catch (error) {
+                console.error('Error applying filters:', error);
+            }
+        }
+        
+        // Function to reset filters
+        function resetFilters() {
+            console.log('Resetting filters');
+            clienteFilter.value = '';
+            frutaFilter.value = '';
+            
+            // Show all rows
+            allRows.forEach(row => {
+                row.style.display = '';
+            });
+            
+            // Update pagination
+            window.tablePagination.updateFilteredRows(allRows);
+        }
+    }
+</script>
+</body>
+</html>

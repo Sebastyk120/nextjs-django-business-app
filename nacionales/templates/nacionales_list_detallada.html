@@ -1,10 +1,947 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends 'comercialbase.html' %}
+{% block content %}
+    {% load static %}
+    {% load custom_filters %}
+    {% load humanize %}
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <link rel="stylesheet" href="{% static 'css/nacionales_list_detallada.css' %}">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <title>Nacionales Detallada</title>
+    </head>
+    <body>
+    <div class="container-fluid py-4">
+        <!-- Search and Actions Section -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-search"></i> Buscar Guía Nacional</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <!-- Search Bar -->
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <form method="GET" class="search-form">
+                                    <div class="input-group autocomplete-container">
+                                        <input type="text"
+                                               name="search"
+                                               class="form-control search-input"
+                                               id="searchInput"
+                                               placeholder="Buscar por número de guía..."
+                                               value="{{ request.GET.search }}"
+                                               autocomplete="off">
+                                        <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+                                        <button class="btn btn-primary search-button" type="submit">
+                                            <i class="fas fa-search"></i> Buscar
+                                        </button>
+                                        {% if request.GET.search %}
+                                            <a href="{% url 'nacionales_list_detallada' %}" class="btn btn-danger">
+                                                <i class="fas fa-times"></i> Limpiar
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </form>
+                            </div>
+                            <!-- Action Buttons -->
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-end gap-2">
+                                    {% if not compra %}
+                                        <button type="button" class="btn btn-create btn-compra"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#compraNacionalModal"
+                                                data-url="{% url 'compra_nacional_create' %}">
+                                            <i class="fas fa-plus-circle"></i> Compra
+                                        </button>
+                                    {% endif %}
+
+                                    {% if compra and not venta %}
+                                        <button type="button"
+                                                class="btn btn-create btn-venta"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#ventaNacionalModal"
+                                                data-url="{% url 'venta_nacional_create' compra.id %}">
+                                            <i class="fas fa-store-alt"></i> Venta
+                                        </button>
+                                    {% endif %}
+
+                                    {% if venta and not reporte_exp %}
+                                        <button type="button"
+                                                class="btn btn-create btn-reporte-exp"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#reporteExportadorModal"
+                                                data-url="{% url 'reporte_exportador_create' venta.compra_nacional_id %}">
+                                            <i class="fas fa-file-export"></i> Reporte Exportador
+                                        </button>
+                                    {% endif %}
+
+                                    {% if reporte_exp and not reporte_prov %}
+                                        <button type="button" class="btn btn-create btn-reporte-prov"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#reporteProveedorModal"
+                                                data-url="{% url 'reporte_proveedor_create' reporte_exp.venta_nacional.compra_nacional_id %}">
+                                            <i class="fas fa-file-invoice"></i> Reporte Proveedor
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if not compra %}
+            <div id="alertInfo">
+                <div class="alert alert-info text-center" role="alert">
+                    <i class="fas fa-info-circle"></i> Ingrese un número de guía para ver los detalles.
+                </div>
+                <!-- Filtros para compras incompletas -->
+                <section class="filter-section">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-filter"></i> Filtros</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 filter-group">
+                                    <h6>Estado Venta:</h6>
+                                    <div class="filter-buttons">
+                                        <button class="filter-btn" data-filter="estado-venta" data-value="En Proceso">En Proceso</button>
+                                        <button class="filter-btn" data-filter="estado-venta" data-value="Completado">Completado</button>
+                                        <button class="filter-btn" data-filter="estado-venta" data-value="Vencido">Vencido</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 filter-group">
+                                    <h6>Estado Rte Exp:</h6>
+                                    <div class="filter-buttons">
+                                        <button class="filter-btn" data-filter="estado-rte-exp" data-value="En Proceso">En Proceso</button>
+                                        <button class="filter-btn" data-filter="estado-rte-exp" data-value="Facturado">Facturado</button>
+                                        <button class="filter-btn" data-filter="estado-rte-exp" data-value="Pagado">Pagado</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 filter-group">
+                                    <h6>Estado Rte Prov:</h6>
+                                    <div class="filter-buttons">
+                                        <button class="filter-btn" data-filter="estado-rte-prov" data-value="En Proceso">En Proceso</button>
+                                        <button class="filter-btn" data-filter="estado-rte-prov" data-value="Reporte Enviado">Reporte Enviado</button>
+                                        <button class="filter-btn" data-filter="estado-rte-prov" data-value="Pagado">Pagado</button>
+                                        <button class="filter-btn" data-filter="estado-rte-prov" data-value="Facturado Por Proveedor">Facturado</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-center mt-3">
+                                <button id="resetFilters" class="filter-btn filter-reset">
+                                    <i class="fas fa-undo"></i> Restablecer Filtros
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="compras-incompletas-section">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-tasks"></i> Procesos de Compra Incompletos
+                                <span class="badge bg-primary rounded-pill" id="contador-compras">{{ compras_incompletas|length }}</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if compras_incompletas %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover compras-table" id="tabla-compras-incompletas">
+                                        <thead>
+                                        <tr>
+                                            <th>Número Guía</th>
+                                            <th>Proveedor</th>
+                                            <th>Fecha Compra</th>
+                                            <th>Fruta</th>
+                                            <th>Peso Compra / Kg</th>
+                                            <th>Resimion</th>
+                                            <th>Estado Venta</th>
+                                            <th>Estado Rte Exp</th>
+                                            <th>Estado Rte Prov</th>
+                                            <th>Progreso</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for compra in compras_incompletas %}
+                                            <tr class="clickable-row"
+                                                data-guia="{{ compra.numero_guia }}"
+                                                data-estado-venta="{{ compra.estado_venta }}"
+                                                data-estado-rte-exp="{{ compra.estado_reporte_exp }}"
+                                                data-estado-rte-prov="{{ compra.estado_reporte_prov }}">
+                                                <td>{{ compra.numero_guia }}</td>
+                                                <td>{{ compra.proveedor }}</td>
+                                                <td>{{ compra.fecha_compra|date:"d/m/Y" }}</td>
+                                                <td>{{ compra.fruta }}</td>
+                                                <td>{{ compra.peso_compra|format_number }}</td>
+                                                <td>{{ compra.remision }}</td>
+                                                <td><span class="status-badge status-{{ compra.estado_venta|slugify }}">{{ compra.estado_venta }}</span></td>
+                                                <td><span class="status-badge status-{{ compra.estado_reporte_exp|slugify }}">{{ compra.estado_reporte_exp }}</span></td>
+                                                <td><span class="status-badge status-{{ compra.estado_reporte_prov|slugify }}">{{ compra.estado_reporte_prov }}</span></td>
+                                                <td style="width: 10%;">
+                                                    <div class="barra-progreso-container tabla-barra-progreso">
+                                                        <div class="barra-progreso {{ compra.progreso_color }} rounded">
+                                                            <div class="progreso rounded"
+                                                                 style="width: {{ compra.porcentaje_completitud }}%;"></div>
+                                                            <span class="porcentaje-texto ms-2">{{ compra.porcentaje_completitud }}%</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-success mb-0">
+                                    <i class="fas fa-check-circle"></i> ¡Felicidades! No hay procesos de compra
+                                    incompletos.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+            </div>
+        {% endif %}
+
+        <!-- Results Section -->
+        {% if compra %}
+            <div class="row">
+                <!-- Compra Nacional Card -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-shopping-cart"></i> Compra Nacional
+                                {% if reporte_exp.pagado %}
+                                    <span class="badge bg-dark">Finalizado</span>
+                                {% endif %}
+                                <button type="button" class="btn btn-sm btn-light float-end"
+                                        data-bs-toggle="modal" data-bs-target="#editCompraNacionalModal"
+                                        data-id="{{ compra.id }}" {% if reporte_exp.pagado %} disabled {% endif %}>
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-row">
+                                <div class="info-item">
+                                    <div class="info-label">Proveedor</div>
+                                    <div class="info-value">{{ compra.proveedor }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Número Guía</div>
+                                    <div class="info-value">{{ compra.numero_guia }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Fecha Compra</div>
+                                    <div class="info-value">{{ compra.fecha_compra }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Peso Compra</div>
+                                    <div class="info-value">{{ compra.peso_compra|format_number }} kg</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Cantidad Empaque</div>
+                                    <div class="info-value">{{ compra.cantidad_empaque }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Tipo Empaque</div>
+                                    <div class="info-value">{{ compra.tipo_empaque }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Precio Compra Exp</div>
+                                    <div class="info-value">{{ compra.precio_compra_exp|format_currency }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Precio Compra Nacional</div>
+                                    <div class="info-value">{{ compra.precio_compra_nal|format_currency }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Fruta</div>
+                                    <div class="info-value">{{ compra.fruta }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Remisión</div>
+                                    <div class="info-value">{{ compra.remision }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Origen</div>
+                                    <div class="info-value">{{ compra.origen_compra }}</div>
+                                </div>
+                                <div class="info-item fullwidth-item">
+                                    <div class="info-label">Observaciones</div>
+                                    <div class="info-value">{{ compra.observaciones|default:"No hay observaciones" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Venta Nacional Card -->
+                {% if venta %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-store"></i> Venta Nacional
+                                    {% if reporte_exp.pagado %}
+                                        <span class="badge bg-dark">Finalizado</span>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-light float-end"
+                                            data-bs-toggle="modal" data-bs-target="#editVentaNacionalModal"
+                                            data-id="{{ venta.id }}" {% if reporte_exp.pagado %}
+                                            disabled {% endif %}>
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="info-row">
+                                    <div class="info-item">
+                                        <div class="info-label">Exportador</div>
+                                        <div class="info-value">{{ venta.exportador }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Fecha Llegada</div>
+                                        <div class="info-value">{{ venta.fecha_llegada }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Fecha Vencimiento</div>
+                                        <div class="info-value">{{ venta.fecha_vencimiento }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Cantidad Empaque Recibida</div>
+                                        <div class="info-value">{{ venta.cantidad_empaque_recibida }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Peso Bruto Recibido</div>
+                                        <div class="info-value">{{ venta.peso_bruto_recibido|format_number }} Kg</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Peso Neto Recibido</div>
+                                        <div class="info-value">{{ venta.peso_neto_recibido|format_number }} Kg</div>
+                                    </div>                                    
+                                    <div class="info-item">
+                                        <div class="info-label">Diferencia Peso</div>
+                                        <div class="info-value">
+                                            {% if venta.diferencia_peso < 0 %}
+                                                <span class="text-danger">{{ venta.diferencia_peso|format_number }} Kg</span>
+                                            {% else %}
+                                                <span class="text-success">{{ venta.diferencia_peso|format_number }} Kg</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Diferencia Empaque</div>
+                                        <div class="info-value">
+                                            {% if venta.diferencia_empaque < 0 %}
+                                                <span class="text-danger">{{ venta.diferencia_empaque }}</span>
+                                            {% else %}
+                                                <span class="text-success">{{ venta.diferencia_empaque }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Estado Venta</div>
+                                        <div class="info-value">
+                                            <span class="status-badge status-{{ venta.estado_venta|slugify }}">{{ venta.estado_venta }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="info-item fullwidth-item">
+                                        <div class="info-label">Observaciones</div>
+                                        <div class="info-value">{{ venta.observaciones|default:"No hay observaciones" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Reporte Calidad Exportador Card -->
+                {% if reporte_exp %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 border-info">
+                            <div class="card-header bg-info text-dark">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-file-alt"></i> Reporte Calidad Exportador
+                                    {% if reporte_exp.pagado %}
+                                        <span class="badge bg-dark">Pagado</span>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-light float-end"
+                                            data-bs-toggle="modal" data-bs-target="#editReporteExportadorModal"
+                                            data-id="{{ reporte_exp.id }}"
+                                            {% if reporte_exp.pagado %} disabled {% endif %}>
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="info-row">
+                                    <div class="info-item">
+                                        <div class="info-label">Remisión/Reporte</div>
+                                        <div class="info-value">{{ reporte_exp.remision_exp }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Fecha Reporte</div>
+                                        <div class="info-value">{{ reporte_exp.fecha_reporte }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Kg Totales</div>
+                                        <div class="info-value">{{ reporte_exp.kg_totales|format_number }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Kg Exportación</div>
+                                        <div class="info-value">{{ reporte_exp.kg_exportacion|format_number }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Kg Nacional</div>
+                                        <div class="info-value">{{ reporte_exp.kg_nacional|format_number }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Kg Merma</div>
+                                        <div class="info-value">{{ reporte_exp.kg_merma|format_number }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">% Exportación</div>
+                                        <div class="info-value">{{ reporte_exp.porcentaje_exportacion|format_percentage_color_exportacion }}</div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <div class="info-label">% Nacional</div>
+                                        <div class="info-value">{{ reporte_exp.porcentaje_nacional|format_percentage_color_nacional }}</div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <div class="info-label">% Merma</div>
+                                        <div class="info-value">{{ reporte_exp.porcentaje_merma|format_percentage_color_merma }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Precio Venta Kg Exp</div>
+                                        <div class="info-value">{{ reporte_exp.precio_venta_kg_exp|format_currency }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Precio Venta Kg Nal</div>
+                                        <div class="info-value">{{ reporte_exp.precio_venta_kg_nal|format_currency }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Total Factura</div>
+                                        <div class="info-value">{{ reporte_exp.precio_total|format_currency }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Factura Heavens</div>
+                                        <div class="info-value">{{ reporte_exp.factura }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Fecha Factura Heavens</div>
+                                        <div class="info-value">{{ reporte_exp.fecha_factura }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Vencimiento Factura</div>
+                                        <div class="info-value">{{ reporte_exp.vencimiento_factura }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Estado Reporte Exp</div>
+                                        <div class="info-value">
+                                            <span class="status-badge status-{{ reporte_exp.estado_reporte_exp|slugify }}">
+                                                {{ reporte_exp.estado_reporte_exp }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Pagado</div>
+                                        <div class="info-value">
+                                            {% if reporte_exp.pagado %}
+                                                <span class="status-badge status-pagado">Sí</span>
+                                            {% else %}
+                                                <span class="status-badge status-pendiente">No</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Reporte Calidad Proveedor Card -->
+                {% if reporte_prov %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-file-invoice"></i> Reporte Calidad Proveedor
+                                    {% if reporte_prov.completado %}
+                                        <span class="badge bg-dark">Pagado</span>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-light float-end"
+                                            data-bs-toggle="modal" data-bs-target="#editReporteProveedorModal"
+                                            data-id="{{ reporte_prov.id }}"
+                                            {% if reporte_prov.completado %} disabled {% endif %}>
+                                        <i class="fas fa-edit"></i> Editar
+                                    </button>
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="info-row">
+                                    <div class="info-item">
+                                        <div class="info-label">Fecha Reporte</div>
+                                        <div class="info-value">{{ reporte_prov.p_fecha_reporte }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Estado Reporte Prov</div>
+                                        <div class="info-value">
+                                            <span class="status-badge status-{{ reporte_prov.estado_reporte_prov|slugify }}">
+                                                {{ reporte_prov.estado_reporte_prov }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <div class="info-label">Kg Totales</div>
+                                        <div class="info-value">{{ reporte_prov.p_kg_totales|format_number }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Kg Exportación</div>
+                                        <div class="info-value">{{ reporte_prov.p_kg_exportacion|format_number }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Kg Nacional</div>
+                                        <div class="info-value">{{ reporte_prov.p_kg_nacional|format_number }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Kg Merma</div>
+                                        <div class="info-value">{{ reporte_prov.p_kg_merma|format_number }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">% Exportación</div>
+                                        <div class="info-value">{{ reporte_prov.p_porcentaje_exportacion|format_percentage_color_exportacion }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">% Nacional</div>
+                                        <div class="info-value">{{ reporte_prov.p_porcentaje_nacional|format_percentage_color_nacional }}</div>
+                                    </div>                                    
+                                    <div class="info-item">
+                                        <div class="info-label">% Merma</div>
+                                        <div class="info-value">{{ reporte_prov.p_porcentaje_merma|format_percentage_color_merma }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">$ Kg Exp</div>
+                                        <div class="info-value">{{ reporte_prov.p_precio_kg_exp|format_currency }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">$ Kg Nal</div>
+                                        <div class="info-value">{{ reporte_prov.p_precio_kg_nal|format_currency }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Total Facturar</div>
+                                        <div class="info-value">{{ reporte_prov.p_total_facturar|format_currency }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Asohofrucol 1%</div>
+                                        <div class="info-value">{{ reporte_prov.asohofrucol|format_currency }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Rte Fte 1.5%</div>
+                                        <div class="info-value">{{ reporte_prov.rte_fte|format_currency }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Rte Ica 4.14/1000</div>
+                                        <div class="info-value">{{ reporte_prov.rte_ica|format_currency }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Utilidad</div>
+                                        <div class="info-value">{{ reporte_prov.p_utilidad|format_currency }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">% Utilidad</div>
+                                        <div class="info-value">{{ reporte_prov.p_porcentaje_utilidad|floatformat:2 }}%</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Total a Pagar</div>
+                                        <div class="info-value">{{ reporte_prov.p_total_pagar|format_currency }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">No Factura Proveedor</div>
+                                        <div class="info-value">{{ reporte_prov.factura_prov }}</div>
+                                    </div> 
+                                    <div class="info-item">
+                                        <div class="info-label">Reporte Enviado</div>
+                                        <div class="info-value">{{ reporte_prov.reporte_enviado|yesno:"✓,✗" }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Reporte Pago</div>
+                                        <div class="info-value">{{ reporte_prov.reporte_pago|yesno:"✓,✗" }}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Completado</div>
+                                        {% if reporte_prov.completado %}
+                                                <span class="status-badge status-pagado">Sí</span>
+                                            {% else %}
+                                                <span class="status-badge status-pendiente">No</span>
+                                    {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Modales -->
+        <!-- Modal Compra Nacional (Creación) -->
+        <div class="modal fade" id="compraNacionalModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-shopping-cart"></i> Nueva Compra Nacional
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="compraNacionalFormContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Venta Nacional (Creación) -->
+        <div class="modal fade" id="ventaNacionalModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-store"></i> Nueva Venta Nacional
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="ventaNacionalFormContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Reporte Exportador (Creación) -->
+        <div class="modal fade" id="reporteExportadorModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-file-export"></i> Nuevo Reporte Exportador
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="reporteExportadorFormContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Reporte Proveedor (Creación) -->
+        <div class="modal fade" id="reporteProveedorModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title">
+                            <i class="fas fa-file-invoice"></i> Nuevo Reporte Proveedor
+                        </h5>
+                        <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="reporteProveedorFormContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Editar Compra Nacional -->
+        <div class="modal fade" id="editCompraNacionalModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-shopping-cart"></i> Editar Compra Nacional
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="editCompraNacionalFormContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Editar Venta Nacional -->
+        <div class="modal fade" id="editVentaNacionalModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-store"></i> Editar Venta Nacional
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="editVentaNacionalFormContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Editar Reporte Exportador -->
+        <div class="modal fade" id="editReporteExportadorModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-dark">
+                        <h5 class="modal-title">
+                            <i class="fas fa-file-export"></i> Editar Reporte Exportador
+                        </h5>
+                        <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="editReporteExportadorFormContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Editar Reporte Proveedor -->
+        <div class="modal fade" id="editReporteProveedorModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title">
+                            <i class="fas fa-file-invoice"></i> Editar Reporte Proveedor
+                        </h5>
+                        <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="editReporteProveedorFormContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    {% block extra_scripts %}
+        <script src="{% static 'js/create_nacional.js' %}"></script>
+        <script src="{% static 'js/currency_formatter.js' %}"></script>
+    {% endblock %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchInput');
+            const alertInfo = document.getElementById('alertInfo');
+            const dropdown = document.getElementById('autocompleteDropdown');
+            let timeoutId;
+
+            // Safely handle event listeners for clickable rows
+            const clickableRows = document.querySelectorAll('.clickable-row');
+            if (clickableRows && clickableRows.length > 0) {
+                clickableRows.forEach(row => {
+                    row.addEventListener('click', function () {
+                        const guia = this.getAttribute('data-guia');
+                        if (guia) {
+                            window.location.href = `{% url 'nacionales_list_detallada' %}?search=${guia}`;
+                        }
+                    });
+                });
+            }
+
+            // Safely handle autocomplete functionality
+            async function fetchSuggestions(term) {
+                try {
+                    const response = await fetch(`{% url 'autocomplete_guia' %}?term=${encodeURIComponent(term)}`);
+                    
+                    // Check if response is JSON
+                    const contentType = response.headers.get("content-type");
+                    if (!contentType || !contentType.includes("application/json")) {
+                        throw new Error("Expected JSON response");
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (!dropdown) return;
+                    dropdown.innerHTML = '';
+                    
+                    if (data.length > 0) {
+                        data.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'autocomplete-item';
+                            div.textContent = item;
+                            div.addEventListener('click', () => {
+                                if (searchInput) {
+                                    searchInput.value = item;
+                                    dropdown.style.display = 'none';
+                                    const searchForm = document.querySelector('.search-form');
+                                    if (searchForm) searchForm.submit();
+                                }
+                            });
+                            dropdown.appendChild(div);
+                        });
+                        dropdown.style.display = 'block';
+                    } else {
+                        dropdown.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error fetching suggestions:', error);
+                    if (dropdown) dropdown.style.display = 'none';
+                }
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    if (alertInfo) {
+                        alertInfo.style.display = this.value.trim() !== "" ? 'none' : 'block';
+                    }
+                    
+                    clearTimeout(timeoutId);
+                    if (this.value.trim() !== "") {
+                        timeoutId = setTimeout(() => fetchSuggestions(this.value), 300);
+                    } else if (dropdown) {
+                        dropdown.style.display = 'none';
+                    }
+                });
+
+                searchInput.addEventListener('focus', () => {
+                    if (searchInput.value !== '') {
+                        fetchSuggestions(searchInput.value);
+                    }
+                });
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function (e) {
+                if (dropdown && !e.target.closest('.autocomplete-container')) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Filter functionality for dashboard
+            const filterButtons = document.querySelectorAll('.filter-btn:not(.filter-reset)');
+            const resetFiltersButton = document.getElementById('resetFilters');
+            const tabla = document.getElementById('tabla-compras-incompletas');
+            const contadorCompras = document.getElementById('contador-compras');
+            
+            if (filterButtons.length > 0) {
+                const filters = {
+                    'estado-venta': [],
+                    'estado-rte-exp': [],
+                    'estado-rte-prov': []
+                };
+                
+                // Apply filter when button is clicked
+                filterButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const filterType = this.getAttribute('data-filter');
+                        const filterValue = this.getAttribute('data-value');
+                        
+                        if (!filterType || !filterValue) return;
+                        
+                        // Toggle filter button active state and update filters object
+                        if (this.classList.contains('active')) {
+                            this.classList.remove('active');
+                            const index = filters[filterType].indexOf(filterValue);
+                            if (index > -1) {
+                                filters[filterType].splice(index, 1);
+                            }
+                        } else {
+                            this.classList.add('active');
+                            filters[filterType].push(filterValue);
+                        }
+                        
+                        applyFilters();
+                    });
+                });
+                
+                // Reset all filters
+                if (resetFiltersButton) {
+                    resetFiltersButton.addEventListener('click', function() {
+                        filterButtons.forEach(button => button.classList.remove('active'));
+                        
+                        // Clear filter arrays
+                        Object.keys(filters).forEach(key => {
+                            filters[key] = [];
+                        });
+                        
+                        // Show all rows
+                        if (tabla) {
+                            const rows = tabla.querySelectorAll('tbody tr');
+                            let visibleCount = 0;
+                            
+                            rows.forEach(row => {
+                                row.style.display = '';
+                                visibleCount++;
+                            });
+                            
+                            // Update counter
+                            if (contadorCompras) {
+                                contadorCompras.textContent = visibleCount;
+                            }
+                        }
+                    });
+                }
+                
+                // Apply all active filters to the table
+                function applyFilters() {
+                    if (!tabla) return;
+                    
+                    const rows = tabla.querySelectorAll('tbody tr');
+                    let visibleCount = 0;
+                    
+                    rows.forEach(row => {
+                        const estadoVenta = row.getAttribute('data-estado-venta');
+                        const estadoRteExp = row.getAttribute('data-estado-rte-exp');
+                        const estadoRteProv = row.getAttribute('data-estado-rte-prov');
+                        
+                        // Check if row should be visible based on active filters
+                        let shouldShow = true;
+                        
+                        if (filters['estado-venta'].length > 0 && !filters['estado-venta'].includes(estadoVenta)) {
+                            shouldShow = false;
+                        }
+                        
+                        if (filters['estado-rte-exp'].length > 0 && !filters['estado-rte-exp'].includes(estadoRteExp)) {
+                            shouldShow = false;
+                        }
+                        
+                        if (filters['estado-rte-prov'].length > 0 && !filters['estado-rte-prov'].includes(estadoRteProv)) {
+                            shouldShow = false;
+                        }
+                        
+                        // Show/hide row based on filter results
+                        if (shouldShow) {
+                            row.style.display = '';
+                            visibleCount++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                    
+                    // Update counter with visible rows
+                    if (contadorCompras) {
+                        contadorCompras.textContent = visibleCount;
+                    }
+                }
+            }
+        });
+    </script>
+    </body>
+    </html>
+{% endblock %}

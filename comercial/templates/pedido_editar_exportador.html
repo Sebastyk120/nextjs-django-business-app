@@ -1,48 +1,76 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/crear_pedido.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/modal_pedidos.css' %}"/>
 <div class="modal-header">
-    <h5 class="modal-title" id="moverItemModalLabel">Editar Pedido Número:  {{ pedido.id }}  <i class="bi bi-pencil-fill"></i></h5>
+    <h5 class="modal-title">
+        <i class="bi bi-pencil-fill"></i> Editar Pedido Número: {{ pedido.id }}
+    </h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 <form id="moverItemForm" method="post">
     {% csrf_token %}
     <div class="modal-body">
-        <div id="errores">
+        <div id="errores" class="errores-container">
             {% for field, error_list in form.errors.items %}
                 {% for error in error_list %}
                     <div class="alert alert-danger">{{ error }}</div>
                 {% endfor %}
             {% endfor %}
         </div>
-        <div class="container">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.valor_pagado_cliente_usd.label_tag }} {{ form.valor_pagado_cliente_usd }}
+        
+        <div class="form-grid">
+            <div class="form-column">
+                <div class="form-field">
+                    <label for="{{ form.valor_pagado_cliente_usd.id_for_label }}" class="field-label">
+                        <i class="fas fa-dollar-sign"></i> Valor Pagado Cliente
+                    </label>
+                    {{ form.valor_pagado_cliente_usd }}
                 </div>
-                <div class="col-md-6">
-                    {{ form.utilidad_bancaria_usd.label_tag }} {{ form.utilidad_bancaria_usd }}
+                
+                <div class="form-field">
+                    <label for="{{ form.fecha_pago.id_for_label }}" class="field-label">
+                        <i class="fas fa-calendar-alt"></i> {{ form.fecha_pago.label }}
+                    </label>
+                    {{ form.fecha_pago }}
+                </div>
+                
+                <div class="form-field">
+                    <label for="{{ form.trm_monetizacion.id_for_label }}" class="field-label">
+                        <i class="fas fa-exchange-alt"></i> {{ form.trm_monetizacion.label }}
+                    </label>
+                    {{ form.trm_monetizacion }}
                 </div>
             </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.fecha_pago.label_tag }} {{ form.fecha_pago }}
+            
+            <div class="form-column">
+                <div class="form-field">
+                    <label for="{{ form.utilidad_bancaria_usd.id_for_label }}" class="field-label">
+                        <i class="fas fa-chart-line"></i> {{ form.utilidad_bancaria_usd.label }}
+                    </label>
+                    {{ form.utilidad_bancaria_usd }}
                 </div>
-                <div class="col-md-6">
-                    {{ form.fecha_monetizacion.label_tag }} {{ form.fecha_monetizacion }}
+                
+                <div class="form-field">
+                    <label for="{{ form.fecha_monetizacion.id_for_label }}" class="field-label">
+                        <i class="fas fa-money-bill-wave"></i> {{ form.fecha_monetizacion.label }}
+                    </label>
+                    {{ form.fecha_monetizacion }}
                 </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.trm_monetizacion.label_tag }} {{ form.trm_monetizacion }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.trm_cotizacion.label_tag }} {{ form.trm_cotizacion }}
+                
+                <div class="form-field">
+                    <label for="{{ form.trm_cotizacion.id_for_label }}" class="field-label">
+                        <i class="fas fa-money-check-alt"></i> {{ form.trm_cotizacion.label }}
+                    </label>
+                    {{ form.trm_cotizacion }}
                 </div>
             </div>
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-info" data-bs-dismiss="modal">Cerrar</button>
-        <button type="submit" class="btn btn-success">Guardar</button>
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Cerrar
+        </button>
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save"></i> Guardar
+        </button>
     </div>
 </form>

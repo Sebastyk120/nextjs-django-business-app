@@ -23,7 +23,8 @@ class FiltroSemanaExportadoraForm(forms.Form):
         required=True,
         widget=forms.Select(attrs={
             'class': 'form-control'
-        })
+        }),
+        error_messages={'required': ''}  
     )
     exportadora = forms.ModelChoiceField(
         queryset=Exportador.objects.all(),
@@ -37,7 +38,12 @@ class FiltroSemanaExportadoraForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Actualizamos las opciones de semana en cada instancia del formulario
-        self.fields['semana'].choices = [('', 'Seleccione una semana')] + get_unique_weeks()
+        choices = [('', 'Seleccione una semana')] + get_unique_weeks()
+        self.fields['semana'].choices = choices
+        
+        # Set initial value if form is unbound to prevent required message
+        if not self.is_bound:
+            self.initial['semana'] = ''
 
 # --------------------------- Formulario con filtro Cliente -------------------------------------------------------
 class SearchForm(forms.Form):
@@ -211,7 +217,7 @@ class DetallePedidoForm(forms.ModelForm):
     class Meta:
         model = DetallePedido
         fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'tipo_caja', 'referencia', 'lleva_contenedor',
-                  'tarifa_utilidad', 'valor_x_caja_usd', 'observaciones', 'precio_proforma']
+                  'tarifa_utilidad', 'tarifa_recuperacion', 'valor_x_caja_usd', 'observaciones', 'precio_proforma']
 
     def __init__(self, *args, **kwargs):
         pedido_id = kwargs.pop('pedido_id', None)
@@ -287,7 +293,7 @@ class EditarDetallePedidoForm(forms.ModelForm):
     class Meta:
         model = DetallePedido
         fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'tipo_caja', 'referencia', 'lleva_contenedor',
-                  'tarifa_utilidad', 'valor_x_caja_usd', 'observaciones', 'precio_proforma']
+                  'tarifa_utilidad', 'tarifa_recuperacion', 'valor_x_caja_usd', 'observaciones', 'precio_proforma']
 
     def __init__(self, *args, **kwargs):
         pedido_id = kwargs.pop('pedido_id', None)
@@ -363,7 +369,7 @@ class EditarDetallePedidoDosForm(forms.ModelForm):
     class Meta:
         model = DetallePedido
         fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'tipo_caja', 'referencia', 'lleva_contenedor',
-                  'tarifa_utilidad', 'valor_x_caja_usd', 'observaciones', 'precio_proforma', 'cajas_enviadas']
+                  'tarifa_utilidad', 'valor_x_caja_usd', 'tarifa_recuperacion', 'observaciones', 'precio_proforma', 'cajas_enviadas']
 
     def __init__(self, *args, **kwargs):
         pedido_id = kwargs.pop('pedido_id', None)
@@ -379,6 +385,7 @@ class EditarDetallePedidoDosForm(forms.ModelForm):
         self.fields['referencia'].disabled = True
         self.fields['lleva_contenedor'].disabled = True
         self.fields['tarifa_utilidad'].disabled = True
+        self.fields['tarifa_recuperacion'].disabled = True
         self.fields['valor_x_caja_usd'].disabled = True
         self.fields['precio_proforma'].disabled = True
 
@@ -448,7 +455,7 @@ class EditarDetallePedidoTresForm(forms.ModelForm):
     class Meta:
         model = DetallePedido
         fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'cajas_enviadas',
-                  'tipo_caja', 'referencia', 'lleva_contenedor', 'tarifa_utilidad',
+                  'tipo_caja', 'referencia', 'lleva_contenedor', 'tarifa_utilidad', 'tarifa_recuperacion',
                   'valor_x_caja_usd', 'no_cajas_nc', 'afecta_utilidad', 'observaciones', 'precio_proforma']
 
     def __init__(self, *args, **kwargs):
@@ -466,6 +473,7 @@ class EditarDetallePedidoTresForm(forms.ModelForm):
         self.fields['referencia'].disabled = True
         self.fields['lleva_contenedor'].disabled = True
         self.fields['tarifa_utilidad'].disabled = True
+        self.fields['tarifa_recuperacion'].disable = True
         self.fields['valor_x_caja_usd'].disabled = True
         self.fields['precio_proforma'].disabled = True
 
@@ -537,7 +545,7 @@ class EliminarDetallePedidoForm(forms.ModelForm):
     class Meta:
         model = DetallePedido
         fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'cajas_enviadas',
-                  'tipo_caja', 'referencia', 'lleva_contenedor', 'tarifa_utilidad',
+                  'tipo_caja', 'referencia', 'lleva_contenedor', 'tarifa_utilidad', 'tarifa_recuperacion',
                   'valor_x_caja_usd', 'no_cajas_nc', 'afecta_utilidad', 'observaciones', 'precio_proforma']
 
     def __init__(self, *args, **kwargs):
@@ -551,6 +559,7 @@ class EliminarDetallePedidoForm(forms.ModelForm):
         self.fields['referencia'].disabled = True
         self.fields['lleva_contenedor'].disabled = True
         self.fields['tarifa_utilidad'].disabled = True
+        self.fields['tarifa_recuperacion'].disable = True
         self.fields['valor_x_caja_usd'].disabled = True
         self.fields['no_cajas_nc'].disabled = True
         self.fields['afecta_utilidad'].disabled = True

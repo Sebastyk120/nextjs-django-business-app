@@ -49,18 +49,20 @@ class MigrateView(LoginRequiredMixin, UserPassesTestMixin, View):
 
 
 def home(request):
-    return render(request, 'home2.html')
+    if not request.user.is_authenticated:
+        return redirect('login')
+    return render(request, 'home.html')
 
 
 def login1(request):
     if request.method == 'GET':
-        return render(request, 'login.html', {'form': AuthenticationForm})
+        return render(request, 'login2.html', {'form': AuthenticationForm})
     else:
         user = authenticate(
             request, username=request.POST['username'], password=request.POST['password'])
         if user is None:
             messages.error(request, f'Usuario o contraseña incorrecto')
-            return render(request, 'login.html',
+            return render(request, 'login2.html',
                           {'form': AuthenticationForm})
         else:
             login(request, user)
@@ -95,12 +97,21 @@ def salir(request):
 
 
 class CustomPasswordResetView(PasswordResetView):
+    template_name = 'registration/password_reset_form.html'
+    email_template_name = 'registration/password_reset_email.html'
+    subject_template_name = 'registration/password_reset_subject.txt'
+    success_url = '/autenticacion/reset_password_sent/'
     title = 'Restablecer Contraseña - Heavens Fruits'
-
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['site_name'] = "Administración Heavens Fruits"
+        context['site_header'] = "Heaven's Fruits Connect"
         return context
+
+    # Asegurarse de que use la plantilla correcta
+    def get_template_names(self):
+        return [self.template_name]
 
 
 def stream_backup():

@@ -1,18 +1,16 @@
 from django.contrib import admin
-from import_export.admin import ImportExportModelAdmin
-from .models import CotizacionEtnico, CotizacionJuan, CotizacionFieldex
 from django.urls import reverse
 from django.utils.html import format_html
+from import_export.admin import ImportExportModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
+from unfold.admin import ModelAdmin
+from unfold.contrib.import_export.forms import ExportForm, ImportForm, SelectableFieldsExportForm
+from .models import CotizacionEtnico, CotizacionJuan, CotizacionFieldex
 from .resources import CotizacionFieldexResource, CotizacionJuanResource, CotizacionEtnicoResource
-from django.contrib import admin
 
-admin.site.site_header = "Administración Heavens Fruits"
-admin.site.site_title = "Administración Heavens"
-admin.site.index_title = "Bienvenido al Portal de Administración Heavens"
-
-
-class CotizacionEtnicoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class CotizacionEtnicoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin, ModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = SelectableFieldsExportForm
     resource_class = CotizacionEtnicoResource
     list_display = ['presentacion', 'semana'] + ['view_history']
 
@@ -23,7 +21,9 @@ class CotizacionEtnicoAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
     view_history.short_description = "Ver Historial"
 
 
-class CotizacionJuanAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class CotizacionJuanAdmin(ImportExportModelAdmin, SimpleHistoryAdmin, ModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = SelectableFieldsExportForm
     resource_class = CotizacionJuanResource
     list_display = ['presentacion', 'semana'] + ['view_history']
 
@@ -34,7 +34,9 @@ class CotizacionJuanAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
     view_history.short_description = "Ver Historial"
 
 
-class CotizacionFieldexAdmin(ImportExportModelAdmin, SimpleHistoryAdmin):
+class CotizacionFieldexAdmin(ImportExportModelAdmin, SimpleHistoryAdmin, ModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = SelectableFieldsExportForm
     resource_class = CotizacionFieldexResource
     list_display = ['presentacion', 'semana'] + ['view_history']
 

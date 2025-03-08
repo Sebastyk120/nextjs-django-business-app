@@ -1,6 +1,6 @@
 {% if not record.pedido.awb and not record.pedido.numero_factura %}
     <button type="button" class="btn btn-outline-info mover-button" id="editar" data-detallepedido-id="{{ record.pk }}" data-pedido-id="{{ record.pedido.pk }}">
-        <i class="bi bi-pencil-square"></i>
+        <i class="fas fa-pencil-alt"></i>
     </button>
 {% endif %}
 

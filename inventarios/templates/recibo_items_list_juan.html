@@ -1,60 +1,110 @@
-{% extends 'comercialbase.html' %} {% block content %}
-    {% load static %}
-    {% load django_tables2 %}
-    <link rel="stylesheet" href="{% static 'css/recibo_items.css' %}"/>
-    <h1 class="align-center">
-        <img src="{% static 'img/Juan-Matas.png' %}" alt="Logo de la Empresa" class="logo-empresa" style="vertical-align:middle; margin-right:5px;"/>
-        Movimientos Inventario Juan Matas <i class="bi bi-nintendo-switch"></i>
-    </h1>
-    <div class="container my-4">
-        <form method="get" class="d-flex justify-content-center mb-3">
-            <input type="text" name="item_busqueda" placeholder="Buscar Referencia..." class="form-control w-25"/>
-            <button class="btn btn-secondary ms-2" type="submit"><i class="bi bi-search"></i></button>
-        </form>
-        <div class="d-flex justify-content-center mb-4">
-            <button type="button" class="btn btn-primary mx-2" name="add" id="add" data-bs-toggle="modal"
-                    data-bs-target="#modalCreateItem" href="{% url 'reciboitemscreatejuan' %}">
-                <i class="bi bi-database-fill-add"></i> Añadir
-            </button>
-            <a class="btn btn-success mx-2" href="{% url 'exportar_items_juan' %}" name="exportar">
-                <i class="bi bi-filetype-xlsx"></i> Exportar
-            </a>
-            <a class="btn btn-danger mx-2" name="volver" id="volver" role="button" onclick="history.back();">
-                <i class="bi bi-reply-fill"></i> Volver
-            </a>
+{% extends 'comercialbase.html' %}
+{% load static %}
+{% load django_tables2 %}
+{% block content %}
+    <link rel="stylesheet" href="{% static 'css/pedido_list_general.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/table_styles.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/modal_styles.css' %}"/>
+
+    <div class="container my-3">
+        <div class="pedidos-wrapper">
+            <!-- Header Section -->
+            <div class="header-section mb-3">
+                <h2 class="section-title text-center">
+                    <img src="{% static 'img/Juan-Matas.png' %}" alt="Logo de la Empresa" class="logo-empresa"/> Movimientos Inventario Juan Matas
+                </h2>
+                <div class="subtitle text-center">Gestión de inventario Juan Matas</div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons mb-4">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCreateItem" href="{% url 'reciboitemscreatejuan' %}">
+                    <i class="bi bi-database-fill-add"></i> Añadir
+                </button>
+                
+                <a class="btn btn-export" href="{% url 'exportar_items_juan' %}" name="exportar">
+                    <i class="bi bi-filetype-xlsx"></i> Exportar
+                </a>
+                
+                <a class="btn btn-back" onclick="history.back();">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+
+            <!-- Search and Filters Card -->
+            <div class="card mb-4 filters-card">
+                <div class="card-header">
+                    <h4><i class="fas fa-search"></i> Búsqueda</h4>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="search-form" id="searchForm">
+                        <div class="row">
+                            <div class="col-lg-9 col-md-8 mb-3">
+                                <div class="form-group">
+                                    <label for="item_busqueda">Buscar Referencia</label>
+                                    <input type="text" name="item_busqueda" id="item_busqueda" class="form-control" placeholder="Buscar Referencia..." value="{{ request.GET.item_busqueda|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button class="btn btn-search w-100" type="submit">
+                                        <i class="bi bi-search"></i> Buscar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="card mb-4 table-card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <h4><i class="fas fa-list"></i> Listado de Movimientos</h4>
+                    <div class="header-actions">
+                        <span class="results-count">{{ table.rows|length }} Registros</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        {% render_table table %}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="container-fluid">
-        {% render_table table %}
-    </div>
+
     <!-- Crear Item Modal -->
-    <div class="modal fade text-white" id="modalCreateItem" tabindex="-1" aria-labelledby="modalCreateItemLabel"
-         aria-hidden="true">
+    <div class="modal fade" id="modalCreateItem" tabindex="-1" aria-labelledby="modalCreateItemLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content text-white bg-dark">
-                <!-- Modal content here -->
+            <div class="modal-content custom-modal">
+                <!-- Modal content will be loaded dynamically -->
             </div>
         </div>
     </div>
+    
     <!-- Editar Item Modal -->
-    <div class="modal fade text-white" id="moverItemModal" tabindex="-1" role="dialog"
-         aria-labelledby="moverItemModalLabel" aria-hidden="true">
+    <div class="modal fade" id="moverItemModal" tabindex="-1" role="dialog" aria-labelledby="moverItemModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content bg-dark">
-                <!-- Modal content here -->
+            <div class="modal-content custom-modal">
+                <!-- Modal content will be loaded dynamically -->
             </div>
         </div>
     </div>
+    
     <!-- Eliminar Item Modal -->
-    <div class="modal fade text-white" id="eliminarItemModal" tabindex="-1" role="dialog"
-         aria-labelledby="eliminarItemModalLabel" aria-hidden="true">
+    <div class="modal fade" id="eliminarItemModal" tabindex="-1" role="dialog" aria-labelledby="eliminarItemModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content bg-dark">
-                <!-- Modal content here -->
+            <div class="modal-content custom-modal">
+                <!-- Modal content will be loaded dynamically -->
             </div>
         </div>
     </div>
+    
+    {% block extra_js %}
     <script src="{% static 'js/editar_item.js' %}"></script>
     <script src="{% static 'js/crear_item.js' %}"></script>
     <script src="{% static 'js/eliminar_item.js' %}"></script>
+    {% endblock %}
 {% endblock %}

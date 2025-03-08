@@ -6,15 +6,19 @@ from .models import Bodega, Item, Movimiento, Inventario, Proveedor
 from .resources import MovimientoResource, ItemResource, BodegaResource, ProveedorResource, UserResource, GroupResource
 from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
+from unfold.admin import ModelAdmin, TabularInline
+from unfold.contrib.import_export.forms import ExportForm, ImportForm, SelectableFieldsExportForm
+from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
 admin.site.site_header = "Administración Heavens Fruits"
 admin.site.site_title = "Administración Heavens"
 admin.site.index_title = "Bienvenido al Portal de Administración Heavens"
 
-
 @admin.register(Item)
-class MyModelAdmin(ImportExportModelAdmin):
+class MyItemAdmin(ModelAdmin, ImportExportModelAdmin):
     import_error_display = ("message", "row", "traceback")
+    import_form_class = ImportForm
+    export_form_class = SelectableFieldsExportForm
     resource_class = ItemResource
 
     # Campos para mostrar en modo tabla
@@ -51,8 +55,10 @@ class MyModelAdmin(ImportExportModelAdmin):
 
 
 @admin.register(Movimiento)
-class MyModelAdmin(ImportExportModelAdmin):
+class MovimientoAdmin(ModelAdmin, ImportExportModelAdmin):
     import_error_display = ("message", "row", "traceback")
+    import_form_class = ImportForm
+    export_form_class = SelectableFieldsExportForm
     resource_class = MovimientoResource
     list_display = (
         "item_historico",
@@ -86,13 +92,15 @@ class MyModelAdmin(ImportExportModelAdmin):
 
 
 @admin.register(Bodega)
-class MyModelAdmin(ImportExportModelAdmin):
+class BodegaAdmin(ModelAdmin, ImportExportModelAdmin):
     import_error_display = ("message", "row", "traceback")
+    import_form_class = ImportForm
+    export_form_class = SelectableFieldsExportForm
     resource_class = BodegaResource
     list_display = ("nombre", "exportador_display")
 
     # Campos para búsqueda
-    search_fields = ("nombre", "exportador__nombre")  # Reemplaza "nombre_campo_relacionado" por el campo del modelo Exportador que identifica al exportador.
+    search_fields = ("nombre", "exportador__nombre")
 
     # Orden predeterminado (ya definido en el modelo, pero puedes especificarlo también aquí)
     ordering = ("nombre",)
@@ -104,8 +112,10 @@ class MyModelAdmin(ImportExportModelAdmin):
 
 
 @admin.register(Proveedor)
-class MyModelAdmin(ImportExportModelAdmin):
+class ProveedorAdmin(ModelAdmin, ImportExportModelAdmin):
     import_error_display = ("message", "row", "traceback")
+    import_form_class = ImportForm
+    export_form_class = SelectableFieldsExportForm
     resource_class = ProveedorResource
 
 
@@ -115,9 +125,15 @@ admin.site.unregister(User)
 
 # Registrar de nuevo el modelo User con la clase personalizada
 @admin.register(User)
-class UserAdmin(ImportExportModelAdmin, BaseUserAdmin):
+class UserAdmin(ModelAdmin, ImportExportModelAdmin, BaseUserAdmin):
     import_error_display = ("message", "row", "traceback")
+    import_form_class = ImportForm
+    export_form_class = SelectableFieldsExportForm
     resource_class = UserResource
+    # Formularios de Unfold
+    form = UserChangeForm
+    add_form = UserCreationForm
+    change_password_form = AdminPasswordChangeForm
 
 
 # Anular el registro del modelo Group
@@ -126,12 +142,30 @@ admin.site.unregister(Group)
 
 # Registrar de nuevo el modelo Group con la clase personalizada
 @admin.register(Group)
-class GroupAdmin(ImportExportModelAdmin, BaseGroupAdmin):
+class GroupAdmin(ModelAdmin, ImportExportModelAdmin, BaseGroupAdmin):
     import_error_display = ("message", "row", "traceback")
+    import_form_class = ImportForm
+    export_form_class = SelectableFieldsExportForm
     resource_class = GroupResource
 
 
-class InventarioAdmin(admin.ModelAdmin):
+class MovimientoInline(TabularInline):
+    model = Movimiento
+    extra = 0
+    fields = ('bodega', 'cantidad_cajas_h', 'propiedad', 'fecha_movimiento')
+    readonly_fields = ('fecha',)
+    show_change_link = True
+    classes = ("collapse",)
+    verbose_name = "Historial de movimiento"
+    verbose_name_plural = "Historial de movimientos"
+    
+    # You can also limit which related items appear
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.order_by('-fecha')[:10]  # Only the last 10 movements
+
+
+class InventarioAdmin(ModelAdmin):
     list_display = (
         'numero_item', 
         'compras_efectivas', 
@@ -151,7 +185,7 @@ class InventarioAdmin(admin.ModelAdmin):
 admin.site.register(Inventario, InventarioAdmin)
 
 @admin.register(LogEntry)
-class LogEntryAdmin(admin.ModelAdmin):
+class LogEntryAdmin(ModelAdmin):
     # Indicamos qué campos se mostrarán en la lista
     list_display = (
         'action_time',

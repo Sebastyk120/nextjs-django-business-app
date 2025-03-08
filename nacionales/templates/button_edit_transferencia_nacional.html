@@ -1,10 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% if record.pk %}
+<button type="button" class="btn btn-warning mover-button"
+        data-bs-toggle="modal"
+        data-bs-target="#editTransferenciaModal"
+        data-url="{% url 'transferencia_nacional_edit' pk=record.pk %}">
+  <i class="bi bi-pencil-square"></i>
+</button>
+{% else %}
+<!-- ...botón o mensaje alternativo si no hay registro... -->
+{% endif %}

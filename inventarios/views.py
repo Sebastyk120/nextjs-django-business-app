@@ -182,6 +182,56 @@ def exportar_items_juan(request):
     return response
 
 
+# -------------------------------------- Exportar Items CI Dorado (Movimientos) Excel: ---------------------------------
+@login_required
+@user_passes_test(user_passes_test(es_miembro_del_grupo('CI_Dorado'), login_url='home'))
+def exportar_items_ci_dorado(request):
+    # Crear un libro de trabajo de Excel
+    output = io.BytesIO()
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Inventario de C.I Dorado'
+    font = Font(bold=True)
+    fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
+
+    # Encabezados
+    columns = ['Referencia', 'Cantidad Cajas', 'Tipo Documento', 'Documento', 'Bodega', 'Proveedor',
+               'Fecha Movimiento', 'Propiedad', 'Observaciones', 'Usuario']
+    for col_num, column_title in enumerate(columns, start=1):
+        cell = worksheet.cell(row=1, column=col_num, value=column_title)
+        cell.font = font
+        cell.fill = fill
+
+    queryset = Item.objects.filter(bodega__exportador__nombre='CI_Dorado')
+
+    # Agregar datos al libro de trabajo
+    for row_num, item in enumerate(queryset, start=2):
+        row = [
+            item.numero_item.nombre,
+            item.cantidad_cajas,
+            item.get_tipo_documento_display(),  # RECORDAR QUE ES PARA LISTAS.
+            item.documento,
+            item.bodega.nombre,  #
+            item.proveedor.nombre,  #
+            item.fecha_movimiento.strftime("%Y-%m-%d"),  # RECORDAR FORMATEO.
+            item.propiedad.nombre,  #
+            item.observaciones,
+            item.user.username,  # Nombre de Usuario.
+        ]
+        for col_num, cell_value in enumerate(row, start=1):
+            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+
+    workbook.save(output)
+    output.seek(0)
+
+    # Crear una respuesta HTTP con el archivo de Excel
+    response = HttpResponse(output.read(),
+                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="inventario_items_ci_dorado.xlsx"'
+
+    return response
+
+
 # ------------------ Exportacion de inventarios  Excel General --------------------------------------------------------
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
@@ -393,6 +443,57 @@ def exportar_inventario_juan(request):
 
     return response
 
+# ------------------ Exportacion de inventarios Excel CI Dorado -----------------------------------------------------
+@login_required
+@user_passes_test(user_passes_test(es_miembro_del_grupo('CI_Dorado'), login_url='home'))
+def exportar_inventario_ci_dorado(request):
+    # Libro De Excel
+    output = io.BytesIO()
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Inventario CI Dorado'
+    font = Font(bold=True)
+    fill = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
+
+    # Encabezados
+    columns = ['Referencia', 'Exportador', 'Compras Efectivas', 'Saldos Iniciales', 'Salidas', 'Traslado Propio',
+               'Traslado Remisionado', 'Ventas', 'Venta Contenedor', 'Stock Actual']
+    for col_num, column_title in enumerate(columns, start=1):
+        cell = worksheet.cell(row=1, column=col_num, value=column_title)
+        cell.font = font
+        cell.fill = fill
+
+    # Filtrar datos Juan Matas
+    queryset = Inventario.objects.filter(numero_item__exportador__nombre='CI_Dorado')
+
+    # Filas para Etnico
+    for row_num, item in enumerate(queryset, start=2):
+        row = [
+            item.numero_item.nombre,
+            item.numero_item.exportador.nombre,
+            item.compras_efectivas,
+            item.saldos_iniciales,
+            item.salidas,
+            item.traslado_propio,
+            item.traslado_remisionado,
+            item.ventas,
+            item.venta_contenedor,
+            # Calculo Stock Actual
+            (item.compras_efectivas + item.saldos_iniciales) - (
+                    item.salidas + item.traslado_propio + item.traslado_remisionado + item.ventas)
+        ]
+        for col_num, cell_value in enumerate(row, start=1):
+            worksheet.cell(row=row_num, column=col_num, value=cell_value)
+
+    workbook.save(output)
+    output.seek(0)
+
+    # Crear una respuesta HTTP con el archivo de Excel
+    response = HttpResponse(output.read(),
+                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="inventario_ci_dorado.xlsx"'
+
+    return response
 
 # ------------------- Lista de Items Etnico  --------------------------------------------------------------------------
 @method_decorator(login_required, name='dispatch')
@@ -608,7 +709,7 @@ class ItemDeleteView(UpdateView):
 class ItemListViewFieldex(SingleTableView):
     model = Item
     table_class = ItemTable
-    template_name = 'recibo_items_list_fieldex.html'
+    template_name = 'recibo_items_list_fieldex2.html'
     form_class = SearchForm
 
     def get_queryset(self):
@@ -622,6 +723,8 @@ class ItemListViewFieldex(SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['item_busqueda'] = self.form_class(self.request.GET)
+        # Debug information
+        print('Context Data:', context)
         return context
 
 
@@ -740,6 +843,74 @@ class ItemCreateViewJuan(CreateView):
     def form_invalid(self, form):
         return JsonResponse({'success': False, 'html': render_to_string(self.template_name, {'form': form})})
 
+# -------------------------------------- Vistas Para CI Dorado--------------------------------------------------------
+
+
+# Mostrar Tabla Recibo - Bodega Recibo Juan Matas (Mostrar Items de ingreso)
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('CI_Dorado'), login_url=reverse_lazy('home')), name='dispatch')
+class ItemListViewCiDorado(SingleTableView):
+    model = Item
+    table_class = ItemTable
+    template_name = 'recibo_items_list_ci_dorado.html'
+    form_class = SearchForm
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(bodega__exportador__nombre='CI_Dorado')
+        form = self.form_class(self.request.GET)
+        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+            item_busqueda = form.cleaned_data.get('item_busqueda')
+            queryset = queryset.filter(numero_item__nombre__icontains=item_busqueda)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['item_busqueda'] = self.form_class(self.request.GET)
+        return context
+
+
+# ---------------------------- //// Crear Item Juan Matas (Ingreso) //////////////////----------------------
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('CI_Dorado'), login_url=reverse_lazy('home')), name='dispatch')
+class ItemCreateViewCiDorado(CreateView):
+    model = Item
+    form_class = ItemForm
+    template_name = 'recibo_crear_item_ci_dorado.html'
+    success_url = '/recibo_items_create_ci_dorado/'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        bodega_predeterminada = Bodega.objects.get(nombre='Ingreso: Compras Efectivas', exportador__nombre='Juan_Matas')
+        initial['bodega'] = bodega_predeterminada
+        return initial
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        exportadora_etnico = 'CI_Dorado'
+        form.fields['numero_item'].queryset = Referencias.objects.filter(exportador__nombre=exportadora_etnico)
+        form.fields['bodega'].queryset = Bodega.objects.filter(exportador__nombre=exportadora_etnico)
+        return form
+
+    @transaction.atomic
+    def form_valid(self, form):
+        numero_item = form.cleaned_data['numero_item']
+        form.instance.user = self.request.user
+        item = form.save()
+        Movimiento.objects.create(
+            item_historico=item.numero_item,
+            cantidad_cajas_h=item.cantidad_cajas,
+            bodega=item.bodega,
+            propiedad=item.propiedad,
+            fecha_movimiento=item.fecha_movimiento,
+            observaciones=item.observaciones,
+            fecha=timezone.now(),
+            user=item.user
+        )
+        messages.success(self.request, f'El item {numero_item} se ha creado exitosamente.')
+        return JsonResponse({'success': True})
+
+    def form_invalid(self, form):
+        return JsonResponse({'success': False, 'html': render_to_string(self.template_name, {'form': form})})
 
 # -----------------------------------// Tabla General Para Historico de Movimientos----------------------------------//
 
@@ -838,4 +1009,26 @@ class InventarioBodegaJuanListView(SingleTableView):
         return context
 
 
+# ----------------------- ///  Lista De Inventarios Por CI Dorado /// ----------------------------------------------
 
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('CI_Dorado'), login_url=reverse_lazy('home')), name='dispatch')
+class InventarioBodegaCiDoradoListView(SingleTableView):
+    model = Inventario
+    table_class = InventarioTable
+    template_name = 'inventario_list_bodega_ci_dorado.html'
+    form_class = SearchForm
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(numero_item__exportador__nombre='CI_Dorado')
+        form = self.form_class(self.request.GET)
+        if form.is_valid() and form.cleaned_data.get('item_busqueda'):
+            item_busqueda = form.cleaned_data.get('item_busqueda')
+            queryset = queryset.filter(numero_item__nombre__icontains=item_busqueda)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['item_busqueda'] = self.form_class(self.request.GET)
+        return context

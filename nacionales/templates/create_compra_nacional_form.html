@@ -1,0 +1,21 @@
+{% load crispy_forms_tags %}
+<style>
+    .form-label {
+        color: #16168c;
+    }
+</style>
+<form method="post" id="compraNacionalForm" action="{% url 'compra_nacional_create' %}">
+    {% csrf_token %}
+    {% crispy form %}
+    <button type="submit" class="btn btn-primary">Guardar Compra Nacional</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+</form>
+<script>
+    $(document).ready(function () {
+        $('.select2').select2();
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true
+        });
+    });
+</script>

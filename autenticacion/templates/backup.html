@@ -70,7 +70,7 @@
 
     <!-- Formulario para descargar el backup -->
     <h2>Descargar Copia De Seguridad</h2>
-    <form method="post" action="{% url 'backup_data' %}">
+    <form method="post" action="{% url 'backup_database' %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-primary">Descargar</button>
     </form>

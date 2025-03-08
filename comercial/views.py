@@ -1,10 +1,10 @@
 import io
 import math
 import time
-import pandas as pd
 from collections import defaultdict
 from datetime import datetime, timedelta, date
 from decimal import Decimal
+import pandas as pd
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
@@ -14,7 +14,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
+from django.views import View
 from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django_tables2 import SingleTableView
@@ -23,6 +25,7 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.workbook import Workbook
 from xhtml2pdf import pisa
+
 from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
     EliminarDetallePedidoForm, EditarPedidoExportadorForm, EditarDetallePedidoForm, EditarReferenciaForm, \
     EditarPedidoSeguimientoForm, FiltroSemanaExportadoraForm, SearchFormReferencias, EditarPedidoFormDos, \
@@ -33,6 +36,7 @@ from .resources import obtener_datos_con_totales_cliente, crear_archivo_excel_cl
     crear_archivo_excel_enviar_cliente, obtener_datos_con_totales_enviar_cliente
 from .tables import PedidoTable, DetallePedidoTable, PedidoExportadorTable, CarteraPedidoTable, UtilidadPedidoTable, \
     ResumenPedidoTable, ReferenciasTable, SeguimienosTable, SeguimienosResumenTable
+
 
 # -----------Funcion para permisos por grupo ---------------------
 def es_miembro_del_grupo(nombre_grupo):
@@ -53,6 +57,8 @@ def redirect_based_on_group_pedidos(request):
         return redirect('pedido_list_etnico')
     elif user.groups.filter(name='Juan_Matas').exists():
         return redirect('pedido_list_juan')
+    elif user.groups.filter(name='CI_Dorado').exists():
+        return redirect('pedido_list_ci_dorado')
     else:
         # Redirigir a una vista por defecto si el usuario no pertenece a ninguno de los grupos
         return redirect('home')
@@ -69,6 +75,8 @@ def redirect_based_on_group_cartera(request):
         return redirect('cartera_list_etnico')
     elif user.groups.filter(name='Juan_Matas').exists():
         return redirect('cartera_list_juan')
+    elif user.groups.filter(name='CI_Dorado').exists():
+        return redirect('cartera_list_ci_dorado')
     else:
         # Redirigir a una vista por defecto si el usuario no pertenece a ninguno de los grupos
         return redirect('home')
@@ -112,627 +120,6 @@ class ResumenPedidoListView(SingleTableView):
         return context
 
 
-
-# ------------------ Exportacion de Utilidades Excel General --------------------------------------------------------
-class ExportarUtilidadesView(TemplateView):
-    template_name = 'export_utilidades_general.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
-# ---------------------------------- Funcion que exporta las utilidades a Excel ---------------------------------------
-
-@login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
-def exportar_utilidades_excel(request):
-    # Crear un libro de trabajo de Excel
-    output = io.BytesIO()
-    workbook = Workbook()
-
-    # Hoja 1: Utilidades Totales General
-    worksheet1 = workbook.active
-    worksheet1.title = 'Utilidades Totales General'
-    header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill(start_color="4CAF50", end_color="4CAF50", fill_type="solid")
-    total_font = Font(bold=True, color="FFFFFF")
-    total_fill = PatternFill(start_color="2196F3", end_color="2196F3", fill_type="solid")
-    total_align = Alignment(horizontal="center")
-
-    # Definir el color de relleno rojo suave
-    fill_red_soft = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
-
-    # Encabezados
-    columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Valor Pagado Cliente', 'Estado Factura', 'T Cajas Enviadas',
-               'Trm Monetizacion',
-               'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
-               'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
-    for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet1.cell(row=1, column=col_num, value=column_title)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = Alignment(horizontal="center")
-
-    # Crear un diccionario para almacenar los totales de Utilidades por exportadora
-    totales_por_utilidad_usd = defaultdict(Decimal)
-    totales_no_cobrables_por_exportadora = defaultdict(Decimal)
-    totales_cobrados_por_exportadora = defaultdict(Decimal)
-    totales_por_cobrar_por_exportadora = defaultdict(Decimal)
-
-    fecha_inicial_str = request.POST.get('fecha_inicial')
-    fecha_final_str = request.POST.get('fecha_final')
-
-    # Verificar si las fechas están vacías
-    if fecha_inicial_str and fecha_final_str:
-        # Convertir las cadenas de fecha en datetime
-        fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-        fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
-
-        # Filtrar los pedidos por fecha_entrega dentro del rango
-        queryset = Pedido.objects.filter(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final)
-    else:
-        # Si las fechas están vacías, exportar todos los pedidos
-        queryset = Pedido.objects.all()
-
-    # Obtener los datos
-    for pedido in queryset:
-        valor_utilidad_usd = pedido.valor_total_utilidad_usd
-        if valor_utilidad_usd is None:
-            continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
-        if pedido.estado_utilidad == "Factura en abono" or pedido.estado_utilidad == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-        if pedido.fecha_pago_utilidad is not None and pedido.documento_cobro_utilidad is not None:
-            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-        if pedido.fecha_pago_utilidad is None and pedido.estado_factura == "Pagada" and (
-                pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada"):
-            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-        totales_por_utilidad_usd[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-
-    # Agregar datos a la hoja de trabajo 1
-    for row_num, pedido in enumerate(queryset, start=2):
-        cobrar_utilidad = "Sí" if pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada" else "No"
-        row = [
-            pedido.pk,
-            pedido.fecha_entrega,
-            pedido.cliente.nombre,
-            pedido.exportadora.nombre,
-            pedido.awb,
-            pedido.fecha_pago,
-            pedido.numero_factura,
-            pedido.valor_total_factura_usd,
-            pedido.valor_pagado_cliente_usd,
-            pedido.estado_factura,
-            pedido.total_cajas_enviadas,
-            pedido.trm_monetizacion,
-            pedido.tasa_representativa_usd_diaria,
-            pedido.valor_total_utilidad_usd,
-            pedido.valor_utilidad_pesos,
-            pedido.documento_cobro_utilidad,
-            pedido.fecha_pago_utilidad,
-            pedido.diferencia_por_abono,
-            pedido.estado_utilidad,
-            cobrar_utilidad,  # Añadido valor de 'Cobrar utilidad'
-        ]
-        for col_num, cell_value in enumerate(row, start=1):
-            cell = worksheet1.cell(row=row_num, column=col_num, value=cell_value)
-            # Aplicar formato de moneda a las columnas específicas
-            if col_num in [8, 9, 11, 12, 13, 14, 18]:
-                cell.number_format = '$#,##0.00'
-            # Pintar la fila si el numero_factura es 'Pedido Cancelado'
-            if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
-                cell.fill = fill_red_soft
-
-    # Hoja 2: Totales por Exportadora
-    worksheet2 = workbook.create_sheet(title='Totales por Exportadora')
-
-    # Encabezados para la segunda hoja
-    totals_columns = ["Exportadora", "Total Utilidades USD", "Total Utilidades No Cobrables USD",
-                      "Total Utilidades Cobradas USD", "Total Por Cobrar USD"]
-    for col_num, column_title in enumerate(totals_columns, start=1):
-        cell = worksheet2.cell(row=1, column=col_num, value=column_title)
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = Alignment(horizontal="center")
-
-    # Función para dar estilo a los totales.
-    def aplicar_estilo_total(worksheet, fila):
-        for col in range(1, len(totals_columns) + 1):
-            celda = worksheet.cell(row=fila, column=col)
-            celda.font = total_font
-            celda.fill = total_fill
-            celda.alignment = total_align
-
-    # Agregar totales a la segunda hoja
-    row_num = 2
-    for exportadora in totales_por_utilidad_usd.keys():
-        worksheet2.cell(row=row_num, column=1, value=exportadora)
-        for col_num, total in enumerate([totales_por_utilidad_usd[exportadora],
-                                         totales_no_cobrables_por_exportadora[exportadora],
-                                         totales_cobrados_por_exportadora[exportadora],
-                                         totales_por_cobrar_por_exportadora[exportadora]], start=2):
-            cell = worksheet2.cell(row=row_num, column=col_num, value=total)
-            cell.number_format = '$#,##0.00'
-        aplicar_estilo_total(worksheet2, row_num)
-        row_num += 1
-
-    workbook.save(output)
-    output.seek(0)
-
-    # Crear una respuesta HTTP con el archivo de Excel
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="utilidades_pedidos_general.xlsx"'
-
-    return response
-
-
-# ------------------ Exportacion de utilidades Excel Etnico --------------------------------------------------------
-
-class ExportarUtilidadesEtnicoView(TemplateView):
-    template_name = 'export_utilidades_etnico.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
-@login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Etnico'), login_url='home'))
-def exportar_utilidades_etnico(request):
-    # Crear un libro de trabajo de Excel
-    output = io.BytesIO()
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Utilidades Totales Etnico'
-    font = Font(bold=True)
-    fill = PatternFill(start_color="3ef983", end_color="3ef983", fill_type="solid")
-    total_font = Font(bold=True, color="FFFFFF")
-    total_fill = PatternFill(start_color="3580e0", end_color="3580e0", fill_type="solid")
-    total_align = Alignment(horizontal="center")
-    # Definir el color de relleno rojo suave
-    fill_red_soft = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
-
-    # Encabezados
-    columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Valor Pagado Cliente', 'Estado Factura', 'T Cajas Enviadas',
-               'Trm Monetizacion',
-               'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
-               'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
-    for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
-    # Crear un diccionario para almacenar los totales de Utilidades por exportadora
-    totales_por_utilidad_usd = defaultdict(Decimal)
-    totales_no_cobrables_por_exportadora = defaultdict(Decimal)
-    totales_cobrados_por_exportadora = defaultdict(Decimal)
-    totales_por_cobrar_por_exportadora = defaultdict(Decimal)
-
-    fecha_inicial_str = request.POST.get('fecha_inicial')
-    fecha_final_str = request.POST.get('fecha_final')
-
-    # Verificar si las fechas están vacías
-    if fecha_inicial_str and fecha_final_str:
-        # Convertir las cadenas de fecha en datetime
-        fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-        fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
-
-        # Filtrar los pedidos por fecha_entrega dentro del rango
-        queryset = Pedido.objects.filter(
-            Q(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final) | Q(exportadora__nombre='Etnico'))
-    else:
-        # Si las fechas están vacías, exportar todos los pedidos
-        queryset = Pedido.objects.filter(exportadora__nombre='Etnico')
-
-        # Obtener los datos de tu modelo y calcular los totales
-        for pedido in queryset:
-            valor_utilidad_usd = pedido.valor_total_utilidad_usd
-            if valor_utilidad_usd is None:
-                continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
-            if pedido.estado_utilidad == "Factura en abono" or pedido.estado_utilidad == "Pendiente Pago Cliente":
-                totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-            if pedido.fecha_pago_utilidad is not None and pedido.documento_cobro_utilidad is not None:
-                totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-            if pedido.fecha_pago_utilidad is None and pedido.estado_factura == "Pagada" and (
-                    pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada"):
-                totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-            totales_por_utilidad_usd[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-
-        # Agregar datos a la hoja de trabajo 1
-        for row_num, pedido in enumerate(queryset, start=2):
-            cobrar_utilidad = "Sí" if pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada" else "No"
-            row = [
-                pedido.pk,
-                pedido.fecha_entrega,
-                pedido.cliente.nombre,
-                pedido.exportadora.nombre,
-                pedido.awb,
-                pedido.fecha_pago,
-                pedido.numero_factura,
-                pedido.valor_total_factura_usd,
-                pedido.valor_pagado_cliente_usd,
-                pedido.estado_factura,
-                pedido.total_cajas_enviadas,
-                pedido.trm_monetizacion,
-                pedido.tasa_representativa_usd_diaria,
-                pedido.valor_total_utilidad_usd,
-                pedido.valor_utilidad_pesos,
-                pedido.documento_cobro_utilidad,
-                pedido.fecha_pago_utilidad,
-                pedido.diferencia_por_abono,
-                pedido.estado_utilidad,
-                cobrar_utilidad,  # Añadido valor de 'Cobrar utilidad'
-            ]
-            for col_num, cell_value in enumerate(row, start=1):
-                cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
-                # Aplicar formato de moneda a las columnas específicas
-                if col_num in [8, 9, 11, 12, 13, 14, 18]:
-                    cell.number_format = '$#,##0.00'
-                # Pintar la fila si el numero_factura es 'Pedido Cancelado'
-                if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
-                    cell.fill = fill_red_soft
-
-    def aplicar_estilo_total(fila):  # Funcion APara Dar Estilo A Los Totales.
-        for col in range(1, len(columns) + 1):
-            celda = worksheet.cell(row=fila, column=col)
-            celda.font = total_font
-            celda.fill = total_fill
-            celda.alignment = total_align
-
-    row_num += 2  # Saltar a la siguiente fila después de los datos
-    for exportadora, total in totales_por_utilidad_usd.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades USD")
-        worksheet.cell(row=row_num, column=3, value=total)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-    for exportadora, total_no_cobrable in totales_no_cobrables_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades No Cobrables USD")
-        worksheet.cell(row=row_num, column=3, value=total_no_cobrable)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-    for exportadora, total_cobrado in totales_cobrados_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades Pagadas")
-        worksheet.cell(row=row_num, column=3, value=total_cobrado)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-    for exportadora, total_por_cobrar in totales_por_cobrar_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades Por Pagar")
-        worksheet.cell(row=row_num, column=3, value=total_por_cobrar)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-
-    workbook.save(output)
-    output.seek(0)
-
-    # Crear una respuesta HTTP con el archivo de Excel
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="utilidades_pedidos_etnico.xlsx"'
-
-    return response
-
-
-# ------------------ Exportacion de Utilidades Excel Fieldex --------------------------------------------------------
-
-class ExportarUtilidadesFieldexView(TemplateView):
-    template_name = 'export_utilidades_fieldex.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
-@login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Fieldex'), login_url='home'))
-def exportar_utilidades_fieldex(request):
-    # Crear un libro de trabajo de Excel
-    output = io.BytesIO()
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Utilidades Totales Fieldex'
-    font = Font(bold=True)
-    fill = PatternFill(start_color="3ef983", end_color="3ef983", fill_type="solid")
-    total_font = Font(bold=True, color="FFFFFF")
-    total_fill = PatternFill(start_color="3580e0", end_color="3580e0", fill_type="solid")
-    total_align = Alignment(horizontal="center")
-    # Definir el color de relleno rojo suave
-    fill_red_soft = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
-
-    # Encabezados
-    columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Valor Pagado Cliente', 'Estado Factura', 'T Cajas Enviadas',
-               'Trm Monetizacion',
-               'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
-               'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
-    for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
-    # Crear un diccionario para almacenar los totales de Utilidades por exportadora
-    totales_por_utilidad_usd = defaultdict(Decimal)
-    totales_no_cobrables_por_exportadora = defaultdict(Decimal)
-    totales_cobrados_por_exportadora = defaultdict(Decimal)
-    totales_por_cobrar_por_exportadora = defaultdict(Decimal)
-    fecha_inicial_str = request.POST.get('fecha_inicial')
-    fecha_final_str = request.POST.get('fecha_final')
-
-    # Verificar si las fechas están vacías
-    if fecha_inicial_str and fecha_final_str:
-        # Convertir las cadenas de fecha en datetime
-        fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-        fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
-
-        # Filtrar los pedidos por fecha_entrega dentro del rango
-        queryset = Pedido.objects.filter(
-            Q(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final) | Q(exportadora__nombre='Fieldex'))
-    else:
-        # Si las fechas están vacías, exportar todos los pedidos
-        queryset = Pedido.objects.filter(exportadora__nombre='Fieldex')
-
-    # Obtener los datos de tu modelo y calcular los totales
-    for pedido in queryset:
-        valor_utilidad_usd = pedido.valor_total_utilidad_usd
-        if valor_utilidad_usd is None:
-            continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
-        if pedido.estado_utilidad == "Factura en abono" or pedido.estado_utilidad == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-        if pedido.fecha_pago_utilidad is not None and pedido.documento_cobro_utilidad is not None:
-            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-        if pedido.fecha_pago_utilidad is None and pedido.estado_factura == "Pagada" and (
-                pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada"):
-            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-        totales_por_utilidad_usd[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-
-    # Agregar datos a la hoja de trabajo 1
-    for row_num, pedido in enumerate(queryset, start=2):
-        cobrar_utilidad = "Sí" if pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada" else "No"
-        row = [
-            pedido.pk,
-            pedido.fecha_entrega,
-            pedido.cliente.nombre,
-            pedido.exportadora.nombre,
-            pedido.awb,
-            pedido.fecha_pago,
-            pedido.numero_factura,
-            pedido.valor_total_factura_usd,
-            pedido.valor_pagado_cliente_usd,
-            pedido.estado_factura,
-            pedido.total_cajas_enviadas,
-            pedido.trm_monetizacion,
-            pedido.tasa_representativa_usd_diaria,
-            pedido.valor_total_utilidad_usd,
-            pedido.valor_utilidad_pesos,
-            pedido.documento_cobro_utilidad,
-            pedido.fecha_pago_utilidad,
-            pedido.diferencia_por_abono,
-            pedido.estado_utilidad,
-            cobrar_utilidad,  # Añadido valor de 'Cobrar utilidad'
-        ]
-        for col_num, cell_value in enumerate(row, start=1):
-            cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
-            # Aplicar formato de moneda a las columnas específicas
-            if col_num in [8, 9, 11, 12, 13, 14, 18]:
-                cell.number_format = '$#,##0.00'
-            # Pintar la fila si el numero_factura es 'Pedido Cancelado'
-            if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
-                cell.fill = fill_red_soft
-
-    # Agregar los totales al final de la hoja de trabajo
-
-    def aplicar_estilo_total(fila):  # Funcion APara Dar Estilo A Los Totales.
-        for col in range(1, len(columns) + 1):
-            celda = worksheet.cell(row=fila, column=col)
-            celda.font = total_font
-            celda.fill = total_fill
-            celda.alignment = total_align
-
-    row_num += 2  # Saltar a la siguiente fila después de los datos
-    for exportadora, total in totales_por_utilidad_usd.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades USD")
-        worksheet.cell(row=row_num, column=3, value=total)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-    for exportadora, total_no_cobrable in totales_no_cobrables_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades No Cobrables USD")
-        worksheet.cell(row=row_num, column=3, value=total_no_cobrable)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-    for exportadora, total_cobrado in totales_cobrados_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades Pagadas")
-        worksheet.cell(row=row_num, column=3, value=total_cobrado)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-    for exportadora, total_por_cobrar in totales_por_cobrar_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades Por Pagar")
-        worksheet.cell(row=row_num, column=3, value=total_por_cobrar)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-
-    workbook.save(output)
-    output.seek(0)
-
-    # Crear una respuesta HTTP con el archivo de Excel
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="utilidades_pedidos_fieldex.xlsx"'
-
-    return response
-
-
-# ------------------ Exportacion de Utilidades Excel Juan Matas --------------------------------------------------------
-class ExportarUtilidadesJuanView(TemplateView):
-    template_name = 'export_utilidades_juan.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
-@login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Juan_Matas'), login_url='home'))
-def exportar_utilidades_juan(request):
-    # Crear un libro de trabajo de Excel
-    output = io.BytesIO()
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Utilidades Totales Juan Matas'
-    font = Font(bold=True)
-    fill = PatternFill(start_color="3ef983", end_color="3ef983", fill_type="solid")
-    total_font = Font(bold=True, color="FFFFFF")
-    total_fill = PatternFill(start_color="3580e0", end_color="3580e0", fill_type="solid")
-    total_align = Alignment(horizontal="center")
-    # Definir el color de relleno rojo suave
-    fill_red_soft = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
-
-    # Encabezados
-    columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
-               'Valor Total Factura USD', 'Valor Pagado Cliente', 'Estado Factura', 'T Cajas Enviadas',
-               'Trm Monetizacion',
-               'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
-               'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
-    for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
-    # Crear un diccionario para almacenar los totales de Utilidades por exportadora
-    totales_por_utilidad_usd = defaultdict(Decimal)
-    totales_no_cobrables_por_exportadora = defaultdict(Decimal)
-    totales_cobrados_por_exportadora = defaultdict(Decimal)
-    totales_por_cobrar_por_exportadora = defaultdict(Decimal)
-    fecha_inicial_str = request.POST.get('fecha_inicial')
-    fecha_final_str = request.POST.get('fecha_final')
-
-    # Verificar si las fechas están vacías
-    if fecha_inicial_str and fecha_final_str:
-        # Convertir las cadenas de fecha en datetime
-        fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-        fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
-
-        # Filtrar los pedidos por fecha_entrega dentro del rango
-        queryset = Pedido.objects.filter(
-            Q(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final) | Q(exportadora__nombre='Juan_Matas'))
-    else:
-        # Si las fechas están vacías, exportar todos los pedidos
-        queryset = Pedido.objects.filter(exportadora__nombre='Juan_Matas')
-
-    # Obtener los datos de tu modelo y calcular los totales
-    for pedido in queryset:
-        valor_utilidad_usd = pedido.valor_total_utilidad_usd
-        if valor_utilidad_usd is None:
-            continue  # O puedes manejarlo de alguna otra manera según tu lógica de negocio
-        if pedido.estado_utilidad == "Factura en abono" or pedido.estado_utilidad == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-        if pedido.fecha_pago_utilidad is not None and pedido.documento_cobro_utilidad is not None:
-            totales_cobrados_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-        if pedido.fecha_pago_utilidad is None and pedido.estado_factura == "Pagada" and (
-                pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada"):
-            totales_por_cobrar_por_exportadora[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-        totales_por_utilidad_usd[pedido.exportadora.nombre] += Decimal(valor_utilidad_usd)
-
-    # Agregar datos a la hoja de trabajo 1
-    for row_num, pedido in enumerate(queryset, start=2):
-        cobrar_utilidad = "Sí" if pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada" else "No"
-        row = [
-            pedido.pk,
-            pedido.fecha_entrega,
-            pedido.cliente.nombre,
-            pedido.exportadora.nombre,
-            pedido.awb,
-            pedido.fecha_pago,
-            pedido.numero_factura,
-            pedido.valor_total_factura_usd,
-            pedido.valor_pagado_cliente_usd,
-            pedido.estado_factura,
-            pedido.total_cajas_enviadas,
-            pedido.trm_monetizacion,
-            pedido.tasa_representativa_usd_diaria,
-            pedido.valor_total_utilidad_usd,
-            pedido.valor_utilidad_pesos,
-            pedido.documento_cobro_utilidad,
-            pedido.fecha_pago_utilidad,
-            pedido.diferencia_por_abono,
-            pedido.estado_utilidad,
-            cobrar_utilidad,  # Añadido valor de 'Cobrar utilidad'
-        ]
-        for col_num, cell_value in enumerate(row, start=1):
-            cell = worksheet.cell(row=row_num, column=col_num, value=cell_value)
-            # Aplicar formato de moneda a las columnas específicas
-            if col_num in [8, 9, 11, 12, 13, 14, 18]:
-                cell.number_format = '$#,##0.00'
-            # Pintar la fila si el numero_factura es 'Pedido Cancelado'
-            if row[6] == 'Pedido Cancelado':  # '6' es el índice de 'No Factura'
-                cell.fill = fill_red_soft
-
-    # Agregar los totales al final de la hoja de trabajo
-
-    def aplicar_estilo_total(fila):  # Funcion APara Dar Estilo A Los Totales.
-        for col in range(1, len(columns) + 1):
-            celda = worksheet.cell(row=fila, column=col)
-            celda.font = total_font
-            celda.fill = total_fill
-            celda.alignment = total_align
-
-    row_num += 2  # Saltar a la siguiente fila después de los datos
-    for exportadora, total in totales_por_utilidad_usd.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades USD")
-        worksheet.cell(row=row_num, column=3, value=total)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-    for exportadora, total_no_cobrable in totales_no_cobrables_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades No Cobrables USD")
-        worksheet.cell(row=row_num, column=3, value=total_no_cobrable)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-    for exportadora, total_cobrado in totales_cobrados_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades Pagadas")
-        worksheet.cell(row=row_num, column=3, value=total_cobrado)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-    for exportadora, total_por_cobrar in totales_por_cobrar_por_exportadora.items():
-        worksheet.cell(row=row_num, column=1, value=exportadora)
-        worksheet.cell(row=row_num, column=2, value="Total Utilidades Por Pagar")
-        worksheet.cell(row=row_num, column=3, value=total_por_cobrar)
-        aplicar_estilo_total(row_num)
-        row_num += 1  # Prepararse para la siguiente fila
-
-    workbook.save(output)
-    output.seek(0)
-
-    # Crear una respuesta HTTP con el archivo de Excel
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="utilidades_pedidos_juan.xlsx"'
-
-    return response
-
-
-# ----------------------- Vista exportacion Detalles de pedido --------------------------------------------
-class ExportarDetallesPedidoView(TemplateView):
-    template_name = 'export_detalles_pedido_view.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
 # ------------------ Exportacion de Detalles de Pedidos Excel General -------------------------------------
 @login_required
 @user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
@@ -752,9 +139,9 @@ def exportar_detalles_pedidos_excel(request):
     columnas = [
         'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
         'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
-        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
+        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad', 'Tarifa Recuperacion',
         'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
-        'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
+        'Valor Total utilidad Producto','Total Recuperacion X Producto',  'Precio Proforma', 'Observaciones'
     ]
 
     # Crear la fila de encabezados con estilos
@@ -818,12 +205,14 @@ def exportar_detalles_pedidos_excel(request):
             detalle.referencia_contenedor,
             detalle.cantidad_contenedores,
             detalle.tarifa_utilidad,
+            detalle.tarifa_recuperacion,
             detalle.valor_x_caja_usd,
             detalle.valor_x_producto,
             detalle.no_cajas_nc,
             detalle.valor_nota_credito_usd,
             detalle.afecta_utilidad,
             detalle.valor_total_utilidad_x_producto,
+            detalle.valor_total_recuperacion_x_producto,
             detalle.precio_proforma,
             detalle.observaciones,
         ]
@@ -843,985 +232,9 @@ def exportar_detalles_pedidos_excel(request):
     return response
 
 
-# ------------------ Exportacion de Pedidos Excel General --------------------------------------------------------
 
-# Vista Para Exportar Pedidos:
-
-class ExportarPedidosView(TemplateView):
-    template_name = 'export_pedidos_general.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
-# Exportacion de Pedidos OpenPyXl >
-@login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
-def exportar_pedidos_excel(request):
-    # 1. Crear un buffer en memoria para almacenar el archivo Excel
-    output = io.BytesIO()
-
-    # 2. Crear el Workbook en modo write_only para optimizar el uso de memoria
-    workbook = Workbook(write_only=True)
-    ws = workbook.create_sheet(title='Pedidos')
-
-    # 3. Definir estilos para los encabezados
-    header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill(start_color="1e0c42", end_color="1e0c42", fill_type="solid")
-    sub_header_fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-
-    # 4. Definir los encabezados para Pedido y DetallePedido
-    pedido_headers = [
-        'No', 'Cliente', 'Semana', 'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada',
-        'Exportador', 'Subexportadora', 'Intermediario', 'Dias Cartera', 'AWB',
-        'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
-        'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado',
-        'Peso Bruto Enviado', 'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB',
-        'ETA', 'ETD', 'Variedades', 'Descuento Comercial', 'No NC', 'Motivo NC',
-        'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura', 'Utilidad Bancaria USD',
-        'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
-        'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
-        'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
-        'Fecha Pago Utilidad', 'Estado Utilidad', 'Estado Cancelacion', 'Estado Documentos',
-        'Estado Reserva', 'Termo', 'Diferencia AWB/Factura', 'Eta Real', 'Estado Pedido',
-        'Observaciones Tracking', 'Observaciones Generales'
-    ]
-
-    detalle_headers = [
-        'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
-        'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
-        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
-        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
-        'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
-    ]
-
-    # 5. Verificar si el usuario incluyó detalles
-    incluir_detalles = request.POST.get('incluir_detalles') == 'true'
-
-    # 6. Obtener filtros de fecha desde el formulario (si existen)
-    fecha_inicial_str = request.POST.get('fecha_inicial')
-    fecha_final_str = request.POST.get('fecha_final')
-
-    # 7. Filtrar los pedidos (mismo código que ya tienes)
-    try:
-        if fecha_inicial_str and fecha_final_str:
-            fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-            fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
-            pedidos_qs = Pedido.objects.filter(
-                fecha_entrega__gte=fecha_inicial,
-                fecha_entrega__lte=fecha_final
-            ).select_related(
-                'cliente',
-                'exportadora',
-                'subexportadora',
-                'intermediario',
-                'destino',
-                'aerolinea',
-                'agencia_carga',
-                'responsable_reserva'
-            ).iterator(chunk_size=50)
-        else:
-            pedidos_qs = Pedido.objects.select_related(
-                'cliente',
-                'exportadora',
-                'subexportadora',
-                'intermediario',
-                'destino',
-                'aerolinea',
-                'agencia_carga',
-                'responsable_reserva'
-            ).iterator(chunk_size=50)
-    except ValueError:
-        return HttpResponse("Fecha inválida", status=400)
-
-    for pedido in pedidos_qs:
-        # 7.1 Escribir una fila de separación para mayor legibilidad (opcional)
-        ws.append([])
-
-        # 7.2 Escribir una fila de cabecera para "Pedido"
-        row_header_pedido = [WriteOnlyCell(ws, value='PEDIDO:')]
-        row_header_pedido[0].font = Font(bold=True, color='FFFFFF')
-        row_header_pedido[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-        ws.append(row_header_pedido)
-
-        # 7.3 Escribir los encabezados de Pedido
-        pedido_header_cells = []
-        for titulo in pedido_headers:
-            celda = WriteOnlyCell(ws, value=titulo)
-            celda.font = header_font
-            celda.fill = header_fill
-            pedido_header_cells.append(celda)
-        ws.append(pedido_header_cells)
-
-        # 7.4 Escribir los datos del Pedido
-        pedido_data = [
-            pedido.pk,
-            pedido.cliente.nombre if pedido.cliente else '',
-            pedido.semana,
-            pedido.fecha_solicitud.strftime('%Y-%m-%d') if pedido.fecha_solicitud else '',
-            pedido.fecha_entrega.strftime('%Y-%m-%d') if pedido.fecha_entrega else '',
-            pedido.fecha_llegada.strftime('%Y-%m-%d') if pedido.fecha_llegada else '',
-            pedido.exportadora.nombre if pedido.exportadora else '',
-            pedido.subexportadora.nombre if pedido.subexportadora else '',
-            pedido.intermediario.nombre if pedido.intermediario else '',
-            pedido.dias_cartera,
-            pedido.awb,
-            pedido.destino.codigo if pedido.destino else '',
-            pedido.aerolinea.nombre if pedido.aerolinea else '',
-            pedido.agencia_carga.nombre if pedido.agencia_carga else '',
-            pedido.responsable_reserva.nombre if pedido.responsable_reserva else '',
-            pedido.numero_factura,
-            pedido.total_cajas_solicitadas,
-            pedido.total_cajas_enviadas,
-            pedido.total_peso_bruto_solicitado,
-            pedido.total_peso_bruto_enviado,
-            pedido.total_piezas_solicitadas,
-            pedido.total_piezas_enviadas,
-            pedido.peso_awb,
-            pedido.eta.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta else '',
-            pedido.etd.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.etd else '',
-            pedido.variedades,
-            pedido.descuento,
-            pedido.nota_credito_no,
-            pedido.motivo_nota_credito,
-            pedido.valor_total_nota_credito_usd,
-            pedido.valor_pagado_cliente_usd,
-            pedido.estado_factura,
-            pedido.utilidad_bancaria_usd,
-            pedido.fecha_pago.strftime('%Y-%m-%d') if pedido.fecha_pago else '',
-            pedido.trm_monetizacion,
-            pedido.fecha_monetizacion.strftime('%Y-%m-%d') if pedido.fecha_monetizacion else '',
-            pedido.tasa_representativa_usd_diaria,
-            pedido.trm_cotizacion,
-            pedido.diferencia_por_abono,
-            pedido.dias_de_vencimiento,
-            pedido.valor_total_factura_usd,
-            pedido.valor_total_utilidad_usd,
-            pedido.valor_utilidad_pesos,
-            pedido.documento_cobro_utilidad,
-            pedido.fecha_pago_utilidad.strftime('%Y-%m-%d') if pedido.fecha_pago_utilidad else '',
-            pedido.estado_utilidad,
-            pedido.estado_cancelacion,
-            pedido.estado_documentos,
-            pedido.estatus_reserva,
-            pedido.termo,
-            pedido.diferencia_peso_factura_awb,
-            pedido.eta_real.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta_real else '',
-            pedido.estado_pedido,
-            pedido.observaciones_tracking,
-            pedido.observaciones
-        ]
-        ws.append(pedido_data)
-
-        if incluir_detalles:
-            # Sólo si se marca 'incluir_detalles'
-            row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
-            row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
-            row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-            ws.append(row_header_detalle)
-
-            detalle_header_cells = []
-            for titulo in detalle_headers:
-                celda = WriteOnlyCell(ws, value=titulo)
-                celda.font = header_font
-                celda.fill = header_fill
-                detalle_header_cells.append(celda)
-            ws.append(detalle_header_cells)
-
-            detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
-                'pedido__exportadora',
-                'pedido__cliente',
-                'fruta',
-                'presentacion',
-                'tipo_caja',
-                'referencia'
-            ).iterator(chunk_size=50)
-
-            for detalle in detalles_qs:
-                detalle_row = [
-                    detalle.pedido.pk,
-                    detalle.pedido.fecha_entrega.strftime('%Y-%m-%d') if detalle.pedido.fecha_entrega else '',
-                    detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
-                    detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
-                    detalle.fruta.nombre if detalle.fruta else '',
-                    detalle.presentacion.nombre if detalle.presentacion else '',
-                    detalle.cajas_solicitadas,
-                    detalle.presentacion_peso,
-                    detalle.kilos,
-                    detalle.cajas_enviadas,
-                    detalle.kilos_enviados,
-                    detalle.diferencia,
-                    detalle.tipo_caja.nombre if detalle.tipo_caja else '',
-                    detalle.referencia.nombre if detalle.referencia else '',
-                    detalle.stickers,
-                    detalle.lleva_contenedor,
-                    detalle.referencia_contenedor,
-                    detalle.cantidad_contenedores,
-                    detalle.tarifa_utilidad,
-                    detalle.valor_x_caja_usd,
-                    detalle.valor_x_producto,
-                    detalle.no_cajas_nc,
-                    detalle.valor_nota_credito_usd,
-                    detalle.afecta_utilidad,
-                    detalle.valor_total_utilidad_x_producto,
-                    detalle.precio_proforma,
-                    detalle.observaciones,
-                ]
-                ws.append(detalle_row)
-            # =============== FIN SECCIÓN DETALLES (CONDICIONAL) ===============
-    # 9. Guardar y retornar el archivo
-    workbook.save(output)
-    output.seek(0)
-    response = HttpResponse(
-        output,
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles.xlsx"'
-    return response
-
-
-# ------------------ Exportacion de Pedidos Excel Etnico --------------------------------------------------------
-
-# Vista Para Exportar Pedidos Etnico:
-
-class ExportarPedidosEtnicoView(TemplateView):
-    template_name = 'export_pedidos_etnico.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
-@login_required
-@user_passes_test(es_miembro_del_grupo('Etnico'), login_url='home')
-def exportar_pedidos_etnico(request):
-    # 1. Crear un buffer en memoria para almacenar el archivo Excel
-    output = io.BytesIO()
-
-    # 2. Crear el Workbook en modo write_only para optimizar el uso de memoria
-    workbook = Workbook(write_only=True)
-    ws = workbook.create_sheet(title='Pedidos')
-
-    # 3. Definir estilos para los encabezados
-    header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill(start_color="1e0c42", end_color="1e0c42", fill_type="solid")
-    sub_header_fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-
-    # 4. Definir los encabezados para Pedido y DetallePedido
-    pedido_headers = [
-        'No', 'Cliente', 'Semana', 'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada',
-        'Exportador', 'Subexportadora', 'Intermediario', 'Dias Cartera', 'AWB',
-        'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
-        'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado',
-        'Peso Bruto Enviado', 'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB',
-        'ETA', 'ETD', 'Variedades', 'Descuento Comercial', 'No NC', 'Motivo NC',
-        'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura', 'Utilidad Bancaria USD',
-        'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
-        'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
-        'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
-        'Fecha Pago Utilidad', 'Estado Utilidad', 'Estado Cancelacion', 'Estado Documentos',
-        'Estado Reserva', 'Termo', 'Diferencia AWB/Factura', 'Eta Real', 'Estado Pedido',
-        'Observaciones Tracking', 'Observaciones Generales'
-    ]
-
-    detalle_headers = [
-        'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
-        'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
-        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
-        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
-        'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
-    ]
-
-    # 5. Verificar si el usuario incluyó detalles
-    incluir_detalles = request.POST.get('incluir_detalles') == 'true'
-
-    # 6. Obtener filtros de fecha desde el formulario (si existen)
-    fecha_inicial_str = request.POST.get('fecha_inicial')
-    fecha_final_str = request.POST.get('fecha_final')
-
-    # 7. Obtener el ID de la exportadora 'Etnico'
-    exportadora = Exportador.objects.filter(nombre='Etnico').first()
-    if not exportadora:
-        return HttpResponse("Exportadora 'Etnico' no encontrada", status=404)
-    exportadora_id = exportadora.id
-
-    # 8. Filtrar los pedidos por exportadora y fechas
-    try:
-        if fecha_inicial_str and fecha_final_str:
-            fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-            fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
-            pedidos_qs = Pedido.objects.filter(
-                exportadora_id=exportadora_id,
-                fecha_entrega__gte=fecha_inicial,
-                fecha_entrega__lte=fecha_final
-            ).select_related(
-                'cliente',
-                'exportadora',
-                'subexportadora',
-                'intermediario',
-                'destino',
-                'aerolinea',
-                'agencia_carga',
-                'responsable_reserva'
-            ).iterator(chunk_size=50)
-        else:
-            pedidos_qs = Pedido.objects.filter(
-                exportadora_id=exportadora_id
-            ).select_related(
-                'cliente',
-                'exportadora',
-                'subexportadora',
-                'intermediario',
-                'destino',
-                'aerolinea',
-                'agencia_carga',
-                'responsable_reserva'
-            ).iterator(chunk_size=50)
-    except ValueError:
-        return HttpResponse("Fecha inválida", status=400)
-
-    # 9. Escribir los encabezados de Pedido
-    for pedido in pedidos_qs:
-        # 7.1 Escribir una fila de separación para mayor legibilidad (opcional)
-        ws.append([])
-
-        # 7.2 Escribir una fila de cabecera para "Pedido"
-        row_header_pedido = [WriteOnlyCell(ws, value='PEDIDO:')]
-        row_header_pedido[0].font = Font(bold=True, color='FFFFFF')
-        row_header_pedido[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-        ws.append(row_header_pedido)
-
-        # 7.3 Escribir los encabezados de Pedido
-        pedido_header_cells = []
-        for titulo in pedido_headers:
-            celda = WriteOnlyCell(ws, value=titulo)
-            celda.font = header_font
-            celda.fill = header_fill
-            pedido_header_cells.append(celda)
-        ws.append(pedido_header_cells)
-
-        # 7.4 Escribir los datos del Pedido
-        pedido_data = [
-            pedido.pk,
-            pedido.cliente.nombre if pedido.cliente else '',
-            pedido.semana,
-            pedido.fecha_solicitud.strftime('%Y-%m-%d') if pedido.fecha_solicitud else '',
-            pedido.fecha_entrega.strftime('%Y-%m-%d') if pedido.fecha_entrega else '',
-            pedido.fecha_llegada.strftime('%Y-%m-%d') if pedido.fecha_llegada else '',
-            pedido.exportadora.nombre if pedido.exportadora else '',
-            pedido.subexportadora.nombre if pedido.subexportadora else '',
-            pedido.intermediario.nombre if pedido.intermediario else '',
-            pedido.dias_cartera,
-            pedido.awb,
-            pedido.destino.codigo if pedido.destino else '',
-            pedido.aerolinea.nombre if pedido.aerolinea else '',
-            pedido.agencia_carga.nombre if pedido.agencia_carga else '',
-            pedido.responsable_reserva.nombre if pedido.responsable_reserva else '',
-            pedido.numero_factura,
-            pedido.total_cajas_solicitadas,
-            pedido.total_cajas_enviadas,
-            pedido.total_peso_bruto_solicitado,
-            pedido.total_peso_bruto_enviado,
-            pedido.total_piezas_solicitadas,
-            pedido.total_piezas_enviadas,
-            pedido.peso_awb,
-            pedido.eta.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta else '',
-            pedido.etd.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.etd else '',
-            pedido.variedades,
-            pedido.descuento,
-            pedido.nota_credito_no,
-            pedido.motivo_nota_credito,
-            pedido.valor_total_nota_credito_usd,
-            pedido.valor_pagado_cliente_usd,
-            pedido.estado_factura,
-            pedido.utilidad_bancaria_usd,
-            pedido.fecha_pago.strftime('%Y-%m-%d') if pedido.fecha_pago else '',
-            pedido.trm_monetizacion,
-            pedido.fecha_monetizacion.strftime('%Y-%m-%d') if pedido.fecha_monetizacion else '',
-            pedido.tasa_representativa_usd_diaria,
-            pedido.trm_cotizacion,
-            pedido.diferencia_por_abono,
-            pedido.dias_de_vencimiento,
-            pedido.valor_total_factura_usd,
-            pedido.valor_total_utilidad_usd,
-            pedido.valor_utilidad_pesos,
-            pedido.documento_cobro_utilidad,
-            pedido.fecha_pago_utilidad.strftime('%Y-%m-%d') if pedido.fecha_pago_utilidad else '',
-            pedido.estado_utilidad,
-            pedido.estado_cancelacion,
-            pedido.estado_documentos,
-            pedido.estatus_reserva,
-            pedido.termo,
-            pedido.diferencia_peso_factura_awb,
-            pedido.eta_real.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta_real else '',
-            pedido.estado_pedido,
-            pedido.observaciones_tracking,
-            pedido.observaciones
-        ]
-        ws.append(pedido_data)
-
-        if incluir_detalles:
-            # Sólo si se marca 'incluir_detalles'
-            row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
-            row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
-            row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-            ws.append(row_header_detalle)
-
-            detalle_header_cells = []
-            for titulo in detalle_headers:
-                celda = WriteOnlyCell(ws, value=titulo)
-                celda.font = header_font
-                celda.fill = header_fill
-                detalle_header_cells.append(celda)
-            ws.append(detalle_header_cells)
-
-            detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
-                'pedido__exportadora',
-                'pedido__cliente',
-                'fruta',
-                'presentacion',
-                'tipo_caja',
-                'referencia'
-            ).iterator(chunk_size=50)
-
-            for detalle in detalles_qs:
-                detalle_row = [
-                    detalle.pedido.pk,
-                    detalle.pedido.fecha_entrega.strftime('%Y-%m-%d') if detalle.pedido.fecha_entrega else '',
-                    detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
-                    detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
-                    detalle.fruta.nombre if detalle.fruta else '',
-                    detalle.presentacion.nombre if detalle.presentacion else '',
-                    detalle.cajas_solicitadas,
-                    detalle.presentacion_peso,
-                    detalle.kilos,
-                    detalle.cajas_enviadas,
-                    detalle.kilos_enviados,
-                    detalle.diferencia,
-                    detalle.tipo_caja.nombre if detalle.tipo_caja else '',
-                    detalle.referencia.nombre if detalle.referencia else '',
-                    detalle.stickers,
-                    detalle.lleva_contenedor,
-                    detalle.referencia_contenedor,
-                    detalle.cantidad_contenedores,
-                    detalle.tarifa_utilidad,
-                    detalle.valor_x_caja_usd,
-                    detalle.valor_x_producto,
-                    detalle.no_cajas_nc,
-                    detalle.valor_nota_credito_usd,
-                    detalle.afecta_utilidad,
-                    detalle.valor_total_utilidad_x_producto,
-                    detalle.precio_proforma,
-                    detalle.observaciones,
-                ]
-                ws.append(detalle_row)
-            # =============== FIN SECCIÓN DETALLES (CONDICIONAL) ===============
-    # 9. Guardar y retornar el archivo
-    workbook.save(output)
-    output.seek(0)
-    response = HttpResponse(
-        output,
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles_etnico.xlsx"'
-    return response
-
-
-# ------------------ Exportacion de Pedidos Excel Fieldex --------------------------------------------------------
-
-class ExportarPedidosFieldexView(TemplateView):
-    template_name = 'export_pedidos_fieldex.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
-@login_required
-@user_passes_test(es_miembro_del_grupo('Fieldex'), login_url='home')
-def exportar_pedidos_fieldex(request):
-    # 1. Crear un buffer en memoria para almacenar el archivo Excel
-    output = io.BytesIO()
-
-    # 2. Crear el Workbook en modo write_only para optimizar el uso de memoria
-    workbook = Workbook(write_only=True)
-    ws = workbook.create_sheet(title='Pedidos')
-
-    # 3. Definir estilos para los encabezados
-    header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill(start_color="1E0C42", end_color="1E0C42", fill_type="solid")
-    sub_header_fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-
-    # 4. Definir los encabezados para Pedido y DetallePedido
-    pedido_headers = [
-        'No', 'Cliente', 'Semana', 'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada',
-        'Exportador', 'Subexportadora', 'Intermediario', 'Dias Cartera', 'AWB',
-        'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
-        'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado',
-        'Peso Bruto Enviado', 'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB',
-        'ETA', 'ETD', 'Variedades', 'Descuento Comercial', 'No NC', 'Motivo NC',
-        'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura', 'Utilidad Bancaria USD',
-        'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
-        'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
-        'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
-        'Fecha Pago Utilidad', 'Estado Utilidad', 'Estado Cancelacion', 'Estado Documentos',
-        'Estado Reserva', 'Termo', 'Diferencia AWB/Factura', 'Eta Real', 'Estado Pedido',
-        'Observaciones Tracking', 'Observaciones Generales'
-    ]
-
-    detalle_headers = [
-        'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
-        'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
-        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
-        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
-        'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
-    ]
-
-    # 5. Verificar si el usuario incluyó detalles
-    incluir_detalles = request.POST.get('incluir_detalles') == 'true'
-
-    # 6. Obtener filtros de fecha desde el formulario (si existen)
-    fecha_inicial_str = request.POST.get('fecha_inicial')
-    fecha_final_str = request.POST.get('fecha_final')
-
-    # 7. Obtener el ID de la exportadora 'Etnico'
-    exportadora = Exportador.objects.filter(nombre='Fieldex').first()
-    if not exportadora:
-        return HttpResponse("Exportadora 'Fieldex' no encontrada", status=404)
-    exportadora_id = exportadora.id
-
-    # 8. Filtrar los pedidos por exportadora y fechas
-    try:
-        if fecha_inicial_str and fecha_final_str:
-            fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-            fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
-            pedidos_qs = Pedido.objects.filter(
-                exportadora_id=exportadora_id,
-                fecha_entrega__gte=fecha_inicial,
-                fecha_entrega__lte=fecha_final
-            ).select_related(
-                'cliente',
-                'exportadora',
-                'subexportadora',
-                'intermediario',
-                'destino',
-                'aerolinea',
-                'agencia_carga',
-                'responsable_reserva'
-            ).iterator(chunk_size=50)
-        else:
-            pedidos_qs = Pedido.objects.filter(
-                exportadora_id=exportadora_id
-            ).select_related(
-                'cliente',
-                'exportadora',
-                'subexportadora',
-                'intermediario',
-                'destino',
-                'aerolinea',
-                'agencia_carga',
-                'responsable_reserva'
-            ).iterator(chunk_size=50)
-    except ValueError:
-        return HttpResponse("Fecha inválida", status=400)
-
-    for pedido in pedidos_qs:
-        # 7.1 Escribir una fila de separación para mayor legibilidad (opcional)
-        ws.append([])
-
-        # 7.2 Escribir una fila de cabecera para "Pedido"
-        row_header_pedido = [WriteOnlyCell(ws, value='PEDIDO:')]
-        row_header_pedido[0].font = Font(bold=True, color='FFFFFF')
-        row_header_pedido[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-        ws.append(row_header_pedido)
-
-        # 7.3 Escribir los encabezados de Pedido
-        pedido_header_cells = []
-        for titulo in pedido_headers:
-            celda = WriteOnlyCell(ws, value=titulo)
-            celda.font = header_font
-            celda.fill = header_fill
-            pedido_header_cells.append(celda)
-        ws.append(pedido_header_cells)
-
-        # 7.4 Escribir los datos del Pedido
-        pedido_data = [
-            pedido.pk,
-            pedido.cliente.nombre if pedido.cliente else '',
-            pedido.semana,
-            pedido.fecha_solicitud.strftime('%Y-%m-%d') if pedido.fecha_solicitud else '',
-            pedido.fecha_entrega.strftime('%Y-%m-%d') if pedido.fecha_entrega else '',
-            pedido.fecha_llegada.strftime('%Y-%m-%d') if pedido.fecha_llegada else '',
-            pedido.exportadora.nombre if pedido.exportadora else '',
-            pedido.subexportadora.nombre if pedido.subexportadora else '',
-            pedido.intermediario.nombre if pedido.intermediario else '',
-            pedido.dias_cartera,
-            pedido.awb,
-            pedido.destino.codigo if pedido.destino else '',
-            pedido.aerolinea.nombre if pedido.aerolinea else '',
-            pedido.agencia_carga.nombre if pedido.agencia_carga else '',
-            pedido.responsable_reserva.nombre if pedido.responsable_reserva else '',
-            pedido.numero_factura,
-            pedido.total_cajas_solicitadas,
-            pedido.total_cajas_enviadas,
-            pedido.total_peso_bruto_solicitado,
-            pedido.total_peso_bruto_enviado,
-            pedido.total_piezas_solicitadas,
-            pedido.total_piezas_enviadas,
-            pedido.peso_awb,
-            pedido.eta.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta else '',
-            pedido.etd.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.etd else '',
-            pedido.variedades,
-            pedido.descuento,
-            pedido.nota_credito_no,
-            pedido.motivo_nota_credito,
-            pedido.valor_total_nota_credito_usd,
-            pedido.valor_pagado_cliente_usd,
-            pedido.estado_factura,
-            pedido.utilidad_bancaria_usd,
-            pedido.fecha_pago.strftime('%Y-%m-%d') if pedido.fecha_pago else '',
-            pedido.trm_monetizacion,
-            pedido.fecha_monetizacion.strftime('%Y-%m-%d') if pedido.fecha_monetizacion else '',
-            pedido.tasa_representativa_usd_diaria,
-            pedido.trm_cotizacion,
-            pedido.diferencia_por_abono,
-            pedido.dias_de_vencimiento,
-            pedido.valor_total_factura_usd,
-            pedido.valor_total_utilidad_usd,
-            pedido.valor_utilidad_pesos,
-            pedido.documento_cobro_utilidad,
-            pedido.fecha_pago_utilidad.strftime('%Y-%m-%d') if pedido.fecha_pago_utilidad else '',
-            pedido.estado_utilidad,
-            pedido.estado_cancelacion,
-            pedido.estado_documentos,
-            pedido.estatus_reserva,
-            pedido.termo,
-            pedido.diferencia_peso_factura_awb,
-            pedido.eta_real.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta_real else '',
-            pedido.estado_pedido,
-            pedido.observaciones_tracking,
-            pedido.observaciones
-        ]
-        ws.append(pedido_data)
-
-        if incluir_detalles:
-            # Sólo si se marca 'incluir_detalles'
-            row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
-            row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
-            row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-            ws.append(row_header_detalle)
-
-            detalle_header_cells = []
-            for titulo in detalle_headers:
-                celda = WriteOnlyCell(ws, value=titulo)
-                celda.font = header_font
-                celda.fill = header_fill
-                detalle_header_cells.append(celda)
-            ws.append(detalle_header_cells)
-
-            detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
-                'pedido__exportadora',
-                'pedido__cliente',
-                'fruta',
-                'presentacion',
-                'tipo_caja',
-                'referencia'
-            ).iterator(chunk_size=50)
-
-            for detalle in detalles_qs:
-                detalle_row = [
-                    detalle.pedido.pk,
-                    detalle.pedido.fecha_entrega.strftime('%Y-%m-%d') if detalle.pedido.fecha_entrega else '',
-                    detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
-                    detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
-                    detalle.fruta.nombre if detalle.fruta else '',
-                    detalle.presentacion.nombre if detalle.presentacion else '',
-                    detalle.cajas_solicitadas,
-                    detalle.presentacion_peso,
-                    detalle.kilos,
-                    detalle.cajas_enviadas,
-                    detalle.kilos_enviados,
-                    detalle.diferencia,
-                    detalle.tipo_caja.nombre if detalle.tipo_caja else '',
-                    detalle.referencia.nombre if detalle.referencia else '',
-                    detalle.stickers,
-                    detalle.lleva_contenedor,
-                    detalle.referencia_contenedor,
-                    detalle.cantidad_contenedores,
-                    detalle.tarifa_utilidad,
-                    detalle.valor_x_caja_usd,
-                    detalle.valor_x_producto,
-                    detalle.no_cajas_nc,
-                    detalle.valor_nota_credito_usd,
-                    detalle.afecta_utilidad,
-                    detalle.valor_total_utilidad_x_producto,
-                    detalle.precio_proforma,
-                    detalle.observaciones,
-                ]
-                ws.append(detalle_row)
-            # =============== FIN SECCIÓN DETALLES (CONDICIONAL) ===============
-    # 9. Guardar y retornar el archivo
-    workbook.save(output)
-    output.seek(0)
-    response = HttpResponse(
-        output,
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles_fieldex.xlsx"'
-    return response
-
-
-# ------------------ Exportacion de Pedidos Excel Juan Matas ---------------------------------------------------------
-class ExportarPedidosJuanView(TemplateView):
-    template_name = 'export_pedidos_juan.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Agrega contexto adicional aquí si es necesario
-        return context
-
-
-@login_required
-@user_passes_test(es_miembro_del_grupo('Juan_Matas'), login_url='home')
-def exportar_pedidos_juan(request):
-    # 1. Crear un buffer en memoria para almacenar el archivo Excel
-    output = io.BytesIO()
-
-    # 2. Crear el Workbook en modo write_only para optimizar el uso de memoria
-    workbook = Workbook(write_only=True)
-    ws = workbook.create_sheet(title='Pedidos')
-
-    # 3. Definir estilos para los encabezados
-    header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill(start_color="1E0C42", end_color="1E0C42", fill_type="solid")
-    sub_header_fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-
-    # 4. Definir los encabezados para Pedido y DetallePedido
-    pedido_headers = [
-        'No', 'Cliente', 'Semana', 'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada',
-        'Exportador', 'Subexportadora', 'Intermediario', 'Dias Cartera', 'AWB',
-        'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
-        'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado',
-        'Peso Bruto Enviado', 'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB',
-        'ETA', 'ETD', 'Variedades', 'Descuento Comercial', 'No NC', 'Motivo NC',
-        'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura', 'Utilidad Bancaria USD',
-        'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
-        'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
-        'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
-        'Fecha Pago Utilidad', 'Estado Utilidad', 'Estado Cancelacion', 'Estado Documentos',
-        'Estado Reserva', 'Termo', 'Diferencia AWB/Factura', 'Eta Real', 'Estado Pedido',
-        'Observaciones Tracking', 'Observaciones Generales'
-    ]
-
-    detalle_headers = [
-        'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
-        'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
-        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
-        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
-        'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
-    ]
-
-    # 5. Verificar si el usuario incluyó detalles
-    incluir_detalles = request.POST.get('incluir_detalles') == 'true'
-
-    # 6. Obtener filtros de fecha desde el formulario (si existen)
-    fecha_inicial_str = request.POST.get('fecha_inicial')
-    fecha_final_str = request.POST.get('fecha_final')
-
-    # 7. Obtener el ID de la exportadora 'Etnico'
-    exportadora = Exportador.objects.filter(nombre='Juan_Matas').first()
-    if not exportadora:
-        return HttpResponse("Exportadora 'Juan_Matas' no encontrada", status=404)
-    exportadora_id = exportadora.id
-
-    # 8. Filtrar los pedidos por exportadora y fechas
-    try:
-        if fecha_inicial_str and fecha_final_str:
-            fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
-            fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
-            pedidos_qs = Pedido.objects.filter(
-                exportadora_id=exportadora_id,
-                fecha_entrega__gte=fecha_inicial,
-                fecha_entrega__lte=fecha_final
-            ).select_related(
-                'cliente',
-                'exportadora',
-                'subexportadora',
-                'intermediario',
-                'destino',
-                'aerolinea',
-                'agencia_carga',
-                'responsable_reserva'
-            ).iterator(chunk_size=50)
-        else:
-            pedidos_qs = Pedido.objects.filter(
-                exportadora_id=exportadora_id
-            ).select_related(
-                'cliente',
-                'exportadora',
-                'subexportadora',
-                'intermediario',
-                'destino',
-                'aerolinea',
-                'agencia_carga',
-                'responsable_reserva'
-            ).iterator(chunk_size=50)
-    except ValueError:
-        return HttpResponse("Fecha inválida", status=400)
-
-    for pedido in pedidos_qs:
-        # 7.1 Escribir una fila de separación para mayor legibilidad (opcional)
-        ws.append([])
-
-        # 7.2 Escribir una fila de cabecera para "Pedido"
-        row_header_pedido = [WriteOnlyCell(ws, value='PEDIDO:')]
-        row_header_pedido[0].font = Font(bold=True, color='FFFFFF')
-        row_header_pedido[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-        ws.append(row_header_pedido)
-
-        # 7.3 Escribir los encabezados de Pedido
-        pedido_header_cells = []
-        for titulo in pedido_headers:
-            celda = WriteOnlyCell(ws, value=titulo)
-            celda.font = header_font
-            celda.fill = header_fill
-            pedido_header_cells.append(celda)
-        ws.append(pedido_header_cells)
-
-        # 7.4 Escribir los datos del Pedido
-        pedido_data = [
-            pedido.pk,
-            pedido.cliente.nombre if pedido.cliente else '',
-            pedido.semana,
-            pedido.fecha_solicitud.strftime('%Y-%m-%d') if pedido.fecha_solicitud else '',
-            pedido.fecha_entrega.strftime('%Y-%m-%d') if pedido.fecha_entrega else '',
-            pedido.fecha_llegada.strftime('%Y-%m-%d') if pedido.fecha_llegada else '',
-            pedido.exportadora.nombre if pedido.exportadora else '',
-            pedido.subexportadora.nombre if pedido.subexportadora else '',
-            pedido.intermediario.nombre if pedido.intermediario else '',
-            pedido.dias_cartera,
-            pedido.awb,
-            pedido.destino.codigo if pedido.destino else '',
-            pedido.aerolinea.nombre if pedido.aerolinea else '',
-            pedido.agencia_carga.nombre if pedido.agencia_carga else '',
-            pedido.responsable_reserva.nombre if pedido.responsable_reserva else '',
-            pedido.numero_factura,
-            pedido.total_cajas_solicitadas,
-            pedido.total_cajas_enviadas,
-            pedido.total_peso_bruto_solicitado,
-            pedido.total_peso_bruto_enviado,
-            pedido.total_piezas_solicitadas,
-            pedido.total_piezas_enviadas,
-            pedido.peso_awb,
-            pedido.eta.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta else '',
-            pedido.etd.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.etd else '',
-            pedido.variedades,
-            pedido.descuento,
-            pedido.nota_credito_no,
-            pedido.motivo_nota_credito,
-            pedido.valor_total_nota_credito_usd,
-            pedido.valor_pagado_cliente_usd,
-            pedido.estado_factura,
-            pedido.utilidad_bancaria_usd,
-            pedido.fecha_pago.strftime('%Y-%m-%d') if pedido.fecha_pago else '',
-            pedido.trm_monetizacion,
-            pedido.fecha_monetizacion.strftime('%Y-%m-%d') if pedido.fecha_monetizacion else '',
-            pedido.tasa_representativa_usd_diaria,
-            pedido.trm_cotizacion,
-            pedido.diferencia_por_abono,
-            pedido.dias_de_vencimiento,
-            pedido.valor_total_factura_usd,
-            pedido.valor_total_utilidad_usd,
-            pedido.valor_utilidad_pesos,
-            pedido.documento_cobro_utilidad,
-            pedido.fecha_pago_utilidad.strftime('%Y-%m-%d') if pedido.fecha_pago_utilidad else '',
-            pedido.estado_utilidad,
-            pedido.estado_cancelacion,
-            pedido.estado_documentos,
-            pedido.estatus_reserva,
-            pedido.termo,
-            pedido.diferencia_peso_factura_awb,
-            pedido.eta_real.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta_real else '',
-            pedido.estado_pedido,
-            pedido.observaciones_tracking,
-            pedido.observaciones
-        ]
-        ws.append(pedido_data)
-
-        if incluir_detalles:
-            # Sólo si se marca 'incluir_detalles'
-            row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
-            row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
-            row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
-            ws.append(row_header_detalle)
-
-            detalle_header_cells = []
-            for titulo in detalle_headers:
-                celda = WriteOnlyCell(ws, value=titulo)
-                celda.font = header_font
-                celda.fill = header_fill
-                detalle_header_cells.append(celda)
-            ws.append(detalle_header_cells)
-
-            detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
-                'pedido__exportadora',
-                'pedido__cliente',
-                'fruta',
-                'presentacion',
-                'tipo_caja',
-                'referencia'
-            ).iterator(chunk_size=50)
-
-            for detalle in detalles_qs:
-                detalle_row = [
-                    detalle.pedido.pk,
-                    detalle.pedido.fecha_entrega.strftime('%Y-%m-%d') if detalle.pedido.fecha_entrega else '',
-                    detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
-                    detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
-                    detalle.fruta.nombre if detalle.fruta else '',
-                    detalle.presentacion.nombre if detalle.presentacion else '',
-                    detalle.cajas_solicitadas,
-                    detalle.presentacion_peso,
-                    detalle.kilos,
-                    detalle.cajas_enviadas,
-                    detalle.kilos_enviados,
-                    detalle.diferencia,
-                    detalle.tipo_caja.nombre if detalle.tipo_caja else '',
-                    detalle.referencia.nombre if detalle.referencia else '',
-                    detalle.stickers,
-                    detalle.lleva_contenedor,
-                    detalle.referencia_contenedor,
-                    detalle.cantidad_contenedores,
-                    detalle.tarifa_utilidad,
-                    detalle.valor_x_caja_usd,
-                    detalle.valor_x_producto,
-                    detalle.no_cajas_nc,
-                    detalle.valor_nota_credito_usd,
-                    detalle.afecta_utilidad,
-                    detalle.valor_total_utilidad_x_producto,
-                    detalle.precio_proforma,
-                    detalle.observaciones,
-                ]
-                ws.append(detalle_row)
-            # =============== FIN SECCIÓN DETALLES (CONDICIONAL) ===============
-    # 9. Guardar y retornar el archivo
-    workbook.save(output)
-    output.seek(0)
-    response = HttpResponse(
-        output,
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename="Pedidos_y_detalles_juan.xlsx"'
-    return response
-
-
-# -------------------------- Funciones De Exportacion Cartera General--------------------------------------------------
-# ------------------ Exportacion De Cartera Por cliente --------------------------------------------------------------
-class ExportarCarteraClienteView(TemplateView):
+# -------------------------- Funciones De Exportacion Cartera General Antigua--------------------------------------------------
+class ExportarCarteraClienteVistaAntiguaView(TemplateView):
     template_name = 'export_cartera_cliente.html'
 
     def get_context_data(self, **kwargs):
@@ -1850,6 +263,8 @@ class ExportarCarteraClienteView(TemplateView):
                 grupo = 'Fieldex'
             elif es_miembro_del_grupo('Juan_Matas')(request.user):
                 grupo = 'Juan_Matas'
+            elif es_miembro_del_grupo('CI_Dorado')(request.user):
+                grupo = 'CI_Dorado'
 
             # Obtener los datos y los totales con el filtro de fecha, cliente, intermediario y grupo
             pedidos, totales = obtener_datos_con_totales_cliente(fecha_inicial, fecha_final, cliente, intermediario,
@@ -1870,6 +285,34 @@ class ExportarCarteraClienteView(TemplateView):
         context = self.get_context_data(**kwargs)
         context['form'] = form
         return self.render_to_response(context)
+
+
+# ------------------ Exportacion De Cartera Por General Dash y demas --------------------------------------------------------------
+class ExportarCarteraClienteView(View):
+    def get(self, request):
+        cliente_id = request.GET.get('cliente', '')
+        fecha_inicial_str = request.GET.get('fecha_inicial', '')
+        fecha_final_str = request.GET.get('fecha_final', '')
+        grupo = request.GET.get('grupo', '')
+
+        hoy = datetime.now().date()
+        primer_dia_mes = datetime(hoy.year, hoy.month, 1).date()
+
+        # Convertir las fechas recibidas o asignar valores por defecto
+        fecha_inicial = parse_date(fecha_inicial_str) or primer_dia_mes
+        fecha_final = parse_date(fecha_final_str) or hoy
+
+        # Si se envió un cliente, obtener el objeto, sino dejarlo en None (si corresponde)
+        cliente = Cliente.objects.get(id=cliente_id) if cliente_id else None
+
+        # Usar keyword arguments para clarificar lo que se envía
+        data = obtener_datos_con_totales_cliente(
+            fecha_inicial=fecha_inicial,
+            fecha_final=fecha_final,
+            cliente=cliente,
+            grupo=grupo
+        )
+        return HttpResponse(status=204)
 
 
 # ------------------  Exportacion De Cartera Por cliente  Para Enviar --------------------------------------------
@@ -2010,7 +453,7 @@ class SeguimientosPedidosListView(SingleTableView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = self.form_class(self.request.GET)
+        context['form'] = ExportSearchFormSeguimientos()
         context['es_autorizador'] = self.request.user.groups.filter(name='Autorizadores').exists()
         return context
 
@@ -2091,7 +534,7 @@ class PedidoEtnicoListView(SingleTableView):
         return context
 
     def get_clientes_con_pedidos(self):
-        return Cliente.objects.filter(pedido__isnull=False).distinct()
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='Etnico').distinct()
 
 
 # -------------------------------- Tabla De Pedidos Fieldex  ----------------------------------------------------
@@ -2138,7 +581,7 @@ class PedidoFieldexListView(SingleTableView):
         return context
 
     def get_clientes_con_pedidos(self):
-        return Cliente.objects.filter(pedido__isnull=False).distinct()
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='Fieldex').distinct()
 
 
 # -------------------------------- Tabla De Pedidos Juan Matas  ----------------------------------------------------
@@ -2185,8 +628,55 @@ class PedidoJuanListView(SingleTableView):
         return context
 
     def get_clientes_con_pedidos(self):
-        return Cliente.objects.filter(pedido__isnull=False).distinct()
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='Juan_Matas').distinct()
 
+
+# -------------------------------- Tabla De Pedidos CI  ----------------------------------------------------
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('CI_Dorado'), login_url=reverse_lazy('home')), name='dispatch')
+class PedidoCiDoradoListView(SingleTableView):
+    model = Pedido
+    table_class = PedidoExportadorTable
+    table_pagination = {"per_page": 14}
+    template_name = 'pedido_list_ci_dorado.html'
+    form_class = SearchForm
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(exportadora__nombre='CI_Dorado')
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
+
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
+            item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
+
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
+        return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='CI_Dorado').distinct()
 
 # -------------------------------  Formulario - Crear Pedido General - Modal (General) ----------------------------
 @method_decorator(login_required, name='dispatch')
@@ -2937,8 +1427,8 @@ class DetallePedidoUpdateTresView(UpdateView):
 class DetallePedidoDeleteiew(UpdateView):
     model = DetallePedido
     form_class = EliminarDetallePedidoForm
-    template_name = 'detalle_pedido_eliminart.html'
-    success_url = '/detalle_pedido_eliminar/'
+    template_name = 'detalle_pedido_eliminar.html'
+    success_url = ''
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2991,6 +1481,11 @@ class DetallePedidoDeleteiew(UpdateView):
                 {'success': False, 'html': render_to_string(self.template_name, {'form': form}, request=self.request)})
         else:
             return super().form_invalid(form)
+        
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['pedido_id'] = self.request.GET.get('pedido_id') or self.request.POST.get('pedido_id')
+        return context
 
 
 # ------------------------- CARTERA General /// Table mostrar cartera de pedidos Heavens ///  -------------------------
@@ -3034,10 +1529,12 @@ class CarteraHeavensListView(SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
+        # Añadir el formulario de exportación al contexto
+        context['export_form'] = ExportSearchForm()
         return context
-
+    
     def get_clientes_con_pedidos(self):
-        return Cliente.objects.filter(pedido__isnull=False).distinct()
+            return Cliente.objects.filter(pedido__isnull=False).distinct()
 
 
 # ------------------------- CARTERA /// Table mostrar cartera de pedidos Etnico ///  ---------------------------
@@ -3052,32 +1549,39 @@ class CarteraEtnicoListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Etnico')
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
                         queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
         return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='Etnico').distinct()
 
 
 # ------------------------- CARTERA /// Table mostrar cartera de pedidos Fieldex ///  ---------------------------
@@ -3092,32 +1596,39 @@ class CarteraFieldexListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Fieldex')
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
                         queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
         return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='Fieldex').distinct()
 
 
 # ------------------------- CARTERA /// Table mostrar cartera de pedidos Juan Matas ///  ---------------------------
@@ -3132,32 +1643,86 @@ class CarteraJuanListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Juan_Matas')
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
                         queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
         return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='Juan_Matas').distinct()
+
+# -------------------- Cartera /// Table mostrar cartera de pedidos Ci Dorado ///  -------------------------
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('CI_Dorado'), login_url=reverse_lazy('home')), name='dispatch')
+class CarteraCiDoradoListView(SingleTableView):
+    model = Pedido
+    table_class = CarteraPedidoTable
+    table_pagination = {"per_page": 15}
+    template_name = 'cartera_list_ci_dorado.html'
+    form_class = SearchForm
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(exportadora__nombre='CI_Dorado')
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
+
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
+            item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
+
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
+        return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='CI_Dorado').distinct()
 
 
 # ------------------------- Utilidades GENERAL /// Table mostrar Utilidades de pedidos Heavens ///  ------------------
@@ -3172,32 +1737,41 @@ class UtilidadHeavensListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
                         queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
+        # Añadir el formulario de exportación al contexto
+        context['export_form'] = ExportSearchForm()
         return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False).distinct()
 
 
 # ------------------------- Utilidades /// Table mostrar Utilidades de pedidos Etnico ///  ---------------------------
@@ -3212,32 +1786,39 @@ class UtilidadEtnicoListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Etnico')
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
                         queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
         return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='Etnico').distinct()
 
 
 # ------------------------- Utilidades /// Table mostrar Utilidades de pedidos Fieldex ///  ---------------------------
@@ -3252,32 +1833,39 @@ class UtilidadFiedexListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Fieldex')
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
                         queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
         return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='Fieldex').distinct()
 
 
 # ------------------------- Utilidades /// Table mostrar Utilidades de pedidos Juan Matas // -----------------------
@@ -3292,33 +1880,86 @@ class UtilidadJuanListView(SingleTableView):
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(exportadora__nombre='Juan_Matas')
-        form = self.form_class(self.request.GET)
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
 
         if form.is_valid():
             metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
             item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
                     queryset = queryset.filter(numero_factura__icontains=item_busqueda)
-                elif metodo_busqueda == 'cliente':
-                    queryset = queryset.filter(cliente__nombre__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
                         queryset = queryset.filter(id=item_busqueda_id)
                     except ValueError:
                         queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['item_busqueda'] = self.form_class(self.request.GET)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
         return context
 
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='Juan_Matas').distinct()
+
+# --------------------------------- Utilidades CI Dorado ----------------------------------------------------------
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('CI_Dorado'), login_url=reverse_lazy('home')), name='dispatch')
+class UtilidadCiDoradoListView(SingleTableView):
+    model = Pedido
+    table_class = UtilidadPedidoTable
+    table_pagination = {"per_page": 15}
+    template_name = 'utilidad_list_ci_dorado.html'
+    form_class = SearchForm
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(exportadora__nombre='CI_Dorado')
+        form = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
+
+        if form.is_valid():
+            metodo_busqueda = form.cleaned_data.get('metodo_busqueda')
+            item_busqueda = form.cleaned_data.get('item_busqueda')
+            cliente = form.cleaned_data.get('cliente')
+
+            if metodo_busqueda and item_busqueda:
+                if metodo_busqueda == 'awb':
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
+                elif metodo_busqueda == 'numero_factura':
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
+                elif metodo_busqueda == 'id':
+                    try:
+                        item_busqueda_id = int(item_busqueda)
+                        queryset = queryset.filter(id=item_busqueda_id)
+                    except ValueError:
+                        queryset = queryset.none()
+                elif metodo_busqueda == 'intermediario':
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
+
+            if cliente:
+                queryset = queryset.filter(cliente=cliente)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = self.form_class(self.request.GET, clientes=self.get_clientes_con_pedidos())
+        return context
+
+    def get_clientes_con_pedidos(self):
+        return Cliente.objects.filter(pedido__isnull=False, pedido__exportadora__nombre='CI_Dorado').distinct()
 
 # --------------------------------- Referencias Table Etnico----------------------------------------------------------
 
@@ -3401,6 +2042,33 @@ class ReferenciasjuanListView(SingleTableView):
         return context
 
 
+# --------------------------------- Referencias Table Ci Dorado ------------------------------------------------------
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(user_passes_test(es_miembro_del_grupo('CI_Dorado'), login_url=reverse_lazy('home')), name='dispatch')
+class ReferenciasCiDoradoListView(SingleTableView):
+    model = Referencias
+    table_class = ReferenciasTable
+    template_name = 'referencia_list_ci_dorado.html'
+    form_class = SearchForm
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(exportador__nombre='CI_Dorado')
+
+        form = self.form_class(self.request.GET)
+        if form.is_valid():
+            item_busqueda = form.cleaned_data.get('item_busqueda')
+            if item_busqueda:
+                queryset = queryset.filter(nombre__icontains=item_busqueda)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = self.form_class(self.request.GET)
+        return context
+
+
 # ---------------------------- Formulario Editar Referencia -----------------------------------------------------------
 @method_decorator(login_required, name='dispatch')
 class ReferenciaUpdateView(UpdateView):
@@ -3449,15 +2117,37 @@ class ReferenciaUpdateView(UpdateView):
             return super().form_invalid(form)
 
 
-# ----------------------- Exportar Referencias por exportador ETNICO -------------------------------------------------
+# ------------------------------Exportar Referencias a Excel-----------------------------------------------------------
 
+# ---------------------------------- Funcion que exporta los Referencias a Excel --------------------------------------
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Etnico'), login_url='home'))
-def exportar_referencias_etnico(request):
+@user_passes_test(lambda u: any(
+    es_miembro_del_grupo(grupo)(u) for grupo in ['Heavens', 'Etnico', 'Fieldex', 'Juan_Matas', 'Ci_Dorado']),
+                  login_url='home')
+def exportar_referencias_excel(request):
+    # Determinar a qué grupo pertenece el usuario
+    grupo = None
+    if es_miembro_del_grupo('Heavens')(request.user):
+        grupo = 'Heavens'
+    elif es_miembro_del_grupo('Etnico')(request.user):
+        grupo = 'Etnico'
+    elif es_miembro_del_grupo('Fieldex')(request.user):
+        grupo = 'Fieldex'
+    elif es_miembro_del_grupo('Juan_Matas')(request.user):
+        grupo = 'Juan_Matas'
+    elif es_miembro_del_grupo('Ci_Dorado')(request.user):
+        grupo = 'Ci_Dorado'
+
     output = io.BytesIO()
     workbook = Workbook()
     worksheet = workbook.active
-    worksheet.title = 'Referencias Etnico'
+
+    # Personalizar el título de la hoja según el grupo
+    if (grupo == 'Heavens'):
+        worksheet.title = 'Referencias Todas'
+    else:
+        worksheet.title = f'Referencias {grupo}' if grupo else 'Referencias'
+
     font = Font(bold=True)
     fill = PatternFill(start_color="fffaac", end_color="fffaac", fill_type="solid")
 
@@ -3468,7 +2158,16 @@ def exportar_referencias_etnico(request):
         cell.font = font
         cell.fill = fill
 
-    queryset = Referencias.objects.filter(exportador__nombre='Etnico')
+    # Filtrar referencias según el grupo del usuario
+    if grupo == 'Heavens':
+        # Si es Heavens, muestra TODAS las referencias (de todas las exportadoras)
+        queryset = Referencias.objects.all()
+    elif grupo:
+        # Para otros grupos, filtrar solo las referencias de su exportadora
+        queryset = Referencias.objects.filter(exportador__nombre=grupo)
+    else:
+        # Si no tiene grupo específico (no debería ocurrir por el decorador)
+        queryset = Referencias.objects.none()
 
     # Agregar datos al libro de trabajo
     for row_num, referencia in enumerate(queryset, start=2):
@@ -3486,102 +2185,19 @@ def exportar_referencias_etnico(request):
 
     workbook.save(output)
     output.seek(0)
+
+    # Personalizar el nombre del archivo según el grupo
+    if grupo == 'Heavens':
+        filename = "referencias_todas.xlsx"
+    else:
+        filename = f"referencias_{grupo.lower() if grupo else 'general'}.xlsx"
+
     response = HttpResponse(output.read(),
                             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="referencias_etnico.xlsx"'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
     return response
 
-
-# ----------------------- Exportar Referencias por exportador FIELDEX -------------------------------------------------
-
-@login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Fieldex'), login_url='home'))
-def exportar_referencias_fieldex(request):
-    output = io.BytesIO()
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Referencias Fieldex'
-    font = Font(bold=True)
-    fill = PatternFill(start_color="fffaac", end_color="fffaac", fill_type="solid")
-
-    # Encabezados
-    columns = ['Referencia', 'Referencia Nueva', 'Contenedor', 'Cantidad Contendedor', 'Precio', 'Exportador']
-    for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
-
-    queryset = Referencias.objects.filter(exportador__nombre='Fieldex')
-
-    # Agregar datos al libro de trabajo
-    for row_num, referencia in enumerate(queryset, start=2):
-        contenedor_nombre = referencia.contenedor.nombre if referencia.contenedor else 'Sin Contenedor'
-        row = [
-            referencia.nombre,
-            referencia.referencia_nueva,
-            contenedor_nombre,
-            referencia.cant_contenedor,
-            referencia.precio,
-            referencia.exportador.nombre,
-        ]
-        for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
-
-    workbook.save(output)
-    output.seek(0)
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="referencias_fieldex.xlsx"'
-
-    return response
-
-
-# ----------------------- Exportar Referencias por exportador JUAN -------------------------------------------------
-
-@login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Juan_Matas'), login_url='home'))
-def exportar_referencias_juan(request):
-    output = io.BytesIO()
-    workbook = Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Referencias Juan_Matas'
-    font = Font(bold=True)
-    fill = PatternFill(start_color="fffaac", end_color="fffaac", fill_type="solid")
-
-    # Encabezados
-    columns = ['Referencia', 'Referencia Nueva', 'Contenedor', 'Cantidad Contendedor', 'Precio', 'Exportador']
-    for col_num, column_title in enumerate(columns, start=1):
-        cell = worksheet.cell(row=1, column=col_num, value=column_title)
-        cell.font = font
-        cell.fill = fill
-
-    queryset = Referencias.objects.filter(exportador__nombre='Juan_Matas')
-
-    # Agregar datos al libro de trabajo
-    for row_num, referencia in enumerate(queryset, start=2):
-        contenedor_nombre = referencia.contenedor.nombre if referencia.contenedor else 'Sin Contenedor'
-        row = [
-            referencia.nombre,
-            referencia.referencia_nueva,
-            contenedor_nombre,
-            referencia.cant_contenedor,
-            referencia.precio,
-            referencia.exportador.nombre,
-        ]
-        for col_num, cell_value in enumerate(row, start=1):
-            worksheet.cell(row=row_num, column=col_num, value=cell_value)
-
-    workbook.save(output)
-    output.seek(0)
-    response = HttpResponse(output.read(),
-                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="referencias_juan.xlsx"'
-
-    return response
-
-
-# --------------------------------- Funciones Heavens General ---------------------------------------------------------
 # ----------------------------- Actualizar los días de Vencimiento ----------------------------------------------------
 
 def actualizar_dias_de_vencimiento_todos(request):
@@ -3802,6 +2418,62 @@ def actualizar_tasas_juan(request):
         pedido.actualizar_tasa_representativa()
     messages.success(request, 'Se Actualizo La TRM Con Banco De La Republica Correctamente')
     return redirect('pedido_list_juan')
+
+
+# --------------------------------- Funciones CI Dorado  ---------------------------------------------------------
+def actualizar_dias_de_vencimiento_ci_dorado(request):
+    batch_size = 150  # Tamaño del lote para evitar consumo excesivo de memoria
+    pedidos = Pedido.objects.all().iterator(chunk_size=batch_size)
+    pedidos_para_actualizar = []
+    hoy = timezone.now().date()
+
+    for pedido in pedidos:
+        if pedido.fecha_pago is not None:
+            pedido.dias_de_vencimiento = 0
+        else:
+            if isinstance(pedido.fecha_entrega, datetime):
+                fecha_entrega = pedido.fecha_entrega.date()
+            elif isinstance(pedido.fecha_entrega, date):
+                fecha_entrega = pedido.fecha_entrega
+            else:
+                # Opcional: Manejar casos inesperados sin detener el proceso completo
+                pedido.dias_de_vencimiento = None
+                pedidos_para_actualizar.append(pedido)
+                continue
+
+            fecha_entrega += timedelta(days=pedido.dias_cartera)
+            pedido.dias_de_vencimiento = (hoy - fecha_entrega).days
+
+        pedidos_para_actualizar.append(pedido)
+
+        # Actualizar en bloque cada 'batch_size' Pedidos
+        if len(pedidos_para_actualizar) >= batch_size:
+            with transaction.atomic():
+                Pedido.objects.bulk_update(
+                    pedidos_para_actualizar,
+                    ['dias_de_vencimiento']
+                )
+            pedidos_para_actualizar = []
+
+    # Actualizar cualquier Pedido restante
+    if pedidos_para_actualizar:
+        with transaction.atomic():
+            Pedido.objects.bulk_update(
+                pedidos_para_actualizar,
+                ['dias_de_vencimiento']
+            )
+
+    messages.success(request, "Todos los pedidos se han actualizado correctamente.")
+    return redirect('pedido_list_ci_dorado')
+
+
+def actualizar_tasas_ci_dorado(request):
+    pedidos = Pedido.objects.order_by('-id')[:50]
+    for pedido in pedidos:
+        pedido.actualizar_tasa_representativa()
+    messages.success(request, 'Se Actualizo La TRM Con Banco De La Republica Correctamente')
+    return redirect('pedido_list_ci_dorado')
+
 
 
 # ----------------------------- Vista Autorización De Cancelaciones De Pedidos ---------------------------------------
@@ -4223,3 +2895,5 @@ def exportar_excel_seguimiento_resumen(request):
     wb.save(response)
 
     return response
+
+

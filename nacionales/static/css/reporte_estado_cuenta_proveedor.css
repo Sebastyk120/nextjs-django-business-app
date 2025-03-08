@@ -1,0 +1,636 @@
+:root {
+    --primary-color: #2c7be5;
+    --secondary-color: #5eba7d;
+    --accent-color: #e66c37;
+    --background-color: #f8f9fa;
+    --header-bg: linear-gradient(135deg, #2c7be5, #1a68d1);
+    --card-bg: #ffffff;
+    --text-color: #344050;
+    --light-text: #95aac9;
+    --border-color: #edf2f9;
+    --positive: #228B22;
+    --negative: #e63757;
+    --warning: #ff8c00;
+}
+
+body {
+    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.container-fluid {
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.landscape {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.header {
+    background: var(--header-bg);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.header::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><path d="M40,120 C80,180 120,180 160,120" stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="8"/><path d="M40,80 C80,20 120,20 160,80" stroke="rgba(255,255,255,0.1)" fill="none" stroke-width="8"/></svg>') repeat;
+    opacity: 0.1;
+    z-index: 0;
+}
+
+.header-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.company-brand {
+    display: flex;
+    flex-direction: column;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 1px;
+}
+
+.logo img {
+    max-height: 40px;
+    max-width: 100%;
+    vertical-align: middle;
+}
+
+.logo-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.company-info {
+    text-align: right;
+}
+
+.company-info h2 {
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.company-info p {
+    margin: 5px 0;
+    font-weight: 300;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.btn {
+    padding: 8px 15px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+}
+
+.btn i {
+    margin-right: 5px;
+}
+
+.btn-back {
+    background-color: #f8f9fa;
+    color: #344050;
+    border: 1px solid #edf2f9;
+}
+
+.btn-print {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Display Options */
+.display-options {
+    display: flex;
+    align-items: center;
+    margin-right: auto;
+}
+
+.display-options label {
+    margin-right: 10px;
+    font-weight: 500;
+}
+
+.display-options select {
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* Summary Cards */
+.summary-box {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.summary-item {
+    flex: 1;
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 15px;
+    margin: 0 8px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.summary-item:first-child {
+    margin-left: 0;
+}
+
+.summary-item:last-child {
+    margin-right: 0;
+}
+
+.summary-title {
+    font-size: 13px;
+    color: var(--light-text);
+    margin-bottom: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.summary-value {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 5px 0;
+}
+
+.summary-words {
+    font-size: 11px;
+    color: var(--light-text);
+    margin: 0;
+    font-style: italic;
+}
+
+.summary-item::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+}
+
+.summary-item:nth-child(1)::after {
+    background-color: var(--primary-color);
+}
+
+.summary-item:nth-child(2)::after {
+    background-color: var(--secondary-color);
+}
+
+.summary-item:nth-child(3)::after {
+    background-color: var(--accent-color);
+}
+
+/* Two-column layout */
+.report-columns {
+    display: flex;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.report-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Cards */
+.card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    position: relative;
+    border: 1px solid var(--border-color);
+    height: 100%;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.card-title i {
+    margin-right: 8px;
+    font-size: 18px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: rgba(44, 123, 229, 0.1);
+    color: var(--primary-color);
+}
+
+/* Card Icon Context Classes */
+.card-title.transactions i {
+    color: var(--primary-color);
+    background-color: rgba(44, 123, 229, 0.1);
+}
+
+.card-title.payments i {
+    color: var(--positive);
+    background-color: rgba(94, 186, 125, 0.1);
+}
+
+.card-title.invoices i {
+    color: var(--accent-color);
+    background-color: rgba(230, 108, 55, 0.1);
+}
+
+.card-title.pending i {
+    color: var(--warning);
+    background-color: rgba(246, 195, 67, 0.1);
+}
+
+.card-title.summary i {
+    color: #6e84a3;
+    background-color: rgba(110, 132, 163, 0.1);
+}
+
+/* Tables */
+.table-responsive {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 5px;
+    font-size: 13px;
+}
+
+th {
+    background-color: rgba(44, 123, 229, 0.1);
+    color: var(--primary-color);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px;
+    white-space: nowrap;
+}
+
+td {
+    padding: 8px 10px;
+    border-top: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+tr:hover {
+    background-color: rgba(44, 123, 229, 0.03);
+}
+
+/* Status badges */
+.status {
+    display: inline-block;
+    padding: 3px 6px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-complete {
+    background-color: rgba(94, 186, 125, 0.1);
+    color: var(--positive);
+}
+
+.status-process {
+    background-color: rgba(246, 195, 67, 0.1);
+    color: var(--warning);
+}
+
+.amount {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.positive {
+    color: var(--positive);
+}
+
+.negative {
+    color: var(--negative);
+}
+
+/* Percentages */
+.percentage {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 11px;
+}
+
+.percentage-good {
+    background-color: rgba(94, 186, 125, 0.1);
+    color: var(--positive);
+}
+
+.percentage-medium {
+    background-color: rgba(246, 195, 67, 0.1);
+    color: var(--warning);
+}
+
+.percentage-bad {
+    background-color: rgba(230, 55, 87, 0.1);
+    color: var(--negative);
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 20px;
+    color: var(--light-text);
+    font-size: 14px;
+}
+
+/* Total row */
+.total-row {
+    background-color: rgba(44, 123, 229, 0.05);
+    font-weight: bold;
+}
+
+/* Final balance statement */
+.final-balance {
+    text-align: center;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.positive-balance {
+    background-color: rgba(94, 186, 125, 0.1);
+    border: 2px solid var(--positive);
+}
+
+.negative-balance {
+    background-color: rgba(230, 55, 87, 0.1);
+    border: 2px solid var(--negative);
+}
+
+.final-balance h4 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.positive-balance h4 {
+    color: var(--positive);
+}
+
+.negative-balance h4 {
+    color: var(--negative);
+}
+
+.final-balance p {
+    margin: 5px 0 0 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.footer {
+    text-align: center;
+    padding: 15px;
+    color: var(--light-text);
+    font-size: 13px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Print styles */
+@media print {
+    @page {
+        size: 17in 11in portrait; /* Tamaño Tabloid en horizontal */
+        margin: 0.5cm;
+        /* Márgenes pequeños */
+    }
+    
+    /* Forzar gráficos de fondo */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body {
+        background: white;
+        font-size: 11pt;
+        color: black;
+        width: 100%;
+    }
+    
+    .container-fluid {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .landscape {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .no-imprimir {
+        display: none !important;
+    }
+    
+    .header {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        padding: 15px;
+    }
+    
+    .card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        border: 1px solid #ddd;
+        margin-bottom: 10mm;
+        box-shadow: none;
+        padding: 15px;
+    }
+    
+    .report-columns {
+        display: flex;
+        width: 100%;
+        gap: 10px;
+    }
+    
+    .report-column {
+        gap: 10px;
+    }
+    
+    table {
+        font-size: 10pt;
+        width: 100% !important;
+    }
+    
+    th, td {
+        padding: 5px;
+    }
+    
+    th {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        background-color: #f1f7ff !important;
+    }
+    
+    .table-responsive {
+        overflow-x: visible;
+        width: 100%;
+    }
+    
+    .final-balance {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        margin: 10px 0;
+        padding: 10px;
+    }
+    
+    .summary-box {
+        display: flex;
+        flex-direction: row !important;
+        width: 100%;
+        gap: 5px;
+        margin-bottom: 10px;
+    }
+    
+    .summary-item {
+        margin: 0;
+        padding: 10px;
+    }
+    
+    .summary-value {
+        font-size: 18px;
+    }
+    
+    .positive-balance {
+        background-color: rgba(94, 186, 125, 0.1) !important;
+    }
+    
+    .negative-balance {
+        background-color: rgba(230, 55, 87, 0.1) !important;
+    }
+    
+    .card-header {
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+    }
+    
+    .footer {
+        margin-top: 10px;
+        padding: 10px;
+    }
+    
+    @page {
+        size: landscape;
+        margin: 8mm;
+    }
+}
+
+@media print and (max-width: 1100px) {
+    .report-columns {
+        flex-direction: column;
+    }
+    
+    table {
+        font-size: 9pt;
+    }
+    
+    .card-title {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+    }
+    
+    .company-info {
+        text-align: center;
+        margin-top: 15px;
+    }
+    
+    .summary-box {
+        flex-direction: column;
+    }
+    
+    .summary-item {
+        margin: 0 0 15px 0;
+    }
+}

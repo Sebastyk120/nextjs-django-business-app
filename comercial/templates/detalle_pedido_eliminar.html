@@ -1,79 +1,165 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/modal_pedidos.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/modal_pedidos.css' %}">
 <div class="modal-header">
-    <h5 class="modal-title" id="moverItemModalLabel">Eliminar Detalle De Pedido <i class="bi bi-trash3-fill"></i></h5>
+    <h5 class="modal-title" id="eliminarItemModalLabel">
+        <i class="fas fa-credit-card"></i> Confirmar Eliminación Detalle De Pedido.
+    </h5>
 </div>
 <form id="eliminarItemForm" method="post">
     {% csrf_token %}
+    <input type="hidden" name="pedido_id" value="{{ pedido_id }}">
     <div class="modal-body">
-        <div id="errores">
+        <div id="errores" class="errores-container">
             {% for field, error_list in form.errors.items %}
                 {% for error in error_list %}
                     <div class="alert alert-danger">{{ error }}</div>
                 {% endfor %}
             {% endfor %}
         </div>
-        <div class="container">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.pedido.label_tag }} {{ form.pedido }}
+
+        <div class="form-grid">
+            <!-- Primera columna -->
+            <div class="form-column">
+                <!-- Pedido -->
+                <div class="form-field">
+                    <label for="{{ form.pedido.id_for_label }}" class="field-label">
+                        <i class="fas fa-shopping-cart"></i> {{ form.pedido.label }}
+                        {% if form.pedido.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.pedido }}
                 </div>
-                <div class="col-md-6">
-                    {{ form.fruta.label_tag }} {{ form.fruta }}
+
+                <!-- Presentación -->
+                <div class="form-field">
+                    <label for="{{ form.presentacion.id_for_label }}" class="field-label">
+                        <i class="fas fa-box-open"></i> {{ form.presentacion.label }}
+                        {% if form.presentacion.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.presentacion }}
+                </div>
+
+                <!-- Cajas Enviadas -->
+                <div class="form-field">
+                    <label for="{{ form.cajas_enviadas.id_for_label }}" class="field-label">
+                        <i class="fas fa-truck"></i> {{ form.cajas_enviadas.label }}
+                        {% if form.cajas_enviadas.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.cajas_enviadas }}
+                </div>
+
+                <!-- Referencia -->
+                <div class="form-field">
+                    <label for="{{ form.referencia.id_for_label }}" class="field-label">
+                        <i class="fas fa-tag"></i> {{ form.referencia.label }}
+                        {% if form.referencia.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.referencia }}
+                </div>
+
+                <!-- Tarifa Utilidad -->
+                <div class="form-field">
+                    <label for="{{ form.tarifa_utilidad.id_for_label }}" class="field-label">
+                        <i class="fa-solid fa-hand-holding-dollar"></i> Tarifa Utilidad Por Caja USD
+                        {% if form.tarifa_utilidad.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.tarifa_utilidad }}
+                </div>
+
+                <!-- No Cajas NC (Nota Crédito) -->
+                <div class="form-field">
+                    <label for="{{ form.no_cajas_nc.id_for_label }}" class="field-label">
+                        <i class="fas fa-minus-circle"></i> {{ form.no_cajas_nc.label }}
+                    </label>
+                    {{ form.no_cajas_nc }}
                 </div>
             </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.presentacion.label_tag }} {{ form.presentacion }}
+
+            <!-- Segunda columna -->
+            <div class="form-column">
+                <!-- Fruta -->
+                <div class="form-field">
+                    <label for="{{ form.fruta.id_for_label }}" class="field-label">
+                        <i class="fas fa-apple-alt"></i> {{ form.fruta.label }}
+                        {% if form.fruta.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.fruta }}
                 </div>
-                <div class="col-md-6">
-                    {{ form.cajas_solicitadas.label_tag }} {{ form.cajas_solicitadas }}
+
+                <!-- Cajas Solicitadas -->
+                <div class="form-field">
+                    <label for="{{ form.cajas_solicitadas.id_for_label }}" class="field-label">
+                        <i class="fas fa-cubes"></i> {{ form.cajas_solicitadas.label }}
+                        {% if form.cajas_solicitadas.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.cajas_solicitadas }}
+                </div>
+
+                <!-- Tipo Caja -->
+                <div class="form-field">
+                    <label for="{{ form.tipo_caja.id_for_label }}" class="field-label">
+                        <i class="fas fa-box"></i> {{ form.tipo_caja.label }}
+                        {% if form.tipo_caja.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.tipo_caja }}
+                </div>
+
+                <!-- Lleva Contenedor -->
+                <div class="form-field">
+                    <label for="{{ form.lleva_contenedor.id_for_label }}" class="field-label">
+                        <i class="fas fa-truck-loading"></i> {{ form.lleva_contenedor.label }}
+                        {% if form.lleva_contenedor.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.lleva_contenedor }}
+                </div>
+
+                <!-- Valor por caja USD -->
+                <div class="form-field">
+                    <label for="{{ form.valor_x_caja_usd.id_for_label }}" class="field-label">
+                        <i class="fas fa-dollar-sign"></i> Valor Por Caja USD
+                        {% if form.valor_x_caja_usd.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                    </label>
+                    {{ form.valor_x_caja_usd }}
+                </div>
+
+                <!-- Afecta Utilidad -->
+                <div class="form-field">
+                    <label for="{{ form.afecta_utilidad.id_for_label }}" class="field-label">
+                        <i class="fas fa-balance-scale"></i> {{ form.afecta_utilidad.label }}
+                    </label>
+                    {{ form.afecta_utilidad }}
                 </div>
             </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.cajas_enviadas.label_tag }} {{ form.cajas_enviadas }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.tipo_caja.label_tag }} {{ form.tipo_caja }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.referencia.label_tag }} {{ form.referencia }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.lleva_contenedor.label_tag }} {{ form.lleva_contenedor }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.tarifa_utilidad.label_tag }} {{ form.tarifa_utilidad }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.valor_x_caja_usd.label_tag }} {{ form.valor_x_caja_usd }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.no_cajas_nc.label_tag }} {{ form.no_cajas_nc }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.afecta_utilidad.label_tag }} {{ form.afecta_utilidad }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.observaciones.label_tag }} {{ form.observaciones }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.precio_proforma.label_tag }} {{ form.precio_proforma }}
+
+            <!-- Fila adicional para precio proforma y observaciones -->
+            <div class="form-column full-width">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-field">
+                            <label for="{{ form.precio_proforma.id_for_label }}" class="field-label">
+                                <i class="fas fa-file-invoice-dollar"></i> Precio Proforma
+                                {% if form.precio_proforma.field.disabled %}<span class="disabled-indicator"><i class="fas fa-lock"></i></span>{% endif %}
+                            </label>
+                            {{ form.precio_proforma }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-field">
+                            <label for="{{ form.observaciones.id_for_label }}" class="field-label">
+                                <i class="fas fa-comment-alt"></i> {{ form.observaciones.label }}
+                            </label>
+                            {{ form.observaciones }}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-info" data-bs-dismiss="modal">Cerrar</button>
-        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Cerrar
+        </button>
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Eliminar
+        </button>
     </div>
 </form>

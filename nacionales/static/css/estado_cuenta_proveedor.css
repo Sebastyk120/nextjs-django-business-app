@@ -1,0 +1,350 @@
+/* Estado de Cuenta Proveedor - Estilos */
+
+/* General Styles */
+body {
+    background-color: #f5f7fa;
+    color: #333;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+}
+
+.container {
+    max-width: 95%;
+    margin: 0 auto;
+    padding: 20px 0;
+}
+
+.account-summary-wrapper {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    position: relative;
+}
+
+/* Header Section */
+.header-section {
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.section-title i {
+    margin-right: 10px;
+    color: #4f46e5;
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 1rem;
+    text-align: center;
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    margin-bottom: 20px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card-body {
+    padding: 15px;
+}
+
+/* Summary Cards */
+.summary-card {
+    text-align: center;
+    height: 100%;
+}
+
+.total-compras-card {
+    background: linear-gradient(135deg, #6BDBD3 0%, #77E9E2 100%);
+    color: #1a202c;
+}
+
+.total-transferido-card {
+    background: linear-gradient(135deg, #A0A9F6 0%, #8B94F5 100%);
+    color: #fff;
+}
+
+.saldo-pendiente-card {
+    background: linear-gradient(135deg, #FF9A9E 0%, #FAD0C4 100%);
+    color: #1a202c;
+}
+
+.utilidad-card {
+    background: linear-gradient(135deg, #96E6A1 0%, #D4FC79 100%);
+    color: #1a202c;
+}
+
+.card-title {
+    font-size: 1rem;
+    opacity: 0.8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.card-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    line-height: 1;
+}
+
+.card-info {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Filter Section */
+.filters-section {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.filters-section .form-label {
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.filters-section .form-control {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    transition: all 0.3s;
+}
+
+.filters-section .form-control:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.btn-filter {
+    background: linear-gradient(45deg, #4f46e5, #7a70fa);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-weight: 500;
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+    width: 100%;
+}
+
+.btn-filter:hover {
+    background: linear-gradient(45deg, #4338ca, #4f46e5);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(79, 70, 229, 0.3);
+    color: white;
+}
+
+/* Botón dashboard - Nuevo estilo */
+.btn-dashboard {
+    background: linear-gradient(45deg, #3f9a61, #38b677);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-weight: 500;
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(56, 182, 119, 0.2);
+    width: 100%;
+}
+
+.btn-dashboard:hover {
+    background: linear-gradient(45deg, #328555, #2da065);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(56, 182, 119, 0.3);
+    color: white;
+}
+
+/* Accordion Styles */
+.accordion {
+    margin-bottom: 20px;
+}
+
+.accordion-item {
+    border: none;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.accordion-header {
+    border-radius: 10px;
+}
+
+.accordion-button {
+    background: #f8fafc;
+    color: #2d3748;
+    font-weight: 600;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 10px;
+    transition: all 0.3s;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.accordion-button:not(.collapsed) {
+    background: linear-gradient(90deg, #4f46e5, #7a70fa);
+    color: white;
+}
+
+.accordion-button::after {
+    margin-left: auto;
+    background-size: 15px;
+}
+
+.accordion-button:focus {
+    box-shadow: none;
+}
+
+.accordion-button i {
+    margin-right: 10px;
+    font-size: 1.1rem;
+}
+
+.accordion-body {
+    padding: 20px;
+    background: white;
+}
+
+/* Table Styles */
+.table-container {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.table thead th {
+    background: #4f46e5;
+    color: white;
+    font-weight: 600;
+    padding: 12px 15px;
+    border: none;
+    position: sticky;
+    top: 0;
+    text-align: left;
+}
+
+.table thead th:first-child {
+    border-radius: 8px 0 0 0;
+}
+
+.table thead th:last-child {
+    border-radius: 0 8px 0 0;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #f1f1f1;
+    transition: background 0.2s;
+}
+
+.table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+}
+
+.table tbody td {
+    padding: 12px 15px;
+    color: #4a5568;
+}
+
+/* Status Colors */
+.completed {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.pending {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+/* Chart Styles */
+.chart-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    margin-top: 25px;
+    /* Añadir altura fija */
+    height: 400px;
+    position: relative;
+}
+
+.chart-title {
+    color: #2d3748;
+    font-weight: 600;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+/* Asegurar que el canvas se mantiene dentro del contenedor */
+.chart-container canvas {
+    max-height: 340px !important; /* Altura máxima del canvas */
+    width: 100% !important;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .container {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .row {
+        margin-left: -10px;
+        margin-right: -10px;
+    }
+    
+    .col-md-3 {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .card-value {
+        font-size: 1.5rem;
+    }
+    
+    .filters-section .col-md-4 {
+        margin-bottom: 15px;
+    }
+}

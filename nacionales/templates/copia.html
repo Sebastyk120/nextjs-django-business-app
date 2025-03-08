@@ -144,11 +144,7 @@
 
     <div class="charts-row">
         <div class="chart-wrapper">
-            <h2>Distribución de Utilidades</h2>
-            <div class="chart-filters">
-                <button class="chart-filter-btn active" data-filter="proveedor">Por Proveedor</button>
-                <button class="chart-filter-btn" data-filter="fruta">Por Fruta</button>
-            </div>
+            <h2>Distribución de Utilidades por Proveedor</h2>
             <div class="chart-card">
                 <canvas id="utilidadesChart" width="400" height="200"></canvas>
             </div>
@@ -158,18 +154,6 @@
             <div class="chart-card">
                 <canvas id="kilosChart" width="400" height="400"></canvas>
             </div>
-        </div>
-    </div>
-
-    <!-- Nueva sección para gráfico de análisis de calidad de ancho completo -->
-    <div class="full-width-chart">
-        <h2>Análisis de Calidad</h2>
-        <div class="chart-filters">
-            <button class="chart-filter-btn active" data-chart="calidad">Calidad</button>
-            <button class="chart-filter-btn" data-chart="evolucion">Evolución por Proveedor</button>
-        </div>
-        <div class="chart-card">
-            <canvas id="calidadEvolucionChart" width="800" height="300"></canvas>
         </div>
     </div>
 
@@ -407,12 +391,12 @@
         // Configurar fechas por defecto solo si no están ya configuradas
         const fechaFin = document.getElementById('fecha_fin');
         const fechaInicio = document.getElementById('fecha_inicio');
-        
+
         // Obtener los valores de la URL si existen
         const urlParams = new URLSearchParams(window.location.search);
         const fechaInicioParam = urlParams.get('fecha_inicio');
         const fechaFinParam = urlParams.get('fecha_fin');
-        
+
         // Usar los valores de la URL si están disponibles
         if (fechaInicioParam) {
             fechaInicio.value = fechaInicioParam;
@@ -422,7 +406,7 @@
             thirtyDaysAgo.setDate(new Date().getDate() - 30);
             fechaInicio.valueAsDate = thirtyDaysAgo;
         }
-        
+
         if (fechaFinParam) {
             fechaFin.value = fechaFinParam;
         } else if (!fechaFin.value) {

@@ -72,11 +72,11 @@
                                 <thead>
                                 <tr>
                                     <th>Guía</th>
-                                    <th>Fecha Llegada</th>
+                                    <th>Fecha Recepción</th>
                                     <th>Fecha Vencimiento</th>
                                     <th>Días Vencidos</th>
                                     <th>Fruta</th>
-                                    <th>Proveedor</th>
+                                    <th>Origen</th>
                                     <th>Peso Bruto (Kg)</th>
                                     <th>Peso Neto (Kg)</th>
                                     <th>Cant. Empaque</th>
@@ -91,7 +91,7 @@
                                         <td>{{ reporte.fecha_vencimiento|date:"d/m/Y" }}</td>
                                         <td class="dias-vencidos-valor">{{ reporte.dias_vencidos }}</td>
                                         <td>{{ reporte.fruta }}</td>
-                                        <td>{{ reporte.proveedor }}</td>
+                                        <td>{{ reporte.origen }}</td>
                                         <td>{{ reporte.peso_bruto_recibido|floatformat:2 }}</td>
                                         <td>{{ reporte.peso_neto_recibido|floatformat:2 }}</td>
                                         <td>{{ reporte.cantidad_empaque_recibida }}</td>

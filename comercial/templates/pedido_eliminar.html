@@ -1,22 +1,38 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/crear_pedido.css' %}"/>
 <div class="modal-header">
-    <h5 class="modal-title" id="moverItemModalLabel">Eliminar Pedido <i class="bi bi-trash3-fill"></i></h5>
+    <h5 class="modal-title">
+        <i class="bi bi-trash3-fill"></i> Eliminar Pedido
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
 <form id="eliminarItemForm" method="post">
     {% csrf_token %}
     <div class="modal-body">
-        <div id="errores">
+        <div id="errores" class="errores-container">
             {% for field, error_list in form.errors.items %}
                 {% for error in error_list %}
                     <div class="alert alert-danger">{{ error }}</div>
                 {% endfor %}
             {% endfor %}
         </div>
-        {{ form.as_p }}
+        
+        <div class="form-grid">
+            <div class="form-field full-width">
+                <p class="text-center text-warning">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-3"></i><br>
+                    ¿Está seguro que desea eliminar este pedido? Esta acción no se puede deshacer.
+                </p>
+                {{ form.as_p }}
+            </div>
+        </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-info" data-bs-dismiss="modal">Cerrar</button>
-        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <button type="button" class="btn btn-info" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Cerrar
+        </button>
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Eliminar
+        </button>
     </div>
 </form>

@@ -1,0 +1,66 @@
+{% extends 'comercialbase.html' %}
+{% load static %}
+{% load django_tables2 %}
+{% block content %}
+    <link rel="stylesheet" href="{% static 'css/inventario_bodega.css' %}">
+    <div class="inventory-dashboard">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="brand">
+                <img src="{% static 'img/logo_ci_dorado.png' %}" alt="Logo de la Empresa" class="brand-logo"/>
+                <h1>Inventario Bodegas C.I Dorado <i class="bi bi-database-gear"></i></h1>
+            </div>
+
+            <!-- Search and Actions Bar -->
+            <div class="actions-bar">
+                <form method="get" class="search-form">
+                    <div class="search-wrapper">
+                        <i class="bi bi-search search-icon"></i>
+                        <input
+                                type="text"
+                                name="item_busqueda"
+                                placeholder="Buscar Referencia..."
+                                class="search-input"
+                        />
+                    </div>
+                    <div class="buttons-group">
+                        <button class="btn-clear" id="clearFilters" type="button">
+                            <i class="bi bi-x-circle"></i>
+                            <span>Limpiar</span>
+                        </button>
+                        <a class="btn-export" href="{% url 'exportar_inventario_ci_dorado' %}">
+                            <i class="bi bi-filetype-xlsx"></i>
+                            <span>Exportar</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </header>
+        <!-- Table Section -->
+        <div class="table-container">
+            <table class="inventory-table">
+                <thead>
+                {% for column in table.columns %}
+                    <th>{{ column.header }}</th>
+                {% endfor %}
+                </thead>
+                <tbody>
+                {% for row in table.rows %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        document.getElementById('clearFilters').addEventListener('click', function () {
+            const url = new URL(window.location.href);
+            url.search = '';
+            window.location.href = url.href;
+        });
+    </script>
+{% endblock %}

@@ -95,22 +95,49 @@ select:focus, input:focus, textarea:focus {
     background-color: #ffffff;
 }
 
-select:disabled, input:disabled, textarea:disabled {
-    background-color: #e9ecef;
-    border-color: #ced4da;
+/* Enhanced Disabled Field Styling */
+select:disabled, 
+input:disabled, 
+textarea:disabled {
+    background-color: #f1f3f5;
+    border: 1px dashed #c2c9d1;
     color: #6c757d;
     cursor: not-allowed;
-    opacity: 0.8;
-    position: relative;
+    opacity: 0.85;
+    box-shadow: none;
 }
 
-select:disabled::after, input:disabled::after, textarea:disabled::after {
-    content: "🔒";
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 12px;
+/* Add styling for disabled field indicator in labels */
+.disabled-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    margin-left: 5px;
+    font-size: 0.85em;
+}
+
+.disabled-indicator i {
+    color: #6c757d !important;
+}
+
+/* Improve field focus for better accessibility */
+select:focus:not(:disabled), 
+input:focus:not(:disabled), 
+textarea:focus:not(:disabled) {
+    outline: none;
+    border-color: #2c7be5;
+    box-shadow: 0 0 0 3px rgba(44, 123, 229, 0.2);
+    background-color: #ffffff;
+}
+
+/* Add focus indication even for disabled fields for accessibility */
+select:focus:disabled, 
+input:focus:disabled, 
+textarea:focus:disabled {
+    outline: none;
+    border-color: #c2c9d1;
+    box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.1);
 }
 
 textarea {

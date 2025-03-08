@@ -1,6 +1,6 @@
 {% if not record.pedido.awb and not record.pedido.numero_factura %}
     <button type="button" class="btn btn-outline-danger eliminar-button" id="eliminar"
             data-detallepedido-id="{{ record.pk }}">
-        <i class="bi bi-trash-fill"></i>
+        <i class="fas fa-trash-alt"></i>
     </button>
 {% endif %}

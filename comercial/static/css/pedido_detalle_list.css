@@ -5,17 +5,19 @@ body {
     background-color: #f5f7fa;
     color: #333;
     font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.9rem; /* Added base font size */
 }
 
 .container {
     max-width: 100%;
+    padding: 10px; /* Added reduced padding */
 }
 
 .order-detail-wrapper {
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    padding: 20px;
+    border-radius: 8px; /* Reduced border radius */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06); /* Less intense shadow */
+    padding: 15px; /* Reduced padding */
     position: relative;
 }
 
@@ -23,48 +25,50 @@ body {
 .section-title {
     font-weight: 600;
     color: #2d3748;
-    margin-bottom: 5px;
+    margin-bottom: 3px; /* Reduced margin */
+    font-size: 1.4rem; /* Added smaller font size */
 }
 
 .subtitle {
     color: #718096;
-    font-size: 1rem;
-    margin-bottom: 15px;
+    font-size: 0.9rem; /* Reduced font size */
+    margin-bottom: 10px; /* Reduced margin */
 }
 
 .mb-4 {
-    margin-bottom: 1.1rem !important;
+    margin-bottom: 0.8rem !important; /* Reduced spacing */
 }
 
 /* Card Designs */
 .card {
     border: none;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border-radius: 8px; /* Reduced border radius */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Less intense shadow */
     overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: transform 0.2s, box-shadow 0.2s; /* Faster transition */
+    margin-bottom: 15px; /* Added reduced margin */
 }
 
 .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px); /* Reduced hover effect */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08); /* Less intense shadow */
 }
 
 .card-header {
     background-color: rgba(0, 0, 0, 0.03);
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    padding: 12px 15px;
+    padding: 10px 12px; /* Reduced padding */
 }
 
 .card-header h4 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1rem; /* Reduced font size */
     font-weight: 600;
     color: #2d3748;
 }
 
 .card-header i {
-    margin-right: 8px;
+    margin-right: 6px; /* Reduced margin */
     color: #4f46e5;
 }
 
@@ -78,38 +82,38 @@ body {
 .client-info {
     display: flex;
     align-items: center;
-    padding: 10px;
+    padding: 8px; /* Reduced padding */
     height: 100%;
 }
 
 .client-icon {
     background: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
+    width: 45px; /* Reduced size */
+    height: 45px; /* Reduced size */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 15px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-right: 12px; /* Reduced margin */
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); /* Less intense shadow */
     flex-shrink: 0;
 }
 
 .client-icon i {
-    font-size: 1.8rem;
+    font-size: 1.5rem; /* Reduced font size */
     color: #333;
 }
 
 .client-details h5 {
-    font-size: 0.9rem;
+    font-size: 0.8rem; /* Reduced font size */
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 3px;
+    letter-spacing: 0.8px; /* Reduced letter spacing */
+    margin-bottom: 2px; /* Reduced margin */
     opacity: 0.8;
 }
 
 .client-details h4 {
-    font-size: 1.4rem;
+    font-size: 1.2rem; /* Reduced font size */
     font-weight: 600;
     margin: 0;
 }
@@ -120,32 +124,32 @@ body {
 }
 
 .detail-item {
-    padding: 8px 10px;
+    padding: 6px 8px; /* Reduced padding */
 }
 
 .detail-box {
     background: rgba(255, 255, 255, 0.5);
-    border-radius: 8px;
-    padding: 10px;
+    border-radius: 6px; /* Reduced border radius */
+    padding: 8px; /* Reduced padding */
     height: 100%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    transition: all 0.3s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03); /* Less intense shadow */
+    transition: all 0.2s; /* Faster transition */
 }
 
 .detail-box:hover {
     background: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06); /* Less intense shadow */
 }
 
 .detail-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* Reduced font size */
     color: #718096;
-    margin-bottom: 5px;
+    margin-bottom: 3px; /* Reduced margin */
     font-weight: 600;
 }
 
 .detail-value {
-    font-size: 1.1rem;
+    font-size: 0.95rem; /* Reduced font size */
     font-weight: 500;
     color: #2d3748;
 }
@@ -164,24 +168,26 @@ body {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px; /* Reduced gap */
+    margin-bottom: 15px; /* Added reduced margin */
 }
 
 .btn {
-    padding: 10px 20px;
-    border-radius: 8px;
+    padding: 8px 12px; /* Reduced padding */
+    border-radius: 6px; /* Reduced border radius */
     font-weight: 500;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px; /* Reduced letter spacing */
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border: none;
+    font-size: 0.85rem; /* Added reduced font size */
 }
 
 .btn i {
-    margin-right: 10px;
-    font-size: 0.9rem;
+    margin-right: 6px; /* Reduced margin */
+    font-size: 0.85rem; /* Reduced font size */
 }
 
 .btn-add {
@@ -191,7 +197,7 @@ body {
 
 .btn-add:hover {
     background: linear-gradient(45deg, #059669, #10b981);
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3); /* Less intense shadow */
     transform: translateY(-2px);
     color: white;
 }
@@ -204,7 +210,7 @@ body {
 .btn-back:hover {
     background-color: #cbd5e1;
     color: #2d3748;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08); /* Less intense shadow */
 }
 
 /* Table Styling */
@@ -213,25 +219,28 @@ body {
     border-spacing: 0;
     width: 100%;
     margin: 0;
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* Reduced font size */
 }
 
 .table thead th {
     background: #4f46e5;
     color: white;
     font-weight: 600;
-    padding: 12px 15px;
+    padding: 8px 6px; /* Significantly reduced padding - matching nacionales */
     border: none;
     position: sticky;
     top: 0;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 0.85rem; /* Added font size */
 }
 
 .table thead th:first-child {
-    border-radius: 8px 0 0 8px;
+    border-radius: 6px 0 0 6px; /* Reduced border radius */
 }
 
 .table thead th:last-child {
-    border-radius: 0 8px 8px 0;
+    border-radius: 0 6px 6px 0; /* Reduced border radius */
 }
 
 .table thead th a {
@@ -260,17 +269,17 @@ body {
 }
 
 .table tbody td {
-    padding: 12px 15px;
+    padding: 6px 5px; /* Significantly reduced padding - matching nacionales */
     color: #4a5568;
     vertical-align: middle;
 }
 
 /* Action buttons in table */
 .table .btn-sm {
-    padding: 5px 10px;
-    font-size: 0.8rem;
-    border-radius: 6px;
-    margin: 0 2px;
+    padding: 4px 8px; /* Reduced padding */
+    font-size: 0.75rem; /* Reduced font size */
+    border-radius: 4px; /* Reduced border radius */
+    margin: 0 1px; /* Reduced margin */
 }
 
 .table .btn-edit {
@@ -306,9 +315,9 @@ body {
 /* Custom Modal */
 .custom-modal {
     background: #2d3748;
-    border-radius: 12px;
+    border-radius: 8px; /* Reduced border radius */
     overflow: hidden;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15); /* Less intense shadow */
     border: none;
 }
 
@@ -316,39 +325,40 @@ body {
     background: linear-gradient(45deg, #4f46e5, #6366f1);
     color: white;
     border-bottom: none;
-    padding: 15px 20px;
+    padding: 12px 15px; /* Reduced padding */
 }
 
 .modal-title {
     font-weight: 600;
-    font-size: 1.2rem;
+    font-size: 1.1rem; /* Reduced font size */
 }
 
 .modal-body {
-    padding: 20px;
+    padding: 15px; /* Reduced padding */
     color: white;
 }
 
 .modal-footer {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 15px 20px;
+    padding: 12px 15px; /* Reduced padding */
 }
 
 /* Responsive Adjustments */
 @media (max-width: 992px) {
     .detail-item {
-        margin-bottom: 8px;
+        margin-bottom: 6px; /* Reduced margin */
     }
 }
 
 @media (max-width: 768px) {
     .action-buttons {
         flex-direction: column;
-        gap: 15px;
+        gap: 10px; /* Reduced gap */
     }
     
     .btn {
         width: 100%;
+        padding: 6px 10px; /* Reduced padding for mobile */
     }
     
     .client-info {
@@ -358,6 +368,12 @@ body {
     
     .client-icon {
         margin-right: 0;
-        margin-bottom: 15px;
+        margin-bottom: 10px; /* Reduced margin */
+        width: 40px; /* Reduced size for mobile */
+        height: 40px; /* Reduced size for mobile */
+    }
+    
+    .client-icon i {
+        font-size: 1.3rem; /* Reduced font size for mobile */
     }
 }

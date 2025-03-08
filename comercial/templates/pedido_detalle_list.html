@@ -1,82 +1,153 @@
 {% extends 'comercialbase.html' %}
+{% load static %}
+{% load django_tables2 %}
 {% block content %}
-    {% load static %}
-    {% load django_tables2 %}
-    <!DOCTYPE html>
-    <html lang="en" data-bs-theme="dark">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="icon" href="{% static 'img/favicon.png' %}">
-        <link rel="stylesheet" href="{% static 'css/detalle_pedido.css' %}"/>
-        <title>Pedidos Heavens</title>
-    </head>
-    <body>
-    <div class="container mt-4">
-        <h1 class="text-center">Pedido No: {{ pedido.id }}</h1>
-        <h2 class="text-center">Cliente: {{ pedido.cliente.nombre }}</h2>
-        <div class="d-flex justify-content-center my-3">
-            {% if not pedido.awb and not pedido.numero_factura %}
-                <button type="button" class="btn btn-primary me-3" name="add" id="add" data-bs-toggle="modal"
+    <link rel="stylesheet" href="{% static 'css/pedido_detalle_list.css' %}"/>
+    <div class="container my-3">
+        <div class="order-detail-wrapper">
+            <!-- Header Section -->
+            <div class="header-section mb-3">
+                <h2 class="section-title text-center">
+                    <i class="fas fa-clipboard-list"></i> Detalles del Pedido
+                </h2>
+                <div class="subtitle text-center">Gestión de elementos del pedido #{{ pedido.id }}</div>
+            </div>
+            
+            <!-- Información del Pedido -->
+            <div class="row mb-4">
+                <!-- Cliente Card -->
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="card h-100 client-card">
+                        <div class="card-body">
+                            <div class="client-info">
+                                <div class="client-icon">
+                                    <i class="fas fa-user-tie"></i>
+                                </div>
+                                <div class="client-details">
+                                    <h5>Cliente</h5>
+                                    <h4>{{ pedido.cliente.nombre }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Details Card -->
+                <div class="col-md-8">
+                    <div class="card order-card">
+                        <div class="card-header">
+                            <h4><i class="fas fa-info-circle"></i> Información del Pedido</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6 detail-item">
+                                    <div class="detail-box">
+                                        <div class="detail-label">Pedido No.</div>
+                                        <div class="detail-value">{{ pedido.id }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 detail-item">
+                                    <div class="detail-box">
+                                        <div class="detail-label">Destino</div>
+                                        <div class="detail-value">{{ pedido.destino }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 detail-item">
+                                    <div class="detail-box">
+                                        <div class="detail-label">Fecha de Entrega</div>
+                                        <div class="detail-value">{{ pedido.fecha_entrega }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 detail-item">
+                                    <div class="detail-box">
+                                        <div class="detail-label">Exportador</div>
+                                        <div class="detail-value">{{ pedido.exportadora.nombre }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons mb-4">
+                {% if not pedido.awb and not pedido.numero_factura %}
+                <button type="button" class="btn btn-add" data-bs-toggle="modal" 
                         data-bs-target="#adddetalleItemModal" href="{% url 'detalle_pedido_crear' pedido.id %}">
-                    <i class="bi bi-bag-plus-fill"></i> Agregar
+                    <i class="fas fa-plus-circle"></i> Agregar Detalle
                 </button>
-            {% endif %}
-            <a type="button" class="btn btn-danger" name="volver" id="volver" role="button"
-               href="{% url 'redirect_based_on_group' %}">
-                <i class="bi bi-reply-fill"></i> Pedidos
-            </a>
+                {% endif %}
+                <a href="{% url 'redirect_based_on_group' %}" class="btn btn-back">
+                    <i class="fas fa-arrow-left"></i> Volver a Pedidos
+                </a>
+            </div>
+
+            <!-- Products Table Card -->
+            <div class="card mb-4 tabla-detalles-card">
+                <div class="card-header">
+                    <h4><i class="fas fa-boxes"></i> Elementos del Pedido</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        {% render_table table %}
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="container-fluid">
-        {% render_table table %}
     </div>
 
     <!-- Modals -->
-    <div class="modal fade text-white" id="adddetalleItemModal" tabindex="-1" role="dialog"
+    <div class="modal fade" id="adddetalleItemModal" tabindex="-1" role="dialog"
          aria-labelledby="adddetalleItemModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content text-white bg-dark">
+            <div class="modal-content custom-modal">
+                <!-- El contenido se cargará por JS -->
             </div>
         </div>
     </div>
 
-    <div class="modal fade text-white" id="moverItemModal" tabindex="-1" role="dialog"
+    <div class="modal fade" id="moverItemModal" tabindex="-1" role="dialog"
          aria-labelledby="moverItemModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content text-white bg-dark">
+            <div class="modal-content custom-modal">
+                <!-- El contenido se cargará por JS -->
             </div>
         </div>
     </div>
 
-    <div class="modal fade text-white" id="moverItemModal2" tabindex="-1" role="dialog"
+    <div class="modal fade" id="moverItemModal2" tabindex="-1" role="dialog"
          aria-labelledby="moverItemModalLabel2" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content text-white bg-dark">
+            <div class="modal-content custom-modal">
+                <!-- El contenido se cargará por JS -->
             </div>
         </div>
     </div>
 
-    <div class="modal fade text-white" id="moverItemModal3" tabindex="-1" role="dialog"
+    <div class="modal fade" id="moverItemModal3" tabindex="-1" role="dialog"
          aria-labelledby="moverItemModalLabel3" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content text-white bg-dark">
+            <div class="modal-content custom-modal">
+                <!-- El contenido se cargará por JS -->
             </div>
         </div>
     </div>
 
-    <div class="modal fade text-white" id="eliminarItemModal" tabindex="-1" role="dialog"
+    <div class="modal fade" id="eliminarItemModal" tabindex="-1" role="dialog"
          aria-labelledby="eliminarItemModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content text-white bg-dark">
+            <div class="modal-content custom-modal">
+                <!-- El contenido se cargará por JS -->
             </div>
         </div>
     </div>
+
+    {% block extra_js %}
     <script src="{% static 'js/editar_detalle_pedido.js' %}"></script>
     <script src="{% static 'js/editar_detalle_pedido2.js' %}"></script>
     <script src="{% static 'js/editar_detalle_pedido3.js' %}"></script>
     <script src="{% static 'js/crear_detalle_pedido.js' %}"></script>
     <script src="{% static 'js/eliminar_detalle_pedido.js' %}"></script>
-    </body>
-    </html>
+    {% endblock %}
 {% endblock %}

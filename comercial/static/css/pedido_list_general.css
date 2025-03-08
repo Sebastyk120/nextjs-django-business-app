@@ -1,0 +1,523 @@
+/* pedido_list_general.css - Estilo moderno para listado de pedidos */
+
+/* General Styles */
+body {
+    background-color: #f5f7fa;
+    color: #333;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.9rem; /* Reduced base font size */
+}
+
+.container {
+    max-width: 100%;
+    padding: 10px; /* Reduced container padding */
+}
+
+.pedidos-wrapper {
+    background: white;
+    border-radius: 8px; /* Reduced border radius */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06); /* Less intense shadow */
+    padding: 15px; /* Reduced padding */
+    position: relative;
+}
+
+/* Header Section */
+.section-title {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 3px; /* Reduced margin */
+    font-size: 1.4rem; /* Smaller font size */
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 0.9rem; /* Reduced font size */
+    margin-bottom: 10px; /* Reduced margin */
+}
+
+/* Summary Cards */
+.summary-section {
+    margin: 15px 0; /* Reduced margin */
+}
+
+.summary-card {
+    display: flex;
+    align-items: center;
+    padding: 12px; /* Reduced padding */
+    border-radius: 8px; /* Reduced border radius */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Less intense shadow */
+    transition: transform 0.2s, box-shadow 0.2s; /* Faster transition */
+    height: 100%;
+}
+
+.summary-card:hover {
+    transform: translateY(-3px); /* Reduced hover effect */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Less intense shadow on hover */
+}
+
+.summary-icon {
+    width: 45px; /* Reduced size */
+    height: 45px; /* Reduced size */
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px; /* Reduced margin */
+    flex-shrink: 0;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1); /* Less intense shadow */
+}
+
+.summary-icon i {
+    font-size: 1.5rem; /* Reduced font size */
+    color: white;
+}
+
+.summary-content {
+    flex-grow: 1;
+}
+
+.summary-content h3 {
+    font-size: 1.4rem; /* Reduced font size */
+    font-weight: 700;
+    margin: 0;
+    color: white;
+}
+
+.summary-content p {
+    font-size: 0.8rem; /* Reduced font size */
+    margin: 0;
+    opacity: 0.9;
+    color: white;
+}
+
+/* Different colors for cards */
+.total-orders {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+}
+
+.pending-orders {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+}
+
+.completed-orders {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.clients {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    color: white;
+}
+
+/* Card Designs */
+.card {
+    border: none;
+    border-radius: 8px; /* Reduced border radius */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Less intense shadow */
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s; /* Faster transition */
+    margin-bottom: 15px; /* Reduced margin */
+}
+
+.card:hover {
+    transform: translateY(-3px); /* Reduced hover effect */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08); /* Less intense shadow */
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 12px 15px; /* Reduced padding */
+}
+
+.card-header h4 {
+    margin: 0;
+    font-size: 1rem; /* Reduced font size */
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.card-header i {
+    margin-right: 6px; /* Reduced margin */
+    color: #4f46e5;
+}
+
+.results-count {
+    font-size: 0.8rem; /* Reduced font size */
+    color: #718096;
+    background: rgba(79, 70, 229, 0.1);
+    padding: 4px 10px; /* Reduced padding */
+    border-radius: 15px; /* Reduced border radius */
+    display: inline-block;
+}
+
+/* Filters Card */
+.filters-card {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.3rem; /* Reduced margin */
+    font-weight: 500;
+    color: #4a5568;
+    font-size: 0.85rem; /* Reduced font size */
+}
+
+.form-control {
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 6px 10px; /* Reduced padding */
+    transition: all 0.3s ease;
+    font-size: 0.85rem; /* Reduced font size */
+    background-color: white;
+}
+
+.form-control:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+/* Table Card */
+.table-card {
+    background: white;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Reduced gap */
+    justify-content: space-between;
+    margin-bottom: 15px; /* Reduced margin */
+}
+
+.btn-group {
+    display: flex;
+    gap: 6px; /* Reduced gap */
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-group {
+        width: 100%;
+    }
+}
+
+.btn {
+    padding: 8px 12px; /* Reduced padding */
+    border-radius: 6px; /* Reduced border radius */
+    font-weight: 500;
+    font-size: 0.85rem; /* Reduced font size */
+    letter-spacing: 0.3px; /* Reduced letter spacing */
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    white-space: nowrap;
+}
+
+.btn i {
+    margin-right: 6px; /* Reduced margin */
+    font-size: 0.9rem; /* Reduced font size */
+}
+
+.btn-create {
+    background: linear-gradient(45deg, #10b981, #34d399);
+    color: white;
+}
+
+.btn-create:hover {
+    background: linear-gradient(45deg, #059669, #10b981);
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3); /* Less intense shadow */
+    color: white;
+}
+
+.btn-export {
+    background: linear-gradient(45deg, #f59e0b, #fbbf24);
+    color: white;
+}
+
+.btn-export:hover {
+    background: linear-gradient(45deg, #d97706, #f59e0b);
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.3); /* Less intense shadow */
+    color: white;
+}
+
+.btn-export-alt {
+    background: linear-gradient(45deg, #f97316, #fb923c);
+    color: white;
+}
+
+.btn-export-alt:hover {
+    background: linear-gradient(45deg, #ea580c, #f97316);
+    box-shadow: 0 3px 10px rgba(249, 115, 22, 0.3); /* Less intense shadow */
+    color: white;
+}
+
+.btn-update {
+    background: linear-gradient(45deg, #8b5cf6, #a78bfa);
+    color: white;
+}
+
+.btn-update:hover {
+    background: linear-gradient(45deg, #7c3aed, #8b5cf6);
+    box-shadow: 0 3px 10px rgba(139, 92, 246, 0.3); /* Less intense shadow */
+    color: white;
+}
+
+.btn-update-alt {
+    background: linear-gradient(45deg, #6366f1, #818cf8);
+    color: white;
+}
+
+.btn-update-alt:hover {
+    background: linear-gradient(45deg, #4f46e5, #6366f1);
+    box-shadow: 0 3px 10px rgba(99, 102, 241, 0.3); /* Less intense shadow */
+    color: white;
+}
+
+.btn-back {
+    background-color: #e2e8f0;
+    color: #4a5568;
+}
+
+.btn-back:hover {
+    background-color: #cbd5e1;
+    color: #2d3748;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08); /* Less intense shadow */
+}
+
+.btn-search {
+    background: linear-gradient(45deg, #4f46e5, #6366f1);
+    color: white;
+}
+
+.btn-search:hover {
+    background: linear-gradient(45deg, #4338ca, #4f46e5);
+    box-shadow: 0 3px 8px rgba(79, 70, 229, 0.25); /* Less intense shadow */
+    color: white;
+}
+
+.btn-clear {
+    background-color: #e2e8f0;
+    color: #4a5568;
+}
+
+.btn-clear:hover {
+    background-color: #cbd5e1;
+    color: #2d3748;
+}
+
+/* Table Styling */
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin: 0;
+    font-size: 0.75rem; /* Reduced font size */
+}
+
+.table thead th {
+    background: #4f46e5;
+    color: white;
+    font-weight: 600;
+    padding: 8px 6px; /* Significantly reduced padding */
+    border: none;
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+    font-size: 0.85rem; /* Reduced font size */
+}
+
+.table thead th:first-child {
+    border-radius: 6px 0 0 6px; /* Reduced border radius */
+}
+
+.table thead th:last-child {
+    border-radius: 0 6px 6px 0; /* Reduced border radius */
+}
+
+.table thead th a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.table thead th a:hover {
+    text-decoration: underline;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #f1f1f1;
+    transition: background 0.2s;
+}
+
+.table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+}
+
+.table tbody td {
+    padding: 6px 5px; /* Significantly reduced padding - same as nacionales */
+    color: #4a5568;
+    vertical-align: middle;
+}
+
+/* Action buttons in table */
+.table .btn-sm {
+    padding: 4px 8px; /* Reduced padding */
+    font-size: 0.75rem; /* Reduced font size */
+    border-radius: 4px; /* Reduced border radius */
+    margin: 0 1px; /* Reduced margin */
+}
+
+.table .btn-info {
+    background-color: rgba(14, 165, 233, 0.1);
+    color: #0284c7;
+}
+
+.table .btn-info:hover {
+    background-color: #0284c7;
+    color: white;
+}
+
+.table .btn-edit {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.table .btn-edit:hover {
+    background-color: #d97706;
+    color: white;
+}
+
+.table .btn-delete {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.table .btn-delete:hover {
+    background-color: #dc2626;
+    color: white;
+}
+
+/* Status badges */
+.badge {
+    padding: 3px 8px; /* Reduced padding */
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.7rem; /* Reduced font size */
+    text-transform: uppercase;
+    letter-spacing: 0.3px; /* Reduced letter spacing */
+    display: inline-flex;
+    align-items: center;
+}
+
+.badge-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.badge-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.badge-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.badge-info {
+    background-color: rgba(14, 165, 233, 0.1);
+    color: #0284c7;
+}
+
+.badge-secondary {
+    background-color: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+}
+
+/* Additional responsive adjustments */
+@media (max-width: 576px) {
+    .summary-card {
+        padding: 10px 8px; /* Reduced padding */
+    }
+    
+    .summary-icon {
+        width: 40px; /* Reduced size */
+        height: 40px; /* Reduced size */
+        margin-right: 8px; /* Reduced margin */
+    }
+    
+    .summary-content h3 {
+        font-size: 1.3rem; /* Reduced font size */
+    }
+    
+    .summary-content p {
+        font-size: 0.7rem; /* Reduced font size */
+    }
+    
+    .btn {
+        padding: 6px 10px; /* Reduced padding */
+        font-size: 0.75rem; /* Reduced font size */
+    }
+    
+    .btn i {
+        margin-right: 4px; /* Reduced margin */
+    }
+    
+    .action-buttons .btn-group {
+        flex-direction: column;
+        gap: 8px; /* Reduced gap */
+    }
+}
+
+/* Print styles */
+@media print {
+    body {
+        background: white;
+    }
+    
+    .pedidos-wrapper {
+        box-shadow: none;
+        padding: 0;
+    }
+    
+    .action-buttons, 
+    .filters-card,
+    .header-actions {
+        display: none;
+    }
+    
+    .card {
+        box-shadow: none;
+        margin-bottom: 15px;
+    }
+    
+    .summary-section {
+        page-break-inside: avoid;
+    }
+    
+    .table thead th {
+        background: #eee !important;
+        color: #333 !important;
+    }
+}

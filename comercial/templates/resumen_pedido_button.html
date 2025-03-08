@@ -1,5 +1,5 @@
 {% if record.estado_cancelacion == 'sin_solicitud' or record.estado_cancelacion == 'pendiente' or record.estado_cancelacion == 'no_autorizado' %}
     <a href="{% url 'pedido_resumen' record.pk %}" class="btn btn-warning">
-        <i class="bi bi-exclamation-circle-fill"></i>
+        <i class="fas fa-exclamation-circle"></i>
     </a>
 {% endif %}

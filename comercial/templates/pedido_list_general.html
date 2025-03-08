@@ -1,106 +1,306 @@
 {% extends 'comercialbase.html' %}
+{% load static %}
+{% load django_tables2 %}
 {% block content %}
-    {% load static %}
-    {% load django_tables2 %}
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="{% static 'css/pedido_items.css' %}"/>
-        <title>Pedidos Etnico</title>
-    </head>
-    <body>
-    <h1 class="align-center">
-        <img src="{% static 'img/heavens2.png' %}" alt="Logo de la Empresa" class="logo-empresa" style="vertical-align:middle; margin-right:5px;"/>
-        Base Pedidos General <i class="bi bi-clipboard2-check-fill"></i>
-    </h1>
+    <link rel="stylesheet" href="{% static 'css/pedido_list_general.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/modal_styles.css' %}"/>
 
-    <form method="get" class="d-flex" id="searchForm">
-        <select name="metodo_busqueda" class="form-control">
-            <option value="" disabled selected>Modo De Búsqueda</option>
-            <option value="awb">AWB</option>
-            <option value="numero_factura">Número de Factura</option>
-            <option value="id">Número De Pedido</option>
-            <option value="intermediario">Intermediario</option>
-        </select>
-        <input type="text" name="item_busqueda" placeholder="Ingrese búsqueda" class="form-control"/>
+    <div class="container my-3">
+        <div class="pedidos-wrapper">
+            <!-- Header Section -->
+            <div class="header-section mb-3">
+                <h2 class="section-title text-center">
+                    <img src="{% static 'img/heavens2.png' %}" alt="Logo Heavens"/> Gestión de Pedidos Heaven's
+                </h2>
+                <div class="subtitle text-center">Base de datos general de pedidos</div>
+            </div>
 
-        <select name="cliente" class="form-control">
-            <option value="" disabled selected>Filtro Cliente</option>
-            {% for cliente in form.fields.cliente.queryset %}
-                <option value="{{ cliente.id }}"
-                        {% if form.cleaned_data.cliente == cliente %}selected{% endif %}>{{ cliente.nombre }}</option>
-            {% endfor %}
-        </select>
+            <!-- Action Buttons -->
+            <div class="action-buttons mb-4">
+                <button type="button" class="btn btn-create" data-bs-toggle="modal" data-bs-target="#modalCreateItem" href="{% url 'pedido_crear' %}">
+                    <i class="fas fa-plus-circle"></i> Nuevo Pedido
+                </button>
+                
+                <div class="btn-group">
+                    <button class="btn btn-export" data-bs-toggle="modal" data-bs-target="#exportModal">
+                        <i class="fas fa-file-export"></i> Exportar Pedidos
+                    </button>
+                    <button class="btn btn-export-alt" data-bs-toggle="modal" data-bs-target="#exportDetallesModal">
+                        <i class="fas fa-table"></i> Exportar Detalles
+                    </button>
+                </div>
+                
+                <div class="btn-group">
+                    <form method="post" action="{% url 'actualizar_dias_de_vencimiento_todos' %}" style="margin:0">
+                        {% csrf_token %}
+                        <button class="btn btn-update" type="submit" name="actualizar-vencimiento">
+                            <i class="fas fa-calendar-check"></i> Actualizar Vencimiento
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'actualizar_tasas' %}" style="margin:0">
+                        {% csrf_token %}
+                        <button class="btn btn-update-alt" type="submit" name="actualizar-tasas">
+                            <i class="fas fa-dollar-sign"></i> Actualizar TRM
+                        </button>
+                    </form>
+                </div>
+                
+                <a class="btn btn-back" onclick="history.back();">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
 
-        <div class="ml-auto">
-            <button class="btn btn-secondary btn-sm" type="submit"><i class="bi bi-search"></i></button>
-            <button class="btn btn-danger btn-sm me-md-5" id="clearFilters" type="button"><i class="bi bi-x-circle"></i>
-            </button>
+            <!-- Search and Filters Card -->
+            <div class="card mb-4 filters-card">
+                <div class="card-header">
+                    <h4><i class="fas fa-search"></i> Búsqueda y Filtros</h4>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="search-form" id="searchForm">
+                        <div class="row">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="metodo_busqueda">Buscar por</label>
+                                    <select name="metodo_busqueda" id="metodo_busqueda" class="form-control">
+                                        <option value="" disabled selected>Seleccione...</option>
+                                        <option value="awb" {% if request.GET.metodo_busqueda == 'awb' %}selected{% endif %}>AWB</option>
+                                        <option value="numero_factura" {% if request.GET.metodo_busqueda == 'numero_factura' %}selected{% endif %}>Nº Factura</option>
+                                        <option value="id" {% if request.GET.metodo_busqueda == 'id' %}selected{% endif %}>Nº Pedido</option>
+                                        <option value="intermediario" {% if request.GET.metodo_busqueda == 'intermediario' %}selected{% endif %}>Intermediario</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="item_busqueda">Término de búsqueda</label>
+                                    <input type="text" name="item_busqueda" id="item_busqueda" class="form-control" placeholder="Buscar..." value="{{ request.GET.item_busqueda|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="cliente">Cliente</label>
+                                    <select name="cliente" id="cliente" class="form-control">
+                                        <option value="" selected>Todos los clientes</option>
+                                        {% for cliente in form.fields.cliente.queryset %}
+                                            <option value="{{ cliente.id }}" {% if request.GET.cliente == cliente.id|stringformat:'i' %}selected{% endif %}>
+                                                {{ cliente.nombre }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-search w-100" type="submit">
+                                            <i class="fas fa-search"></i> Buscar
+                                        </button>
+                                        <button class="btn btn-clear w-100" id="clearFilters" type="button">
+                                            <i class="fas fa-times-circle"></i> Limpiar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="card mb-4 table-card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <h4><i class="fas fa-list"></i> Listado de Pedidos</h4>
+                    <div class="header-actions">
+                        <span class="results-count">{{ table.rows|length }} Pedidos</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        {% render_table table %}
+                    </div>
+                </div>
+            </div>
         </div>
-    </form>
-
-
-    <div class="button-container">
-        <button type="button" class="btn btn-primary btn-sm" name="add" id="add" data-bs-toggle="modal"
-                data-bs-target="#modalCreateItem" href="{% url 'pedido_crear' %}"><i
-                class="bi bi-clipboard2-plus-fill"></i>
-        </button>
-        <a class="nav-link" href="{% url 'exportar_pedidos_view' %}" name="exportar">
-            <button class="btn btn-success btn-sm" id="export"><i class="bi bi-table"></i> Exportar Pedidos xlsx
-            </button>
-        </a>
-        <a class="nav-link" href="{% url 'exportar_detalles_p_heavens_view' %}" name="exportardetalle">
-            <button class="btn btn-success btn-sm" id="export"><i class="bi bi-journal-arrow-down"></i> Exportar
-                Detalles xlsx
-            </button>
-        </a>
-        <form method="post" action="{% url 'actualizar_dias_de_vencimiento_todos' %}">
-            {% csrf_token %}
-            <button class="btn btn-primary btn-sm" type="submit" name="actualizar-vencimiento"><i
-                    class="bi bi-calendar2-date-fill"></i> Actualizar Días De Vencimiento
-            </button>
-        </form>
-        <form method="post" action="{% url 'actualizar_tasas' %}">
-            {% csrf_token %}
-            <button class="btn btn-primary btn-sm" type="submit" name="actualizar-tasas"><i
-                    class="bi bi-currency-exchange"></i> Actualizar TRM Banrep
-            </button>
-        </form>
-        <a type="button" class="btn btn-danger btn-sm" name="volver" id="volver" role="button"
-           onclick="history.back();"><i class="bi bi-reply-fill"></i></a>
     </div>
 
-    <div class="container-fluid">
-        {% render_table table %}
-    </div>
     <!-- Crear Item Modal -->
-    <div class="modal fade text-white" id="modalCreateItem" tabindex="-1" aria-labelledby="modalCreateItemLabel"
-         aria-hidden="true">
+    <div class="modal fade" id="modalCreateItem" tabindex="-1" aria-labelledby="modalCreateItemLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content text-white bg-dark">
+            <div class="modal-content custom-modal">
+                <!-- El contenido se cargará por JS -->
             </div>
         </div>
     </div>
+    
     <!-- Editar Item Modal -->
-    <div class="modal fade text-white" id="moverItemModal" tabindex="-1" role="dialog"
-         aria-labelledby="moverItemModalLabel"
-         aria-hidden="true">
+    <div class="modal fade" id="moverItemModal" tabindex="-1" role="dialog" aria-labelledby="moverItemModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content text-white bg-dark">
+            <div class="modal-content custom-modal">
+                <!-- El contenido se cargará por JS -->
             </div>
         </div>
     </div>
 
-    <div class="modal fade text-white" id="moverItemModal2" tabindex="-1" role="dialog"
-         aria-labelledby="moverItemModalLabel2"
-         aria-hidden="true">
+    <div class="modal fade" id="moverItemModal2" tabindex="-1" role="dialog" aria-labelledby="moverItemModalLabel2" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content text-white bg-dark">
+            <div class="modal-content custom-modal">
+                <!-- El contenido se cargará por JS -->
             </div>
         </div>
     </div>
+    
+    <!-- Modal de Exportación de Pedidos -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-export">
+                <div class="modal-header export-header">
+                    <h5 class="modal-title export-title" id="exportModalLabel">
+                        <i class="fas fa-file-export"></i> Exportación De Pedidos General
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="{% url 'exportar_pedidos_excel_general' %}" id="exportForm" class="export-form">
+                        {% csrf_token %}
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="fecha_inicial" class="form-label">Fecha Inicial:</label>
+                                    <input type="date" id="fecha_inicial" name="fecha_inicial" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="fecha_final" class="form-label">Fecha Final:</label>
+                                    <input type="date" id="fecha_final" name="fecha_final" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" name="incluir_detalles" id="incluir_detalles" value="true" class="form-check-input">
+                            <label for="incluir_detalles" class="form-check-label">¿Incluir Detalles del Pedido?</label>
+                        </div>
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Para exportar todos los pedidos omita los campos de fecha. El filtro se aplica con la fecha de factura.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer export-footer">
+                    <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn export-btn" onclick="document.getElementById('exportForm').submit();">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Exportación de Detalles de Pedido -->
+    <div class="modal fade" id="exportDetallesModal" tabindex="-1" aria-labelledby="exportDetallesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-export">
+                <div class="modal-header export-header">
+                    <h5 class="modal-title export-title" id="exportDetallesModalLabel">
+                        <i class="fas fa-file-export"></i> Exportación De Detalles De Pedido
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="{% url 'exportar_detalles_p_heavens' %}" id="exportDetallesForm" class="export-form">
+                        {% csrf_token %}
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="numero_pedido_inicial" class="form-label">Número de Pedido Inicial:</label>
+                                    <input type="number" id="numero_pedido_inicial" name="numero_pedido_inicial" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="numero_pedido_final" class="form-label">Número de Pedido Final:</label>
+                                    <input type="number" id="numero_pedido_final" name="numero_pedido_final" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Para exportar todos los detalles de pedidos omita los campos.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer export-footer">
+                    <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn export-btn" onclick="document.getElementById('exportDetallesForm').submit();">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal global para Solicitar Cancelación -->
+    <div class="modal fade" id="cancelModalGlobal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Solicitar Cancelación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Pedido: <span id="cancelPedidoId"></span></p>
+                        <p>Cliente: <span id="cancelCliente"></span></p>
+                        <p>Exportador: <span id="cancelExportador"></span></p>
+                        <div class="mb-3">
+                            <label for="cancelObservaciones" class="form-label">Motivo De Cancelación:</label>
+                            <textarea name="observaciones" id="cancelObservaciones" rows="4" class="form-control" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-danger">Solicitar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal global para Autorizar Cancelación -->
+    <div class="modal fade" id="authorizeModalGlobal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Autorizar Cancelación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Pedido: <span id="authPedidoId"></span></p>
+                        <p>Cliente: <span id="authCliente"></span></p>
+                        <p>Exportador: <span id="authExportador"></span></p>
+                        <div class="mb-3">
+                            <label for="authObservaciones" class="form-label">Motivo De Cancelación:</label>
+                            <textarea name="observaciones" id="authObservaciones" rows="4" class="form-control"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-warning" name="accion" value="no_autorizar">Denegar</button>
+                        <button type="submit" class="btn btn-danger" name="accion" value="autorizar">Autorizar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}
     <script src="{% static 'js/editar_pedido.js' %}"></script>
     <script src="{% static 'js/crear_pedido.js' %}"></script>
     <script src="{% static 'js/editar_pedido2.js' %}"></script>
@@ -113,7 +313,41 @@
             // Recargar la página con la URL sin parámetros de búsqueda
             window.location.href = url.href;
         });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Solicitar Cancelación
+            const cancelModal = document.getElementById('cancelModalGlobal');
+            cancelModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const recordId = button.getAttribute('data-record-id');
+                const pedido = button.getAttribute('data-record-pedido');
+                const cliente = button.getAttribute('data-record-cliente');
+                const exportador = button.getAttribute('data-record-exportador');
+
+                // Set action URL pedido/<int:pedido_id>/cancelacion/
+                cancelModal.querySelector('form').action = `/comercial/pedido/${recordId}/cancelacion/`;
+                cancelModal.querySelector('#cancelPedidoId').textContent = pedido;
+                cancelModal.querySelector('#cancelCliente').textContent = cliente;
+                cancelModal.querySelector('#cancelExportador').textContent = exportador;
+                cancelModal.querySelector('#cancelObservaciones').value = "";
+            });
+
+            // Autorizar Cancelación
+            const authModal = document.getElementById('authorizeModalGlobal');
+            authModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const recordId = button.getAttribute('data-autorization-id');
+                const pedido = button.getAttribute('data-record-pedido');
+                const cliente = button.getAttribute('data-record-cliente');
+                const exportador = button.getAttribute('data-record-exportador'); 
+
+                authModal.querySelector('form').action = `/comercial/autorizacion/${recordId}/autorizar/`;
+                authModal.querySelector('#authPedidoId').textContent = pedido;
+                authModal.querySelector('#authCliente').textContent = cliente;
+                authModal.querySelector('#authExportador').textContent = exportador;
+                authModal.querySelector('#authObservaciones').value = "";
+            });
+        });
     </script>
-    </body>
-    </html>
+    {% endblock %}
 {% endblock %}

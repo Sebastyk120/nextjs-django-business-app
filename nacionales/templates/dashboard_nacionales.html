@@ -1,10 +1,996 @@
+{% load static %}
+{% load custom_filters %}
+{% load humanize %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Proveedores Nacionales</title>
+    <link rel="icon" href="{% static 'img/favicon.png' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard_nacionales.css' %}">
 </head>
 <body>
-$END$
-</body>
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>   <i class="fas fa-truck"></i> Estado General Compras Nacionales</h1>
+        <div class="actions">
+            <button class="btn btn-secondary" id="menuBtn">
+                <i class="fas fa-bars"></i> Menú Nacionales
+            </button>
+            <button class="btn btn-secondary" id="exportBtn">
+                <i class="fas fa-file-export"></i> Exportar
+            </button>
+            <button class="btn btn-secondary" id="openEstadoCuentaModal">
+                <i class="fas fa-file-invoice"></i> Estado de Cuenta Proveedor
+            </button>
+            <button class="btn btn-secondary" id="openEnvioReportesModalLink">
+                <i class="fas fa-paper-plane"></i> Enviar Reportes
+            </button>
+            <button class="btn btn-primary" id="refreshBtn">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+        </div>
+    </div>
+
+    <div class="filter-panel">
+        <form class="filter-form" id="filterForm" method="get" action="">
+            <div class="form-group">
+                <label for="fecha_inicio">Fecha Inicio:</label>
+                <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio"
+                       value="{{ fecha_inicio|date:'Y-m-d' }}">
+            </div>
+            <div class="form-group">
+                <label for="fecha_fin">Fecha Fin:</label>
+                <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin|date:'Y-m-d' }}">
+            </div>
+            <div class="form-group">
+                <label for="proveedor">Proveedor:</label>
+                <select class="form-control" id="proveedor" name="proveedor">
+                    <option value="">Todos</option>
+                    {% for proveedor in proveedores %}
+                        <option value="{{ proveedor.id }}"
+                                {% if proveedor_id == proveedor.id|stringformat:"i" %}selected{% endif %}>{{ proveedor.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="fruta">Fruta:</label>
+                <select class="form-control" id="fruta" name="fruta">
+                    <option value="">Todas</option>
+                    {% for fruta in frutas %}
+                        <option value="{{ fruta.id }}"
+                                {% if fruta_id == fruta.id|stringformat:"i" %}selected{% endif %}>{{ fruta.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-buttons">
+                <button type="button" class="btn btn-secondary" id="resetBtn">
+                    <i class="fas fa-undo"></i> Restablecer
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-grid">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">COMPRAS TOTALES</span>
+                <div class="card-icon bg-primary">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+            </div>
+            <div class="card-value">{{ global_total_compras|floatformat:0|format_currency }}</div>
+            <div class="card-description">
+                {% if compras_prev %}
+                    <span class="{% if compras_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ compras_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">KILOS COMPRADOS</span>
+                <div class="card-icon bg-success">
+                    <i class="fas fa-weight-hanging"></i>
+                </div>
+            </div>
+            <div class="card-value">{{ global_total_kilos|floatformat:0|format_number }}</div>
+            <div class="card-description">
+                {% if kilos_prev %}
+                    <span class="{% if kilos_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ kilos_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">UTILIDADES TOTALES</span>
+                <div class="card-icon bg-info">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+            <div class="card-value">{{ global_total_utilidades|floatformat:0|format_currency }}</div>
+            <div class="card-description">
+                {% if utilidades_prev %}
+                    <span class="{% if utilidades_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ utilidades_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <a href="{% url 'nacionales_list_detallada' %}">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">REPORTES PENDIENTES</span>
+                    <div class="card-icon bg-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="card-value">{{ global_total_reportes }}</div>
+                <div class="card-description">
+                    {% if reportes_prev %}
+                        <span class="{% if reportes_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                            {{ reportes_percent }}% respecto al periodo anterior
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="charts-row">
+        <div class="chart-wrapper">
+            <h2>Distribución de Utilidades</h2>
+            <div class="chart-filters">
+                <button class="chart-filter-btn active" data-filter="proveedor">Por Proveedor</button>
+                <button class="chart-filter-btn" data-filter="fruta">Por Fruta</button>
+            </div>
+            <div class="chart-card">
+                <canvas id="utilidadesChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+        <div class="chart-wrapper">
+            <h2>Participación de Kilos</h2>
+            <div class="chart-card">
+                <canvas id="kilosChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nueva sección para gráfico de análisis de calidad de ancho completo -->
+    <div class="full-width-chart">
+        <h2>Análisis de Calidad</h2>
+        <div class="chart-filters">
+            <button class="chart-filter-btn active" data-chart="calidad">Calidad</button>
+            <button class="chart-filter-btn" data-chart="evolucion">Evolución por Proveedor</button>
+        </div>
+        <div class="chart-card">
+            <canvas id="calidadEvolucionChart" width="800" height="300"></canvas>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <h2>Detalle de Proveedores</h2>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Proveedor</th>
+                <th>№ Compras</th>
+                <th>Reportes Pendientes</th>
+                <th>Valor Compras</th>
+                <th>Total Pagado</th>
+                <th>Facturado Exp.</th>
+                <th>Kilos Comprados</th>
+                <th>Utilidades</th>
+                <th>% Kilos</th>
+                <th>% Utilidad</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in proveedores_data %}
+                <tr>
+                    <td>{{ item.proveedor.nombre }}</td>
+                    <td>{{ item.numero_de_compras }}</td>
+                    <td>{{ item.reportes_pendientes }}</td>
+                    <td class="numeric">{{ item.valor_total_compras|floatformat:0|format_currency }}</td>
+                    <td class="numeric">{{ item.total_pagado_proveedor|floatformat:0|format_currency }}</td>
+                    <td class="numeric">{{ item.total_facturado_exportadores|floatformat:0|format_currency }}</td>
+                    <td class="numeric">{{ item.total_kilos_comprados|floatformat:0|format_number }}</td>
+                    <td class="numeric">{{ item.total_utilidades|floatformat:0|format_currency }}</td>
+                    <td class="numeric">{{ item.percent_kilos|floatformat:2 }}%</td>
+                    <td class="numeric">{{ item.percent_utilidad|floatformat:2 }}%</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center">No hay datos disponibles</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal para el menú de navegación -->
+<div id="menuModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <span class="close" id="closeMenuModal">&times;</span>
+        <h2 style="margin-bottom: 20px;"><i class="fas fa-compass"></i> Navegación</h2>
+        <div class="nav-section">
+            <div class="nav-section-title">Inicio</div>
+            <ul class="nav-menu">
+                <li class="nav-menu-item">
+                    <a href="{% url 'home' %}" class="nav-menu-link home">
+                        <i class="fas fa-home"></i> Menú Principal
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'dashboard_comercial' %}" class="nav-menu-link">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard Comercial
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Nacionales</div>
+            <ul class="nav-menu">
+                <li class="nav-menu-item">
+                    <a href="{% url 'nacionales_list_general' %}" class="nav-menu-link">
+                        <i class="fas fa-list"></i> Listado General 4 Etapas
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'nacionales_list_detallada' %}" class="nav-menu-link">
+                        <i class="fas fa-table"></i> Listado Detallado (Reportes Pendientes)
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Operaciones Nacionales Exportador</div>
+            <ul class="nav-menu">
+                <li class="nav-menu-item">
+                    <a href="{% url 'relacion_reportes_vencidos' %}" class="nav-menu-link">
+                        <i class="fas fa-calendar-times"></i> Relacion Reportes Vencidos.
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'relacion_facturas_vencidas' %}" class="nav-menu-link">
+                        <i class="fas fa-file-invoice-dollar"></i> Relacion Facturas Vencidas.
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'transferencias_list' %}" class="nav-menu-link">
+                        <i class="fas fa-exchange-alt"></i> Transferencias Proveedores.
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'admin:nacionales_facturacionexportadores_changelist' %}" class="nav-menu-link">
+                        <i class="fas fa-shopping-cart"></i> Facturas Exportadoras.
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Operaciones Nacionales Proveedor</div>
+            <ul class="nav-menu">
+                <li class="nav-menu-item">
+                    <a href="{% url 'reporte_individual_proveedor' %}" class="nav-menu-link">
+                        <i class="fas fa-exchange-alt"></i> Envio De Reporte Invidual.
+                    </a>
+                </li>
+                <li class="nav-menu-item">
+                    <a href="#" id="openEnvioReportesModalLink" class="nav-menu-link">
+                        <i class="fas fa-shopping-cart"></i> Envio Reportes General. (Dashboard)
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para exportar -->
+<div id="exportModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); overflow: auto;">
+    <div class="modal-content" style="background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 50%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+        <span class="close" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        <h2 style="margin-bottom: 20px;">Exportar Datos</h2>
+        <p style="margin-bottom: 14px;">El archivo exportado reflejará los filtros actualmente activos.</p>
+        <p style="margin-bottom: 14px;">Seleccione los datos que desea exportar:</p>
+        <form id="exportForm" style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="selectAll" style="transform: scale(1.2);">
+                <label for="selectAll" style="font-weight: bold;">Seleccionar Todo</label>
+            </div>
+            <div style="height: 1px; background-color: #eee; margin: 10px 0;"></div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" name="export_data" value="compra_nacional" id="compra_nacional" style="transform: scale(1.2);">
+                <label for="compra_nacional">Compra Nacional</label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" name="export_data" value="venta_nacional" id="venta_nacional" style="transform: scale(1.2);">
+                <label for="venta_nacional">Venta Nacional</label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" name="export_data" value="reporte_exportador" id="reporte_exportador" style="transform: scale(1.2);">
+                <label for="reporte_exportador">Reporte Calidad Exportador</label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" name="export_data" value="reporte_proveedor" id="reporte_proveedor" style="transform: scale(1.2);">
+                <label for="reporte_proveedor">Reporte Calidad Proveedor</label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" name="export_data" value="transferencias" id="transferencias" style="transform: scale(1.2);">
+                <label for="transferencias">Transferencias Proveedor</label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" name="export_data" value="dashboard" id="dashboard" style="transform: scale(1.2);">
+                <label for="dashboard">Resumen Dashboard</label>
+            </div>
+            <div style="height: 1px; background-color: #eee; margin: 10px 0;"></div>
+            <button type="submit" class="btn btn-primary" style="align-self: flex-end; margin-top: 10px;">
+                <i class="fas fa-download"></i> Descargar Excel
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para Estado de Cuenta -->
+<div id="estadoCuentaModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <span class="close" id="closeEstadoCuentaModal">&times;</span>
+        <h3 style="margin-bottom: 20px; color: var(--dark); font-size: 22px; text-align: center;">
+            <i class="fas fa-file-invoice-dollar"></i> Estado de Cuenta Proveedor
+        </h3>
+        <div style="margin-bottom: 20px;">
+            <label for="proveedorSelect" style="display: block; margin-bottom: 8px; font-weight: 500; color: #555;">Seleccione Proveedor:</label>
+            <select id="proveedorSelect" class="form-control" style="width: 100%; padding: 12px; border-radius: var(--radius); border: 1px solid #ddd;">
+                {% for p in proveedores %}
+                    <option value="{{ p.id }}">{{ p.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 25px;">
+            <button class="btn btn-secondary" id="closeEstadoCuentaBtn" style="margin-right: 10px;">
+                <i class="fas fa-times-circle"></i> Cancelar
+            </button>
+            <button class="btn btn-primary" id="generarEstadoBtn">
+                <i class="fas fa-check-circle"></i> Generar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Envío de Reportes General -->
+<div id="envioReportesModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <span class="close" id="closeEnvioReportesModal">&times;</span>
+        <h3 style="margin-bottom: 20px; color: var(--dark); font-size: 22px; text-align: center;">
+            <i class="fas fa-paper-plane"></i> Envío de Reportes General
+        </h3>
+        <div style="margin-bottom: 20px;">
+            <label for="proveedorReportesSelect" style="display: block; margin-bottom: 8px; font-weight: 500; color: #555;">Seleccione Proveedor:</label>
+            <select id="proveedorReportesSelect" class="form-control" style="width: 100%; padding: 12px; border-radius: var(--radius); border: 1px solid #ddd;">
+                {% for p in proveedores %}
+                    <option value="{{ p.id }}">{{ p.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 25px;">
+            <button class="btn btn-secondary" id="closeEnvioReportesBtn" style="margin-right: 10px;">
+                <i class="fas fa-times-circle"></i> Cancelar
+            </button>
+            <button class="btn btn-primary" id="generarReportesBtn">
+                <i class="fas fa-paper-plane"></i> Enviar Reportes
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+    // Establecer fechas por defecto
+    document.addEventListener('DOMContentLoaded', function () {
+        // Configurar fechas por defecto solo si no están ya configuradas
+        const fechaFin = document.getElementById('fecha_fin');
+        const fechaInicio = document.getElementById('fecha_inicio');
+
+        // Obtener los valores de la URL si existen
+        const urlParams = new URLSearchParams(window.location.search);
+        const fechaInicioParam = urlParams.get('fecha_inicio');
+        const fechaFinParam = urlParams.get('fecha_fin');
+
+        // Usar los valores de la URL si están disponibles
+        if (fechaInicioParam) {
+            fechaInicio.value = fechaInicioParam;
+        } else if (!fechaInicio.value) {
+            // Solo establecer fecha por defecto si no hay valor en la URL ni en el input
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(new Date().getDate() - 30);
+            fechaInicio.valueAsDate = thirtyDaysAgo;
+        }
+
+        if (fechaFinParam) {
+            fechaFin.value = fechaFinParam;
+        } else if (!fechaFin.value) {
+            // Solo establecer fecha por defecto si no hay valor en la URL ni en el input
+            const today = new Date();
+            fechaFin.valueAsDate = today;
+        }
+
+        // Botón de restablecer filtros
+        document.getElementById('resetBtn').addEventListener('click', function () {
+            window.location.href = '{% url "dashboard_nacionales" %}';
+        });
+
+        // Inicializar gráficos
+        inicializarGraficos();
+        
+        // Botón de actualizar
+        document.getElementById('refreshBtn').addEventListener('click', function () {
+            window.location.reload();
+        });
+
+        // Modal de menú de navegación
+        const menuModal = document.getElementById('menuModal');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeMenuModal = document.getElementById('closeMenuModal');
+
+        // Modal de exportación
+        const exportModal = document.getElementById('exportModal');
+        const exportBtn = document.getElementById('exportBtn');
+        const closeExportModal = document.getElementsByClassName('close')[1]; // Segunda instancia de clase 'close'
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('input[name="export_data"]');
+        const exportForm = document.getElementById('exportForm');
+
+        // Abrir modal de menú
+        menuBtn.onclick = function() {
+            menuModal.style.display = "block";
+        }
+
+        // Abrir modal de exportación
+        exportBtn.onclick = function() {
+            exportModal.style.display = "block";
+        }
+
+        // Cerrar modal de menú
+        closeMenuModal.onclick = function() {
+            menuModal.style.display = "none";
+        }
+
+        // Cerrar modal de exportación
+        closeExportModal.onclick = function() {
+            exportModal.style.display = "none";
+        }
+
+        // Cerrar modales al hacer clic fuera de ellos
+        window.onclick = function(event) {
+            if (event.target == menuModal) {
+                menuModal.style.display = "none";
+            }
+            if (event.target == exportModal) {
+                exportModal.style.display = "none";
+            }
+        }
+
+        // Gestionar "Seleccionar todo"
+        selectAllCheckbox.addEventListener('change', function() {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+
+        // Actualizar "Seleccionar todo" cuando se cambian los checkboxes individuales
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const allChecked = Array.from(checkboxes).every(c => c.checked);
+                const someChecked = Array.from(checkboxes).some(c => c.checked);
+                selectAllCheckbox.checked = allChecked;
+                selectAllCheckbox.indeterminate = someChecked && !allChecked;
+            });
+        });
+
+        // Manejar envío del formulario
+        exportForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const selectedData = Array.from(checkboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value);
+            if (selectedData.length === 0) {
+                alert('Por favor seleccione al menos una opción para exportar.');
+                return;
+            }
+
+            // Construir URL con parámetros
+            const params = new URLSearchParams();
+            selectedData.forEach(item => {
+                params.append('data', item);
+            });
+
+            // Añadir fechas y otros filtros si están presentes
+            const fechaInicio = document.getElementById('fecha_inicio').value;
+            const fechaFin = document.getElementById('fecha_fin').value;
+            const proveedor = document.getElementById('proveedor').value;
+            const fruta = document.getElementById('fruta').value;
+            if (fechaInicio) params.append('fecha_inicio', fechaInicio);
+            if (fechaFin) params.append('fecha_fin', fechaFin);
+            if (proveedor) params.append('proveedor', proveedor);
+            if (fruta) params.append('fruta', fruta);
+
+            // Redireccionar a la URL de exportación
+            window.location.href = `{% url 'export_data' %}?${params.toString()}`;
+
+            // Cerrar modal
+            exportModal.style.display = "none";
+        });
+
+        // Modal de Estado de Cuenta
+        const openEstadoCuentaBtn = document.getElementById('openEstadoCuentaModal');
+        const estadoCuentaModal = document.getElementById('estadoCuentaModal');
+        const closeEstadoCuentaModal = document.getElementById('closeEstadoCuentaModal');
+        const closeEstadoCuentaBtn = document.getElementById('closeEstadoCuentaBtn');
+        const generarEstadoBtn = document.getElementById('generarEstadoBtn');
+        const proveedorSelect = document.getElementById('proveedorSelect');
+
+        // Modal de Envío de Reportes
+        const openEnvioReportesBtn = document.getElementById('openEnvioReportesModalLink');
+        const envioReportesModal = document.getElementById('envioReportesModal');
+        const closeEnvioReportesModal = document.getElementById('closeEnvioReportesModal');
+        const closeEnvioReportesBtn = document.getElementById('closeEnvioReportesBtn');
+        const generarReportesBtn = document.getElementById('generarReportesBtn');
+        const proveedorReportesSelect = document.getElementById('proveedorReportesSelect');
+
+        // Abrir modal de Estado de Cuenta
+        openEstadoCuentaBtn.onclick = function() {
+            estadoCuentaModal.style.display = 'block';
+        };
+
+        // Cerrar modal de Estado de Cuenta
+        closeEstadoCuentaModal.onclick = function() {
+            estadoCuentaModal.style.display = 'none';
+        };
+
+        closeEstadoCuentaBtn.onclick = function() {
+            estadoCuentaModal.style.display = 'none';
+        };
+
+        // Abrir modal de Envío de Reportes
+        openEnvioReportesBtn.onclick = function() {
+            envioReportesModal.style.display = 'block';
+        };
+
+        // Cerrar modal de Envío de Reportes
+        closeEnvioReportesModal.onclick = function() {
+            envioReportesModal.style.display = 'none';
+        };
+
+        closeEnvioReportesBtn.onclick = function() {
+            envioReportesModal.style.display = 'none';
+        };
+
+        // Cerrar modales al hacer clic fuera de ellos
+        window.onclick = function(e) {
+            if(e.target == estadoCuentaModal) {
+                estadoCuentaModal.style.display = 'none';
+            }
+            if(e.target == envioReportesModal) {
+                envioReportesModal.style.display = 'none';
+            }
+            if(e.target == menuModal) {
+                menuModal.style.display = "none";
+            }
+            if(e.target == exportModal) {
+                exportModal.style.display = "none";
+            }
+        };
+
+        // Redirigir con proveedor seleccionado - Estado de Cuenta
+        generarEstadoBtn.onclick = function() {
+            const provId = proveedorSelect.value;
+            window.location.href = "{% url 'estado_cuenta_proveedor' 9999 %}".replace("9999", provId);
+        };
+
+        // Redirigir con proveedor seleccionado - Envío de Reportes
+        generarReportesBtn.onclick = function() {
+            const provId = proveedorReportesSelect.value;
+            window.location.href = "{% url 'reporte_estado_cuenta_proveedor' 9999 %}".replace("9999", provId);
+        };
+
+        // Manejar clicks en los filtros de gráficos
+        document.querySelectorAll('.chart-filters .chart-filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remover clase activa de todos los botones del mismo grupo
+                const parentFilters = this.closest('.chart-filters');
+                parentFilters.querySelectorAll('.chart-filter-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+                
+                // Añadir clase activa al botón clickeado
+                this.classList.add('active');
+                
+                // Actualizar gráfico correspondiente
+                if (this.dataset.filter) {
+                    actualizarGraficoUtilidades(this.dataset.filter);
+                } else if (this.dataset.chart) {
+                    actualizarGraficoCalidad(this.dataset.chart);
+                }
+            });
+        });
+    });
+
+    function inicializarGraficos() {
+        // Obtener datos para gráficos desde el backend
+        const proveedoresLabels = [{% for item in proveedores_data %}'{{ item.proveedor.nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const utilidadesData = [{% for item in proveedores_data %}{{ item.total_utilidades|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        
+        // Datos para utilidades por fruta
+        const frutasLabels = [{% for item in utilidades_frutas %}'{{ item.fruta }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const utilidadesFrutaData = [{% for item in utilidades_frutas %}{{ item.utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        
+        // Datos para evolución mes
+        const evolucionLabels = proveedoresLabels;
+        const evolucionData = [{% for item in proveedores_data %}{{ item.total_peso_recibido|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        
+        // Datos para calidad
+        const kgExportacion = {{ kg_exportacion|stringformat:"0.0f" }};
+        const kgNacional = {{ kg_nacional|stringformat:"0.0f" }};
+        const kgMerma = {{ kg_merma|stringformat:"0.0f" }};
+        const pctExportacion = {{ porcentaje_exportacion|stringformat:"0.2f" }};
+        const pctNacional = {{ porcentaje_nacional|stringformat:"0.2f" }};
+        const pctMerma = {{ porcentaje_merma|stringformat:"0.2f" }};
+
+        // Crear el array de datos para el gráfico de kilos
+        const kilosPercentData = [{% for item in proveedores_data %}{{ item.total_kilos_comprados|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+        // Variables para gráficos
+        window.charts = {};
+
+        // Gráfico de utilidades
+        const utilidadesCtx = document.getElementById('utilidadesChart').getContext('2d');
+        window.charts.utilidades = new Chart(utilidadesCtx, {
+            type: 'bar',
+            data: {
+                labels: proveedoresLabels,
+                datasets: [{
+                    label: 'Utilidades ($)',
+                    data: utilidadesData,
+                    backgroundColor: [
+                        'rgba(52, 152, 219, 0.7)',  // Azul claro
+                        'rgba(46, 204, 113, 0.7)',  // Verde claro
+                        'rgba(26, 188, 156, 0.7)',  // Turquesa
+                        'rgba(155, 89, 182, 0.7)',  // Morado
+                        'rgba(241, 196, 15, 0.7)',  // Amarillo
+                        'rgba(231, 76, 60, 0.7)',   // Rojo vibrante
+                        'rgba(230, 126, 34, 0.7)',  // Naranja
+                        'rgba(39, 174, 96, 0.7)',   // Verde esmeralda
+                        'rgba(142, 68, 173, 0.7)',  // Púrpura oscuro
+                        'rgba(52, 73, 94, 0.7)'     // Gris azulado
+                    ],
+                    borderColor: [
+                        'rgba(52, 152, 219, 1)',
+                        'rgba(46, 204, 113, 1)',
+                        'rgba(26, 188, 156, 1)',
+                        'rgba(155, 89, 182, 1)',
+                        'rgba(241, 196, 15, 1)',
+                        'rgba(231, 76, 60, 1)',
+                        'rgba(230, 126, 34, 1)',
+                        'rgba(39, 174, 96, 1)',
+                        'rgba(142, 68, 173, 1)',
+                        'rgba(52, 73, 94, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // Gráfico de kilos
+        const kilosCtx = document.getElementById('kilosChart').getContext('2d');
+        window.charts.kilos = new Chart(kilosCtx, {
+            type: 'doughnut',
+            data: {
+                labels: proveedoresLabels,
+                datasets: [{
+                    data: kilosPercentData,
+                    backgroundColor: [
+                        'rgba(52, 152, 219, 0.7)',  // Azul claro
+                        'rgba(46, 204, 113, 0.7)',  // Verde claro
+                        'rgba(26, 188, 156, 0.7)',  // Turquesa
+                        'rgba(155, 89, 182, 0.7)',  // Morado
+                        'rgba(241, 196, 15, 0.7)',  // Amarillo
+                        'rgba(231, 76, 60, 0.7)',   // Rojo
+                        'rgba(52, 73, 94, 0.7)',    // Gris azulado
+                        'rgba(230, 126, 34, 0.7)',  // Naranja
+                        'rgba(142, 68, 173, 0.7)',  // Púrpura oscuro
+                        'rgba(39, 174, 96, 0.7)'    // Verde esmeralda
+                    ],
+                    borderColor: [
+                        'rgba(52, 152, 219, 1)',
+                        'rgba(46, 204, 113, 1)',
+                        'rgba(26, 188, 156, 1)',
+                        'rgba(155, 89, 182, 1)',
+                        'rgba(241, 196, 15, 1)',
+                        'rgba(231, 76, 60, 1)',
+                        'rgba(52, 73, 94, 1)',
+                        'rgba(230, 126, 34, 1)',
+                        'rgba(142, 68, 173, 1)',
+                        'rgba(39, 174, 96, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                cutout: '45%',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.label + ': ' + context.parsed + ' kg';
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'left',
+                        labels: {font: {size: 10}}
+                    },
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true,
+                    duration: 1000
+                }
+            }
+        });
+
+        // Gráfico de calidad/evolución
+        const calidadEvolucionCtx = document.getElementById('calidadEvolucionChart').getContext('2d');
+        window.charts.calidadEvolucion = new Chart(calidadEvolucionCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Exportación', 'Nacional', 'Merma'],
+                datasets: [{
+                    label: 'Kilos',
+                    data: [kgExportacion, kgNacional, kgMerma],
+                    backgroundColor: [
+                        'rgba(46, 204, 113, 0.9)',  // Verde brillante
+                        'rgba(241, 196, 15, 0.9)',  // Amarillo brillante
+                        'rgba(231, 76, 60, 0.9)',   // Rojo brillante
+                    ],
+                    borderColor: [
+                        'rgba(39, 174, 96, 1)',
+                        'rgba(243, 156, 18, 1)',
+                        'rgba(192, 57, 43, 1)',
+                    ],
+                    borderWidth: 1
+                }, {
+                    label: 'Porcentaje',
+                    data: [pctExportacion, pctNacional, pctMerma],
+                    backgroundColor: [
+                        'rgba(46, 204, 113, 0.4)',
+                        'rgba(241, 196, 15, 0.4)',
+                        'rgba(231, 76, 60, 0.4)',
+                    ],
+                    borderColor: [
+                        'rgba(39, 174, 96, 0.8)',
+                        'rgba(243, 156, 18, 0.8)',
+                        'rgba(192, 57, 43, 0.8)',
+                    ],
+                    borderWidth: 1,
+                    yAxisID: 'y1',
+                    type: 'line',
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Kilos'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + ' kg';
+                            }
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Porcentaje'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.datasetIndex === 0) {
+                                    return label + context.parsed.y.toLocaleString() + ' kg';
+                                } else {
+                                    return label + context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Guardar datos para switch entre vistas
+        window.chartData = {
+            utilidades: {
+                proveedor: {
+                    labels: proveedoresLabels,
+                    data: utilidadesData
+                },
+                fruta: {
+                    labels: frutasLabels,
+                    data: utilidadesFrutaData
+                }
+            },
+            calidadEvolucion: {
+                calidad: {
+                    labels: ['Exportación', 'Nacional', 'Merma'],
+                    datasets: [{
+                        label: 'Kilos',
+                        data: [kgExportacion, kgNacional, kgMerma],
+                        backgroundColor: [
+                            'rgba(46, 204, 113, 0.9)',
+                            'rgba(241, 196, 15, 0.9)',
+                            'rgba(231, 76, 60, 0.9)',
+                        ],
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Porcentaje',
+                        data: [pctExportacion, pctNacional, pctMerma],
+                        type: 'line',
+                        backgroundColor: [
+                            'rgba(46, 204, 113, 0.4)',
+                            'rgba(241, 196, 15, 0.4)',
+                            'rgba(231, 76, 60, 0.4)',
+                        ],
+                        yAxisID: 'y1'
+                    }]
+                },
+                evolucion: {
+                    labels: evolucionLabels,
+                    datasets: [{
+                        label: 'Peso Recibido',
+                        data: evolucionData,
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        yAxisID: 'y'
+                    }]
+                }
+            }
+        };
+    }
+
+    function actualizarGraficoUtilidades(tipo) {
+        const chart = window.charts.utilidades;
+        const data = window.chartData.utilidades[tipo];
+        
+        chart.data.labels = data.labels;
+        chart.data.datasets[0].data = data.data;
+        chart.update();
+    }
+
+    function actualizarGraficoCalidad(tipo) {
+        const chart = window.charts.calidadEvolucion;
+        const data = window.chartData.calidadEvolucion[tipo];
+        
+        chart.data.labels = data.labels;
+        chart.data.datasets = [];
+        
+        if (tipo === 'calidad') {
+            chart.options.scales.y.title.text = 'Kilos';
+            chart.options.scales.y1.display = true;
+            
+            chart.data.datasets = [{
+                label: 'Kilos',
+                data: data.datasets[0].data,
+                backgroundColor: [
+                    'rgba(46, 204, 113, 0.9)',
+                    'rgba(241, 196, 15, 0.9)',
+                    'rgba(231, 76, 60, 0.9)',
+                ],
+                borderColor: [
+                    'rgba(39, 174, 96, 1)',
+                    'rgba(243, 156, 18, 1)',
+                    'rgba(192, 57, 43, 1)',
+                ],
+                borderWidth: 1,
+                yAxisID: 'y'
+            }, {
+                label: 'Porcentaje',
+                data: data.datasets[1].data,
+                backgroundColor: [
+                    'rgba(46, 204, 113, 0.4)',
+                    'rgba(241, 196, 15, 0.4)',
+                    'rgba(231, 76, 60, 0.4)',
+                ],
+                borderColor: [
+                    'rgba(39, 174, 96, 0.8)',
+                    'rgba(243, 156, 18, 0.8)',
+                    'rgba(192, 57, 43, 0.8)',
+                ],
+                borderWidth: 1,
+                yAxisID: 'y1',
+                type: 'line',
+                fill: false,
+                tension: 0.4
+            }];
+        } else {
+            chart.options.scales.y.title.text = 'Peso Recibido (kg)';
+            chart.options.scales.y1.display = false;
+            
+            chart.data.datasets = [{
+                label: 'Peso Recibido',
+                data: data.datasets[0].data,
+                backgroundColor: Array(data.labels.length).fill('rgba(52, 152, 219, 0.7)'),
+                borderColor: Array(data.labels.length).fill('rgba(52, 152, 219, 1)'),
+                borderWidth: 1,
+                yAxisID: 'y'
+            }];
+        }
+        
+        chart.update();
+    }
+</script>
+
+
+
+</html></body></body>
 </html>

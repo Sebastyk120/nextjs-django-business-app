@@ -1,83 +1,183 @@
 {% extends 'comercialbase.html' %}
+{% load static %}
+{% load django_tables2 %}
 {% block content %}
-    {% load static %}
-    {% load django_tables2 %}
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="{% static 'css/pedido_items.css' %}"/>
-        <title>Pedidos Etnico</title>
-    </head>
-    <body>
-    <h1 class="align-center">
-        <img src="{% static 'img/fieldex.png' %}" alt="Logo de la Empresa" class="logo-empresa" style="vertical-align:middle; margin-right:5px;"/>
-        Base Pedidos Fieldex <i class="bi bi-clipboard2-check-fill"></i>
-    </h1>
+    <link rel="stylesheet" href="{% static 'css/pedido_list_general.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/table_styles.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/modal_styles.css' %}"/>
 
-    <form method="get" class="d-flex" id="searchForm">
-        <select name="metodo_busqueda" class="form-control">
-            <option value="" disabled selected>Modo De Búsqueda</option>
-            <option value="awb">AWB</option>
-            <option value="numero_factura">Número de Factura</option>
-            <option value="id">Número De Pedido</option>
-            <option value="intermediario">Intermediario</option>
-        </select>
-        <input type="text" name="item_busqueda" placeholder="Ingrese búsqueda" class="form-control"/>
+    <div class="container my-3">
+        <div class="pedidos-wrapper">
+            <!-- Header Section -->
+            <div class="header-section mb-3">
+                <h2 class="section-title text-center">
+                    <img src="{% static 'img/fieldex.png' %}" alt="Logo Fieldex" class="logo-empresa"/> Base Pedidos Fieldex
+                </h2>
+                <div class="subtitle text-center">Gestión de pedidos Fieldex</div>
+            </div>
 
-        <select name="cliente" class="form-control">
-            <option value="" disabled selected>Filtro Cliente</option>
-            {% for cliente in form.fields.cliente.queryset %}
-                <option value="{{ cliente.id }}"
-                        {% if form.cleaned_data.cliente == cliente %}selected{% endif %}>{{ cliente.nombre }}</option>
-            {% endfor %}
-        </select>
+            <!-- Action Buttons -->
+            <div class="action-buttons mb-4">
+                <button class="btn btn-export" data-bs-toggle="modal" data-bs-target="#exportModal">
+                    <i class="fas fa-file-export"></i> Exp. Pedidos
+                </button>
+                
+                <div class="btn-group">
+                    <form method="post" action="{% url 'actualizar_vencimiento_fieldex' %}" style="margin:0">
+                        {% csrf_token %}
+                        <button class="btn btn-update" type="submit" name="actualizar-vencimiento">
+                            <i class="fas fa-calendar-check"></i> Act. Vencimiento
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'actualizar_tasas_fieldex' %}" style="margin:0">
+                        {% csrf_token %}
+                        <button class="btn btn-update-alt" type="submit" name="actualizar-tasas">
+                            <i class="fas fa-dollar-sign"></i> Act. TRM
+                        </button>
+                    </form>
+                </div>
+                
+                <a class="btn btn-back" onclick="history.back();">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
 
-        <div class="ml-auto">
-            <button class="btn btn-secondary btn-sm" type="submit"><i class="bi bi-search"></i></button>
-            <button class="btn btn-danger btn-sm me-md-5" id="clearFilters" type="button"><i class="bi bi-x-circle"></i>
-            </button>
-        </div>
-    </form>
+            <!-- Search and Filters Card -->
+            <div class="card mb-4 filters-card">
+                <div class="card-header">
+                    <h4><i class="fas fa-search"></i> Búsqueda y Filtros</h4>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="search-form" id="searchForm">
+                        <div class="row">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="metodo_busqueda">Buscar por</label>
+                                    <select name="metodo_busqueda" id="metodo_busqueda" class="form-control">
+                                        <option value="" disabled selected>Seleccione...</option>
+                                        <option value="awb" {% if request.GET.metodo_busqueda == 'awb' %}selected{% endif %}>AWB</option>
+                                        <option value="numero_factura" {% if request.GET.metodo_busqueda == 'numero_factura' %}selected{% endif %}>Nº Factura</option>
+                                        <option value="id" {% if request.GET.metodo_busqueda == 'id' %}selected{% endif %}>Nº Pedido</option>
+                                        <option value="intermediario" {% if request.GET.metodo_busqueda == 'intermediario' %}selected{% endif %}>Intermediario</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="item_busqueda">Término de búsqueda</label>
+                                    <input type="text" name="item_busqueda" id="item_busqueda" class="form-control" placeholder="Buscar..." value="{{ request.GET.item_busqueda|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="cliente">Cliente</label>
+                                    <select name="cliente" id="cliente" class="form-control">
+                                        <option value="" selected>Todos los clientes</option>
+                                        {% for cliente in form.fields.cliente.queryset %}
+                                            <option value="{{ cliente.id }}" {% if request.GET.cliente == cliente.id|stringformat:'i' %}selected{% endif %}>
+                                                {{ cliente.nombre }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-search w-100" type="submit">
+                                            <i class="fas fa-search"></i> Buscar
+                                        </button>
+                                        <button class="btn btn-clear w-100" id="clearFilters" type="button">
+                                            <i class="fas fa-times-circle"></i> Limpiar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
-
-    <div class="button-container">
-        <a class="nav-link" href="{% url 'exportar_pedidos_fieldex_view' %}" name="exportardetalle">
-            <button class="btn btn-success btn-sm" id="export"><i class="bi bi-journal-arrow-down"></i> Exportar Pedidos
-                xlsx
-            </button>
-        </a>
-        <form method="post" action="{% url 'actualizar_vencimiento_fieldex' %}">
-            {% csrf_token %}
-            <button class="btn btn-primary btn-sm" type="submit" name="actualizar-vencimiento"><i
-                    class="bi bi-calendar2-date-fill"></i> Actualizar Días De Vencimiento
-            </button>
-        </form>
-        <form method="post" action="{% url 'actualizar_tasas_fieldex' %}">
-            {% csrf_token %}
-            <button class="btn btn-primary btn-sm" type="submit" name="actualizar-tasas"><i
-                    class="bi bi-currency-exchange"></i> Actualizar TRM Banrep
-            </button>
-        </form>
-        <a type="button" class="btn btn-danger btn-sm" name="volver" id="volver" role="button"
-           onclick="history.back();"><i class="bi bi-reply-fill"></i></a>
-    </div>
-
-    <div class="container-fluid">
-        {% render_table table %}
-    </div>
-
-    <!-- Editar Item Modal -->
-    <div class="modal fade text-white" id="moverItemModal" tabindex="-1" role="dialog"
-         aria-labelledby="moverItemModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content text-white bg-dark">
+            <!-- Table Card -->
+            <div class="card mb-4 table-card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <h4><i class="fas fa-list"></i> Listado de Pedidos</h4>
+                    <div class="header-actions">
+                        <span class="results-count">{{ table.rows|length }} Pedidos</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        {% render_table table %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <script src="{% static 'js/editar_pedido_exportador.js' %}"></script>
+
+    <!-- Editar Item Modal -->
+    <div class="modal fade" id="moverItemModal" tabindex="-1" role="dialog" aria-labelledby="moverItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content custom-modal">
+                <!-- El contenido se cargará por JS -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Exportación de Pedidos -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-export">
+                <div class="modal-header export-header">
+                    <h5 class="modal-title export-title" id="exportModalLabel">
+                        <i class="fas fa-file-export"></i> Exportación De Pedidos General
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="{% url 'exportar_pedidos_excel_general' %}" id="exportForm" class="export-form">
+                        {% csrf_token %}
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="fecha_inicial" class="form-label">Fecha Inicial:</label>
+                                    <input type="date" id="fecha_inicial" name="fecha_inicial" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="fecha_final" class="form-label">Fecha Final:</label>
+                                    <input type="date" id="fecha_final" name="fecha_final" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" name="incluir_detalles" id="incluir_detalles" value="true" class="form-check-input">
+                            <label for="incluir_detalles" class="form-check-label">¿Incluir Detalles del Pedido?</label>
+                        </div>
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Para exportar todos los pedidos omita los campos de fecha. El filtro se aplica con la fecha de factura.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer export-footer">
+                    <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn export-btn" onclick="document.getElementById('exportForm').submit();">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% block extra_js %}
+        <script src="{% static 'js/editar_pedido_exportador.js' %}"></script>
+    {% endblock %}
+    
     <script>
         document.getElementById('clearFilters').addEventListener('click', function () {
             // Obtener la URL actual sin los parámetros de búsqueda
@@ -88,6 +188,4 @@
             window.location.href = url.href;
         });
     </script>
-    </body>
-    </html>
 {% endblock %}

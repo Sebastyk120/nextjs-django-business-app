@@ -1,0 +1,23 @@
+{% load crispy_forms_tags %}
+<style>
+    label
+    {
+        color: #16168c;
+    }
+    .form-label {
+        color: #16168c;
+    }
+</style>
+<form method="post" id="editReporteProveedorForm" action="{% url 'reporte_proveedor_edit' reporte.id %}">
+    {% csrf_token %}
+    <input type="hidden" name="_method" value="put">
+    {% crispy form %}
+    <button type="submit" class="btn btn-warning">Guardar Cambios</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+</form>
+
+<script>
+    $(document).ready(function() {
+        $('.select2').select2();
+    });
+</script>

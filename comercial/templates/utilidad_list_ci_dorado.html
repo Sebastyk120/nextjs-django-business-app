@@ -1,0 +1,158 @@
+{% extends 'comercialbase.html' %}
+{% load static %}
+{% load django_tables2 %}
+{% block content %}
+    <link rel="stylesheet" href="{% static 'css/pedido_list_general.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/table_styles.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/modal_styles.css' %}"/>
+
+    <div class="container my-3">
+        <div class="pedidos-wrapper">
+            <!-- Header Section -->
+            <div class="header-section mb-3">
+                <h2 class="section-title text-center">
+                    <img src="{% static 'img/logo_ci_dorado.png' %}" alt="Logo Ci Dorado" class="logo-empresa"/> Informe De Utilidades Ci Dorado
+                </h2>
+                <div class="subtitle text-center">Control y análisis de utilidades</div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons mb-4">
+                <button class="btn btn-export" data-bs-toggle="modal" data-bs-target="#exportModal">
+                    <i class="fas fa-file-excel"></i> Exp. Utilidades
+                </button>
+
+                <a class="btn btn-back" onclick="history.back();">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+
+            <!-- Search and Filters Card -->
+            <div class="card mb-4 filters-card">
+                <div class="card-header">
+                    <h4><i class="fas fa-search"></i> Búsqueda y Filtros</h4>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="search-form" id="searchForm">
+                        <div class="row">
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="metodo_busqueda">Buscar por</label>
+                                    <select name="metodo_busqueda" id="metodo_busqueda" class="form-control">
+                                        <option value="" disabled selected>Seleccione...</option>
+                                        <option value="awb" {% if request.GET.metodo_busqueda == 'awb' %}selected{% endif %}>AWB</option>
+                                        <option value="numero_factura" {% if request.GET.metodo_busqueda == 'numero_factura' %}selected{% endif %}>Nº Factura</option>
+                                        <option value="id" {% if request.GET.metodo_busqueda == 'id' %}selected{% endif %}>Nº Pedido</option>
+                                        <option value="intermediario" {% if request.GET.metodo_busqueda == 'intermediario' %}selected{% endif %}>Intermediario</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="item_busqueda">Término de búsqueda</label>
+                                    <input type="text" name="item_busqueda" id="item_busqueda" class="form-control" placeholder="Buscar..." value="{{ request.GET.item_busqueda|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="cliente">Cliente</label>
+                                    <select name="cliente" id="cliente" class="form-control">
+                                        <option value="" selected>Todos los clientes</option>
+                                        {% for cliente in form.fields.cliente.queryset %}
+                                            <option value="{{ cliente.id }}" {% if request.GET.cliente == cliente.id|stringformat:'i' %}selected{% endif %}>
+                                                {{ cliente.nombre }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-12 d-flex justify-content-end">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-search" type="submit">
+                                        <i class="fas fa-search"></i> Buscar
+                                    </button>
+                                    <button class="btn btn-clear" id="clearFilters" type="button">
+                                        <i class="fas fa-times-circle"></i> Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="card mb-4 table-card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <h4><i class="fas fa-sack-dollar"></i> Listado de Utilidades</h4>
+                    <div class="header-actions">
+                        <span class="results-count">{{ table.rows|length }} Registros</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        {% render_table table %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Exportación de Utilidades -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-export">
+                <div class="modal-header export-header">
+                    <h5 class="modal-title export-title" id="exportModalLabel">
+                        <i class="fas fa-file-export"></i> Exportación De Utilidades Ci Dorado
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="{% url 'exportar_utilidades_general' %}" id="exportForm" class="export-form">
+                        {% csrf_token %}
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="fecha_inicial" class="form-label">Fecha Inicial:</label>
+                                    <input type="date" id="fecha_inicial" name="fecha_inicial" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="fecha_final" class="form-label">Fecha Final:</label>
+                                    <input type="date" id="fecha_final" name="fecha_final" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Para exportar todas las utilidades omita los campos de fecha. El filtro se aplica con la fecha de factura.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer export-footer">
+                    <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn export-btn" onclick="document.getElementById('exportForm').submit();">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block extra_js %}
+    <script>
+        document.getElementById('clearFilters').addEventListener('click', function () {
+            // Obtener la URL actual sin los parámetros de búsqueda
+            const url = new URL(window.location.href);
+            url.search = '';
+
+            // Recargar la página con la URL sin parámetros de búsqueda
+            window.location.href = url.href;
+        });
+    </script>
+    {% endblock %}
+{% endblock %}

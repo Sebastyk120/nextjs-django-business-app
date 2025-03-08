@@ -20,14 +20,13 @@
 
 /* Highlight days overdue value */
 .dias-vencidos-valor {
-    font-weight: bold;
-    color: #e53e3e;
-    padding: 3px 10px;
-    border-radius: 12px;
-    background-color: rgba(229, 62, 62, 0.1);
-    display: inline-block;
-    min-width: 40px;
-    text-align: center;
+    font-weight: bold !important;
+    color: #e53e3e !important;
+    padding: 3px 10px !important;
+    border-radius: 12px !important;
+    background-color: rgba(229, 62, 62, 0.1) !important;
+    text-align: center !important;
+    vertical-align: middle !important;
 }
 
 /* Different heading colors */

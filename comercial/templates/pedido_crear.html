@@ -1,53 +1,92 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/crear_pedido.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/modal_pedidos.css' %}"/>
 <div class="modal-header">
-    <h5 class="modal-title">Crear Pedido <i class="bi bi-bag-plus-fill"></i></h5>
+    <h5 class="modal-title">
+        <i class="fas fa-clipboard-list"></i> Crear Nuevo Pedido
+    </h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 </div>
-<form action="{% url 'pedido_crear' %}" method="post">
+<form action="{% url 'pedido_crear' %}" method="post" id="formCrearPedido">
     {% csrf_token %}
     <div class="modal-body">
-        <div id="errores">
+        <div id="errores" class="errores-container">
             {% for field, error_list in form.errors.items %}
                 {% for error in error_list %}
                     <div class="alert alert-danger">{{ error }}</div>
                 {% endfor %}
             {% endfor %}
         </div>
-        <div class="container">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.cliente.label_tag }} {{ form.cliente }}
+        
+        <div class="form-grid">
+            <!-- Primera columna -->
+            <div class="form-column">
+                <!-- Cliente -->
+                <div class="form-field">
+                    <label for="{{ form.cliente.id_for_label }}" class="field-label">
+                        <i class="fas fa-user"></i> {{ form.cliente.label }}
+                    </label>
+                    {{ form.cliente }}
                 </div>
-                <div class="col-md-6">
-                    {{ form.fecha_entrega.label_tag }} {{ form.fecha_entrega }}
+                
+                <!-- Exportadora -->
+                <div class="form-field">
+                    <label for="{{ form.exportadora.id_for_label }}" class="field-label">
+                        <i class="fas fa-ship"></i> {{ form.exportadora.label }}
+                    </label>
+                    {{ form.exportadora }}
+                </div>
+                
+                <!-- Intermediario -->
+                <div class="form-field">
+                    <label for="{{ form.intermediario.id_for_label }}" class="field-label">
+                        <i class="fas fa-handshake"></i> {{ form.intermediario.label }}
+                    </label>
+                    {{ form.intermediario }}
                 </div>
             </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.exportadora.label_tag }} {{ form.exportadora }}
+            
+            <!-- Segunda columna -->
+            <div class="form-column">
+                <!-- Fecha de Entrega -->
+                <div class="form-field">
+                    <label for="{{ form.fecha_entrega.id_for_label }}" class="field-label">
+                        <i class="fas fa-calendar-alt"></i> {{ form.fecha_entrega.label }}
+                    </label>
+                    {{ form.fecha_entrega }}
                 </div>
-                <div class="col-md-6">
-                    {{ form.subexportadora.label_tag }} {{ form.subexportadora }}
+                
+                <!-- Subexportadora -->
+                <div class="form-field">
+                    <label for="{{ form.subexportadora.id_for_label }}" class="field-label">
+                        <i class="fas fa-building"></i> {{ form.subexportadora.label }}
+                    </label>
+                    {{ form.subexportadora }}
+                </div>
+                
+                <!-- Destino -->
+                <div class="form-field">
+                    <label for="{{ form.destino.id_for_label }}" class="field-label">
+                        <i class="fas fa-map-marker-alt"></i> {{ form.destino.label }}
+                    </label>
+                    {{ form.destino }}
                 </div>
             </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    {{ form.intermediario.label_tag }} {{ form.intermediario }}
-                </div>
-                <div class="col-md-6">
-                    {{ form.destino.label_tag }} {{ form.destino }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-12">
-                    {{ form.observaciones.label_tag }} {{ form.observaciones }}
-                </div>
+            
+            <!-- Observaciones - Ancho completo -->
+            <div class="form-field full-width">
+                <label for="{{ form.observaciones.id_for_label }}" class="field-label">
+                    <i class="fas fa-comment-alt"></i> {{ form.observaciones.label }}
+                </label>
+                {{ form.observaciones }}
             </div>
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Cerrar</button>
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Guardar Pedido
+        </button>
     </div>
 </form>

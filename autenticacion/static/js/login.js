@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (togglePassword && passwordField) {
         togglePassword.addEventListener('click', function() {
-            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            const type = passwordField.getAttribute('type') === 'password' ? 'email' : 'password';
             passwordField.setAttribute('type', type);
             
             // Change eye icon
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add focus and blur effects
-    const inputs = document.querySelectorAll('input[type="text"], input[type="password"]');
+    const inputs = document.querySelectorAll('input[type="email"], input[type="password"]');
     
     if (inputs.length) {
         inputs.forEach(input => {

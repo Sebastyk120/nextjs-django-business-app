@@ -1,0 +1,22 @@
+{% load crispy_forms_tags %}
+<style>
+    .form-label {
+        color: #16168c;
+    }
+</style>
+<form method="post" id="reporteProveedorForm" action="{% url 'reporte_proveedor_create' reporte_exp.venta_nacional.compra_nacional_id %}">
+    {% csrf_token %}
+    {% crispy form %}
+    <button type="submit" class="btn btn-success">Guardar Reporte Exportador</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+</form>
+
+<script>
+    $(document).ready(function() {
+        $('.select2').select2();
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true
+        });
+    });
+</script>

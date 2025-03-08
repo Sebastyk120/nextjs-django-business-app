@@ -1,0 +1,27 @@
+{% load crispy_forms_tags %}
+<style>
+    label
+    {
+        color: #16168c;
+    }
+    .form-label {
+        color: #16168c;
+    }
+</style>
+<form method="post" id="reporteExportadorForm" action="{% url 'reporte_exportador_create' venta.compra_nacional_id %}">
+    {% csrf_token %}
+    {% crispy form %}
+    <input type="hidden" id="precio_compra_exp_value" value="{{ venta.compra_nacional.precio_compra_exp }}" />
+    <button type="submit" class="btn btn-success">Guardar Reporte Exportador</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+</form>
+
+<script>
+    $(document).ready(function() {
+        $('.select2').select2();
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true
+        });
+    });
+</script>

@@ -1,0 +1,317 @@
+body {
+    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+    font-size: 14px !important;
+    background-color: #f5f7fa;
+}
+
+a {
+    color: white;
+    text-decoration: none;
+}
+
+/* Header Section */
+.section-title {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 1rem;
+    margin-bottom: 15px;
+}
+
+.card {
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin: 25px 0;
+    border: none;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 12px 15px;
+}
+
+.card-header h4 {
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.card-footer {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 12px 15px;
+}
+
+/* Filter card styles */
+.filter-card {
+    background-color: #fff;
+    margin-bottom: 20px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    animation-duration: 0.6s;
+}
+
+.filter-header {
+    background: linear-gradient(135deg, #0275d8, #036098);
+    color: white;
+}
+
+.filter-header h4 {
+    font-weight: 600;
+}
+
+.data-card {
+    background-color: #fff;
+    animation-duration: 0.8s;
+}
+
+.btn-add,
+.btn-filter,
+.btn-clear {
+    padding: 10px 20px;
+    border: none;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: 50px;
+}
+
+.btn-add {
+    background: linear-gradient(135deg, #0275d8, #036098);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-add:hover {
+    background: linear-gradient(135deg, #036098, #01426a);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn-filter {
+    background-color: #036098;
+}
+
+.btn-filter:hover {
+    background-color: #01426a;
+    transform: translateY(-2px);
+}
+
+.btn-clear {
+    background-color: #6c757d;
+}
+
+.btn-clear:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+}
+
+/* Form styles */
+.form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.form-control,
+.form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 10px 15px;
+    transition: all 0.3s;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Table styles - Updated to match resumen_pedido.css */
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+    width: 100%;
+    background-color: #fff;
+    font-size: 0.9rem;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table thead th {
+    background: #4f46e5;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    padding: 12px 15px;
+    border: none;
+    position: sticky;
+    top: 0;
+}
+
+.table thead th:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.table thead th:last-child {
+    border-radius: 0 8px 8px 0;
+}
+
+.table thead th a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.table thead th a:hover {
+    text-decoration: underline;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #f1f1f1;
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+    cursor: pointer;
+    transform: scale(1.01);
+}
+
+.table tbody tr:nth-of-type(even) {
+    background-color: #f2f5fa;
+}
+
+.table td {
+    padding: 12px 15px;
+    vertical-align: middle;
+    text-align: center;
+    border-top: 1px solid #f1f1f1;
+    color: #4a5568;
+}
+
+/* Select2 Customization */
+.select2-container--bootstrap-5 .select2-selection {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    height: 42px;
+    padding: 5px 15px;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    line-height: 32px;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+    height: 42px;
+}
+
+/* Modal styles */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #036098, #0275d8);
+    color: white;
+    padding: 1.5rem;
+    border-bottom: none;
+    position: relative;
+}
+
+.modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.btn-close {
+    color: white;
+    opacity: 1;
+    transition: all 0.3s;
+}
+
+.btn-close:hover {
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .card-header {
+        padding: 1rem;
+    }
+    
+    .card-header h4 {
+        font-size: 16px;
+    }
+    
+    .table {
+        font-size: 0.85em;
+    }
+    
+    .btn-add, .btn-filter, .btn-clear {
+        padding: 8px 15px;
+        font-size: 0.9em;
+    }
+    
+    .section-title {
+        font-size: 20px;
+    }
+}
+
+/* Animation classes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate__fadeIn {
+    animation-name: fadeIn;
+    animation-duration: 0.8s;
+}
+
+.animate__fadeInDown {
+    animation-name: fadeInDown;
+    animation-duration: 0.6s;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

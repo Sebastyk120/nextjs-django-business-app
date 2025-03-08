@@ -1,10 +1,152 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends 'comercialbase.html' %}
+{% load static %}
+{% load django_tables2 %}
+{% load custom_filters %}
+
+{% block content %}
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
+        <link rel="stylesheet" href="{% static 'css/nacionales_list_transferencia.css' %}">
+        <title>Transferencias Proveedor</title>
+    </head>
+    <body>
+    <div class="container py-4">
+        <!-- Header Section -->
+        <div class="header-section mb-3">
+            <h2 class="section-title text-center">
+                <i class="fas fa-exchange-alt me-2"></i> Transferencias a Proveedores
+            </h2>
+            <div class="subtitle text-center">Gestión de transferencias a proveedores nacionales</div>
+        </div>
+        
+        <!-- Filter Card -->
+        <div class="card filter-card animate__animated animate__fadeInDown">
+            <div class="card-header filter-header">
+                <h4 class="mb-0"><i class="fas fa-filter me-2"></i>Filtros</h4>
+            </div>
+            <div class="card-body">
+                <form method="get" id="filter-form" class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                        <label for="proveedor" class="form-label">Proveedor</label>
+                        <select name="proveedor" id="proveedor" class="form-select select2">
+                            <option value="">Todos los proveedores</option>
+                            {% for proveedor in proveedores %}
+                                <option value="{{ proveedor.id }}" {% if selected_proveedor|stringformat:"i" == proveedor.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ proveedor.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-filter me-2">
+                            <i class="fas fa-search me-1"></i> Filtrar
+                        </button>
+                        <a href="{% url 'transferencias_list' %}" class="btn btn-clear">
+                            <i class="fas fa-undo me-1"></i> Limpiar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Data Card -->
+        <div class="card data-card animate__animated animate__fadeIn">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h4 class="mb-0"><i class="fas fa-list me-2"></i>Lista de Transferencias</h4>
+                    </div>
+                    <div class="col-md-6 d-flex justify-content-end">
+                        <button type="button" class="btn btn-add" data-bs-toggle="modal"
+                                data-url="{% url 'transferencia_nacional_create' %}"
+                                data-bs-target="#addTransferenciaModal">
+                            <i class="fas fa-plus me-2"></i>Nueva Transferencia
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    {% render_table table %}
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-0">Total transferencias: {{ table.rows|length }}</p>
+                    </div>
+                    {% if total_valor %}
+                    <div class="col-md-6 text-end">
+                        <p class="mb-0">Valor total: {{ total_valor|floatformat:0|format_currency }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar nueva transferencia -->
+    <div class="modal fade" id="addTransferenciaModal" tabindex="-1" aria-labelledby="addTransferenciaModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTransferenciaModalLabel">
+                        <i class="fas fa-plus-circle me-2"></i>Nueva Transferencia
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Aquí se cargará el formulario vía AJAX -->
+                    <div class="spinner-border text-primary d-none" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para editar transferencia -->
+    <div class="modal fade" id="editTransferenciaModal" tabindex="-1" aria-labelledby="editTransferenciaModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTransferenciaModalLabel">
+                        <i class="fas fa-edit me-2"></i>Editar Transferencia
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="spinner-border text-primary d-none" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/currency_formatter.js' %}"></script>
+    <script src="{% static 'js/create_transferencia.js' %}"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                dropdownParent: $('#filter-form')
+            });
+
+            // Format currency values in table
+            $('.currency-value').each(function() {
+                let value = $(this).text();
+                $(this).text(formatCurrency(value));
+            });
+        });
+    </script>
+    </body>
+    </html>
+{% endblock %}

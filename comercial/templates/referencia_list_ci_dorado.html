@@ -1,0 +1,65 @@
+{% extends 'comercialbase.html' %} {% block content %}
+    {% load static %}
+    {% load django_tables2 %}
+    <!DOCTYPE html>
+    <html lang="en" data-bs-theme="dark">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{% static 'css/pedido_list_general.css' %}"/>
+        <title>Referencias C.I Dorado</title>
+    </head>
+    <body>
+    <div class="container">
+        <div class="pedidos-wrapper mb-3">
+            <h1 class="section-title" style="padding-left: 4em;"><i class="bi bi-journals"></i> Referencias C.I Dorado</h1>
+            <p class="subtitle">Gestión de referencias de productos C.I Dorado</p>
+            
+            <div class="action-buttons">
+                <form method="get" class="d-flex w-100 mb-2">
+                    <div class="input-group">
+                        <input type="text" name="item_busqueda" placeholder="Buscar Referencia..." class="form-control"/>
+                        <button class="btn btn-search" type="submit"><i class="bi bi-search"></i> Buscar</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="action-buttons mb-4">
+                <div class="btn-group">
+                    <a class="btn btn-export" href="{% url 'exportar_referencias_excel' %}" name="exportar">
+                        <i class="bi bi-filetype-xlsx"></i> Exportar a Excel
+                    </a>
+                    <a class="btn btn-back" name="volver" id="volver" role="button" onclick="history.back();">
+                        <i class="bi bi-reply-fill"></i> Volver
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card table-card">
+                <div class="card-header">
+                    <h4><i class="bi bi-table"></i> Listado de Referencias</h4>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        {% render_table table %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Editar Item Modal -->
+    <div class="modal fade text-white" id="moverItemModal" tabindex="-1" role="dialog"
+         aria-labelledby="moverItemModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content bg-dark">
+            </div>
+        </div>
+    </div>
+    {% block extra_js %}
+    <script src="{% static 'js/editar_referencia_exportador.js' %}"></script>
+    {% endblock %}
+    </body>
+    </html>
+{% endblock %}

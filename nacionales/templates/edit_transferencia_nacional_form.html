@@ -4,7 +4,7 @@
         color: #16168c;
     }
 </style>
-<form method="post" id="transferenciaNacionalForm" action="{% url 'transferencia_nacional_edit' %}">
+<form method="post" id="transferenciaNacionalForm" action="{% url 'transferencia_nacional_edit' record.pk%}">
     {% csrf_token %}
     {% crispy form %}
     <button type="submit" class="btn btn-primary">Guardar Transferencia Nacional</button>

@@ -1,11 +1,7 @@
 import django_tables2 as tables
 from django.utils.html import format_html
 from .models import Pedido, DetallePedido, Referencias
-
-
-def format_as_currency(value):
-    formatted_value = "${:2f}".format(value)
-    return formatted_value
+from .templatetags.custom_filters import format_currency
 
 
 class PedidoTable(tables.Table):
@@ -43,11 +39,11 @@ class PedidoTable(tables.Table):
                   "estado_utilidad", "variedades", "estado_pedido", "estado_cancelacion", "observaciones", "detalle",
                   "editar", "editar2", "inf", "cancelar")
         row_attrs = {
-            "style": lambda record: ("background-color: #f8d7da;" if record.estado_cancelacion == "autorizado" else
-                                     ("background-color: #d4edda;" if record.estado_pedido == "Finalizado" else
-                                      (
-                                          "background-color: #fff3cd;" if record.estado_cancelacion == "pendiente" else ""))
-                                     )
+            "class": lambda record: (
+                "row-canceled" if record.estado_cancelacion == "autorizado" else
+                ("row-completed" if record.estado_pedido == "Finalizado" else
+                 ("row-pending" if record.estado_cancelacion == "pendiente" else ""))
+            )
         }
 
     def render_dias_de_vencimiento(self, value):
@@ -57,34 +53,34 @@ class PedidoTable(tables.Table):
             return format_html(f'<span style="color: red;">{value}</span>')
 
     def render_tasa_representativa_usd_diaria(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_total_factura_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_utilidad_bancaria_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_total_utilidad_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_utilidad_pesos(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_trm_monetizacion(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_diferencia_por_abono(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_pagado_cliente_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_total_nota_credito_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_descuento(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
 
 class DetallePedidoTable(tables.Table):
@@ -96,10 +92,12 @@ class DetallePedidoTable(tables.Table):
     eliminar = tables.TemplateColumn(template_name='detalle_pedido_eliminar_button.html', orderable=False)
     afecta_utilidad = tables.Column()
     tarifa_utilidad = tables.Column()
+    tarifa_recuperacion = tables.Column()
     valor_x_caja_usd = tables.Column()
     valor_x_producto = tables.Column()
     valor_nota_credito_usd = tables.Column()
     valor_total_utilidad_x_producto = tables.Column()
+    valor_total_recuperacion_x_producto = tables.Column()
     precio_proforma = tables.Column()
 
     class Meta:
@@ -107,9 +105,9 @@ class DetallePedidoTable(tables.Table):
         template_name = "django_tables2/bootstrap5-responsive.html"
         fields = ["fruta", "presentacion", "cajas_solicitadas", "presentacion_peso", "kilos", "cajas_enviadas",
                   "kilos_enviados", "diferencia", "tipo_caja", "referencia__nombre", "stickers", "lleva_contenedor",
-                  "referencia_contenedor", "cantidad_contenedores", "tarifa_utilidad", "valor_x_caja_usd",
+                  "referencia_contenedor", "cantidad_contenedores", "tarifa_utilidad", "tarifa_recuperacion", "valor_x_caja_usd",
                   "valor_x_producto", "no_cajas_nc", "valor_nota_credito_usd", "afecta_utilidad",
-                  "valor_total_utilidad_x_producto", "precio_proforma", "observaciones", "editar", "enviadas",
+                  "valor_total_utilidad_x_producto", "valor_total_recuperacion_x_producto","precio_proforma", "observaciones", "editar", "enviadas",
                   "nota_utilidad", "eliminar"]
         exclude = ("pedido", "id")
 
@@ -122,22 +120,28 @@ class DetallePedidoTable(tables.Table):
             return format_html('<span style="color: blue;">Dcto</span>')
 
     def render_tarifa_utilidad(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
+
+    def render_tarifa_recuperacion(self, value):
+        return format_currency(value)
 
     def render_valor_x_caja_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_x_producto(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_nota_credito_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_total_utilidad_x_producto(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
+
+    def render_valor_total_recuperacion_x_producto(self, value):
+        return format_currency(value)
 
     def render_precio_proforma(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
 
 class PedidoExportadorTable(tables.Table):
@@ -184,31 +188,31 @@ class PedidoExportadorTable(tables.Table):
             return format_html(f'<span style="color: red;">{value}</span>')
 
     def render_valor_total_factura_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_utilidad_bancaria_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_total_utilidad_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_utilidad_pesos(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_trm_monetizacion(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_diferencia_por_abono(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_pagado_cliente_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_total_nota_credito_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_descuento(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
 
 class CarteraPedidoTable(tables.Table):
@@ -241,19 +245,19 @@ class CarteraPedidoTable(tables.Table):
             return format_html(f'<span style="color: red;">{value}</span>')
 
     def render_valor_total_factura_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_utilidad_bancaria_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_pagado_cliente_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_diferencia_por_abono(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_descuento(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
 
 class UtilidadPedidoTable(tables.Table):
@@ -293,22 +297,22 @@ class UtilidadPedidoTable(tables.Table):
             return format_html('<span style="color: red;">✘</span>')
 
     def render_valor_total_utilidad_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_tasa_representativa_usd_diaria(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_utilidad_pesos(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_trm_monetizacion(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_valor_total_factura_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_diferencia_por_abono(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
 
 class ResumenPedidoTable(tables.Table):
@@ -317,6 +321,7 @@ class ResumenPedidoTable(tables.Table):
     lleva_contenedor = tables.BooleanColumn(orderable=False, verbose_name="Contenedor")
     valor_x_caja_usd = tables.Column(verbose_name="$Precio Final")
     tarifa_utilidad = tables.Column(verbose_name="$Utilidad Caja")
+    tarifa_recuperacion = tables.Column(verbose_name="$ Recuperacion Caja")
     precio_proforma = tables.Column(verbose_name="$Proforma")
     precio_und_caja = tables.Column(empty_values=(), orderable=False, verbose_name="$Precio Caja")
 
@@ -325,7 +330,7 @@ class ResumenPedidoTable(tables.Table):
         template_name = "django_tables2/bootstrap5-responsive.html"
         fields = ["fruta", "presentacion", "cajas_solicitadas", "presentacion_peso", "kilos", "peso_bruto", "tipo_caja",
                   "referencia__nombre", "stickers", "lleva_contenedor", "observaciones", "precio_und_caja",
-                  "tarifa_utilidad", "valor_x_caja_usd", "precio_proforma"]
+                  "tarifa_utilidad", "tarifa_recuperacion", "valor_x_caja_usd", "precio_proforma"]
         exclude = ("pedido", "id")
 
     def render_peso_bruto(self, record):
@@ -338,16 +343,20 @@ class ResumenPedidoTable(tables.Table):
             return format_html('<span style="color: red;">✘</span>')
 
     def render_precio_und_caja(self, record):
-        return format_as_currency(record.valor_x_caja_usd - record.tarifa_utilidad)
+        return format_currency(record.valor_x_caja_usd - record.tarifa_utilidad - record.tarifa_recuperacion)
 
     def render_valor_x_caja_usd(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
     def render_tarifa_utilidad(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
+
+    def render_tarifa_recuperacion(self, value):
+        return format_currency(value)
+
 
     def render_precio_proforma(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
 
 class ReferenciasTable(tables.Table):
@@ -363,7 +372,7 @@ class ReferenciasTable(tables.Table):
         exclude = ("id",)
 
     def render_precio(self, value):
-        return format_as_currency(value)
+        return format_currency(value)
 
 
 # -------------------- Tabla De seguimiento Tracking ----------------------------------------------------------------

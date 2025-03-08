@@ -1,13 +1,23 @@
 $(document).ready(function () {
+    // Clean up any existing event handlers to prevent duplicates
+    $(document).off('show.bs.modal', '#modalCreateItem');
+    $(document).off('hidden.bs.modal', '#modalCreateItem');
+    $(document).off('submit', '#modalCreateItem form');
+    
+    // Load content when modal is shown
     $("#modalCreateItem").on('show.bs.modal', function (e) {
         var link = $(e.relatedTarget);
         $(this).find(".modal-content").load(link.attr("href"));
     });
 
-    $(document).off('submit', '#modalCreateItem');
+    // Clear modal content when hidden to prevent style persistence
+    $("#modalCreateItem").on('hidden.bs.modal', function () {
+        $(this).find(".modal-content").empty();
+    });
 
+    // Handle form submission
     $("#modalCreateItem").on('submit', 'form', function (e) {
-        e.preventDefault();//#modalCreateItem
+        e.preventDefault();
 
         $.ajax({
             type: 'POST',

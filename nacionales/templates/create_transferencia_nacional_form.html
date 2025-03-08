@@ -1,10 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% load crispy_forms_tags %}
+<style>
+    .form-label {
+        color: #16168c;
+    }
+</style>
+<form method="post" id="transferenciaNacionalForm" action="{% url 'transferencia_nacional_create' %}">
+    {% csrf_token %}
+    {% crispy form %}
+    <button type="submit" class="btn btn-primary">Guardar Transferencia Nacional</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+</form>

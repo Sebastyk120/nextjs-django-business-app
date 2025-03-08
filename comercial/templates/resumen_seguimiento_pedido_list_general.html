@@ -2,36 +2,127 @@
 {% block content %}
     {% load static %}
     {% load django_tables2 %}
-    <!DOCTYPE html>
-    <html lang="es" data-bs-theme="dark">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="{% static 'css/seguimiento_resumen_pedido_items.css' %}"/>
-        <title>Tracking Heavens</title>
-    </head>
-    <body>
-    <div class="container">
-        <h1 class="align-center">Resumen Exportaciones <i class="bi bi-clipboard-data-fill"></i></h1>
-        <form id="filterForm" method="get" class="form-inline my-2 my-lg-0 d-flex align-items-center justify-content-center">
-            {{ form.as_p }}
-            <div class="button-container">
-                <button type="submit" class="btn btn-primary">Filtrar</button>
-                <button type="button" id="clearFilters" class="btn btn-secondary">Limpiar Filtros</button>
-                <a class="btn btn-danger btn-md" id="exportButton" name="exportar"
-                   href="{% url 'exportar_resumen_semana_pdf' %}?{{ request.GET.urlencode }}" target="_blank" disabled>
-                    <i class="bi bi-filetype-pdf"></i>
+    <link rel="stylesheet" href="{% static 'css/pedido_list_general.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/table_styles.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/modal_styles.css' %}"/>
+
+    <div class="container my-3">
+        <div class="pedidos-wrapper">
+            <!-- Header Section -->
+            <div class="header-section mb-3">
+                <h1 class="section-title text-center">
+                    <img src="{% static 'img/heavens2.png' %}" alt="Logo de la Empresa" class="logo-empresa"/>
+                    Resumen Exportaciones <i class="bi bi-clipboard-data-fill"></i>
+                </h1>
+                <div class="subtitle text-center">Vista consolidada de exportaciones Heavens</div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons mb-4">
+                <a class="btn btn-export-detail btn-danger btn-lg pulse-button" href="{% url 'exportar_resumen_semana_pdf' %}?{{ request.GET.urlencode }}" id="exportPdfBtn">
+                    <i class="fas fa-file-pdf"></i> Exportar PDF
                 </a>
-                <a class="btn btn-success btn-md" id="exportButton" name="exportar"
-                   href="{% url 'exportar_excel_seguimientos_resumen' %}?{{ request.GET.urlencode }}" target="_blank" disabled>
-                    <i class="bi bi-filetype-xls"></i>
+                
+                <a class="btn btn-export pulse-button" href="{% url 'exportar_excel_seguimientos_resumen' %}?{{ request.GET.urlencode }}" id="exportExcelBtn">
+                    <i class="fas fa-file-excel"></i> Exportar Excel
+                </a>
+                
+                <a class="btn btn-back" href="{% url 'redirect_based_on_group' %}">
+                    <i class="fas fa-arrow-left"></i> Volver
                 </a>
             </div>
-        </form>
+
+            <!-- Search and Filters Card -->
+            <div class="card mb-4 filters-card">
+                <div class="card-header">
+                    <h4><i class="fas fa-filter"></i> Filtros de Resumen</h4>
+                </div>
+                <div class="card-body">
+                    <form id="filterForm" method="get" class="search-form">
+                        <div class="row align-items-end">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.semana.label_tag }}
+                                    {{ form.semana }}
+                                    <div class="invalid-feedback">Este campo es obligatorio</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {{ form.exportadora.label_tag }}
+                                    {{ form.exportadora }}
+                                </div>
+                            </div>
+                            <div class="col-md-4 d-flex justify-content-end">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-search">
+                                        <i class="fas fa-filter"></i> Filtrar
+                                    </button>
+                                    <button type="button" id="clearFilters" class="btn btn-clear">
+                                        <i class="fas fa-times-circle"></i> Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="card mb-4 table-card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <h4><i class="bi bi-clipboard-data-fill"></i> Resumen de Exportaciones</h4>
+                    <div class="header-actions">
+                        <span class="results-count">{{ table.rows|length }} Registros</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        {% render_table table %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="container-fluid">
-        {% render_table table %}
-    </div>
+
+    <style>
+        /* Custom styles for PDF button */
+        .btn-danger.pulse-button {
+            box-shadow: 0 0 0 rgba(204,169,44, 0.4);
+            animation: pulse 3s infinite;
+        }
+
+        .btn-export.pulse-button {
+            box-shadow: 0 0 0 rgba(204,169,44, 0.4);
+            animation: pulse 3s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+            }
+            
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+            }
+            
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        select.is-invalid {
+            border-color:rgb(231, 136, 146);
+        }
+    </style>
+
     <script>
         document.getElementById('clearFilters').addEventListener('click', function () {
             // Obtener la URL actual sin los parámetros de búsqueda
@@ -40,7 +131,31 @@
             // Recargar la página con la URL sin parámetros de búsqueda
             window.location.href = url.href;
         });
+        
+        // Validate semana field is not empty before exporting
+        document.getElementById('exportPdfBtn').addEventListener('click', function(e) {
+            validateSemanaField(e);
+        });
+        
+        document.getElementById('exportExcelBtn').addEventListener('click', function(e) {
+            validateSemanaField(e);
+        });
+        
+        // Remove error state when user selects a value
+        document.querySelector('select[name="semana"]').addEventListener('change', function() {
+            if (this.value !== '') {
+                this.classList.remove('is-invalid');
+            }
+        });
+        
+        function validateSemanaField(e) {
+            const semanaField = document.querySelector('select[name="semana"]');
+            if (!semanaField.value || semanaField.value === '') {
+                e.preventDefault();
+                semanaField.classList.add('is-invalid');
+                alert('Por favor seleccione una semana antes de exportar');
+                return false;
+            }
+        }
     </script>
-    </body>
-    </html>
 {% endblock %}

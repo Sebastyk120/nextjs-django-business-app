@@ -1,0 +1,114 @@
+{% extends 'comercialbase.html' %}
+{% load static %}
+{% load django_tables2 %}
+{% block content %}
+    <link rel="stylesheet" href="{% static 'css/pedido_list_general.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/table_styles.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/modal_styles.css' %}"/>
+
+    <div class="container my-3">
+        <div class="pedidos-wrapper">
+            <!-- Header Section -->
+            <div class="header-section mb-3">
+                <h2 class="section-title text-center">
+                    <img src="{% static 'img/fieldex.png' %}" alt="Logo de la Empresa" class="logo-empresa"/> Movimientos Inventario Fieldex
+                </h2>
+                <div class="subtitle text-center">Gestión de inventario Fieldex</div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons mb-4">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCreateItem" href="{% url 'reciboitemscreatefieldex' %}">
+                    <i class="bi bi-database-fill-add"></i> Añadir
+                </button>
+                
+                <a class="btn btn-export" href="{% url 'exportar_items_fieldex' %}" name="exportar">
+                    <i class="bi bi-filetype-xlsx"></i> Exportar
+                </a>
+                
+                <a class="btn btn-back" onclick="history.back();">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+
+            <!-- Search and Filters Card -->
+            <div class="card mb-4 filters-card">
+                <div class="card-header">
+                    <h4><i class="fas fa-search"></i> Búsqueda</h4>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="search-form" id="searchForm">
+                        <div class="row">
+                            <div class="col-lg-9 col-md-8 mb-3">
+                                <div class="form-group">
+                                    <label for="item_busqueda">Buscar Referencia</label>
+                                    <input type="text" name="item_busqueda" id="item_busqueda" class="form-control" placeholder="Buscar Referencia..." value="{{ request.GET.item_busqueda|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button class="btn btn-search w-100" type="submit">
+                                        <i class="bi bi-search"></i> Buscar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="card mb-4 table-card">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <h4><i class="fas fa-list"></i> Listado de Movimientos</h4>
+                    <div class="header-actions">
+                        <span class="results-count">{{ table.rows|length }} Registros</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        {% if table %}
+                            {% render_table table %}
+                        {% else %}
+                            <p>No data available</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Crear Item Modal -->
+    <div class="modal fade" id="modalCreateItem" tabindex="-1" aria-labelledby="modalCreateItemLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content custom-modal">
+                <!-- Modal content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Editar Item Modal -->
+    <div class="modal fade" id="moverItemModal" tabindex="-1" role="dialog" aria-labelledby="moverItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content custom-modal">
+                <!-- Modal content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Eliminar Item Modal -->
+    <div class="modal fade" id="eliminarItemModal" tabindex="-1" role="dialog" aria-labelledby="eliminarItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content custom-modal">
+                <!-- Modal content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    {% block extra_js %}
+    <script src="{% static 'js/editar_item.js' %}"></script>
+    <script src="{% static 'js/crear_item.js' %}"></script>
+    <script src="{% static 'js/eliminar_item.js' %}"></script>
+    {% endblock %}
+{% endblock %}

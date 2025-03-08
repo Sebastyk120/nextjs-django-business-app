@@ -1,0 +1,25 @@
+/* High-specificity table row styling */
+.table tbody tr.row-canceled {
+    background-color: #f8d7da !important;
+}
+
+.table tbody tr.row-completed {
+    background-color: #d4edda !important;
+}
+
+.table tbody tr.row-pending {
+    background-color: #fff3cd !important;
+}
+
+/* Ensure these styles override Bootstrap table hover effects */
+.table tbody tr.row-canceled:hover {
+    background-color: #f5c6cb !important;
+}
+
+.table tbody tr.row-completed:hover {
+    background-color: #c3e6cb !important;
+}
+
+.table tbody tr.row-pending:hover {
+    background-color: #ffeeba !important;
+}
