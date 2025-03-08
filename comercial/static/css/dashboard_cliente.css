@@ -5,10 +5,11 @@ body {
     background-color: #f5f7fa;
     color: #333;
     font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+    font-size: 0.9rem;
 }
 
 .container-fluid {
-    padding: 30px;
+    padding: 20px;
 }
 
 /* Enhanced Title Styling */
@@ -27,7 +28,7 @@ body {
 .dashboard-title h1 {
     font-weight: 700;
     margin: 0;
-    font-size: 1.8rem;
+    font-size: 1.5rem;
 }
 
 .dashboard-title .title-icon {
@@ -129,7 +130,7 @@ h1:before {
 
 .card-header h4 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
@@ -312,7 +313,7 @@ h1:before {
 }
 
 .summary-value {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     margin: 15px 0;
 }
@@ -456,6 +457,7 @@ h1:before {
     font-weight: 600;
     border: none;
     padding: 15px;
+    font-size: 0.85rem;
 }
 
 .table td {
@@ -463,6 +465,7 @@ h1:before {
     vertical-align: middle;
     color: #334155;
     border-color: #f1f5f9;
+    font-size: 0.85rem;
 }
 
 .table-hover tbody tr:hover {
@@ -521,7 +524,7 @@ canvas {
 
 /* Larger Chart Container */
 .chart-container-lg {
-    height: 350px !important;
+    height: 300px !important;
     position: relative;
 }
 
@@ -537,7 +540,7 @@ canvas {
 .legend-item {
     display: flex;
     align-items: center;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
 }
 
 .legend-color {
@@ -554,12 +557,13 @@ canvas {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     padding: 10px;
     border: 1px solid #e2e8f0;
+    font-size: 0.85rem;
 }
 
 /* Responsive Adjustments */
 @media (max-width: 992px) {
     .container-fluid {
-        padding: 20px;
+        padding: 15px;
     }
 
     .btn-text {
@@ -577,11 +581,23 @@ canvas {
     .button-group {
         gap: 6px;
     }
+
+    .dashboard-title h1 {
+        font-size: 1.3rem;
+    }
+
+    .summary-value {
+        font-size: 20px;
+    }
+
+    .chart-container-lg {
+        height: 250px !important;
+    }
 }
 
 @media (max-width: 768px) {
     .container-fluid {
-        padding: 15px;
+        padding: 10px;
     }
     
     .filter-section form {
@@ -594,6 +610,18 @@ canvas {
     
     .summary-card {
         margin-bottom: 15px;
+    }
+
+    .dashboard-title h1 {
+        font-size: 1.1rem;
+    }
+
+    .summary-value {
+        font-size: 18px;
+    }
+
+    .chart-container-lg {
+        height: 200px !important;
     }
 }
 
