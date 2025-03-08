@@ -1,0 +1,279 @@
+{% load static %}
+{% load custom_filters %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado de Cuenta - {{ proveedor.nombre }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/estado_cuenta_proveedor.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="account-summary-wrapper">
+            <!-- Header Section -->
+            <div class="header-section">
+                <h2 class="section-title">
+                    <i class="bi bi-wallet2"></i> Estado de Cuenta Proveedor Nacional
+                </h2>
+                <div class="subtitle">{{ proveedor.nombre }} | {{ fecha_inicio|date:'d/m/Y' }} - {{ fecha_fin|date:'d/m/Y' }}</div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="filters-section">
+                <form method="GET" class="row">
+                    <!-- Proveedor field removed as requested -->
+                    <div class="col-md-4">
+                        <label for="fecha_inicio" class="form-label">Fecha Inicio:</label>
+                        <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio|date:'Y-m-d' }}" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="fecha_fin" class="form-label">Fecha Fin:</label>
+                        <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin|date:'Y-m-d' }}" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-filter">
+                            <i class="bi bi-filter"></i> Aplicar Filtros
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <a href="{% url 'dashboard_nacionales' %}" class="btn btn-dashboard">
+                            <i class="bi bi-speedometer2"></i> Dashboard Nal
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Resumen Cards -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card summary-card total-compras-card h-100">
+                        <div class="card-body">
+                            <div class="card-icon">
+                                <i class="bi bi-cart-check fs-3"></i>
+                            </div>
+                            <h5 class="card-title">Total Compras</h5>
+                            <p class="card-value">{{ total_compras_valor|format_currency }}</p>
+                            <p class="card-info">{{ total_kilos|format_number }} kg</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card summary-card total-transferido-card h-100">
+                        <div class="card-body">
+                            <div class="card-icon">
+                                <i class="bi bi-cash-coin fs-3"></i>
+                            </div>
+                            <h5 class="card-title">Total Transferido</h5>
+                            <p class="card-value">{{ total_transferido|format_currency }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card summary-card saldo-pendiente-card h-100">
+                        <div class="card-body">
+                            <div class="card-icon">
+                                <i class="bi bi-exclamation-circle fs-3"></i>
+                            </div>
+                            <h5 class="card-title">Saldo Pendiente</h5>
+                            <p class="card-value {% if saldo_pendiente > 0 %}pending{% else %}completed{% endif %}">
+                                {{ saldo_pendiente|format_currency }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card summary-card utilidad-card h-100">
+                        <div class="card-body">
+                            <div class="card-icon">
+                                <i class="bi bi-graph-up-arrow fs-3"></i>
+                            </div>
+                            <h5 class="card-title">Utilidad</h5>
+                            <p class="card-value">{{ total_utilidad|format_currency }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalles -->
+            <div class="accordion" id="detallesAccordion">
+                <!-- Compras -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#comprasCollapse">
+                            <i class="bi bi-box-seam"></i> Compras Realizadas
+                        </button>
+                    </h2>
+                    <div id="comprasCollapse" class="accordion-collapse collapse show" data-bs-parent="#detallesAccordion">
+                        <div class="accordion-body">
+                            <div class="table-container">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th><i class="bi bi-calendar3"></i> Fecha</th>
+                                            <th><i class="bi bi-upc-scan"></i> Guía</th>
+                                            <th><i class="bi bi-box"></i> Fruta</th>
+                                            <th><i class="bi bi-truck"></i> Peso (kg)</th>
+                                            <th><i class="bi bi-tag"></i> Precio Exp</th>
+                                        
+                                            <th><i class="bi bi-percent"></i> Progreso</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for compra in compras %}
+                                            <tr>
+                                                <td>{{ compra.fecha_compra|date:"d/m/Y" }}</td>
+                                                <td>{{ compra.numero_guia }}</td>
+                                                <td>{{ compra.fruta }}</td>
+                                                <td>{{ compra.peso_compra|format_number }}</td>
+                                                <td>{{ compra.precio_compra_exp|format_currency }}</td>
+                                                <td>{{ compra.precio_compra_nal|format_currency }}</td>
+                                                <td class="{% if compra.porcentaje_completitud == 100 %}completed{% else %}pending{% endif %}">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="progress me-2" style="height: 8px; width: 100px;">
+                                                            <div class="progress-bar {% if compra.porcentaje_completitud == 100 %}bg-success{% else %}bg-warning{% endif %}" 
+                                                                role="progressbar" 
+                                                                style="width: {{ compra.porcentaje_completitud|floatformat:0 }}%">
+                                                            </div>
+                                                        </div>
+                                                        {{ compra.porcentaje_completitud|floatformat:0 }}%
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="5" class="text-center py-3">
+                                                    <i class="bi bi-info-circle me-2"></i> No hay compras en este período.
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transferencias -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#transferenciasCollapse">
+                            <i class="bi bi-bank"></i> Transferencias Realizadas
+                        </button>
+                    </h2>
+                    <div id="transferenciasCollapse" class="accordion-collapse collapse show" data-bs-parent="#detallesAccordion">
+                        <div class="accordion-body">
+                            <div class="table-container">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th><i class="bi bi-calendar3"></i> Fecha</th>
+                                            <th><i class="bi bi-currency-dollar"></i> Valor</th>
+                                            <th><i class="bi bi-building"></i> Origen</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for transferencia in transferencias %}
+                                            <tr>
+                                                <td>{{ transferencia.fecha_transferencia|date:"d/m/Y" }}</td>
+                                                <td>{{ transferencia.valor_transferencia|format_currency }}</td>
+                                                <td>{{ transferencia.origen_transferencia }}</td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="3" class="text-center py-3">
+                                                    <i class="bi bi-info-circle me-2"></i> No hay transferencias en este período.
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="chart-container">
+                <h4 class="chart-title"><i class="bi bi-bar-chart-line"></i> Evolución de Compras</h4>
+                <canvas id="comprasChart"></canvas>
+            </div>
+            
+            <!-- Botón de volver eliminado -->
+
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('comprasChart').getContext('2d');
+            const comprasChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [{% for compra in compras_por_fecha %}'{{ compra.fecha_compra|date:"d/m/Y" }}',{% endfor %}],
+                    datasets: [{
+                        label: 'Valor de Compras',
+                        data: [{% for compra in compras_por_fecha %}{{ compra.total_valor }},{% endfor %}],
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#4f46e5',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let value = context.raw;
+                                    return 'Valor: $' + value.toLocaleString('es-ES', {
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 0
+                                    });
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('es-ES');
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: true,  // Cambiado a true para mantener proporciones
+                    aspectRatio: 2  // Relación de aspecto ancho:alto = 2:1
+                }
+            });
+        });
+    </script>
+</body>
+</html>

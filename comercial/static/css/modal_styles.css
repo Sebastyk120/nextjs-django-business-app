@@ -1,0 +1,152 @@
+/* Modal Styles */
+.modal-content.bg-dark {
+    background: linear-gradient(to bottom, #343a40, #212529);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-footer {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal .btn {
+    transition: all 0.3s;
+    border-radius: 4px;
+    font-weight: 500;
+    padding: 8px 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.modal .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.modal .form-control {
+    border-radius: 4px;
+    transition: box-shadow 0.3s;
+}
+
+.modal .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.modal-title {
+    font-weight: 600;
+    color: #f8f9fa;
+}
+
+.modal .alert {
+    border-left: 4px solid #17a2b8;
+    background-color: rgba(23, 162, 184, 0.1);
+    color: #f8f9fa;
+}
+
+.modal .form-check-input {
+    background-color: #343a40;
+    border: 1px solid #6c757d;
+}
+
+.modal .form-check-input:checked {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.modal label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Animaciones para el modal */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: scale(0.9);
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1);
+}
+
+/* Export Modal Light Theme */
+.modal-content.bg-export {
+    background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #212529;
+}
+
+.modal-header.export-header {
+    background-color: #28a745;
+    border-bottom: 1px solid #28a745;
+    color: white;
+}
+
+.modal-footer.export-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.export-title {
+    font-weight: 600;
+    color: white;
+}
+
+.export-form .form-control {
+    background-color: white;
+    border: 1px solid #ced4da;
+    color: #212529;
+}
+
+.export-form .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+    border-color: #28a745;
+}
+
+.export-form label {
+    color: #212529;
+    font-weight: 500;
+}
+
+.export-form .form-check-input {
+    background-color: white;
+    border: 1px solid #ced4da;
+}
+
+.export-form .form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.export-form .alert-info {
+    background-color: #cff4fc;
+    border-color: #b6effb;
+    color: #055160;
+}
+
+.export-btn {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.export-btn:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.cancel-btn {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.cancel-btn:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}

@@ -1,0 +1,592 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Estado Cuenta Cliente</title>
+    <link rel="icon" href="{% static 'img/favicon.png' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: 0.3s;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            background-color: #4F81BD;
+            color: white;
+            font-weight: bold;
+            border-radius: 10px 10px 0 0 !important;
+        }
+
+        .summary-card {
+            text-align: center;
+            padding: 15px;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .summary-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-paid {
+            background-color: #4CAF50;
+        }
+
+        .status-pending {
+            background-color: #FFC107;
+        }
+
+        .status-overdue {
+            background-color: #F44336;
+        }
+
+        .filter-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table th {
+            background-color: #4F81BD;
+            color: white;
+        }
+
+        .progress {
+            height: 10px;
+            margin-top: 5px;
+        }
+
+        .data-point {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .data-label {
+            color: #666;
+        }
+
+        .data-value {
+            font-weight: bold;
+        }
+
+        .payment-timeline {
+            position: relative;
+            margin-left: 20px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .timeline-item:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #4F81BD;
+        }
+
+        .timeline-item:after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 12px;
+            height: 100%;
+            width: 2px;
+            background-color: #ddd;
+        }
+
+        .timeline-item:last-child:after {
+            display: none;
+        }
+
+        .table-highlight tr:hover {
+            background-color: rgba(79, 129, 189, 0.1);
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid py-4">
+    <h1 class="mb-4">Dashboard Estado de Cuenta</h1>
+
+    <!-- Filtros -->
+    <div class="row filter-section">
+        <div class="col-md-10">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="cliente" class="form-label">Cliente</label>
+                    <select name="cliente" id="cliente" class="form-select">
+                        <option value="">Todos los clientes</option>
+                        {% for cliente in clientes %}
+                            <option value="{{ cliente.id }}"
+                                    {% if selected_cliente == cliente.id %}selected{% endif %}>{{ cliente.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="fecha_inicial" class="form-label">Fecha Inicial</label>
+                    <input type="date" class="form-control" id="fecha_inicial" name="fecha_inicial"
+                           value="{{ fecha_inicial|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="fecha_final" class="form-label">Fecha Final</label>
+                    <input type="date" class="form-control" id="fecha_final" name="fecha_final"
+                           value="{{ fecha_final|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="grupo" class="form-label">Exportadora</label>
+                    <select name="grupo" id="grupo" class="form-select">
+                        <option value="">Todas</option>
+                        {% for exportadora in exportadoras %}
+                            <option value="{{ exportadora.nombre }}"
+                                    {% if selected_grupo == exportadora.nombre %}selected{% endif %}>{{ exportadora.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary mb-3 w-100">Filtrar</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <a href="{% url 'exportar_cartera_cliente' %}?cliente={{ selected_cliente }}&fecha_inicial={{ fecha_inicial|date:'Y-m-d' }}&fecha_final={{ fecha_final|date:'Y-m-d' }}&grupo={{ selected_grupo }}"
+               class="btn btn-success mb-3 w-100">
+                <i class="fas fa-file-excel me-2"></i>Exportar
+            </a>
+        </div>
+    </div>
+
+    {% if selected_cliente %}
+        <!-- Resumen del Cliente -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-user me-2"></i>Información del Cliente
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-3">{{ cliente.nombre }}</h4>
+                        <div class="data-point">
+                            <span class="data-label"><i class="fa-solid fa-address-book"></i> Dirección:</span>
+                            <span class="data-value">{{ cliente.direccion }}</span>
+                        </div>
+                        <div class="data-point">
+                            <span class="data-label"><i class="fa-solid fa-landmark"></i> Tax ID:</span>
+                            <span class="data-value">{{ cliente.tax_id }}</span>
+                        </div>
+                        <div class="data-point">
+                            <span class="data-label"><i class="fas fa-calendar me-2"></i> Días de cartera:</span>
+                            <span class="data-value">{{ cliente.negociaciones_cartera }}</span>
+                        </div>
+                        <div class="data-point">
+                            <span class="data-label"><i class="fas fa-globe me-2"></i> País:</span>
+                            <span class="data-value">{{ cliente.destino_iata.pais }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="row">
+                    <!-- Tarjetas resumen -->
+                    <div class="col-md-4">
+                        <div class="card summary-card">
+                            <div class="summary-value text-primary">{{ total_facturas|format_currency }}</div>
+                            <div class="summary-label">Total Facturado (USD)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card summary-card">
+                            <div class="summary-value text-success">{{ total_pagado|format_currency }}</div>
+                            <div class="summary-label">Total Pagado (USD)</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card summary-card">
+                            <div class="summary-value text-danger">{{ saldo_pendiente|format_currency }}</div>
+                            <div class="summary-label">Saldo Pendiente (USD)</div>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico estado de cartera -->
+                    <div class="col-12 mt-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fas fa-chart-pie me-2"></i>Estado de Cartera
+                            </div>
+                            <div class="card-body">
+                                <canvas id="carteraChart" height="180"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Análisis detallado -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line me-2"></i>Tendencia de Pagos
+                    </div>
+                    <div class="card-body">
+                        <canvas id="paymentsChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-bar me-2"></i>Facturas por Exportadora
+                    </div>
+                    <div class="card-body">
+                        <canvas id="exportadoraChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial de pagos recientes -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-history me-2"></i>Historial de Pagos Recientes
+                    </div>
+                    <div class="card-body">
+                        <div class="payment-timeline">
+                            {% for pago in pagos_recientes %}
+                                <div class="timeline-item">
+                                    <div><strong>{{ pago.fecha_pago|date:"d/m/Y" }}</strong></div>
+                                    <div>Factura: {{ pago.numero_factura }}</div>
+                                    <div>{{ pago.valor_pagado_cliente_usd|format_currency }} USD</div>
+                                </div>
+                            {% empty %}
+                                <p>No hay pagos recientes registrados.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Facturas Próximas a Vencer
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-highlight">
+                                <thead>
+                                <tr>
+                                    <th>Factura</th>
+                                    <th>Monto (USD)</th>
+                                    <th>Fecha Entrega</th>
+                                    <th>Fecha Esperada</th>
+                                    <th>Días Restantes</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for factura in facturas_proximas %}
+                                    <tr {% if factura.dias_restantes <= 5 %}class="table-danger"
+                                        {% elif factura.dias_restantes <= 10 %}class="table-warning"{% endif %}>
+                                        <td>{{ factura.numero_factura }}</td>
+                                        <td>{{ factura.valor_total_factura_usd|format_currency }}</td>
+                                        <td>{{ factura.fecha_entrega|date:"d/m/Y" }}</td>
+                                        <td>{{ factura.fecha_esperada_pago|date:"d/m/Y" }}</td>
+                                        <td>{{ factura.dias_restantes }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">No hay facturas próximas a vencer.</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Listado de facturas -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="fas fa-file-invoice-dollar me-2"></i>Listado de Facturas
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-highlight">
+                        <thead>
+                        <tr>
+                            <th>Factura</th>
+                            <th>AWB</th>
+                            <th>Fecha Entrega</th>
+                            <th>Exp. Fecha Pago</th>
+                            <th>Exportadora</th>
+                            <th>Total Factura</th>
+                            <th>Total Pagado</th>
+                            <th>Nota Crédito</th>
+                            <th>Descuento</th>
+                            <th>Utilidad</th>
+                            <th>Saldo</th>
+                            <th>Estado</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for pedido in pedidos %}
+                            {% with saldo=pedido.valor_total_factura_usd|sub:pedido.valor_pagado_cliente_usd|sub:pedido.utilidad_bancaria_usd|sub:pedido.valor_total_nota_credito_usd|sub:pedido.descuento %}
+                                <tr>
+                                    <td>{{ pedido.numero_factura }}</td>
+                                    <td>{{ pedido.awb }}</td>
+                                    <td>{{ pedido.fecha_entrega|date:"d/m/Y" }}</td>
+                                    <td>{{ pedido.fecha_esperada_pago|date:"d/m/Y" }}</td>
+                                    <td>{{ pedido.exportadora__nombre }}</td>
+                                    <td>{{ pedido.valor_total_factura_usd|format_currency }}</td>
+                                    <td>{{ pedido.valor_pagado_cliente_usd|format_currency }}</td>
+                                    <td>{{ pedido.valor_total_nota_credito_usd|format_currency }}</td>
+                                    <td>{{ pedido.descuento|format_currency }}</td>
+                                    <td>{{ pedido.utilidad_bancaria_usd|format_currency }}</td>
+                                    <td>{{ saldo|format_currency }}</td>
+                                    <td>
+                                        {% if pedido.estado_factura == 'Pagada' %}
+                                            <span class="badge bg-success">Pagada</span>
+                                        {% elif pedido.dias_de_vencimiento > 0 %}
+                                            <span class="badge bg-danger">Vencida {{ pedido.dias_de_vencimiento }} días</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endwith %}
+                        {% empty %}
+                            <tr>
+                                <td colspan="12" class="text-center">No hay facturas disponibles con los filtros
+                                    seleccionados.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen por exportadora -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="fas fa-building me-2"></i>Resumen por Exportadora
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-highlight">
+                        <thead>
+                        <tr>
+                            <th>Intermediario</th>
+                            <th>Cliente</th>
+                            <th>Exportadora</th>
+                            <th>Total Facturas</th>
+                            <th>Total Pagado</th>
+                            <th>Utilidad Bancaria</th>
+                            <th>Total Notas Crédito</th>
+                            <th>Total Descuentos</th>
+                            <th>Saldo</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for total in totales %}
+                            {% with saldo=total.total_factura|sub:total.total_pagado|sub:total.total_utilidad|sub:total.total_nc|sub:total.total_descuentos %}
+                                <tr>
+                                    <td>{{ total.intermediario__nombre|default:"-" }}</td>
+                                    <td>{{ total.cliente__nombre }}</td>
+                                    <td>{{ total.exportadora__nombre }}</td>
+                                    <td>{{ total.total_factura|format_currency }}</td>
+                                    <td>{{ total.total_pagado|format_currency }}</td>
+                                    <td>{{ total.total_utilidad|format_currency }}</td>
+                                    <td>{{ total.total_nc|format_currency }}</td>
+                                    <td>{{ total.total_descuentos|format_currency }}</td>
+                                    <td>{{ saldo|format_currency }}</td>
+                                </tr>
+                            {% endwith %}
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center">No hay datos disponibles con los filtros
+                                    seleccionados.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- Mensaje cuando no hay cliente seleccionado -->
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-user-circle fa-5x text-muted mb-3"></i>
+                <h3>Seleccione un cliente para ver su estado de cuenta</h3>
+                <p class="text-muted">Utilice los filtros superiores para seleccionar un cliente y el rango de
+                    fechas.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        {% if selected_cliente %}
+            // Gráfico de estado de cartera
+            var carteraCtx = document.getElementById('carteraChart').getContext('2d');
+            var carteraChart = new Chart(carteraCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pagado', 'Pendiente', 'Notas de Crédito', 'Descuentos', 'Utilidad Bancaria'],
+                    datasets: [{
+                        data: [
+                            {{ total_pagado }},
+                            {{ saldo_pendiente }},
+                            {{ total_notas_credito }},
+                            {{ total_descuentos }},
+                            {{ total_utilidad }}
+                        ],
+                        backgroundColor: [
+                            '#4CAF50',
+                            '#F44336',
+                            '#2196F3',
+                            '#FF9800',
+                            '#9C27B0'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltips: {
+                        callbacks: {
+                            label: function (tooltipItem, data) {
+                                var label = data.labels[tooltipItem.index] || '';
+                                var value = data.datasets[0].data[tooltipItem.index];
+                                return label + ': $' + value.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de tendencia de pagos
+            var paymentsCtx = document.getElementById('paymentsChart').getContext('2d');
+            var paymentsChart = new Chart(paymentsCtx, {
+                type: 'line',
+                data: {
+                    labels: {{ pagos_fechas|safe }},
+                    datasets: [{
+                        label: 'Monto Pagado (USD)',
+                        data: {{ pagos_montos|safe }},
+                        backgroundColor: 'rgba(79, 129, 189, 0.2)',
+                        borderColor: 'rgba(79, 129, 189, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(79, 129, 189, 1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        xAxes: [{
+                            type: 'time',
+                            time: {
+                                unit: 'month',
+                                displayFormats: {
+                                    month: 'MMM YYYY'
+                                }
+                            },
+                            gridLines: {
+                                display: false
+                            }
+                        }],
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                callback: function (value) {
+                                    return '$' + value;
+                                }
+                            }
+                        }]
+                    }
+                }
+            });
+
+            // Gráfico por exportadora
+            var exportadoraCtx = document.getElementById('exportadoraChart').getContext('2d');
+            var exportadoraChart = new Chart(exportadoraCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{ exportadoras_nombres|safe }},
+                    datasets: [{
+                        label: 'Total Facturado (USD)',
+                        data: {{ exportadoras_montos|safe }},
+                        backgroundColor: 'rgba(79, 129, 189, 0.7)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                callback: function (value) {
+                                    return '$' + value;
+                                }
+                            }
+                        }]
+                    }
+                }
+            });
+        {% endif %}
+    });
+</script>
+</body>
+</html>
+

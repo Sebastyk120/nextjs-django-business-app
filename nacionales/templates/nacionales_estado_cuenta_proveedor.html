@@ -1,0 +1,69 @@
+
+{% block content %}
+    <div class="container">
+        <h1>Estado de Cuenta Proveedores Nacionales</h1>
+
+        <div class="filter-bar">
+            <form method="get">
+                <div class="form-row">
+                    <div class="col">
+                        <label for="fecha_inicio">Fecha Inicio:</label>
+                        <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio }}">
+                    </div>
+                    <div class="col">
+                        <label for="fecha_fin">Fecha Fin:</label>
+                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}">
+                    </div>
+                    <div class="col">
+                        <label for="proveedor">Proveedor:</label>
+                        <select class="form-control" id="proveedor" name="proveedor">
+                            <option value="">Todos</option>
+                            {% for proveedor in proveedores %}
+                                <option value="{{ proveedor.id }}" {% if proveedor.id|stringformat:'i' == proveedor_id %}selected{% endif %}>{{ proveedor.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label for="fruta">Fruta:</label>
+                        <select class="form-control" id="fruta" name="fruta">
+                            <option value="">Todas</option>
+                            {% for fruta in frutas %}
+                                <option value="{{ fruta.id }}" {% if fruta.id|stringformat:'i' == fruta_id %}selected{% endif %}>{{ fruta.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Filtrar</button>
+            </form>
+        </div>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Proveedor</th>
+                    <th>Número de Compras</th>
+                    <th>Reportes Pendientes</th>
+                    <th>Valor Total Compras</th>
+                    <th>Total Pagado Proveedor</th>
+                    <th>Total Facturado Exportadores</th>
+                    <th>Total Kilos Comprados</th>
+                    <th>Total Utilidades</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in proveedores_data %}
+                    <tr>
+                        <td>{{ data.proveedor.nombre }}</td>
+                        <td>{{ data.numero_de_compras }}</td>
+                        <td>{{ data.reportes_pendientes }}</td>
+                        <td>{{ data.valor_total_compras }}</td>
+                        <td>{{ data.total_pagado_proveedor }}</td>
+                        <td>{{ data.total_facturado_exportadores }}</td>
+                        <td>{{ data.total_kilos_comprados }}</td>
+                        <td>{{ data.total_utilidades }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

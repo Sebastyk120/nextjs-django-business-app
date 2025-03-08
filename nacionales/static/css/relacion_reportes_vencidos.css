@@ -1,0 +1,98 @@
+/* Relacion Reportes Vencidos CSS */
+
+/* Specific styles for the overdue reports view */
+.reportes-vencidos-wrapper {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    position: relative;
+}
+
+/* Different color scheme for this report type */
+.reportes-vencidos-wrapper .search-card {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+}
+
+.reportes-vencidos-wrapper .results-card .card-header {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+/* Highlight days overdue value */
+.dias-vencidos-valor {
+    font-weight: bold;
+    color: #e53e3e;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background-color: rgba(229, 62, 62, 0.1);
+    display: inline-block;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* Different heading colors */
+.reportes-vencidos-wrapper .section-title {
+    color: #2e7d32;
+}
+
+.reportes-vencidos-wrapper .btn-export {
+    background: linear-gradient(45deg, #2e7d32, #43a047);
+}
+
+.reportes-vencidos-wrapper .btn-export:hover {
+    background: linear-gradient(45deg, #388e3c, #4caf50);
+}
+
+/* Alternate row colors for better readability */
+.reportes-vencidos-wrapper .table tbody tr:nth-child(odd) {
+    background-color: rgba(46, 125, 50, 0.05);
+}
+
+.reportes-vencidos-wrapper .table tbody tr:hover {
+    background-color: rgba(46, 125, 50, 0.1);
+}
+
+/* Total section styling */
+.reportes-vencidos-wrapper .total-section {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+.reportes-vencidos-wrapper .total-amount {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #2e7d32;
+    background: white;
+    padding: 8px 25px;
+}
+
+/* Print styles */
+@media print {
+    @page {
+        size: 17in 11in portrait; /* Tabloid size */
+        margin: 0.5cm;
+    }
+    
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .reportes-vencidos-wrapper {
+        box-shadow: none;
+        padding: 0;
+    }
+    
+    .search-card, .action-buttons, .no-imprimir {
+        display: none !important;
+    }
+    
+    .table thead th {
+        background-color: #2e7d32 !important;
+        color: white !important;
+    }
+    
+    .dias-vencidos-valor {
+        color: #e53e3e !important;
+        background-color: rgba(229, 62, 62, 0.1) !important;
+    }
+}

@@ -1,0 +1,363 @@
+/* pedido_detalle_list.css - Estilo moderno para detalles de pedidos */
+
+/* General Styles */
+body {
+    background-color: #f5f7fa;
+    color: #333;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+}
+
+.container {
+    max-width: 100%;
+}
+
+.order-detail-wrapper {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    position: relative;
+}
+
+/* Header Section */
+.section-title {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 1rem;
+    margin-bottom: 15px;
+}
+
+.mb-4 {
+    margin-bottom: 1.1rem !important;
+}
+
+/* Card Designs */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 12px 15px;
+}
+
+.card-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.card-header i {
+    margin-right: 8px;
+    color: #4f46e5;
+}
+
+/* Client Card */
+.client-card {
+    background: linear-gradient(135deg, #c2e9fb 0%, #a1c4fd 100%);
+    color: #333;
+    height: 100%;
+}
+
+.client-info {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    height: 100%;
+}
+
+.client-icon {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.client-icon i {
+    font-size: 1.8rem;
+    color: #333;
+}
+
+.client-details h5 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+    opacity: 0.8;
+}
+
+.client-details h4 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Order Card */
+.order-card {
+    background: linear-gradient(135deg, #e0f7fa 0%, #f3e5f5 100%);
+}
+
+.detail-item {
+    padding: 8px 10px;
+}
+
+.detail-box {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    padding: 10px;
+    height: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s;
+}
+
+.detail-box:hover {
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.detail-label {
+    font-size: 0.8rem;
+    color: #718096;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.detail-value {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #2d3748;
+}
+
+/* Table Card */
+.tabla-detalles-card {
+    background: white;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+}
+
+.btn i {
+    margin-right: 10px;
+    font-size: 0.9rem;
+}
+
+.btn-add {
+    background: linear-gradient(45deg, #10b981, #34d399);
+    color: white;
+}
+
+.btn-add:hover {
+    background: linear-gradient(45deg, #059669, #10b981);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-back {
+    background-color: #e2e8f0;
+    color: #4a5568;
+}
+
+.btn-back:hover {
+    background-color: #cbd5e1;
+    color: #2d3748;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Styling */
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+.table thead th {
+    background: #4f46e5;
+    color: white;
+    font-weight: 600;
+    padding: 12px 15px;
+    border: none;
+    position: sticky;
+    top: 0;
+}
+
+.table thead th:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.table thead th:last-child {
+    border-radius: 0 8px 8px 0;
+}
+
+.table thead th a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.table thead th a:hover {
+    text-decoration: underline;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #f1f1f1;
+    transition: background 0.2s;
+}
+
+.table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+}
+
+.table tbody td {
+    padding: 12px 15px;
+    color: #4a5568;
+    vertical-align: middle;
+}
+
+/* Action buttons in table */
+.table .btn-sm {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    margin: 0 2px;
+}
+
+.table .btn-edit {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.table .btn-edit:hover {
+    background-color: #d97706;
+    color: white;
+}
+
+.table .btn-delete {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+}
+
+.table .btn-delete:hover {
+    background-color: #dc2626;
+    color: white;
+}
+
+.table .btn-move {
+    background-color: rgba(14, 165, 233, 0.1);
+    color: #0284c7;
+}
+
+.table .btn-move:hover {
+    background-color: #0284c7;
+    color: white;
+}
+
+/* Custom Modal */
+.custom-modal {
+    background: #2d3748;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    border: none;
+}
+
+.modal-header {
+    background: linear-gradient(45deg, #4f46e5, #6366f1);
+    color: white;
+    border-bottom: none;
+    padding: 15px 20px;
+}
+
+.modal-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.modal-body {
+    padding: 20px;
+    color: white;
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 15px 20px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    .detail-item {
+        margin-bottom: 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    .client-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .client-icon {
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+}

@@ -1,0 +1,410 @@
+/* Relacion Facturas Vencidas CSS */
+
+/* General Styles */
+body {
+    background-color: #f5f7fa;
+    color: #333;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+}
+
+.container {
+    max-width: 1400px;
+}
+
+.facturas-vencidas-wrapper {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    position: relative;
+}
+
+/* Header Section */
+.section-title {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #718096;
+    font-size: 1rem;
+    margin-bottom: 15px;
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.card-header i {
+    margin-right: 8px;
+    color: #4f46e5;
+}
+
+.fecha-consulta {
+    font-size: 0.9rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+/* Search Card */
+.search-card {
+    background: linear-gradient(135deg, #e0f7fa 0%, #bbdefb 100%);
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #2d3748;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+}
+
+.form-control:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.btn-search {
+    background: linear-gradient(45deg, #4f46e5, #6366f1);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-weight: 500;
+    transition: all 0.3s;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-search:hover {
+    background: linear-gradient(45deg, #4338ca, #4f46e5);
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-search i {
+    margin-right: 8px;
+}
+
+/* Results Card */
+.results-card {
+    background: white;
+}
+
+.factura-group {
+    border-bottom: 1px solid #f1f1f1;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.factura-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.factura-header {
+    background: linear-gradient(135deg, #ffefba 0%, #ffffff 100%);
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+}
+
+.factura-info h5 {
+    margin: 0;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+}
+
+.factura-info h5 i {
+    margin-right: 8px;
+    color: #f59e0b;
+}
+
+.factura-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #4b5563;
+}
+
+.factura-meta span {
+    display: flex;
+    align-items: center;
+}
+
+.factura-meta i {
+    margin-right: 5px;
+    color: #6366f1;
+    font-size: 0.85rem;
+}
+
+.vencimiento {
+    color: #e53e3e;
+    font-weight: 500;
+}
+
+.subtotal {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+/* Table Styling */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.table thead th {
+    background: #4f46e5;
+    color: white;
+    font-weight: 600;
+    padding: 12px 15px;
+    border: none;
+    position: sticky;
+    top: 0;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table thead th:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.table thead th:last-child {
+    border-radius: 0 8px 8px 0;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #f1f1f1;
+    transition: background 0.2s;
+}
+
+.table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+}
+
+.table tbody td {
+    padding: 10px 15px;
+    color: #4a5568;
+    text-align: center;
+}
+
+/* Total Section */
+.total-section {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin-top: 20px;
+}
+
+.total-label {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-right: 15px;
+}
+
+.total-amount {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #047857;
+    background: white;
+    padding: 8px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* No Results State */
+.no-results-card {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+}
+
+.no-results-icon {
+    font-size: 3rem;
+    color: #a0aec0;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.no-results-text {
+    color: #4a5568;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+.btn i {
+    margin-right: 10px;
+    font-size: 1.1rem;
+}
+
+.btn-back {
+    background-color: #e2e8f0;
+    color: #4a5568;
+    border: none;
+}
+
+.btn-back:hover {
+    background-color: #cbd5e1;
+    color: #2d3748;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-export {
+    background: linear-gradient(45deg, #10b981, #059669);
+    color: white;
+    border: none;
+}
+
+.btn-export:hover {
+    background: linear-gradient(45deg, #059669, #047857);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    transform: translateY(-2px);
+    color: white;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .factura-meta {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .action-buttons {
+        flex-direction: column-reverse;
+        gap: 15px;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    .total-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .total-label {
+        margin-right: 0;
+        margin-bottom: 8px;
+    }
+    
+    .total-amount {
+        text-align: center;
+    }
+}
+
+/* Print Styles */
+@media print {
+    body, html {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .container {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+    }
+    
+    .facturas-vencidas-wrapper {
+        box-shadow: none;
+        padding: 0;
+    }
+    
+    .search-card, .action-buttons {
+        display: none !important;
+    }
+    
+    .card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #eee;
+    }
+    
+    .table {
+        font-size: 9pt;
+    }
+    
+    .table thead th {
+        background-color: #f3f4f6 !important;
+        color: black !important;
+    }
+}
