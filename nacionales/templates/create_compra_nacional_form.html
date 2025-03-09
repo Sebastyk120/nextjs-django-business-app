@@ -2,43 +2,13 @@
 <style>
     .form-label {
         color: #16168c;
-        font-weight: 500;
-    }
-    .card-header {
-        border-radius: 5px 5px 0 0;
-    }
-    .card {
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-    }
-    .btn {
-        border-radius: 4px;
-        font-weight: 500;
-    }
-    .btn-primary {
-        background-color: #3f51b5;
-        border-color: #3f51b5;
-    }
-    .form-control:focus {
-        border-color: #3f51b5;
-        box-shadow: 0 0 0 0.2rem rgba(63,81,181,0.25);
     }
 </style>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <form method="post" id="compraNacionalForm" action="{% url 'compra_nacional_create' %}">
     {% csrf_token %}
-    <div class="container-fluid px-0">
-        {% crispy form %}
-        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
-            <button type="button" class="btn btn-secondary me-md-2" data-bs-dismiss="modal">
-                <i class="fas fa-times me-1"></i> Cancelar
-            </button>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save me-1"></i> Guardar Compra Nacional
-            </button>
-        </div>
-    </div>
+    {% crispy form %}
+    <button type="submit" class="btn btn-primary">Guardar Compra Nacional</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
 </form>
 <script>
     $(document).ready(function () {

@@ -1,7 +1,7 @@
 from decimal import Decimal
 from django import forms
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field, Row, Column, HTML, Div
+from crispy_forms.layout import Layout, Field, Row, Column
 from .models import CompraNacional, VentaNacional, ReporteCalidadExportador, ReporteCalidadProveedor, TransferenciasProveedor
 
 class CompraNacionalForm(forms.ModelForm):
@@ -23,41 +23,30 @@ class CompraNacionalForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Div(
-                HTML('<h5 class="card-header bg-primary text-white mb-3"><i class="fas fa-shopping-cart me-2"></i> Información General</h5>'),
-                Row(
-                    Column('proveedor', css_class='form-group col-md-4 mb-0'),
-                    Column('fruta', css_class='form-group col-md-4 mb-0'),
-                    Column('peso_compra', css_class='form-group col-md-4 mb-0'),
-                    css_class='form-row'
-                ),
-                Row(
-                    Column('origen_compra', css_class='form-group col-md-4 mb-0'),
-                    Column('fecha_compra', css_class='form-group col-md-4 mb-0'),
-                    Column('precio_compra_exp', css_class='form-group col-md-4 mb-0'),
-                    css_class='form-row'
-                ),
-                css_class='card p-3 mb-3 border-primary'
+            Row(
+                Column('proveedor', css_class='form-group col-md-4 mb-0'),
+                Column('fruta', css_class='form-group col-md-4 mb-0'),
+                Column('peso_compra', css_class='form-group col-md-4 mb-0'),
+                css_class='form-row'
             ),
-            Div(
-                HTML('<h5 class="card-header bg-info text-white mb-3"><i class="fas fa-box me-2"></i> Información de Empaque</h5>'),
-                Row(
-                    Column('tipo_empaque', css_class='form-group col-md-6 mb-0'),
-                    Column('cantidad_empaque', css_class='form-group col-md-6 mb-0'),
-                    css_class='form-row'
-                ),
-                css_class='card p-3 mb-3 border-info'
+            Row(
+                Column('origen_compra', css_class='form-group col-md-4 mb-0'),
+                Column('fecha_compra', css_class='form-group col-md-4 mb-0'),
+                Column('precio_compra_exp', css_class='form-group col-md-4 mb-0'),
+                css_class='form-row'
             ),
-            Div(
-                HTML('<h5 class="card-header bg-success text-white mb-3"><i class="fas fa-file-alt me-2"></i> Documentación</h5>'),
-                Row(
-                    Column('numero_guia', css_class='form-group col-md-6 mb-0'),
-                    Column('remision', css_class='form-group col-md-6 mb-0'),
-                    css_class='form-row'
-                ),
-                Div('observaciones', css_class='form-group'),
-                css_class='card p-3 border-success'
+            Row(
+                Column('tipo_empaque', css_class='form-group col-md-6 mb-0'),
+                Column('cantidad_empaque', css_class='form-group col-md-6 mb-0'),
+                css_class='form-row'
             ),
+            Row(
+                Column('numero_guia', css_class='form-group col-md-6 mb-0'),
+                Column('remision', css_class='form-group col-md-6 mb-0'),
+                css_class='form-row'
+            ),
+
+            'observaciones',
         )
 
 
@@ -76,25 +65,18 @@ class VentaNacionalForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Div(
-                HTML('<h5 class="card-header bg-primary text-white mb-3"><i class="fas fa-truck me-2"></i> Información de Entrega</h5>'),
-                Row(
-                    Column('exportador', css_class='form-group col-md-6 mb-0'),
-                    Column('fecha_llegada', css_class='form-group col-md-6 mb-0'),
-                    css_class='form-row'
-                ),
-                css_class='card p-3 mb-3 border-primary'
+            Row(
+                Column('exportador', css_class='form-group col-md-6 mb-0'),
+                Column('fecha_llegada', css_class='form-group col-md-6 mb-0'),
+                css_class='form-row'
             ),
-            Div(
-                HTML('<h5 class="card-header bg-success text-white mb-3"><i class="fas fa-balance-scale me-2"></i> Información de Peso y Empaque</h5>'),
-                Row(
-                    Column('peso_bruto_recibido', css_class='form-group col-md-6 mb-0'),
-                    Column('cantidad_empaque_recibida', css_class='form-group col-md-6 mb-0'),
-                    css_class='form-row'
-                ),
-                Div('observaciones', css_class='form-group mt-3'),
-                css_class='card p-3 border-success'
+            Row(
+                Column('peso_bruto_recibido', css_class='form-group col-md-6 mb-0'),
+                Column('cantidad_empaque_recibida', css_class='form-group col-md-6 mb-0'),
+                css_class='form-row'
             ),
+
+            'observaciones',
         )
 
     def clean(self):
@@ -139,42 +121,26 @@ class ReporteCalidadExportadorForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Div(
-                HTML('<h5 class="card-header bg-primary text-white mb-3"><i class="fas fa-file-invoice me-2"></i> Información del Reporte</h5>'),
-                Row(
-                    Column('remision_exp', css_class='form-group col-md-6 mb-0'),
-                    Column('fecha_reporte', css_class='form-group col-md-6 mb-0'),
-                    css_class='form-row'
-                ),
-                css_class='card p-3 mb-3 border-primary'
+            Row(
+                Column('remision_exp', css_class='form-group col-md-6 mb-0'),
+                Column('fecha_reporte', css_class='form-group col-md-6 mb-0'),
+                css_class='form-row'
             ),
-            Div(
-                HTML('<h5 class="card-header bg-success text-white mb-3"><i class="fas fa-balance-scale me-2"></i> Información de Peso</h5>'),
-                Row(
-                    Column('kg_exportacion', css_class='form-group col-md-6 mb-0'),
-                    Column('kg_nacional', css_class='form-group col-md-6 mb-0'),
-                    css_class='form-row'
-                ),
-                css_class='card p-3 mb-3 border-success'
+            Row(
+                Column('kg_exportacion', css_class='form-group col-md-6 mb-0'),
+                Column('kg_nacional', css_class='form-group col-md-6 mb-0'),
+                css_class='form-row'
             ),
-            Div(
-                HTML('<h5 class="card-header bg-info text-white mb-3"><i class="fas fa-dollar-sign me-2"></i> Información de Precios</h5>'),
-                Row(
-                    Column('precio_venta_kg_exp', css_class='form-group col-md-6 mb-0'),
-                    Column('precio_venta_kg_nal', css_class='form-group col-md-6 mb-0'),
-                    css_class='form-row'
-                ),
-                css_class='card p-3 mb-3 border-info'
+            Row(
+                Column('precio_venta_kg_exp', css_class='form-group col-md-6 mb-0'),
+                Column('precio_venta_kg_nal', css_class='form-group col-md-6 mb-0'),
+                css_class='form-row'
             ),
-            Div(
-                HTML('<h5 class="card-header bg-warning text-white mb-3"><i class="fas fa-receipt me-2"></i> Información de Facturación</h5>'),
-                Row(
-                    Column('pagado', css_class='form-group col-md-4 mb-0'),
-                    Column('factura', css_class='form-group col-md-4 mb-0'),
-                    Column('fecha_factura', css_class='form-group col-md-4 mb-0'),
-                    css_class='form-row'
-                ),
-                css_class='card p-3 border-warning'
+            Row(
+                Column('pagado', css_class='form-group col-md-4 mb-0'),
+                Column('factura', css_class='form-group col-md-4 mb-0'),
+                Column('fecha_factura', css_class='form-group col-md-4 mb-0'),
+                css_class='form-row'
             ),
         )
 
@@ -223,29 +189,18 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
-            Div(
-                HTML('<h5 class="card-header bg-primary text-white mb-3"><i class="fas fa-weight me-2"></i> Información de Calidad</h5>'),
-                Row(
-                    Column('p_kg_exportacion', css_class='form-group col-md-6 mb-0'),
-                    Column('p_kg_nacional', css_class='form-group col-md-6 mb-0'),
-                    css_class='form-row'
-                ),
-                css_class='card p-3 mb-3 border-primary'
-            ),
-            Div(
-                HTML('<h5 class="card-header bg-success text-white mb-3"><i class="fas fa-file-invoice me-2"></i> Documentación y Estado</h5>'),
-                Row(
-                    Column('factura_prov', css_class='form-group col-md-12 mb-0'),
-                    css_class='form-row mb-3'
-                ),
-                Row(
-                    Column('reporte_enviado', css_class='form-group col-md-4 mb-0'),
-                    Column('reporte_pago', css_class='form-group col-md-4 mb-0'),
-                    Column('completado', css_class='form-group col-md-4 mb-0'),
-                    css_class='form-row'
-                ),
-                css_class='card p-3 border-success'
-            ),
+            Row(
+                Column('p_kg_exportacion', css_class='form-group col-md-4 mb-0'),
+                Column('p_kg_nacional', css_class='form-group col-md-4 mb-0'),
+                Column('factura_prov', css_class='form-group col-md-4 mb-0'),
+                css_class='form-row'),
+            Row(
+
+                Column('reporte_enviado', css_class='form-group col-md-4 mb-0'),
+                Column('reporte_pago', css_class='form-group col-md-4 mb-0'),
+                Column('completado', css_class='form-group col-md-4 mb-0'),
+                css_class='form-row'),
+
         )
 
     def clean(self):
