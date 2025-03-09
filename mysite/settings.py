@@ -164,7 +164,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 ALLOWED_HOSTS = [
-    'heavens-server.up.railway.app', 'localhost', '*',
+    'heavens-server.up.railway.app', 'localhost'
 ]
 CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app"]
 CSRF_ALLOWED_ORIGINS = ["https://heavens-server.up.railway.app"]

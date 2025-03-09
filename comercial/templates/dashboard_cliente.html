@@ -119,11 +119,19 @@
             </div>
             <div class="col-md-3">
                 <div class="card summary-card">
+                    {% if saldo_pendiente < 0 %}
+                    <div class="metric-icon metric-icon-success">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="summary-value text-success">{{ saldo_pendiente|format_currency }}</div>
+                    <div class="summary-label">Saldo Pendiente (USD) - Saldo a Favor</div>
+                    {% else %}
                     <div class="metric-icon metric-icon-danger">
                         <i class="fas fa-exclamation-circle"></i>
                     </div>
                     <div class="summary-value text-danger">{{ saldo_pendiente|format_currency }}</div>
                     <div class="summary-label">Saldo Pendiente (USD) - Abonos</div>
+                    {% endif %}
                 </div>
             </div>
         </div>
