@@ -495,6 +495,11 @@ class SeguimienosTable(tables.Table):
             return format_html('<span title="{}">{}</span>', value, value)
         return value
 
+    def render_variedades(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
+
     def render_cliente(self, value):
         if value:
             return format_html('<span title="{}">{}</span>', value, value)
