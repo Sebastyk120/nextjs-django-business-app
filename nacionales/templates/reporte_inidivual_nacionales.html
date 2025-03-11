@@ -236,6 +236,7 @@
                 font-weight: 600;
                 padding: 0.875rem;
                 text-align: center;
+                border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
             }
 
             .table-row {
@@ -715,27 +716,27 @@
             }
 
             @media print {
-                .no-print, .no-imprimir {
+                .no-print, .no-print, .no-imprimir * {
                     display: none !important;
                 }
                 
                 body {
                     background-color: white;
                 }
-            
+
                 .reporte-container {
                     box-shadow: none;
                     margin: 0;
                     width: 100%;
                     max-width: none;
                 }
-            
+
                 .reporte-header {
                     background: var(--primary-color) !important;
                     -webkit-print-color-adjust: exact;
                     print-color-adjust: exact;
                 }
-            
+
                 .module {
                     break-inside: avoid;
                     box-shadow: none;
@@ -843,7 +844,6 @@
                 overflow: hidden;
                 margin: 1.5rem 0;
                 box-shadow: var(--box-shadow-sm);
-                width: 100%; /* Ensure full width */
             }
 
             .chart-segment {
@@ -857,7 +857,6 @@
                 transition: var(--transition);
                 position: relative;
                 min-width: 40px;
-                flex-grow: 1; /* Allow segments to grow proportionally */
             }
 
             .chart-segment:hover {
@@ -1206,7 +1205,7 @@
                 
                 <!-- Gráfico de distribución de porcentajes -->
                 <div class="distribution-chart">
-                    <div class="chart-segment export" style="width: {{ reporte_proveedor.p_porcentaje_exportacion|floatformat:2 }}%; flex-basis: {{ reporte_proveedor.p_porcentaje_exportacion|floatformat:2 }}%;">
+                    <div class="chart-segment export" style="width: {{ reporte_proveedor.p_porcentaje_exportacion|floatformat:2 }}%">
                         {% if reporte_proveedor.p_porcentaje_exportacion > 8 %}
                             {{ reporte_proveedor.p_porcentaje_exportacion|floatformat:1 }}%
                         {% endif %}
@@ -1214,7 +1213,7 @@
                             Exportación: {{ reporte_proveedor.p_porcentaje_exportacion|floatformat:2 }}%
                         </div>
                     </div>
-                    <div class="chart-segment national" style="width: {{ reporte_proveedor.p_porcentaje_nacional|floatformat:2 }}%; flex-basis: {{ reporte_proveedor.p_porcentaje_nacional|floatformat:2 }}%;">
+                    <div class="chart-segment national" style="width: {{ reporte_proveedor.p_porcentaje_nacional|floatformat:2 }}%">
                         {% if reporte_proveedor.p_porcentaje_nacional > 8 %}
                             {{ reporte_proveedor.p_porcentaje_nacional|floatformat:1 }}%
                         {% endif %}
@@ -1222,7 +1221,7 @@
                             Nacional: {{ reporte_proveedor.p_porcentaje_nacional|floatformat:2 }}%
                         </div>
                     </div>
-                    <div class="chart-segment loss" style="width: {{ reporte_proveedor.p_porcentaje_merma|floatformat:2 }}%; flex-basis: {{ reporte_proveedor.p_porcentaje_merma|floatformat:2 }}%;">
+                    <div class="chart-segment loss" style="width: {{ reporte_proveedor.p_porcentaje_merma|floatformat:2 }}%">
                         {% if reporte_proveedor.p_porcentaje_merma > 8 %}
                             {{ reporte_proveedor.p_porcentaje_merma|floatformat:1 }}%
                         {% endif %}
@@ -1305,7 +1304,7 @@
         </div>
 
         <div class="footer">
-            <p>Este reporte fue generado automáticamente por el sistema de Heaven's Connet</p>
+            <p>Este reporte fue generado automáticamente por el sistema de Heaven's Fruits SAS.</p>
             <p>© {% now "Y" %} - Heaven's Fruits SAS - Todos los derechos reservados</p>
         </div>
 

@@ -1,54 +1,73 @@
 from decimal import Decimal
 from django import forms
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Field, Row, Column
+from crispy_forms.layout import Layout, Field, Row, Column, Div, HTML
 from .models import CompraNacional, VentaNacional, ReporteCalidadExportador, ReporteCalidadProveedor, TransferenciasProveedor
 
+# forms.py
 class CompraNacionalForm(forms.ModelForm):
     precio_compra_exp = forms.DecimalField(
         widget=forms.TextInput(attrs={
             'class': 'form-control currency-input',
-            'data-type': 'currency'
+            'data-type': 'currency',
         })
     )
-    fecha_compra = forms.DateField(widget=forms.DateInput(format='%Y-%m-%d',
-                                                          attrs={'type': 'date', 'class': 'form-control'}), )
+    fecha_compra = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control',
+            'placeholder': 'YYYY-MM-DD'
+        })
+    )
 
     class Meta:
         model = CompraNacional
         fields = '__all__'
+        widgets = {
+            'observaciones': forms.Textarea(attrs={
+                'rows': 3,
+                'class': 'form-control',
+                'placeholder': 'Ingrese observaciones...'
+            }),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'form-label'
+        self.helper.field_class = 'mb-3'
         self.helper.layout = Layout(
-            Row(
-                Column('proveedor', css_class='form-group col-md-4 mb-0'),
-                Column('fruta', css_class='form-group col-md-4 mb-0'),
-                Column('peso_compra', css_class='form-group col-md-4 mb-0'),
-                css_class='form-row'
-            ),
-            Row(
-                Column('origen_compra', css_class='form-group col-md-4 mb-0'),
-                Column('fecha_compra', css_class='form-group col-md-4 mb-0'),
-                Column('precio_compra_exp', css_class='form-group col-md-4 mb-0'),
-                css_class='form-row'
-            ),
-            Row(
-                Column('tipo_empaque', css_class='form-group col-md-6 mb-0'),
-                Column('cantidad_empaque', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-            Row(
-                Column('numero_guia', css_class='form-group col-md-6 mb-0'),
-                Column('remision', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-
-            'observaciones',
+            Div(
+                HTML('<h5 class="text-primary mb-4">Detalles de la Compra</h5>'),
+                Row(
+                    Column('proveedor', css_class='col-md-4'),
+                    Column('fruta', css_class='col-md-4'),
+                    Column('peso_compra', css_class='col-md-4'),
+                    css_class='g-3'
+                ),
+                Row(
+                    Column('origen_compra', css_class='col-md-4'),
+                    Column('fecha_compra', css_class='col-md-4'),
+                    Column('precio_compra_exp', css_class='col-md-4'),
+                    css_class='g-3'
+                ),
+                HTML('<hr class="my-4">'),
+                HTML('<h5 class="text-primary mb-4">Empaque y Documentación</h5>'),
+                Row(
+                    Column('tipo_empaque', css_class='col-md-6'),
+                    Column('cantidad_empaque', css_class='col-md-6'),
+                    css_class='g-3'
+                ),
+                Row(
+                    Column('numero_guia', css_class='col-md-6'),
+                    Column('remision', css_class='col-md-6'),
+                    css_class='g-3'
+                ),
+                'observaciones',
+                css_class='p-4 bg-white rounded shadow-sm'
+            )
         )
-
 
 
 class VentaNacionalForm(forms.ModelForm):
@@ -64,19 +83,26 @@ class VentaNacionalForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'form-label'
+        self.helper.field_class = 'mb-3'
         self.helper.layout = Layout(
-            Row(
-                Column('exportador', css_class='form-group col-md-6 mb-0'),
-                Column('fecha_llegada', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-            Row(
-                Column('peso_bruto_recibido', css_class='form-group col-md-6 mb-0'),
-                Column('cantidad_empaque_recibida', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-
-            'observaciones',
+            Div(
+                HTML('<h5 class="text-primary mb-4">Detalles de la Venta</h5>'),
+                Row(
+                    Column('exportador', css_class='col-md-6'),
+                    Column('fecha_llegada', css_class='col-md-6'),
+                    css_class='g-3'
+                ),
+                Row(
+                    Column('peso_bruto_recibido', css_class='col-md-6'),
+                    Column('cantidad_empaque_recibida', css_class='col-md-6'),
+                    css_class='g-3'
+                ),
+                HTML('<hr class="my-4">'),
+                HTML('<h5 class="text-primary mb-4">Observaciones</h5>'),
+                'observaciones',
+                css_class='p-4 bg-white rounded shadow-sm'
+            )
         )
 
     def clean(self):
@@ -120,28 +146,38 @@ class ReporteCalidadExportadorForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'form-label'
+        self.helper.field_class = 'mb-3'
         self.helper.layout = Layout(
-            Row(
-                Column('remision_exp', css_class='form-group col-md-6 mb-0'),
-                Column('fecha_reporte', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-            Row(
-                Column('kg_exportacion', css_class='form-group col-md-6 mb-0'),
-                Column('kg_nacional', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-            Row(
-                Column('precio_venta_kg_exp', css_class='form-group col-md-6 mb-0'),
-                Column('precio_venta_kg_nal', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-            Row(
-                Column('pagado', css_class='form-group col-md-4 mb-0'),
-                Column('factura', css_class='form-group col-md-4 mb-0'),
-                Column('fecha_factura', css_class='form-group col-md-4 mb-0'),
-                css_class='form-row'
-            ),
+            Div(
+                HTML('<h5 class="text-primary mb-4">Información General</h5>'),
+                Row(
+                    Column('remision_exp', css_class='col-md-6'),
+                    Column('fecha_reporte', css_class='col-md-6'),
+                    css_class='g-3'
+                ),
+                HTML('<hr class="my-4">'),
+                HTML('<h5 class="text-primary mb-4">Detalles de Venta</h5>'),
+                Row(
+                    Column('kg_exportacion', css_class='col-md-6'),
+                    Column('kg_nacional', css_class='col-md-6'),
+                    css_class='g-3'
+                ),
+                Row(
+                    Column('precio_venta_kg_exp', css_class='col-md-6'),
+                    Column('precio_venta_kg_nal', css_class='col-md-6'),
+                    css_class='g-3'
+                ),
+                HTML('<hr class="my-4">'),
+                HTML('<h5 class="text-primary mb-4">Facturación</h5>'),
+                Row(
+                    Column('pagado', css_class='col-md-4'),
+                    Column('factura', css_class='col-md-4'),
+                    Column('fecha_factura', css_class='col-md-4'),
+                    css_class='g-3'
+                ),
+                css_class='p-4 bg-white rounded shadow-sm'
+            )
         )
 
     def clean(self):
@@ -188,19 +224,27 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'form-label'
+        self.helper.field_class = 'mb-3'
         self.helper.layout = Layout(
-            Row(
-                Column('p_kg_exportacion', css_class='form-group col-md-4 mb-0'),
-                Column('p_kg_nacional', css_class='form-group col-md-4 mb-0'),
-                Column('factura_prov', css_class='form-group col-md-4 mb-0'),
-                css_class='form-row'),
-            Row(
-
-                Column('reporte_enviado', css_class='form-group col-md-4 mb-0'),
-                Column('reporte_pago', css_class='form-group col-md-4 mb-0'),
-                Column('completado', css_class='form-group col-md-4 mb-0'),
-                css_class='form-row'),
-
+            Div(
+                HTML('<h5 class="text-primary mb-4">Detalles del Reporte</h5>'),
+                Row(
+                    Column('p_kg_exportacion', css_class='col-md-4'),
+                    Column('p_kg_nacional', css_class='col-md-4'),
+                    Column('factura_prov', css_class='col-md-4'),
+                    css_class='g-3'
+                ),
+                HTML('<hr class="my-4">'),
+                HTML('<h5 class="text-primary mb-4">Estado del Reporte</h5>'),
+                Row(
+                    Column('reporte_enviado', css_class='col-md-4'),
+                    Column('reporte_pago', css_class='col-md-4'),
+                    Column('completado', css_class='col-md-4'),
+                    css_class='g-3'
+                ),
+                css_class='p-4 bg-white rounded shadow-sm'
+            )
         )
 
     def clean(self):
@@ -259,19 +303,25 @@ class TransferenciasProveedorForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'form-label'
+        self.helper.field_class = 'mb-3'
         self.helper.layout = Layout(
-            Row(
-                Column('proveedor', css_class='form-group col-md-4 mb-0'),
-                Column('referencia', css_class='form-group col-md-4 mb-0'),
-                Column('origen_transferencia', css_class='form-group col-md-4 mb-0'),
-
-                css_class='form-row'
-            ),
-            Row(
-                Column('fecha_transferencia', css_class='form-group col-md-6 mb-0'),
-                Column('valor_transferencia', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-
-            'observaciones',
+            Div(
+                HTML('<h5 class="text-primary mb-4">Información de Transferencia</h5>'),
+                Row(
+                    Column('proveedor', css_class='col-md-4'),
+                    Column('referencia', css_class='col-md-4'),
+                    Column('origen_transferencia', css_class='col-md-4'),
+                    css_class='g-3'
+                ),
+                Row(
+                    Column('fecha_transferencia', css_class='col-md-6'),
+                    Column('valor_transferencia', css_class='col-md-6'),
+                    css_class='g-3'
+                ),
+                HTML('<hr class="my-4">'),
+                HTML('<h5 class="text-primary mb-4">Observaciones</h5>'),
+                'observaciones',
+                css_class='p-4 bg-white rounded shadow-sm'
+            )
         )

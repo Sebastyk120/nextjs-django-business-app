@@ -26,14 +26,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Simple validation
             if (username.trim() === '') {
-                showError('username', 'Por favor ingrese su nombre de usuario');
+                showError('username', 'Por favor, ingrese su nombre de usuario');
                 isValid = false;
             } else {
                 removeError('username');
             }
             
             if (password.trim() === '') {
-                showError('password', 'Por favor ingrese su contraseña');
+                showError('password', 'Por favor, ingrese su contraseña');
                 isValid = false;
             } else {
                 removeError('password');

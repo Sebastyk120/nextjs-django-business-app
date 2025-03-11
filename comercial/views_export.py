@@ -1,41 +1,14 @@
 import io
-import math
-import time
 from collections import defaultdict
-from datetime import datetime, timedelta, date
+from datetime import datetime
 from decimal import Decimal
-import pandas as pd
-from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
-from django.db import transaction
-from django.db.models import Q, Sum
-from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
-from django.shortcuts import get_object_or_404, redirect, render
-from django.template.loader import render_to_string
-from django.urls import reverse_lazy
-from django.utils import timezone
-from django.utils.dateparse import parse_date
-from django.utils.decorators import method_decorator
-from django.views import View
-from django.views.generic import TemplateView
-from django.views.generic.edit import CreateView, UpdateView
-from django_tables2 import SingleTableView
+from django.db.models import Q
+from django.http import HttpResponse
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Font, PatternFill, Alignment
-from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.workbook import Workbook
-from xhtml2pdf import pisa
-
-from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
-    EliminarDetallePedidoForm, EditarPedidoExportadorForm, EditarDetallePedidoForm, EditarReferenciaForm, \
-    EditarPedidoSeguimientoForm, FiltroSemanaExportadoraForm, SearchFormReferencias, EditarPedidoFormDos, \
-    EditarPedidoFormCartera, EditarPedidoFormUtilidades, EditarDetallePedidoDosForm, EditarDetallePedidoTresForm, \
-    ExportSearchForm, ExportSearchFormSeguimientos
-from .models import Pedido, DetallePedido, Referencias, AutorizacionCancelacion, Presentacion, Exportador, Cliente
-from .resources import obtener_datos_con_totales_cliente, crear_archivo_excel_cliente, \
-    crear_archivo_excel_enviar_cliente, obtener_datos_con_totales_enviar_cliente
-from .tables import PedidoTable, DetallePedidoTable, PedidoExportadorTable, CarteraPedidoTable, UtilidadPedidoTable, \
-    ResumenPedidoTable, ReferenciasTable, SeguimienosTable, SeguimienosResumenTable
+from .models import Pedido, DetallePedido
 
 
 def es_miembro_del_grupo(nombre_grupo):

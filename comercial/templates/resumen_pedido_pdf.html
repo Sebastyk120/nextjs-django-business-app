@@ -94,7 +94,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>Resumen Para El Pedido: #{{ pedido.id }} Fecha De Solicitud: {{ pedido.fecha_solicitud }}</h1>
+    <h1>Resumen Para El Pedido: #{{ pedido.id }} Fecha de Solicitud: {{ pedido.fecha_solicitud }}</h1>
 
     <table class="details-table">
         <tr>
@@ -112,7 +112,7 @@
                     {% if pedido.intermediario %}{{ pedido.intermediario.nombre }}{% else %}--{% endif %}</div>
             </td>
             <td>
-                <div class="card-header">Fecha De Entrega Final</div>
+                <div class="card-header">Fecha de Entrega Final</div>
                 <div class="card-body">{{ pedido.fecha_entrega }}</div>
             </td>
         </tr>
@@ -122,7 +122,7 @@
                 <div class="card-body">{{ total_peso_bruto }}</div>
             </td>
             <td>
-                <div class="card-header">Número De Piezas</div>
+                <div class="card-header">Número de Piezas</div>
                 <div class="card-body">{{ total_piezas }}</div>
             </td>
             <td>

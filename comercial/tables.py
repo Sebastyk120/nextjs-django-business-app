@@ -82,6 +82,16 @@ class PedidoTable(tables.Table):
     def render_descuento(self, value):
         return format_currency(value)
 
+    def render_observaciones(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
+
+    def render_variedades(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
+
 
 class DetallePedidoTable(tables.Table):
     editar = tables.TemplateColumn(template_name='detalle_pedido_editar_button.html', orderable=False)
@@ -229,7 +239,6 @@ class CarteraPedidoTable(tables.Table):
     class Meta:
         model = Pedido
         template_name = "django_tables2/bootstrap5-responsive.html"
-        order_by = ('cliente',)
         fields = (
             "intermediario", "cliente", "exportadora", "awb", "id", "fecha_entrega_personalizada", "numero_factura",
             "valor_total_factura_usd", "dias_de_vencimiento", "valor_pagado_cliente_usd", "diferencia_por_abono",

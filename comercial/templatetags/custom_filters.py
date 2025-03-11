@@ -1,5 +1,5 @@
+import re
 from decimal import Decimal
-
 from django import template
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -114,28 +114,35 @@ def sub(value, arg):
 
 @register.filter(name='numero_a_letras')
 def numero_a_letras(value):
-    """Convert a number to its text representation in Spanish"""
+    """Convertir número a texto en español con formato de moneda"""
     if value is None:
         return "Cero pesos"
 
     try:
-        # Round to 2 decimal places
+        # Redondear a 2 decimales y convertir a string formateado
         value = Decimal(value).quantize(Decimal('0.01'))
-
-        # Split into whole and decimal parts
-        whole_part = int(value)
-        decimal_part = int((value - whole_part) * 100)
-
-        # Convert whole part to words
-        whole_text = num2words(whole_part, lang='es')
-
-        # Format the result
-        if decimal_part > 0:
-            return f"{whole_text} pesos con {decimal_part} centavos M/Cte"
+        value_str = f"{value:,.2f}"  # Formato con 2 decimales
+        
+        # Separar parte entera y decimal
+        entero_str, decimal_str = value_str.split('.')
+        entero = int(entero_str.replace(',', ''))  # Quitar comas de miles
+        decimal = int(decimal_str)
+        
+        # Convertir parte entera a texto
+        texto_entero = num2words(entero, lang='es')
+        
+        # Corregir contracciones gramaticales
+        texto_entero = re.sub(r'(\buno)(?= mil\b)', r'un', texto_entero, flags=re.IGNORECASE)
+        texto_entero = re.sub(r'(\bciento un\b)', r'ciento un', texto_entero, flags=re.IGNORECASE)
+        
+        # Formatear texto final
+        if decimal > 0:
+            return f"{texto_entero.capitalize()} pesos colombianos {decimal:02d}/100 M.N."
         else:
-            return f"{whole_text} pesos M/Cte"
-    except:
-        return "Error al convertir"
+            return f"{texto_entero.capitalize()} pesos colombianos."
+            
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @register.filter(name='abs')
 def abs_value(value):

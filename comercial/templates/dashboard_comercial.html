@@ -22,6 +22,9 @@
             <a href="{% url 'dashboard_cliente' %}" class="btn btn-primary">
                 <i class="fas fa-users"></i> Estado De Cuenta Clientes
             </a>
+            <a href="{% url 'exportar_dashboard_comercial' %}?{{ request.GET.urlencode }}" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Exportar a Excel
+            </a>
             <button class="btn btn-secondary" id="menuBtn">
                 <i class="fas fa-bars"></i> Menú Comercial
             </button>
@@ -529,15 +532,27 @@
             {% endfor %}
         ];
         
+        // Obtener datos reales del periodo anterior
+        const datosMensualesAnterior = [
+            {% for item in datos_mensuales_anterior %}
+                {
+                    fecha: '{{ item.fecha }}',
+                    mes: '{{ item.nombre_mes }}',
+                    año: {{ item.año }},
+                    totalKilos: {{ item.total_kilos|floatformat:0 }},
+                    totalCajas: {{ item.total_cajas }},
+                    totalUtilidad: {{ item.total_utilidad|floatformat:0 }},
+                    totalNC: {{ item.total_nc|floatformat:0 }}
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
         // Preparar datos para el gráfico
         const labels = datosMensuales.map(item => `${item.mes} ${item.año}`);
         const kilosData = datosMensuales.map(item => item.totalKilos);
         
-        // Crear datos para el período anterior con validación
-        const factorCambioKilos = obtenerFactorCambio({{ kilos_percent|default:0|stringformat:"f" }});
-        const kilosDataPrevio = kilosData.map(valor => {
-            return Math.max(0, valor / (1 + factorCambioKilos));
-        });
+        // Crear datos para el período anterior usando datos reales
+        const kilosPrevData = organizarDatosPeriodoAnterior(datosMensuales, datosMensualesAnterior, 'totalKilos');
         
         // Crear el gráfico de barras con datos comparativos
         const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
@@ -555,7 +570,7 @@
                     },
                     {
                         label: 'Kilos Enviados (Período Anterior)',
-                        data: kilosDataPrevio,
+                        data: kilosPrevData,
                         backgroundColor: 'rgba(46, 204, 113, 0.3)', // Verde más claro
                         borderColor: 'rgba(46, 204, 113, 0.6)',
                         borderWidth: 1
@@ -645,9 +660,24 @@
             {% endfor %}
         ];
         
-        // Preparar datos para el gráfico
+        // Obtener datos reales del periodo anterior
+        const datosMensualesAnterior = [
+            {% for item in datos_mensuales_anterior %}
+                {
+                    fecha: '{{ item.fecha }}',
+                    mes: '{{ item.nombre_mes }}',
+                    año: {{ item.año }},
+                    totalKilos: {{ item.total_kilos|floatformat:0 }},
+                    totalCajas: {{ item.total_cajas }},
+                    totalUtilidad: {{ item.total_utilidad|floatformat:0 }},
+                    totalNC: {{ item.total_nc|floatformat:0 }}
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        // Preparar datos para el gráfico actual
         const labels = datosMensuales.map(item => `${item.mes} ${item.año}`);
-        let datos, titulo, etiqueta, unidad, factorCambio;
+        let datos, datosPrevios, titulo, etiqueta, unidad;
         
         // Colores base por tipo de dato
         const colorSchemes = {
@@ -672,43 +702,37 @@
         switch(tipo) {
             case 'kilos':
                 datos = datosMensuales.map(item => item.totalKilos);
+                datosPrevios = organizarDatosPeriodoAnterior(datosMensuales, datosMensualesAnterior, 'totalKilos');
                 titulo = 'Evolución Mensual de Kilos Enviados';
                 etiqueta = 'Kilos Enviados';
                 unidad = ' kg';
                 colorBase = colorSchemes.kilos;
-                factorCambio = obtenerFactorCambio({{ kilos_percent|default:0|stringformat:"f" }});
                 break;
             case 'cajas':
                 datos = datosMensuales.map(item => item.totalCajas);
+                datosPrevios = organizarDatosPeriodoAnterior(datosMensuales, datosMensualesAnterior, 'totalCajas');
                 titulo = 'Evolución Mensual de Cajas Enviadas';
                 etiqueta = 'Cajas Enviadas';
                 unidad = '';
                 colorBase = colorSchemes.cajas;
-                factorCambio = obtenerFactorCambio({{ cajas_percent|default:0|stringformat:"f" }});
                 break;
             case 'utilidad':
                 datos = datosMensuales.map(item => item.totalUtilidad);
+                datosPrevios = organizarDatosPeriodoAnterior(datosMensuales, datosMensualesAnterior, 'totalUtilidad');
                 titulo = 'Evolución Mensual de Utilidad Total';
                 etiqueta = 'Utilidad USD';
                 unidad = ' USD';
                 colorBase = colorSchemes.utilidad;
-                factorCambio = obtenerFactorCambio({{ utilidad_usd_percent|default:0|stringformat:"f" }});
                 break;
             case 'nc':
                 datos = datosMensuales.map(item => item.totalNC);
+                datosPrevios = organizarDatosPeriodoAnterior(datosMensuales, datosMensualesAnterior, 'totalNC');
                 titulo = 'Evolución Mensual de Notas de Crédito';
                 etiqueta = 'Notas de Crédito USD';
                 unidad = ' USD';
                 colorBase = colorSchemes.nc;
-                factorCambio = obtenerFactorCambio({{ notas_credito_percent|default:0|stringformat:"f" }});
                 break;
         }
-        
-        // Crear datos para el período anterior (simulados a partir de los porcentajes de cambio globales)
-        const datosPeriodoAnterior = datos.map(valor => {
-            // Usar el porcentaje de cambio global para estimar valores previos
-            return Math.max(0, valor / (1 + factorCambio));
-        });
         
         // Actualizar dataset para mostrar barras agrupadas (período actual y anterior)
         monthlyChart.data.datasets = [
@@ -721,7 +745,7 @@
             },
             {
                 label: `${etiqueta} (Período Anterior)`,
-                data: datosPeriodoAnterior,
+                data: datosPrevios,
                 backgroundColor: colorBase.previo,
                 borderColor: colorBase.previo,
                 borderWidth: 1
@@ -749,24 +773,24 @@
         // Obtener datos para gráfico de utilidad por cliente
         const clienteLabels = [{% for item in utilidad_por_cliente %}'{{ item.cliente__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
         const clienteData = [{% for item in utilidad_por_cliente %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        
+        // Obtener datos reales del periodo anterior
+        const clienteLabelsAnterior = [{% for item in utilidad_por_cliente_anterior %}'{{ item.cliente__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const clienteDataAnterior = [{% for item in utilidad_por_cliente_anterior %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
 
         // Destruir gráfico existente si hay uno
         if (utilidadChart) {
             utilidadChart.destroy();
         }
 
-        // Obtener fechas para el título
-        const fechaInicio = document.getElementById('fecha_inicio').value;
-        const fechaFin = document.getElementById('fecha_fin').value;
-        const rangoFechas = `${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`;
+        // Crear datos para el período anterior alineados con los clientes actuales
+        const clienteDataPrevio = [];
+        for (const cliente of clienteLabels) {
+            const index = clienteLabelsAnterior.indexOf(cliente);
+            clienteDataPrevio.push(index !== -1 ? clienteDataAnterior[index] : 0);
+        }
 
-        // Crear datos para el período anterior con validación
-        const factorCambioUtilidad = obtenerFactorCambio({{ utilidad_usd_percent|default:0|stringformat:"f" }});
-        const clienteDataPrevio = clienteData.map(valor => {
-            return Math.max(0, valor / (1 + factorCambioUtilidad));
-        });
-
-        // Crear nuevo gráfico por cliente
+        // Crear nuevo gráfico por cliente con datos reales
         const utilidadCtx = document.getElementById('utilidadChart').getContext('2d');
         utilidadChart = new Chart(utilidadCtx, {
             type: 'bar',
@@ -861,11 +885,9 @@
             tituloGrafico += ' para ' + (typeof nombreCliente !== 'undefined' ? nombreCliente : 'Cliente Seleccionado');
         }
 
-        // Crear datos para el período anterior con validación
+        // Crear datos para el período anterior
         const factorCambioUtilidad = obtenerFactorCambio({{ utilidad_usd_percent|default:0|stringformat:"f" }});
-        const frutaDataPrevio = frutaData.map(valor => {
-            return Math.max(0, valor / (1 + factorCambioUtilidad));
-        });
+        const frutaDataPrevio = calcularDatosPeriodoAnterior(frutaData, 'utilidad', factorCambioUtilidad);
 
         // Crear nuevo gráfico por fruta
         const utilidadCtx = document.getElementById('utilidadChart').getContext('2d');
@@ -935,11 +957,9 @@
         const fechaFin = document.getElementById('fecha_fin').value;
         const rangoFechas = `${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`;
 
-        // Crear datos para el período anterior con validación
+        // Crear datos para el período anterior
         const factorCambioUtilidad = obtenerFactorCambio({{ utilidad_usd_percent|default:0|stringformat:"f" }});
-        const exportadorDataPrevio = exportadorData.map(valor => {
-            return Math.max(0, valor / (1 + factorCambioUtilidad));
-        });
+        const exportadorDataPrevio = calcularDatosPeriodoAnterior(exportadorData, 'utilidad', factorCambioUtilidad);
 
         // Título del gráfico con cliente y fechas
         let tituloGrafico = 'Utilidad USD por Exportador';
@@ -1013,11 +1033,97 @@
         return parseFloat(porcentaje) / 100;
     }
 
+    // Nueva función para determinar si había datos en el periodo anterior
+    function hayDatosEnPeriodoAnterior(indicador) {
+        // Verificamos si el valor existe y es mayor que cero
+        switch(indicador) {
+            case 'kilos':
+                return {{ kilos_prev|yesno:"true,false" }};
+            case 'cajas':
+                return {{ cajas_prev|yesno:"true,false" }};
+            case 'facturado':
+                return {{ facturado_prev|yesno:"true,false" }};
+            case 'utilidad':
+                return {{ utilidad_usd_prev|yesno:"true,false" }};
+            case 'nc':
+                return {{ notas_credito_prev|yesno:"true,false" }};
+            case 'cancelados':
+                return {{ cancelados_prev|yesno:"true,false" }};
+            default:
+                return false;
+        }
+    }
+
+    // Función para calcular datos del periodo anterior
+    function calcularDatosPeriodoAnterior(datosActuales, tipoIndicador, factorCambio) {
+        // Si no hay datos en el periodo anterior, devolver todo ceros
+        if (!hayDatosEnPeriodoAnterior(tipoIndicador)) {
+            return datosActuales.map(() => 0);
+        }
+        
+        // Si hay datos, usar el factor de cambio para estimar valores
+        return datosActuales.map(valor => {
+            return Math.max(0, valor / (1 + factorCambio));
+        });
+    }
+
+    // Nueva función para determinar si estamos comparando datos de años diferentes
+    function hayComparacionEntreAniosDiferentes() {
+        // Obtener el rango de fechas seleccionado
+        const fechaInicio = document.getElementById('fecha_inicio').value;
+        const fechaFin = document.getElementById('fecha_fin').value;
+        
+        // Si no hay fechas seleccionadas, asumimos que es una comparación segura
+        if (!fechaInicio || !fechaFin) return false;
+        
+        // Extraer el año de las fechas
+        const anioInicio = new Date(fechaInicio).getFullYear();
+        const anioFin = new Date(fechaFin).getFullYear();
+        
+        // Si los años son diferentes o el rango es mayor a 12 meses,
+        // consideramos que la comparación con el período anterior no es confiable
+        if (anioInicio !== anioFin) return true;
+        
+        // También verificamos si el rango de fechas es demasiado amplio (más de 12 meses)
+        const msEnUnAnio = 365 * 24 * 60 * 60 * 1000;
+        const diferenciaMs = new Date(fechaFin) - new Date(fechaInicio);
+        
+        return diferenciaMs > msEnUnAnio;
+    }
+
     // Función para formatear fechas
     function formatDate(dateString) {
         if (!dateString) return '';
         const date = new Date(dateString);
         return date.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
+    }
+
+    // Función para organizar los datos del período anterior en correspondencia con los datos actuales
+    function organizarDatosPeriodoAnterior(datosPeriodoActual, datosPeriodoAnterior, campoDatos) {
+        // Si no hay datos en el periodo anterior, devolver todo ceros
+        if (!datosPeriodoAnterior || datosPeriodoAnterior.length === 0) {
+            return datosPeriodoActual.map(() => 0);
+        }
+        
+        // Crear un mapa de los datos del período anterior por mes y año
+        const mapaDatosPrevios = {};
+        datosPeriodoAnterior.forEach(item => {
+            // La clave es mes+año para hacer una búsqueda exacta
+            const clave = `${item.mes}-${item.año}`;
+            mapaDatosPrevios[clave] = item[campoDatos];
+        });
+        
+        // Para cada mes del período actual, buscar el mes correspondiente
+        // en el período anterior (mismo mes, año anterior)
+        return datosPeriodoActual.map(itemActual => {
+            const mesActual = itemActual.mes;
+            const añoActual = itemActual.año;
+            const añoAnterior = añoActual - 1;
+            
+            // Buscar datos del mismo mes pero año anterior
+            const clave = `${mesActual}-${añoAnterior}`;
+            return mapaDatosPrevios[clave] || 0;
+        });
     }
 </script>
 </body>

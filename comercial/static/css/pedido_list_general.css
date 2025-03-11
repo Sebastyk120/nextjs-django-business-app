@@ -337,8 +337,13 @@ body {
     border: none;
     position: sticky;
     top: 0;
+    z-index: 10;
+    vertical-align: middle;
+    text-align: center;
     white-space: nowrap;
-    font-size: 0.85rem; /* Reduced font size */
+    font-size: 0.75rem;
+    user-select: none;
+    cursor: pointer;
 }
 
 .table thead th:first-child {
@@ -354,11 +359,20 @@ body {
     text-decoration: none;
     display: flex;
     align-items: center;
-    justify-content: center;
 }
 
 .table thead th a:hover {
     text-decoration: underline;
+}
+
+.table thead th.asc:after {
+    content: ' ↑';
+    font-size: 0.85em;
+}
+
+.table thead th.desc:after {
+    content: ' ↓';
+    font-size: 0.85em;
 }
 
 .table tbody tr {
@@ -371,13 +385,26 @@ body {
 }
 
 .table tbody tr:hover {
-    background-color: rgba(79, 70, 229, 0.05);
+    background-color: rgba(79, 70, 229, 0.1);
+    box-shadow: 0 0 8px rgba(79, 70, 229, 0.2);
+    transform: translateY(-1px);
+    transition: all 0.2s;
 }
 
 .table tbody td {
     padding: 6px 5px; /* Significantly reduced padding - same as nacionales */
     color: #4a5568;
     vertical-align: middle;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Las celdas de texto libre pueden tener wrap */
+.table td.text-cell {
+    white-space: normal;
 }
 
 /* Action buttons in table */
@@ -416,6 +443,14 @@ body {
 .table .btn-delete:hover {
     background-color: #dc2626;
     color: white;
+}
+
+.table .btn {
+    width: auto;
+    padding: 3px 8px;
+    margin: 1px;
+    font-size: 0.7rem;
+    line-height: 1.5;
 }
 
 /* Status badges */
@@ -520,4 +555,235 @@ body {
         background: #eee !important;
         color: #333 !important;
     }
+}
+
+/* NUEVOS ESTILOS PARA MEJORAR LA PRESENTACIÓN DE TABLAS */
+
+/* Tarjeta de filtros mejorada */
+.filters-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.filter-toggle {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+}
+
+/* Indicadores de estado de fila */
+.table-status-indicators {
+    font-size: 0.8rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+}
+
+.color-box {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 5px;
+}
+
+.legend-item.normal .color-box {
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+
+.legend-item.completed .color-box {
+    background-color: #d4edda;
+}
+
+.legend-item.pending .color-box {
+    background-color: #fff3cd;
+}
+
+.legend-item.canceled .color-box {
+    background-color: #f8d7da;
+}
+
+/* Mejorar la visualización de la tabla */
+.table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    vertical-align: middle;
+    text-align: center;
+    white-space: inherit;
+    font-size: 0.75rem;
+    user-select: none;
+    cursor: pointer;
+}
+
+.table thead th.asc:after {
+    content: ' ↑';
+    font-size: 0.85em;
+}
+
+.table thead th.desc:after {
+    content: ' ↓';
+    font-size: 0.85em;
+}
+
+/* Mejorar visualización de datos en celdas */
+.table tbody td {
+    white-space: nowrap;
+    font-size: 0.75rem;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Las celdas de texto libre pueden tener wrap */
+.table td.text-cell {
+    white-space: normal;
+}
+
+/* Estilos para filas según estado */
+.row-completed {
+    background-color: #d4edda !important;
+}
+
+.row-pending {
+    background-color: #fff3cd !important;
+}
+
+.row-canceled {
+    background-color: #f8d7da !important;
+}
+
+/* Hover más distinguible */
+.table tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.1) !important;
+    box-shadow: 0 0 8px rgba(79, 70, 229, 0.2);
+    transform: translateY(-1px);
+    transition: all 0.2s;
+}
+
+/* Selector de columnas */
+.dropdown-menu.column-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px;
+    width: 250px;
+}
+
+.column-list .dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
+.column-list .form-check-input {
+    margin-right: 8px;
+}
+
+/* Badge de conteo de resultados */
+.results-count {
+    font-size: 0.85rem;
+    padding: 5px 10px;
+    border-radius: 20px;
+    color: white;
+}
+
+/* Footer de la tabla */
+.table-card .card-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    padding: 8px 15px;
+}
+
+.table-info {
+    font-size: 0.8rem;
+}
+
+.page-size {
+    width: 130px;
+}
+
+/* Mejorar visualización responsiva */
+@media (max-width: 992px) {
+    .btn-group {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .header-actions {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+}
+
+/* Mejorar presentación de botones de acción en la tabla */
+.table .btn {
+    width: auto;
+    padding: 3px 8px;
+    margin: 1px;
+    font-size: 0.7rem;
+    line-height: 1.5;
+}
+
+/* Tooltips más informativos */
+[data-bs-toggle="tooltip"] {
+    cursor: help;
+}
+
+/* Valores monetarios destacados */
+.money-value {
+    font-family: 'Roboto Mono', monospace;
+    text-align: right;
+    padding-right: 10px !important;
+}
+
+.positive-value {
+    color: #10b981;
+}
+
+.negative-value {
+    color: #ef4444;
+}
+
+/* Mejoras de accesibilidad */
+.table th {
+    color: white;
+    font-weight: 600;
+}
+
+/* Elementos destacados */
+.highlight-row {
+    animation: highlight-fade 2s ease-in-out;
+}
+
+@keyframes highlight-fade {
+    0% { background-color: rgba(79, 70, 229, 0.3); }
+    100% { background-color: transparent; }
+}
+
+/* Estado de columnas */
+.d-none {
+    display: none !important;
+}
+
+/* Valores en cero o nulos más sutiles */
+.zero-value {
+    opacity: 0.5;
+    color: #6c757d;
+}
+
+/* Hacer más obvias las acciones principales */
+.btn-primary-action {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    transform: scale(1.05);
 }

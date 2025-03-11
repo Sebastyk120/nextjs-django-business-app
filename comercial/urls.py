@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path
-from . import views, views2, views3, views_exp
+from . import views, views2, views_proyec_vent, views4_dash_comer, views_export
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -38,7 +38,7 @@ urlpatterns = [
     path('exportar_cartera_cliente', views.ExportarCarteraClienteView.as_view(), name='exportar_cartera_cliente'),
     path('exportar_cartera_cliente_antigua', views.ExportarCarteraClienteVistaAntiguaView.as_view(), name='exportar_cartera_cliente_antigua'),
     path('exportar_cartera_cliente_enviar', views.ExportarCarteraClienteEnviarView.as_view(), name='exportar_cartera_cliente_enviar'),
-    path('exportar_pedidos_excel_general', views_exp.exportar_pedidos_excel_general, name='exportar_pedidos_excel_general'),
+    path('exportar_pedidos_excel_general', views_export.exportar_pedidos_excel_general, name='exportar_pedidos_excel_general'),
 
     path('exportar_excel_seguimiento_tracking', views.exportar_excel_seguimiento_tracking, name='exportar_excel_seguimiento_tracking'),
 
@@ -47,7 +47,7 @@ urlpatterns = [
     path('utilidad_list_fieldex', views.UtilidadFiedexListView.as_view(), name='utilidad_list_fieldex'),
     path('utilidad_list_juan', views.UtilidadJuanListView.as_view(), name='utilidad_list_juan'),
     path('utilidad_list_ci_dorado', views.UtilidadCiDoradoListView.as_view(), name='utilidad_list_ci_dorado'),
-    path('exportar_utilidades_general', views_exp.exportar_utilidades_excel, name='exportar_utilidades_general'),
+    path('exportar_utilidades_general', views_export.exportar_utilidades_excel, name='exportar_utilidades_general'),
 
 
 
@@ -80,12 +80,12 @@ urlpatterns = [
     path('exportar_resumen_semana_pdf/', views.export_pdf_resumen_semana, name='exportar_resumen_semana_pdf'),
     path('pedido_resumen_pdf/<int:pedido_id>', views.exportar_pdf_resumen_pedido, name='pedido_resumen_pdf'),
     path('exportar_excel_seguimientos_resumen/', views.exportar_excel_seguimiento_resumen, name='exportar_excel_seguimientos_resumen'),
-    path('dashboard_comercial/', views3.dashboard_comercial, name='dashboard_comercial'),
+    path('dashboard_comercial/', views4_dash_comer.dashboard_comercial, name='dashboard_comercial'),
     path('dashboard_cliente/', views2.dashboard_cliente, name='dashboard_cliente'),
     path('dashboard_cliente/exportar/', views2.exportar_cartera_cliente_dashboard, name='exportar_cartera_cliente_dashboard'),
-
+    path('exportar-dashboard-comercial/', views4_dash_comer.exportar_dashboard_comercial, name='exportar_dashboard_comercial'),
+    
     # Dashboard y proyección de ventas
-    path('dashboard-comercial/', views3.dashboard_comercial, name='dashboard_comercial'),
-    path('proyeccion-ventas/', views3.proyeccion_ventas, name='proyeccion_ventas'),
-    path('api/proyeccion-ventas/', views3.proyeccion_ventas_api, name='proyeccion_ventas_api'),
+    path('proyeccion-ventas/', views_proyec_vent.proyeccion_ventas, name='proyeccion_ventas'),
+    path('api/proyeccion-ventas/', views_proyec_vent.proyeccion_ventas_api, name='proyeccion_ventas_api'),
 ]

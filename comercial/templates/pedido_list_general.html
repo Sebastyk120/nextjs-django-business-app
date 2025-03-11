@@ -54,8 +54,11 @@
             <div class="card mb-4 filters-card">
                 <div class="card-header">
                     <h4><i class="fas fa-search"></i> Búsqueda y Filtros</h4>
+                    <button type="button" class="btn btn-sm btn-outline-secondary filter-toggle" data-bs-toggle="collapse" data-bs-target="#filterContent">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
                 </div>
-                <div class="card-body">
+                <div class="card-body collapse show" id="filterContent">
                     <form method="get" class="search-form" id="searchForm">
                         <div class="row">
                             <div class="col-lg-3 col-md-6 mb-3">
@@ -91,6 +94,29 @@
                             </div>
                             <div class="col-lg-3 col-md-6 mb-3">
                                 <div class="form-group">
+                                    <label for="estado_pedido">Estado del pedido</label>
+                                    <select name="estado_pedido" id="estado_pedido" class="form-control">
+                                        <option value="" selected>Todos los estados</option>
+                                        <option value="Por Reservar" {% if request.GET.estado_pedido == 'Por Reservar' %}selected{% endif %}>Por Reservar</option>
+                                        <option value="Reservado" {% if request.GET.estado_pedido == 'Reservado' %}selected{% endif %}>Reservado</option>
+                                        <option value="Finalizado" {% if request.GET.estado_pedido == 'Finalizado' %}selected{% endif %}>Finalizado</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="fecha_desde">Desde</label>
+                                    <input type="date" name="fecha_desde" id="fecha_desde" class="form-control" value="{{ request.GET.fecha_desde|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="fecha_hasta">Hasta</label>
+                                    <input type="date" name="fecha_hasta" id="fecha_hasta" class="form-control" value="{{ request.GET.fecha_hasta|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-lg-6 col-md-12 mb-3">
+                                <div class="form-group">
                                     <label>&nbsp;</label>
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-search w-100" type="submit">
@@ -112,12 +138,35 @@
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
                     <h4><i class="fas fa-list"></i> Listado de Pedidos</h4>
                     <div class="header-actions">
-                        <span class="results-count">{{ table.rows|length }} Pedidos</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="dropdown column-selector">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="columnSelector" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-columns"></i> Columnas
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end column-list" aria-labelledby="columnSelector">
+                                    <!-- Se llenará con JavaScript -->
+                                </ul>
+                            </div>
+                            <span class="results-count badge bg-primary">{{ table.rows|length }} Pedidos</span>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">
+                    <div class="table-status-indicators mb-2 d-flex flex-wrap gap-2">
+                        <span class="legend-item normal"><span class="color-box"></span> Normal</span>
+                        <span class="legend-item completed"><span class="color-box"></span> Finalizado</span>
+                        <span class="legend-item pending"><span class="color-box"></span> Pendiente cancelación</span>
+                        <span class="legend-item canceled"><span class="color-box"></span> Cancelado</span>
+                    </div>
                     <div class="table-responsive">
                         {% render_table table %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="table-info">
+                            <span class="text-muted">Ordenar: Haz clic en los encabezados de columna</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -305,16 +354,155 @@
     <script src="{% static 'js/crear_pedido.js' %}"></script>
     <script src="{% static 'js/editar_pedido2.js' %}"></script>
     <script>
-        document.getElementById('clearFilters').addEventListener('click', function () {
-            // Obtener la URL actual sin los parámetros de búsqueda
-            const url = new URL(window.location.href);
-            url.search = '';
+        document.addEventListener('DOMContentLoaded', function () {
+            // Limpiar filtros
+            document.getElementById('clearFilters').addEventListener('click', function () {
+                const url = new URL(window.location.href);
+                url.search = '';
+                window.location.href = url.href;
+            });
 
-            // Recargar la página con la URL sin parámetros de búsqueda
-            window.location.href = url.href;
+            // Inicializar selector de columnas
+            initColumnSelector();
+
+            // Inicializar modales de cancelación
+            initCancelationModals();
         });
 
-        document.addEventListener('DOMContentLoaded', function () {
+        function initColumnSelector() {
+            const table = document.querySelector('.table');
+            if (!table) return;
+            
+            const headerCells = table.querySelectorAll('thead th');
+            const columnList = document.querySelector('.column-list');
+            
+            // Limpiar lista
+            columnList.innerHTML = '';
+            
+            // Agregar opciones de mostrar/ocultar todas al INICIO
+            const showAllLi = document.createElement('li');
+            const showAllBtn = document.createElement('button');
+            showAllBtn.className = 'dropdown-item';
+            showAllBtn.textContent = 'Mostrar todas';
+            showAllBtn.addEventListener('click', function() {
+                document.querySelectorAll('.column-list input[type="checkbox"]').forEach(cb => {
+                    cb.checked = true;
+                    toggleColumnVisibility(cb.dataset.columnIndex, true);
+                });
+                
+                // Guardar preferencias
+                const allColumns = {};
+                headerCells.forEach((cell) => {
+                    const columnName = cell.textContent.trim();
+                    if (columnName) allColumns[columnName] = true;
+                });
+                localStorage.setItem('pedidosVisibleColumns', JSON.stringify(allColumns));
+            });
+            showAllLi.appendChild(showAllBtn);
+            columnList.appendChild(showAllLi);
+            
+            const hideAllLi = document.createElement('li');
+            const hideAllBtn = document.createElement('button');
+            hideAllBtn.className = 'dropdown-item';
+            hideAllBtn.textContent = 'Ocultar todas excepto esenciales';
+            hideAllBtn.addEventListener('click', function() {
+                // Columnas esenciales que siempre deben mostrarse
+                const essentialColumns = ['No.', 'Cliente', 'Exportador', 'Fecha Entrega', 'AWB', 'Factura', 'Cajas Solicitadas', 'Estado Pedido', 'Detalle', 'Editar', 'Awb-Fact', 'Inf', 'Cancelar'];
+                
+                document.querySelectorAll('.column-list input[type="checkbox"]').forEach(cb => {
+                    const columnText = cb.parentElement.textContent.trim();
+                    const isEssential = essentialColumns.some(ec => columnText.includes(ec));
+                    cb.checked = isEssential;
+                    toggleColumnVisibility(cb.dataset.columnIndex, isEssential);
+                });
+                
+                // Guardar preferencias
+                const savedColumns = {};
+                headerCells.forEach((cell) => {
+                    const columnName = cell.textContent.trim();
+                    if (columnName) {
+                        const isEssential = essentialColumns.some(ec => columnName.includes(ec));
+                        savedColumns[columnName] = isEssential;
+                    }
+                });
+                localStorage.setItem('pedidosVisibleColumns', JSON.stringify(savedColumns));
+            });
+            hideAllLi.appendChild(hideAllBtn);
+            columnList.appendChild(hideAllLi);
+            
+            // Agregar separador después de las opciones generales
+            const separator = document.createElement('li');
+            separator.innerHTML = '<hr class="dropdown-divider">';
+            columnList.appendChild(separator);
+            
+            // Definir columnas esenciales para inicialización
+            const essentialColumns = ['No.', 'Cliente', 'Exportadora', 'Fecha Entrega', 'Nº Factura', 'Estado', 'Detalle', 'Editar', 'Awb-Fact', 'Inf', 'Cancelar'];
+            
+            // Crear elementos para cada columna
+            headerCells.forEach((cell, index) => {
+                if (index === 0) return; // Ignorar selector de columna
+                
+                const columnName = cell.textContent.trim();
+                if (!columnName) return;
+                
+                const li = document.createElement('li');
+                const label = document.createElement('label');
+                label.className = 'dropdown-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'form-check-input me-2';
+                
+                // Comprobar si es columna esencial o si hay preferencia guardada
+                const savedColumns = JSON.parse(localStorage.getItem('pedidosVisibleColumns') || '{}');
+                const isEssential = essentialColumns.some(ec => columnName.includes(ec));
+                
+                // Prioridad: 1) Preferencias guardadas 2) Columnas esenciales
+                if (Object.keys(savedColumns).length > 0 && savedColumns.hasOwnProperty(columnName)) {
+                    checkbox.checked = savedColumns[columnName];
+                } else {
+                    checkbox.checked = isEssential; // Por defecto, mostrar solo las esenciales
+                }
+                
+                checkbox.dataset.columnIndex = index;
+                
+                checkbox.addEventListener('change', function() {
+                    // Guardar preferencia
+                    const savedColumns = JSON.parse(localStorage.getItem('pedidosVisibleColumns') || '{}');
+                    savedColumns[columnName] = checkbox.checked;
+                    localStorage.setItem('pedidosVisibleColumns', JSON.stringify(savedColumns));
+                    
+                    // Aplicar visibilidad
+                    toggleColumnVisibility(index, checkbox.checked);
+                });
+                
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(columnName));
+                li.appendChild(label);
+                columnList.appendChild(li);
+                
+                // Aplicar visibilidad inicial
+                toggleColumnVisibility(index, checkbox.checked);
+            });
+        }
+
+        function toggleColumnVisibility(columnIndex, isVisible) {
+            const table = document.querySelector('.table');
+            if (!table) return;
+            
+            // Obtener todas las celdas de esa columna (incluyendo header)
+            const cells = table.querySelectorAll(`tr > :nth-child(${parseInt(columnIndex) + 1})`);
+            
+            cells.forEach(cell => {
+                if (isVisible) {
+                    cell.classList.remove('d-none');
+                } else {
+                    cell.classList.add('d-none');
+                }
+            });
+        }
+
+        function initCancelationModals() {
             // Solicitar Cancelación
             const cancelModal = document.getElementById('cancelModalGlobal');
             cancelModal.addEventListener('show.bs.modal', function (event) {
@@ -347,7 +535,7 @@
                 authModal.querySelector('#authExportador').textContent = exportador;
                 authModal.querySelector('#authObservaciones').value = "";
             });
-        });
+        }
     </script>
     {% endblock %}
 {% endblock %}
