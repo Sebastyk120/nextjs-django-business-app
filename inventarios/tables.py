@@ -22,6 +22,11 @@ class ItemTable(tables.Table):
             "numero_item", "cantidad_cajas", "bodega", "proveedor", "fecha_movimiento", "propiedad",
             "tipo_documento", "documento", "observaciones", "user", "editar")
 
+    def render_numero_item(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
+
 
 # Historicos (Inventario De Movimientos).---------------------------------------------------------------------------
 class MovimientoTable(tables.Table):

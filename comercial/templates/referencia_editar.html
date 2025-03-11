@@ -1,24 +1,129 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/referencia_editar.css' %}"/>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Referencia</title>
+    <link rel="stylesheet" href="{% static 'css/referencia_editar.css' %}"/>
 </head>
 <body>
-<div class="modal-header">
-    <h5 class="modal-title" id="moverItemModalLabel">Editar Referencia <i class="bi bi-pencil-fill"></i></h5>
-</div>
-<form id="moverItemForm" method="post">
-    {% csrf_token %}
-    <div class="modal-body">
-        <div id="errores">
-            {% for field, error_list in form.errors.items %}
-                {% for error in error_list %}
-                    <div class="alert alert-danger">{{ error }}</div>
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title" id="moverItemModalLabel">
+            <i class="bi bi-tag-fill me-2"></i> Editar Referencia
+        </h5>
+    </div>
+    <form id="moverItemForm" method="post" class="form-container">
+        {% csrf_token %}
+        <div class="modal-body">
+            <div id="errores">
+                {% for field, error_list in form.errors.items %}
+                    {% for error in error_list %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
                 {% endfor %}
-            {% endfor %}
+            </div>
+            
+            <!-- Campo Nombre -->
+            <div class="form-field">
+                <label for="{{ form.nombre.id_for_label }}">
+                    <i class="bi bi-bookmark-fill me-1"></i> Nombre
+                </label>
+                <div class="icon-field">
+                    {{ form.nombre }}
+                    <i class="bi bi-lock-fill field-icon"></i>
+                </div>
+            </div>
+
+            <!-- Campo Referencia Nueva -->
+            <div class="form-field">
+                <label for="{{ form.referencia_nueva.id_for_label }}">
+                    <i class="bi bi-code me-1"></i> Referencia Nueva
+                </label>
+                {{ form.referencia_nueva }}
+                {% if form.referencia_nueva.help_text %}
+                    <p class="help-text">{{ form.referencia_nueva.help_text }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Campo Precio -->
+            <div class="form-field">
+                <label for="{{ form.precio.id_for_label }}">
+                    <i class="bi bi-currency-dollar me-1"></i> Precio
+                </label>
+                {{ form.precio }}
+                {% if form.precio.help_text %}
+                    <p class="help-text">{{ form.precio.help_text }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Campo Contenedor -->
+            <div class="form-field">
+                <label for="{{ form.contenedor.id_for_label }}">
+                    <i class="bi bi-box-seam me-1"></i> Contenedor
+                </label>
+                {{ form.contenedor }}
+            </div>
+
+            <!-- Campo Cantidad Contenedor -->
+            <div class="form-field">
+                <label for="{{ form.cant_contenedor.id_for_label }}">
+                    <i class="bi bi-123 me-1"></i> Cantidad Contenedor
+                </label>
+                {{ form.cant_contenedor }}
+            </div>
+
+            <!-- Campo Cantidad Pallet Con Contenedor -->
+            <div class="form-field">
+                <label for="{{ form.cantidad_pallet_con_contenedor.id_for_label }}">
+                    <i class="bi bi-grid-3x3 me-1"></i> Cantidad Pallet Con Contenedor
+                </label>
+                {{ form.cantidad_pallet_con_contenedor }}
+                {% if form.cantidad_pallet_con_contenedor.help_text %}
+                    <p class="help-text">{{ form.cantidad_pallet_con_contenedor.help_text }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Campo Cantidad Pallet Sin Contenedor -->
+            <div class="form-field">
+                <label for="{{ form.cantidad_pallet_sin_contenedor.id_for_label }}">
+                    <i class="bi bi-grid-3x3-gap me-1"></i> Cantidad Pallet Sin Contenedor
+                </label>
+                {{ form.cantidad_pallet_sin_contenedor }}
+                {% if form.cantidad_pallet_sin_contenedor.help_text %}
+                    <p class="help-text">{{ form.cantidad_pallet_sin_contenedor.help_text }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Campo Porcentaje Peso Bruto -->
+            <div class="form-field">
+                <label for="{{ form.porcentaje_peso_bruto.id_for_label }}">
+                    <i class="bi bi-percent me-1"></i> Porcentaje Peso Bruto
+                </label>
+                {{ form.porcentaje_peso_bruto }}
+            </div>
+
+            <!-- Campo Exportador -->
+            <div class="form-field">
+                <label for="{{ form.exportador.id_for_label }}">
+                    <i class="bi bi-building me-1"></i> Exportador
+                </label>
+                <div class="icon-field">
+                    {{ form.exportador }}
+                    <i class="bi bi-lock-fill field-icon"></i>
+                </div>
+            </div>
         </div>
-        {{ form.as_p }}
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-warning" data-bs-dismiss="modal">Cerrar</button>
-        <button type="submit" class="btn btn-success">Editar</button>
-    </div>
-</form>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-warning" data-bs-dismiss="modal">
+                <i class="bi bi-x-circle me-1"></i> Cerrar
+            </button>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check2-circle me-1"></i> Guardar Cambios
+            </button>
+        </div>
+    </form>
+</div>
+</body>
+</html>

@@ -589,14 +589,20 @@ class EditarPedidoExportadorForm(forms.ModelForm):
 class EditarReferenciaForm(forms.ModelForm):
     class Meta:
         model = Referencias
-        fields = ['nombre', 'referencia_nueva', 'precio', 'contenedor', 'cant_contenedor',
-                  'exportador']
+        fields = ['nombre', 'referencia_nueva', 'precio', 'contenedor', 'cant_contenedor', 
+                  'cantidad_pallet_con_contenedor', 'cantidad_pallet_sin_contenedor', 
+                  'porcentaje_peso_bruto', 'exportador']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['nombre'].disabled = True
-        self.fields['cant_contenedor'].disabled = True
         self.fields['exportador'].disabled = True
+        
+        # Añadir descripciones y placeholders para mejor UX
+        self.fields['referencia_nueva'].help_text = "Código o número de la nueva referencia"
+        self.fields['precio'].widget.attrs.update({'placeholder': 'Precio en USD'})
+        self.fields['cantidad_pallet_con_contenedor'].help_text = "Número de pallets cuando usa contenedor"
+        self.fields['cantidad_pallet_sin_contenedor'].help_text = "Número de pallets sin contenedor"
 
 
 # --------------------------------------- Editar Pedidos, Seguimiento o tracking -------------------------------------
