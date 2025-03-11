@@ -97,8 +97,10 @@
                                     <label for="estado_pedido">Estado del pedido</label>
                                     <select name="estado_pedido" id="estado_pedido" class="form-control">
                                         <option value="" selected>Todos los estados</option>
-                                        <option value="Por Reservar" {% if request.GET.estado_pedido == 'Por Reservar' %}selected{% endif %}>Por Reservar</option>
-                                        <option value="Reservado" {% if request.GET.estado_pedido == 'Reservado' %}selected{% endif %}>Reservado</option>
+                                        <option value="En Proceso" {% if request.GET.estado_pedido == 'En Proceso' %}selected{% endif %}>En Proceso</option>
+                                        <option value="Despachado" {% if request.GET.estado_pedido == 'Despachado' %}selected{% endif %}>Despachado</option>
+                                        <option value="Reprogramado" {% if request.GET.estado_pedido == 'Reprogramado' %}selected{% endif %}>Reprogramado</option>
+                                        <option value="Cancelado" {% if request.GET.estado_pedido == 'Cancelado' %}selected{% endif %}>Cancelado</option>
                                         <option value="Finalizado" {% if request.GET.estado_pedido == 'Finalizado' %}selected{% endif %}>Finalizado</option>
                                     </select>
                                 </div>
