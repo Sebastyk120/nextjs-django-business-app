@@ -92,6 +92,11 @@ class PedidoTable(tables.Table):
             return format_html('<span title="{}">{}</span>', value, value)
         return value
 
+    def render_cliente(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
+
 
 class DetallePedidoTable(tables.Table):
     editar = tables.TemplateColumn(template_name='detalle_pedido_editar_button.html', orderable=False)
@@ -223,6 +228,21 @@ class PedidoExportadorTable(tables.Table):
 
     def render_descuento(self, value):
         return format_currency(value)
+
+    def render_observaciones(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
+
+    def render_variedades(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
+
+    def render_cliente(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
 
 
 class CarteraPedidoTable(tables.Table):
@@ -368,6 +388,7 @@ class ResumenPedidoTable(tables.Table):
         return format_currency(value)
 
 
+
 class ReferenciasTable(tables.Table):
     precio = tables.Column()
     editar = tables.TemplateColumn(
@@ -469,6 +490,16 @@ class SeguimienosTable(tables.Table):
     def render_fecha_llegada(self, value):
         return value.strftime('%d/%m/%Y')
 
+    def render_observaciones_tracking(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
+
+    def render_cliente(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
+
 
 class SeguimienosResumenTable(tables.Table):
     semana = tables.Column(verbose_name='Week', )
@@ -504,3 +535,18 @@ class SeguimienosResumenTable(tables.Table):
 
     def render_fecha_entrega(self, value):
         return value.strftime('%d/%m/%Y')
+
+    def render_observaciones_tracking(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
+
+    def render_cliente(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
+
+    def render_variedades(self, value):
+        if value:
+            return format_html('<span title="{}">{}</span>', value, value)
+        return value
