@@ -53,9 +53,22 @@ class SearchForm(forms.Form):
         ('id', 'Número De Pedido'),
         ('intermediario', 'Intermediario'),
     ]
+    
+    ESTADO_PEDIDO_CHOICES = [
+        ('', 'Todos los estados'),
+        ('En Proceso', 'En Proceso'),
+        ('Despachado', 'Despachado'),
+        ('Reprogramado', 'Reprogramado'),
+        ('Cancelado', 'Cancelado'),
+        ('Finalizado', 'Finalizado'),
+    ]
+    
     metodo_busqueda = forms.ChoiceField(choices=METODO_BUSQUEDA_CHOICES, required=False, label="Modo De Búsqueda")
     item_busqueda = forms.CharField(max_length=100, required=False, label="Ingrese búsqueda")
     cliente = forms.ModelChoiceField(queryset=Cliente.objects.none(), required=False, label="Cliente")
+    estado_pedido = forms.ChoiceField(choices=ESTADO_PEDIDO_CHOICES, required=False, label="Estado del pedido")
+    fecha_desde = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}), label="Desde")
+    fecha_hasta = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}), label="Hasta")
 
     def __init__(self, *args, **kwargs):
         clientes = kwargs.pop('clientes', None)
