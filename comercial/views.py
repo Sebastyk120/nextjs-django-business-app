@@ -1,14 +1,13 @@
 import io
 import math
 import time
-from collections import defaultdict
 from datetime import datetime, timedelta, date
-from decimal import Decimal
+
 import pandas as pd
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Sum
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -393,9 +392,9 @@ class PedidoListView(SingleTableView):
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
-                    queryset = queryset.filter(awb__icontains(item_busqueda))
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda))
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -403,7 +402,7 @@ class PedidoListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda))
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -533,7 +532,7 @@ class PedidoEtnicoListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -580,7 +579,7 @@ class PedidoFieldexListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -627,7 +626,7 @@ class PedidoJuanListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -667,7 +666,7 @@ class PedidoCiDoradoListView(SingleTableView):
                 if metodo_busqueda == 'awb':
                     queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda)
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -675,7 +674,7 @@ class PedidoCiDoradoListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -1521,9 +1520,9 @@ class CarteraHeavensListView(SingleTableView):
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
-                    queryset = queryset.filter(awb__icontains(item_busqueda))
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda))
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -1531,7 +1530,7 @@ class CarteraHeavensListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -1570,9 +1569,9 @@ class CarteraEtnicoListView(SingleTableView):
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
-                    queryset = queryset.filter(awb__icontains(item_busqueda))
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda))
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -1580,7 +1579,7 @@ class CarteraEtnicoListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -1617,9 +1616,9 @@ class CarteraFieldexListView(SingleTableView):
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
-                    queryset = queryset.filter(awb__icontains(item_busqueda))
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda))
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -1627,7 +1626,7 @@ class CarteraFieldexListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -1664,9 +1663,9 @@ class CarteraJuanListView(SingleTableView):
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
-                    queryset = queryset.filter(awb__icontains(item_busqueda))
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda))
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -1674,7 +1673,7 @@ class CarteraJuanListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -1711,9 +1710,9 @@ class CarteraCiDoradoListView(SingleTableView):
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
-                    queryset = queryset.filter(awb__icontains(item_busqueda))
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda)
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -1721,7 +1720,7 @@ class CarteraCiDoradoListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -1758,9 +1757,9 @@ class UtilidadHeavensListView(SingleTableView):
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
-                    queryset = queryset.filter(awb__icontains(item_busqueda))
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda))
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -1768,7 +1767,7 @@ class UtilidadHeavensListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -1807,9 +1806,9 @@ class UtilidadEtnicoListView(SingleTableView):
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
-                    queryset = queryset.filter(awb__icontains(item_busqueda))
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda))
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -1817,7 +1816,7 @@ class UtilidadEtnicoListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -1854,9 +1853,9 @@ class UtilidadFiedexListView(SingleTableView):
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
-                    queryset = queryset.filter(awb__icontains(item_busqueda))
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda))
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -1864,7 +1863,7 @@ class UtilidadFiedexListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -1901,9 +1900,9 @@ class UtilidadJuanListView(SingleTableView):
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
-                    queryset = queryset.filter(awb__icontains(item_busqueda))
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda))
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -1911,7 +1910,7 @@ class UtilidadJuanListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -1948,9 +1947,9 @@ class UtilidadCiDoradoListView(SingleTableView):
 
             if metodo_busqueda and item_busqueda:
                 if metodo_busqueda == 'awb':
-                    queryset = queryset.filter(awb__icontains(item_busqueda))
+                    queryset = queryset.filter(awb__icontains=item_busqueda)
                 elif metodo_busqueda == 'numero_factura':
-                    queryset = queryset.filter(numero_factura__icontains(item_busqueda)
+                    queryset = queryset.filter(numero_factura__icontains=item_busqueda)
                 elif metodo_busqueda == 'id':
                     try:
                         item_busqueda_id = int(item_busqueda)
@@ -1958,7 +1957,7 @@ class UtilidadCiDoradoListView(SingleTableView):
                     except ValueError:
                         queryset = queryset.none()
                 elif metodo_busqueda == 'intermediario':
-                    queryset = queryset.filter(intermediario__nombre__icontains(item_busqueda)
+                    queryset = queryset.filter(intermediario__nombre__icontains=item_busqueda)
 
             if cliente:
                 queryset = queryset.filter(cliente=cliente)
@@ -1990,7 +1989,7 @@ class ReferenciasEtnicoListView(SingleTableView):
         if form.is_valid():
             item_busqueda = form.cleaned_data.get('item_busqueda')
             if item_busqueda:
-                queryset = queryset.filter(nombre__icontains(item_busqueda)
+                queryset = queryset.filter(nombre__icontains=item_busqueda)
 
         return queryset
 
@@ -2017,7 +2016,7 @@ class ReferenciasFieldexListView(SingleTableView):
         if form.is_valid():
             item_busqueda = form.cleaned_data.get('item_busqueda')
             if item_busqueda:
-                queryset = queryset.filter(nombre__icontains(item_busqueda)
+                queryset = queryset.filter(nombre__icontains=item_busqueda)
 
         return queryset
 
@@ -2044,7 +2043,7 @@ class ReferenciasjuanListView(SingleTableView):
         if form.is_valid():
             item_busqueda = form.cleaned_data.get('item_busqueda')
             if item_busqueda:
-                queryset = queryset.filter(nombre__icontains(item_busqueda)
+                queryset = queryset.filter(nombre__icontains=item_busqueda)
 
         return queryset
 
@@ -2071,7 +2070,7 @@ class ReferenciasCiDoradoListView(SingleTableView):
         if form.is_valid():
             item_busqueda = form.cleaned_data.get('item_busqueda')
             if item_busqueda:
-                queryset = queryset.filter(nombre__icontains(item_busqueda)
+                queryset = queryset.filter(nombre__icontains=item_busqueda)
 
         return queryset
 
