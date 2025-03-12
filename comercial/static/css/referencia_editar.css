@@ -42,7 +42,7 @@
     font-weight: 500;
 }
 
-.form-field input, 
+.form-field input,
 .form-field select {
     width: 100%;
     padding: 10px 12px;
@@ -54,7 +54,7 @@
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-.form-field input:focus, 
+.form-field input:focus,
 .form-field select:focus {
     border-color: #80bdff;
     outline: 0;

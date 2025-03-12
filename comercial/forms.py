@@ -17,6 +17,7 @@ def get_unique_weeks():
     # Devolvemos las semanas en el formato correcto
     return [(f"{semana[0]}-{semana[1]}", f'Semana {semana[0]}-{semana[1]}') for semana in semanas_ordenadas]
 
+
 class FiltroSemanaExportadoraForm(forms.Form):
     semana = forms.ChoiceField(
         label='Semana',
@@ -24,7 +25,7 @@ class FiltroSemanaExportadoraForm(forms.Form):
         widget=forms.Select(attrs={
             'class': 'form-control'
         }),
-        error_messages={'required': ''}  
+        error_messages={'required': ''}
     )
     exportadora = forms.ModelChoiceField(
         queryset=Exportador.objects.all(),
@@ -40,10 +41,11 @@ class FiltroSemanaExportadoraForm(forms.Form):
         # Actualizamos las opciones de semana en cada instancia del formulario
         choices = [('', 'Seleccione una semana')] + get_unique_weeks()
         self.fields['semana'].choices = choices
-        
+
         # Set initial value if form is unbound to prevent required message
         if not self.is_bound:
             self.initial['semana'] = ''
+
 
 # --------------------------- Formulario con filtro Cliente -------------------------------------------------------
 class SearchForm(forms.Form):
@@ -53,7 +55,7 @@ class SearchForm(forms.Form):
         ('id', 'Número De Pedido'),
         ('intermediario', 'Intermediario'),
     ]
-    
+
     ESTADO_PEDIDO_CHOICES = [
         ('', 'Todos los estados'),
         ('En Proceso', 'En Proceso'),
@@ -62,7 +64,7 @@ class SearchForm(forms.Form):
         ('Cancelado', 'Cancelado'),
         ('Finalizado', 'Finalizado'),
     ]
-    
+
     metodo_busqueda = forms.ChoiceField(choices=METODO_BUSQUEDA_CHOICES, required=False, label="Modo De Búsqueda")
     item_busqueda = forms.CharField(max_length=100, required=False, label="Ingrese búsqueda")
     cliente = forms.ModelChoiceField(queryset=Cliente.objects.none(), required=False, label="Cliente")
@@ -382,7 +384,8 @@ class EditarDetallePedidoDosForm(forms.ModelForm):
     class Meta:
         model = DetallePedido
         fields = ['pedido', 'fruta', 'presentacion', 'cajas_solicitadas', 'tipo_caja', 'referencia', 'lleva_contenedor',
-                  'tarifa_utilidad', 'valor_x_caja_usd', 'tarifa_recuperacion', 'observaciones', 'precio_proforma', 'cajas_enviadas']
+                  'tarifa_utilidad', 'valor_x_caja_usd', 'tarifa_recuperacion', 'observaciones', 'precio_proforma',
+                  'cajas_enviadas']
 
     def __init__(self, *args, **kwargs):
         pedido_id = kwargs.pop('pedido_id', None)
@@ -602,15 +605,15 @@ class EditarPedidoExportadorForm(forms.ModelForm):
 class EditarReferenciaForm(forms.ModelForm):
     class Meta:
         model = Referencias
-        fields = ['nombre', 'referencia_nueva', 'precio', 'contenedor', 'cant_contenedor', 
-                  'cantidad_pallet_con_contenedor', 'cantidad_pallet_sin_contenedor', 
+        fields = ['nombre', 'referencia_nueva', 'precio', 'contenedor', 'cant_contenedor',
+                  'cantidad_pallet_con_contenedor', 'cantidad_pallet_sin_contenedor',
                   'porcentaje_peso_bruto', 'exportador']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['nombre'].disabled = True
         self.fields['exportador'].disabled = True
-        
+
         # Añadir descripciones y placeholders para mejor UX
         self.fields['referencia_nueva'].help_text = "Código o número de la nueva referencia"
         self.fields['precio'].widget.attrs.update({'placeholder': 'Precio en USD'})

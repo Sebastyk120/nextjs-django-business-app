@@ -511,11 +511,11 @@
 
         // Por defecto mostramos utilidad por cliente
         mostrarUtilidadPorCliente();
-        
+
         // Inicializar el gráfico mensual
         inicializarGraficoMensual();
     }
-    
+
     function inicializarGraficoMensual() {
         // Obtener datos para el gráfico mensual
         const datosMensuales = [
@@ -531,7 +531,7 @@
                 }{% if not forloop.last %},{% endif %}
             {% endfor %}
         ];
-        
+
         // Obtener datos reales del periodo anterior
         const datosMensualesAnterior = [
             {% for item in datos_mensuales_anterior %}
@@ -546,14 +546,14 @@
                 }{% if not forloop.last %},{% endif %}
             {% endfor %}
         ];
-        
+
         // Preparar datos para el gráfico
         const labels = datosMensuales.map(item => `${item.mes} ${item.año}`);
         const kilosData = datosMensuales.map(item => item.totalKilos);
-        
+
         // Crear datos para el período anterior usando datos reales
         const kilosPrevData = organizarDatosPeriodoAnterior(datosMensuales, datosMensualesAnterior, 'totalKilos');
-        
+
         // Crear el gráfico de barras con datos comparativos
         const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
         monthlyChart = new Chart(monthlyCtx, {
@@ -619,32 +619,32 @@
                 }
             }
         });
-        
+
         // Event listeners para los botones de filtro
         document.getElementById('kilosBtn').addEventListener('click', function() {
             actualizarGraficoMensual('kilos', this);
         });
-        
+
         document.getElementById('cajasBtn').addEventListener('click', function() {
             actualizarGraficoMensual('cajas', this);
         });
-        
+
         document.getElementById('utilidadBtn').addEventListener('click', function() {
             actualizarGraficoMensual('utilidad', this);
         });
-        
+
         document.getElementById('ncBtn').addEventListener('click', function() {
             actualizarGraficoMensual('nc', this);
         });
     }
-    
+
     function actualizarGraficoMensual(tipo, boton) {
         // Actualizar clases activas
         document.querySelectorAll('.chart-filter-btn').forEach(btn => {
             btn.classList.remove('active');
         });
         boton.classList.add('active');
-        
+
         // Obtener datos para el gráfico mensual
         const datosMensuales = [
             {% for item in datos_mensuales %}
@@ -659,7 +659,7 @@
                 }{% if not forloop.last %},{% endif %}
             {% endfor %}
         ];
-        
+
         // Obtener datos reales del periodo anterior
         const datosMensualesAnterior = [
             {% for item in datos_mensuales_anterior %}
@@ -674,11 +674,11 @@
                 }{% if not forloop.last %},{% endif %}
             {% endfor %}
         ];
-        
+
         // Preparar datos para el gráfico actual
         const labels = datosMensuales.map(item => `${item.mes} ${item.año}`);
         let datos, datosPrevios, titulo, etiqueta, unidad;
-        
+
         // Colores base por tipo de dato
         const colorSchemes = {
             'kilos': {
@@ -698,7 +698,7 @@
                 previo: 'rgba(231, 76, 60, 0.3)'
             }
         };
-        
+
         switch(tipo) {
             case 'kilos':
                 datos = datosMensuales.map(item => item.totalKilos);
@@ -733,7 +733,7 @@
                 colorBase = colorSchemes.nc;
                 break;
         }
-        
+
         // Actualizar dataset para mostrar barras agrupadas (período actual y anterior)
         monthlyChart.data.datasets = [
             {
@@ -751,7 +751,7 @@
                 borderWidth: 1
             }
         ];
-        
+
         // Actualizar opciones
         monthlyChart.options.plugins.title.text = titulo;
         monthlyChart.options.scales.y.ticks.callback = function(value) {
@@ -764,7 +764,7 @@
             }
             return context.dataset.label + ': ' + prefix + context.raw.toLocaleString() + unidad;
         };
-        
+
         // Actualizar el gráfico
         monthlyChart.update();
     }
@@ -773,7 +773,7 @@
         // Obtener datos para gráfico de utilidad por cliente
         const clienteLabels = [{% for item in utilidad_por_cliente %}'{{ item.cliente__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
         const clienteData = [{% for item in utilidad_por_cliente %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
-        
+
         // Obtener datos reales del periodo anterior
         const clienteLabelsAnterior = [{% for item in utilidad_por_cliente_anterior %}'{{ item.cliente__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
         const clienteDataAnterior = [{% for item in utilidad_por_cliente_anterior %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
@@ -1060,7 +1060,7 @@
         if (!hayDatosEnPeriodoAnterior(tipoIndicador)) {
             return datosActuales.map(() => 0);
         }
-        
+
         // Si hay datos, usar el factor de cambio para estimar valores
         return datosActuales.map(valor => {
             return Math.max(0, valor / (1 + factorCambio));
@@ -1072,22 +1072,22 @@
         // Obtener el rango de fechas seleccionado
         const fechaInicio = document.getElementById('fecha_inicio').value;
         const fechaFin = document.getElementById('fecha_fin').value;
-        
+
         // Si no hay fechas seleccionadas, asumimos que es una comparación segura
         if (!fechaInicio || !fechaFin) return false;
-        
+
         // Extraer el año de las fechas
         const anioInicio = new Date(fechaInicio).getFullYear();
         const anioFin = new Date(fechaFin).getFullYear();
-        
+
         // Si los años son diferentes o el rango es mayor a 12 meses,
         // consideramos que la comparación con el período anterior no es confiable
         if (anioInicio !== anioFin) return true;
-        
+
         // También verificamos si el rango de fechas es demasiado amplio (más de 12 meses)
         const msEnUnAnio = 365 * 24 * 60 * 60 * 1000;
         const diferenciaMs = new Date(fechaFin) - new Date(fechaInicio);
-        
+
         return diferenciaMs > msEnUnAnio;
     }
 
@@ -1104,7 +1104,7 @@
         if (!datosPeriodoAnterior || datosPeriodoAnterior.length === 0) {
             return datosPeriodoActual.map(() => 0);
         }
-        
+
         // Crear un mapa de los datos del período anterior por mes y año
         const mapaDatosPrevios = {};
         datosPeriodoAnterior.forEach(item => {
@@ -1112,14 +1112,14 @@
             const clave = `${item.mes}-${item.año}`;
             mapaDatosPrevios[clave] = item[campoDatos];
         });
-        
+
         // Para cada mes del período actual, buscar el mes correspondiente
         // en el período anterior (mismo mes, año anterior)
         return datosPeriodoActual.map(itemActual => {
             const mesActual = itemActual.mes;
             const añoActual = itemActual.año;
             const añoAnterior = añoActual - 1;
-            
+
             // Buscar datos del mismo mes pero año anterior
             const clave = `${mesActual}-${añoAnterior}`;
             return mapaDatosPrevios[clave] || 0;
