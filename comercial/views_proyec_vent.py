@@ -482,8 +482,8 @@ def analyze_customer_portfolio(historical_data):
     customer_growth.sort(key=lambda x: x['growth'])
     
     # Get top growing and declining customers
-    declining_customers = [c for c in customer_growth if c['growth'] < -2][:10]  # More than 10% decline
-    growing_customers = [c for c in customer_growth if c['growth'] > 2][-10:]    # More than 10% growth
+    declining_customers = [c for c in customer_growth if c['growth'] < -2][:10]
+    growing_customers = [c for c in customer_growth if c['growth'] > 2][-10:]
     growing_customers.reverse()  # Sort from highest to lowest
     
     return {

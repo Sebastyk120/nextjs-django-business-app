@@ -38,9 +38,7 @@ DEBUG = False
 # Application definition
 
 INSTALLED_APPS = [
-    # Nuestra aplicación de autenticación primero para que sus plantillas tengan prioridad
     'autenticacion.apps.AutenticacionConfig',
-    # Luego Unfold
     'unfold',
     'unfold.contrib.filters',
     'unfold.contrib.inlines',

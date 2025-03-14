@@ -305,8 +305,9 @@ class Pedido(models.Model):
     dias_de_vencimiento = models.IntegerField(verbose_name="Dias Vencimiento", editable=False, null=True, blank=True)
     valor_total_factura_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Total Factura",
                                                   null=True, blank=True, editable=False, default=0)
-    valor_total_utilidad_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Utilidades USD",
+    valor_total_utilidad_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$ Utilidades USD",
                                                    null=True, blank=True, editable=False, default=0)
+    valor_total_recuperacion_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$ Recuperaciónes USD", null=True, blank=True, editable=False, default=0)
     valor_utilidad_pesos = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="$Utilidades Pesos",
                                                null=True, blank=True, editable=False, default=0)
     documento_cobro_utilidad = models.CharField(max_length=50, verbose_name="Doc Cobro Utilidad", null=True, blank=True,
@@ -733,6 +734,7 @@ class DetallePedido(models.Model):
         valor_x_producto_delta = self.valor_x_producto or 0
         valor_nota_delta = self.valor_nota_credito_usd or 0
         valor_utilidad_delta = self.valor_total_utilidad_x_producto or 0
+        valor_recuperacion_delta = self.valor_total_recuperacion_x_producto or 0
         peso_bruto_solicitado_delta = self.calcular_peso_bruto()
         peso_bruto_enviado_delta = self.calcular_peso_bruto_final()
 
@@ -742,6 +744,7 @@ class DetallePedido(models.Model):
             valor_x_producto_delta -= (detalle_anterior.valor_x_producto or 0)
             valor_nota_delta -= (detalle_anterior.valor_nota_credito_usd or 0)
             valor_utilidad_delta -= (detalle_anterior.valor_total_utilidad_x_producto or 0)
+            valor_recuperacion_delta -= (detalle_anterior.valor_total_recuperacion_x_producto or 0)
             peso_bruto_solicitado_delta -= detalle_anterior.calcular_peso_bruto()
             peso_bruto_enviado_delta -= detalle_anterior.calcular_peso_bruto_final()
 
@@ -751,6 +754,7 @@ class DetallePedido(models.Model):
             valor_x_producto_delta = -(self.valor_x_producto or 0)
             valor_nota_delta = -(self.valor_nota_credito_usd or 0)
             valor_utilidad_delta = -(self.valor_total_utilidad_x_producto or 0)
+            valor_recuperacion_delta = -(self.valor_total_recuperacion_x_producto or 0)
             peso_bruto_solicitado_delta = -self.calcular_peso_bruto()
             peso_bruto_enviado_delta = -self.calcular_peso_bruto_final()
 
@@ -760,6 +764,7 @@ class DetallePedido(models.Model):
         pedido.valor_total_factura_usd = (pedido.valor_total_factura_usd or 0) + valor_x_producto_delta
         pedido.valor_total_nota_credito_usd = (pedido.valor_total_nota_credito_usd or 0) + valor_nota_delta
         pedido.valor_total_utilidad_usd = (pedido.valor_total_utilidad_usd or 0) + valor_utilidad_delta
+        pedido.valor_total_recuperacion_usd = (pedido.valor_total_recuperacion_usd or 0) + valor_recuperacion_delta
         pedido.total_peso_bruto_solicitado = (pedido.total_peso_bruto_solicitado or 0) + peso_bruto_solicitado_delta
         pedido.total_peso_bruto_enviado = (pedido.total_peso_bruto_enviado or 0) + peso_bruto_enviado_delta
 

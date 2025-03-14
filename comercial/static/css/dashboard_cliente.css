@@ -515,6 +515,7 @@ h1:before {
 .table-compact .badge {
     font-size: 0.75rem;
     padding: 0.35em 0.65em;
+    font-weight: 400;
 }
 
 /* Chart Container */

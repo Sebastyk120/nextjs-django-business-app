@@ -35,7 +35,7 @@ class PedidoTable(tables.Table):
                   "valor_total_nota_credito_usd", "utilidad_bancaria_usd", "fecha_pago", "valor_pagado_cliente_usd",
                   "fecha_monetizacion", "trm_monetizacion", "tasa_representativa_usd_diaria", "trm_cotizacion",
                   "estado_factura", "diferencia_por_abono", "dias_de_vencimiento", "valor_total_factura_usd",
-                  "valor_total_utilidad_usd", "valor_utilidad_pesos", "documento_cobro_utilidad", "fecha_pago_utilidad",
+                  "valor_total_utilidad_usd", "valor_utilidad_pesos", "valor_total_recuperacion_usd", "documento_cobro_utilidad", "fecha_pago_utilidad",
                   "estado_utilidad", "variedades", "estado_pedido", "estado_cancelacion", "observaciones", "detalle",
                   "editar", "editar2", "inf", "cancelar")
         row_attrs = {
@@ -62,6 +62,9 @@ class PedidoTable(tables.Table):
         return format_currency(value)
 
     def render_valor_total_utilidad_usd(self, value):
+        return format_currency(value)
+
+    def render_valor_total_recuperacion_usd(self, value):
         return format_currency(value)
 
     def render_valor_utilidad_pesos(self, value):
@@ -309,7 +312,7 @@ class UtilidadPedidoTable(tables.Table):
                   "cliente", "exportadora", "awb", "fecha_entrega_personalizada", "numero_factura",
                   "valor_total_factura_usd", "valor_pagado_cliente_usd", "diferencia_por_abono", "trm_monetizacion",
                   "tasa_representativa_usd_diaria", "estado_factura", "total_cajas_enviadas",
-                  "valor_total_utilidad_usd", "valor_utilidad_pesos", "documento_cobro_utilidad", "fecha_pago_utilidad",
+                  "valor_total_utilidad_usd", "valor_utilidad_pesos", "valor_total_recuperacion_usd", "documento_cobro_utilidad", "fecha_pago_utilidad",
                   "estado_utilidad", "editar")
         row_attrs = {
             "style": lambda record: (
@@ -326,6 +329,9 @@ class UtilidadPedidoTable(tables.Table):
             return format_html('<span style="color: red;">✘</span>')
 
     def render_valor_total_utilidad_usd(self, value):
+        return format_currency(value)
+
+    def render_valor_total_recuperacion_usd(self, value):
         return format_currency(value)
 
     def render_tasa_representativa_usd_diaria(self, value):

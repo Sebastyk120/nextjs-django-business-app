@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db.models import Q
 from django.http import HttpResponse
 from openpyxl.cell import WriteOnlyCell
-from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.workbook import Workbook
 from .models import Pedido, DetallePedido
 
@@ -51,6 +51,16 @@ def exportar_utilidades_excel(request):
     subtotal_font = Font(bold=True, name='Arial', size=10)
     subtotal_fill = PatternFill(start_color="E3F2FD", end_color="E3F2FD", fill_type="solid")
     
+    category_font = Font(bold=True, color="000000", name='Arial', size=10)
+    category_fill = PatternFill(start_color="F5F5F5", end_color="F5F5F5", fill_type="solid")
+    
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
     date_format = 'DD-MM-YYYY'
     number_format = '$#,##0.00'
     percentage_format = '0.00%'
@@ -66,11 +76,11 @@ def exportar_utilidades_excel(request):
     columns = ['No. Pedido', 'Fecha Entrega Pedido', 'Cliente', 'Exportador', 'AWB', 'Fecha Pago Cliente', 'No Factura',
                'Valor Total Factura USD', 'Valor Pagado Cliente', 'Estado Factura', 'T Cajas Enviadas',
                'Trm Monetizacion',
-               'TRM Banrep', 'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
+               'TRM Banrep', 'Valor Utilidad USD', 'Valor Recuperación USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
                'Fecha Pago Utilidad', 'Diferencia O Abono', 'Estado Utilidad', 'Cobrar Utilidad']
     
     # Ajuste automático del ancho de las columnas según su contenido
-    column_widths = [10, 15, 20, 15, 12, 15, 15, 15, 15, 15, 12, 12, 12, 15, 15, 20, 15, 15, 15, 10]
+    column_widths = [10, 15, 20, 15, 12, 15, 15, 15, 15, 15, 12, 12, 12, 15, 15, 15, 20, 15, 15, 15, 10]
     
     # Aplicar encabezados y ancho de columnas
     for col_num, (column_title, width) in enumerate(zip(columns, column_widths), start=1):
@@ -78,19 +88,30 @@ def exportar_utilidades_excel(request):
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = header_align
+        cell.border = thin_border
         worksheet1.column_dimensions[worksheet1.cell(row=1, column=col_num).column_letter].width = width
 
-    # Crear un diccionario para almacenar los totales de Utilidades por exportadora
+    # Crear diccionarios para almacenar los totales por estado y exportadora
     totales_por_utilidad_usd = defaultdict(Decimal)
-    totales_no_cobrables_por_exportadora = defaultdict(Decimal)
-    totales_cobrados_por_exportadora = defaultdict(Decimal)
-    totales_por_cobrar_por_exportadora = defaultdict(Decimal)
+    totales_por_recuperacion_usd = defaultdict(Decimal)
+    totales_por_estado = {
+        'Pendiente Pago Cliente': defaultdict(Decimal),
+        'Factura en abono': defaultdict(Decimal),
+        'Por Facturar': defaultdict(Decimal),
+        'Facturada': defaultdict(Decimal),
+        'Pagada': defaultdict(Decimal)
+    }
     
     # Totales generales para el resumen
     total_general_utilidad_usd = Decimal('0.00')
-    total_general_no_cobrable = Decimal('0.00')
-    total_general_cobrado = Decimal('0.00')
-    total_general_por_cobrar = Decimal('0.00')
+    total_general_recuperacion_usd = Decimal('0.00')
+    total_general_por_estado = {
+        'Pendiente Pago Cliente': Decimal('0.00'),
+        'Factura en abono': Decimal('0.00'),
+        'Por Facturar': Decimal('0.00'),
+        'Facturada': Decimal('0.00'),
+        'Pagada': Decimal('0.00')
+    }
     total_cajas_enviadas = 0
     clientes_unicos = set()
     exportadoras_unicas = set()
@@ -124,6 +145,7 @@ def exportar_utilidades_excel(request):
     row_num = 2  # Comenzar después del encabezado
     for pedido in queryset:
         valor_utilidad_usd = pedido.valor_total_utilidad_usd or Decimal('0.00')
+        valor_recuperacion_usd = pedido.valor_total_recuperacion_usd or Decimal('0.00')
         
         # Acumular estadísticas
         exportadora = pedido.exportadora.nombre
@@ -133,21 +155,15 @@ def exportar_utilidades_excel(request):
         
         # Calcular totales por exportadora
         totales_por_utilidad_usd[exportadora] += valor_utilidad_usd
+        totales_por_recuperacion_usd[exportadora] += valor_recuperacion_usd
         total_general_utilidad_usd += valor_utilidad_usd
+        total_general_recuperacion_usd += valor_recuperacion_usd
         
         # Clasificar utilidades según su estado
-        if pedido.estado_utilidad == "Factura en abono" or pedido.estado_utilidad == "Pendiente Pago Cliente":
-            totales_no_cobrables_por_exportadora[exportadora] += valor_utilidad_usd
-            total_general_no_cobrable += valor_utilidad_usd
-            
-        if pedido.fecha_pago_utilidad is not None and pedido.documento_cobro_utilidad is not None:
-            totales_cobrados_por_exportadora[exportadora] += valor_utilidad_usd
-            total_general_cobrado += valor_utilidad_usd
-            
-        if pedido.fecha_pago_utilidad is None and pedido.estado_factura == "Pagada" and (
-                pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada"):
-            totales_por_cobrar_por_exportadora[exportadora] += valor_utilidad_usd
-            total_general_por_cobrar += valor_utilidad_usd
+        estado = pedido.estado_utilidad
+        if estado in totales_por_estado:
+            totales_por_estado[estado][exportadora] += valor_utilidad_usd
+            total_general_por_estado[estado] += valor_utilidad_usd
 
         # Determinar si se debe cobrar la utilidad
         cobrar_utilidad = "Sí" if pedido.estado_utilidad == "Por Facturar" or pedido.estado_utilidad == "Facturada" else "No"
@@ -168,6 +184,7 @@ def exportar_utilidades_excel(request):
             pedido.trm_monetizacion,
             pedido.tasa_representativa_usd_diaria,
             valor_utilidad_usd,
+            valor_recuperacion_usd,
             pedido.valor_utilidad_pesos,
             pedido.documento_cobro_utilidad,
             pedido.fecha_pago_utilidad,
@@ -178,14 +195,15 @@ def exportar_utilidades_excel(request):
         
         for col_num, cell_value in enumerate(row, start=1):
             cell = worksheet1.cell(row=row_num, column=col_num, value=cell_value)
+            cell.border = Side(style='thin', color="DDDDDD")
             
             # Aplicar formato a fechas
-            if col_num in [2, 6, 17]:  # Columnas de fechas
+            if col_num in [2, 6, 18]:  # Columnas de fechas
                 if cell_value:
                     cell.number_format = date_format
             
             # Aplicar formato de moneda a las columnas específicas
-            if col_num in [8, 9, 12, 13, 14, 18]:
+            if col_num in [8, 9, 12, 13, 14, 15, 16, 19]:
                 if cell_value:
                     cell.number_format = number_format
                     
@@ -201,19 +219,29 @@ def exportar_utilidades_excel(request):
     worksheet1.cell(row=total_row, column=1, value="TOTALES GENERALES")
     worksheet1.cell(row=total_row, column=1).font = total_font
     worksheet1.cell(row=total_row, column=1).fill = total_fill
+    worksheet1.cell(row=total_row, column=1).border = thin_border
     worksheet1.merge_cells(start_row=total_row, start_column=1, end_row=total_row, end_column=13)
     
     # Total de Utilidades USD
     cell = worksheet1.cell(row=total_row, column=14, value=total_general_utilidad_usd)
     cell.font = total_font
     cell.fill = total_fill
+    cell.border = thin_border
+    cell.number_format = number_format
+    
+    # Total de Recuperación USD
+    cell = worksheet1.cell(row=total_row, column=15, value=total_general_recuperacion_usd)
+    cell.font = total_font
+    cell.fill = total_fill
+    cell.border = thin_border
     cell.number_format = number_format
     
     # Total de Utilidades en Pesos
     total_pesos = sum(p.valor_utilidad_pesos or Decimal('0.00') for p in queryset)
-    cell = worksheet1.cell(row=total_row, column=15, value=total_pesos)
+    cell = worksheet1.cell(row=total_row, column=16, value=total_pesos)
     cell.font = total_font
     cell.fill = total_fill
+    cell.border = thin_border
     cell.number_format = number_format
 
     # Hoja 2: Totales por Exportadora con formato mejorado
@@ -228,7 +256,7 @@ def exportar_utilidades_excel(request):
         
     title_cell = worksheet2.cell(row=1, column=1, value=title_text)
     title_cell.font = Font(bold=True, size=14, name='Arial')
-    worksheet2.merge_cells(start_row=1, start_column=1, end_row=1, end_column=5)
+    worksheet2.merge_cells(start_row=1, start_column=1, end_row=1, end_column=8)  # Updated to include new column
     title_cell.alignment = Alignment(horizontal="center")
     
     # Período del informe
@@ -236,39 +264,59 @@ def exportar_utilidades_excel(request):
         period_text = f"Período: {fecha_inicial_str} al {fecha_final_str}"
         period_cell = worksheet2.cell(row=2, column=1, value=period_text)
         period_cell.font = Font(italic=True, size=10)
-        worksheet2.merge_cells(start_row=2, start_column=1, end_row=2, end_column=5)
+        worksheet2.merge_cells(start_row=2, start_column=1, end_row=2, end_column=8)  # Updated to include new column
         period_cell.alignment = Alignment(horizontal="center")
         start_row = 4
     else:
         start_row = 3
     
-    # Encabezados para la segunda hoja
-    headers = ["Exportadora", "Total Utilidades USD", "Utilidades No Cobrables", "Utilidades Cobradas", "Por Cobrar"]
-    header_widths = [30, 20, 25, 20, 20]
+    # Encabezados para la segunda hoja - Separando "Por Facturar" y "Facturada"
+    headers = ["Exportadora", "Total Utilidades USD", "Total Recuperación USD", 
+               "Pendiente Pago", "Factura en Abono", "Por Facturar", "Facturada", "Pagada"]
+    header_widths = [30, 20, 20, 20, 20, 20, 20, 20]
     
     for col_num, (header, width) in enumerate(zip(headers, header_widths), start=1):
         cell = worksheet2.cell(row=start_row, column=col_num, value=header)
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = header_align
+        cell.border = thin_border
         worksheet2.column_dimensions[worksheet2.cell(row=start_row, column=col_num).column_letter].width = width
     
     # Agregar totales a la segunda hoja
     row_num = start_row + 1
     for exportadora in sorted(totales_por_utilidad_usd.keys()):
-        worksheet2.cell(row=row_num, column=1, value=exportadora)
+        worksheet2.cell(row=row_num, column=1, value=exportadora).border = thin_border
         
         cell = worksheet2.cell(row=row_num, column=2, value=totales_por_utilidad_usd[exportadora])
         cell.number_format = number_format
+        cell.border = thin_border
         
-        cell = worksheet2.cell(row=row_num, column=3, value=totales_no_cobrables_por_exportadora[exportadora])
+        cell = worksheet2.cell(row=row_num, column=3, value=totales_por_recuperacion_usd[exportadora])
         cell.number_format = number_format
+        cell.border = thin_border
         
-        cell = worksheet2.cell(row=row_num, column=4, value=totales_cobrados_por_exportadora[exportadora])
+        # Agregar valores por estado
+        cell = worksheet2.cell(row=row_num, column=4, value=totales_por_estado['Pendiente Pago Cliente'][exportadora])
         cell.number_format = number_format
+        cell.border = thin_border
         
-        cell = worksheet2.cell(row=row_num, column=5, value=totales_por_cobrar_por_exportadora[exportadora])
+        cell = worksheet2.cell(row=row_num, column=5, value=totales_por_estado['Factura en abono'][exportadora])
         cell.number_format = number_format
+        cell.border = thin_border
+        
+        # Separar "Por Facturar" y "Facturada"
+        cell = worksheet2.cell(row=row_num, column=6, value=totales_por_estado['Por Facturar'][exportadora])
+        cell.number_format = number_format
+        cell.border = thin_border
+        
+        cell = worksheet2.cell(row=row_num, column=7, value=totales_por_estado['Facturada'][exportadora])
+        cell.number_format = number_format
+        cell.border = thin_border
+        
+        cell = worksheet2.cell(row=row_num, column=8, value=totales_por_estado['Pagada'][exportadora])
+        cell.number_format = number_format
+        cell.border = thin_border
         
         row_num += 1
 
@@ -279,27 +327,51 @@ def exportar_utilidades_excel(request):
     cell = worksheet2.cell(row=totals_row, column=1, value="TOTAL GENERAL")
     cell.font = total_font
     cell.fill = total_fill
+    cell.border = thin_border
     
     cell = worksheet2.cell(row=totals_row, column=2, value=total_general_utilidad_usd)
     cell.font = total_font
     cell.fill = total_fill
+    cell.border = thin_border
     cell.number_format = number_format
     
-    cell = worksheet2.cell(row=totals_row, column=3, value=total_general_no_cobrable)
+    cell = worksheet2.cell(row=totals_row, column=3, value=total_general_recuperacion_usd)
     cell.font = total_font
     cell.fill = total_fill
+    cell.border = thin_border
     cell.number_format = number_format
     
-    cell = worksheet2.cell(row=totals_row, column=4, value=total_general_cobrado)
+    cell = worksheet2.cell(row=totals_row, column=4, value=total_general_por_estado['Pendiente Pago Cliente'])
     cell.font = total_font
     cell.fill = total_fill
+    cell.border = thin_border
     cell.number_format = number_format
     
-    cell = worksheet2.cell(row=totals_row, column=5, value=total_general_por_cobrar)
+    cell = worksheet2.cell(row=totals_row, column=5, value=total_general_por_estado['Factura en abono'])
     cell.font = total_font
     cell.fill = total_fill
+    cell.border = thin_border
     cell.number_format = number_format
     
+    # Separar "Por Facturar" y "Facturada" en totales generales
+    cell = worksheet2.cell(row=totals_row, column=6, value=total_general_por_estado['Por Facturar'])
+    cell.font = total_font
+    cell.fill = total_fill
+    cell.border = thin_border
+    cell.number_format = number_format
+    
+    cell = worksheet2.cell(row=totals_row, column=7, value=total_general_por_estado['Facturada'])
+    cell.font = total_font
+    cell.fill = total_fill
+    cell.border = thin_border
+    cell.number_format = number_format
+    
+    cell = worksheet2.cell(row=totals_row, column=8, value=total_general_por_estado['Pagada'])
+    cell.font = total_font
+    cell.fill = total_fill
+    cell.border = thin_border
+    cell.number_format = number_format
+
     workbook.save(output)
     output.seek(0)
 
@@ -365,7 +437,7 @@ def exportar_pedidos_excel_general(request):
         'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura', 'Utilidad Bancaria USD',
         'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
         'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
-        'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
+        'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Valor Recuperacion USD', 'Documento Cobro Utilidad',
         'Fecha Pago Utilidad', 'Estado Utilidad', 'Estado Cancelacion', 'Estado Documentos',
         'Estado Reserva', 'Termo', 'Diferencia AWB/Factura', 'Eta Real', 'Estado Pedido',
         'Observaciones Tracking', 'Observaciones Generales'
@@ -376,7 +448,7 @@ def exportar_pedidos_excel_general(request):
         'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
         'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad', 'Tarifa Recuperacion',
         'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
-        'Valor Total utilidad Producto', 'Precio Proforma', 'Observaciones'
+        'Valor Total utilidad Producto', 'Valor Total Recuperacion X Producto', 'Precio Proforma', 'Observaciones'
     ]
 
     # 5. Verificar si el usuario incluyó detalles
@@ -388,7 +460,7 @@ def exportar_pedidos_excel_general(request):
 
     # 7. Filtrar los pedidos según fechas
     try:
-        if fecha_inicial_str and fecha_final_str:
+        if (fecha_inicial_str and fecha_final_str):
             fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
             fecha_final = datetime.strptime(fecha_final_str, '%Y-%m-%d')
             base_filter = Q(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final)
@@ -484,6 +556,7 @@ def exportar_pedidos_excel_general(request):
             pedido.valor_total_factura_usd,
             pedido.valor_total_utilidad_usd,
             pedido.valor_utilidad_pesos,
+            pedido.valor_total_recuperacion_usd,
             pedido.documento_cobro_utilidad,
             pedido.fecha_pago_utilidad.strftime('%Y-%m-%d') if pedido.fecha_pago_utilidad else '',
             pedido.estado_utilidad,
@@ -547,6 +620,7 @@ def exportar_pedidos_excel_general(request):
                     detalle.tarifa_recuperacion,
                     detalle.valor_x_caja_usd,
                     detalle.valor_x_producto,
+                    detalle.valor_total_recuperacion_x_producto,
                     detalle.no_cajas_nc,
                     detalle.valor_nota_credito_usd,
                     detalle.afecta_utilidad,

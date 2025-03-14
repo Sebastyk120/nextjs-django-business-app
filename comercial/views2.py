@@ -466,6 +466,8 @@ def exportar_cartera_cliente_dashboard(request):
             estado_texto = 'Sin valor'
         elif estado == 'Cancelada':
             estado_texto = 'Cancelada'
+        elif estado == 'Abono':
+            estado_texto = 'Abono'
         elif pedido.get('estado_cancelacion') == 'Pendiente':  # Changed from ['estado_cancelacion'] to .get()
             estado_texto = 'Cancelación Pendiente'
         elif pedido.get('estado_cancelacion') == 'Autorizado':  # Changed from ['estado_cancelacion'] to .get()
