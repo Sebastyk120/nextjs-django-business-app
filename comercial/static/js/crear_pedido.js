@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    // Clean up any existing event handlers to prevent duplicates
+
     $(document).off('show.bs.modal', '#modalCreateItem');
     $(document).off('hidden.bs.modal', '#modalCreateItem');
     $(document).off('submit', '#modalCreateItem form');

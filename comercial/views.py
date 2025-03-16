@@ -1,5 +1,6 @@
 import io
 import math
+import os
 import time
 from datetime import datetime, timedelta, date
 
@@ -8,7 +9,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
 from django.db.models import Sum
-from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden, FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
@@ -26,12 +27,14 @@ from openpyxl.utils import get_column_letter
 from openpyxl.workbook import Workbook
 from xhtml2pdf import pisa
 
+from mysite import settings
 from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
     EliminarDetallePedidoForm, EditarPedidoExportadorForm, EditarDetallePedidoForm, EditarReferenciaForm, \
     EditarPedidoSeguimientoForm, FiltroSemanaExportadoraForm, SearchFormReferencias, EditarPedidoFormDos, \
     EditarPedidoFormCartera, EditarPedidoFormUtilidades, EditarDetallePedidoDosForm, EditarDetallePedidoTresForm, \
     ExportSearchForm, ExportSearchFormSeguimientos
-from .models import Pedido, DetallePedido, Referencias, AutorizacionCancelacion, Presentacion, Exportador, Cliente
+from .models import Pedido, DetallePedido, Referencias, AutorizacionCancelacion, Presentacion, Exportador, Cliente, \
+    Intermediario
 from .resources import obtener_datos_con_totales_cliente, crear_archivo_excel_cliente, \
     crear_archivo_excel_enviar_cliente, obtener_datos_con_totales_enviar_cliente
 from .tables import PedidoTable, DetallePedidoTable, PedidoExportadorTable, CarteraPedidoTable, UtilidadPedidoTable, \
@@ -458,7 +461,7 @@ class ExportarCarteraClienteEnviarView(TemplateView):
 
             # Crear el archivo Excel
             ruta_archivo = 'estado_cuenta_clientes.xlsx'
-            crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo)
+            crear_archivo_excel_enviar_cliente(pedidos, totales, ruta_archivo, fecha_inicial, fecha_final, cliente, intermediario, grupo)
 
             # Leer el archivo y preparar la respuesta
             with open(ruta_archivo, 'rb') as archivo_excel:

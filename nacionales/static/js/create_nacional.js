@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (parseFloat(precioVenta) < parseFloat(precioCompra)) {
                             Swal.fire({
                                 title: 'Atención',
-                                text: `El precio de venta Kg Exportación ($${formatearMoneda(precioVenta)}) es menor que el precio de compra Kg Nacional ($${formatearMoneda(precioCompra)}). ¿Desea continuar?`,
+                                text: `El precio de venta Kg Exportación ($${formatearMoneda(precioVenta)}) es menor que el precio de compra Kg Exportación ($${formatearMoneda(precioCompra)}). ¿Desea continuar?`,
                                 icon: 'warning',
                                 showCancelButton: true,
                                 confirmButtonText: 'Sí, guardar',
@@ -1012,14 +1012,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const contentType = response.headers.get("content-type");
             if (contentType && contentType.includes("application/json")) {
                 const data = await response.json();
-                // ...existing code...
             } else {
                 // Treat unexpected responses as an error
                 console.error('Server returned HTML instead of JSON.');
             }
         } catch (error) {
             console.error('Error fetching suggestions:', error);
-            // ...existing code...
         }
     }
 

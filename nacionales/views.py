@@ -3,7 +3,7 @@ import io
 import xlsxwriter
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Sum, Prefetch
+from django.db.models import Sum, Prefetch, Avg
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
@@ -23,6 +23,7 @@ from .tables import (
     ReporteCalidadProveedorTable, TransferenciasProveedorTable
 )
 from datetime import date
+from .choices import origen_transferencia
 
 
 def es_miembro_del_grupo(nombre_grupo):
@@ -388,8 +389,18 @@ class TransferenciasListView(SingleTableView):
         
         # Filter by provider if provided
         proveedor_id = self.request.GET.get('proveedor')
+        fecha_inicio = self.request.GET.get('fecha_inicio')
+        fecha_fin = self.request.GET.get('fecha_fin')
+        origen = self.request.GET.get('origen')
+        
         if proveedor_id:
             queryset = queryset.filter(proveedor_id=proveedor_id)
+        if fecha_inicio:
+            queryset = queryset.filter(fecha_transferencia__gte=fecha_inicio)
+        if fecha_fin:
+            queryset = queryset.filter(fecha_transferencia__lte=fecha_fin)
+        if origen:
+            queryset = queryset.filter(origen_transferencia=origen)
             
         return queryset.order_by('-fecha_transferencia')
 
@@ -400,8 +411,12 @@ class TransferenciasListView(SingleTableView):
         # Add providers list for filter dropdown
         context['proveedores'] = ProveedorNacional.objects.all().order_by('nombre')
         
-        # Keep the selected provider in context for form
+        # Add origen choices for filter dropdown
+        context['origenes'] = origen_transferencia
+        
+        # Keep selected filters in context
         context['selected_proveedor'] = self.request.GET.get('proveedor', '')
+        context['selected_origen'] = self.request.GET.get('origen', '')
         
         # Calculate total value of transfers in the filtered queryset
         total_valor = self.get_queryset().aggregate(total=Sum('valor_transferencia'))['total'] or 0
@@ -1101,7 +1116,11 @@ def estado_cuenta_proveedor(request, proveedor_id):
         rep_cal_exp__venta_nacional__compra_nacional__in=compras
     ).aggregate(total=Sum('p_total_facturar'))['total'] or Decimal('0')
 
-    total_kilos = compras.aggregate(total=Sum('peso_compra'))['total'] or Decimal('0')
+    total_kilos = VentaNacional.objects.filter(
+        compra_nacional__in=compras
+    ).aggregate(
+        total=Sum('peso_neto_recibido')
+    )['total'] or Decimal('0')
 
     total_transferido = TransferenciasProveedor.objects.filter(
         proveedor=proveedor,
@@ -1117,7 +1136,7 @@ def estado_cuenta_proveedor(request, proveedor_id):
 
     # Datos para gráficos
     compras_por_fecha = compras.values('fecha_compra').annotate(
-        total_valor=Sum('precio_compra_exp')  # Simplificado, ajustar según necesidad
+    total_valor=Avg('precio_compra_exp')  
     ).order_by('fecha_compra')
 
     # Contexto para el template

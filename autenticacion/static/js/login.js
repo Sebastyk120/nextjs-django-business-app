@@ -60,8 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showError(fieldId, message) {
         const field = document.getElementById(fieldId);
         const errorMessage = document.createElement('div');
-        
-        // Remove any existing error
+
         removeError(fieldId);
         
         errorMessage.className = 'error-message';

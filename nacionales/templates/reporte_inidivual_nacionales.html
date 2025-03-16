@@ -15,24 +15,32 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
         <style>
             :root {
-                --primary-color: #1D7043;
-                --primary-dark: #145A33;
-                --primary-light: #E8F5E9;
-                --secondary-color: #2563EB;
-                --secondary-light: #EFF6FF;
-                --accent-color: #F59E0B;
-                --danger-color: #DC2626;
-                --success-color: #059669;
-                --neutral-50: #F9FAFB;
-                --neutral-100: #F3F4F6;
-                --neutral-200: #E5E7EB;
-                --neutral-300: #D1D5DB;
-                --neutral-400: #9CA3AF;
-                --neutral-500: #6B7280;
-                --neutral-600: #4B5563;
-                --neutral-700: #374151;
-                --neutral-800: #1F2937;
-                --neutral-900: #111827;
+                /* Nueva paleta de colores vibrantes */
+                --primary-color: #2563eb;       /* Azul brillante */
+                --primary-dark: #1e40af;        /* Azul oscuro */
+                --primary-light: #dbeafe;       /* Azul claro */
+                --secondary-color: #7c3aed;     /* Púrpura vibrante */
+                --secondary-light: #ede9fe;     /* Púrpura claro */
+                --accent-color: #f59e0b;        /* Naranja brillante */
+                --danger-color: #ef4444;        /* Rojo vibrante */
+                --success-color: #10b981;       /* Verde esmeralda */
+                --export-color: #10b981;        /* Verde esmeralda para exportación */
+                --national-color: #f59e0b;      /* Naranja brillante para nacional */
+                --loss-color: #ef4444;          /* Rojo vibrante para pérdidas */
+                
+                /* Escala de grises moderna */
+                --neutral-50: #f8fafc;
+                --neutral-100: #f1f5f9;
+                --neutral-200: #e2e8f0;
+                --neutral-300: #cbd5e1;
+                --neutral-400: #94a3b8;
+                --neutral-500: #64748b;
+                --neutral-600: #475569;
+                --neutral-700: #334155;
+                --neutral-800: #1e293b;
+                --neutral-900: #0f172a;
+                
+                /* El resto de las variables permanecen igual */
                 --border-radius-sm: 6px;
                 --border-radius: 12px;
                 --border-radius-lg: 16px;
@@ -40,11 +48,186 @@
                 --box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02);
                 --box-shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.08), 0 10px 10px -5px rgba(0,0,0,0.04);
                 --transition: all 0.2s ease-in-out;
-                --export-color: #059669;
-                --national-color: #F59E0B;
-                --loss-color: #DC2626;
             }
 
+            /* Actualizaciones específicas para elementos que usan los colores */
+            .reporte-header {
+                position: relative;
+                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+                color: white;
+                padding: 2rem;  /* Reducido de 3rem a 2rem */
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid var(--neutral-200);
+                gap: 1.5rem;  /* Reducido de 2rem a 1.5rem */
+            }
+
+            .logo img {
+                height: 150px;  /* Reducido de 180px a 150px */
+                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+                transition: var(--transition);
+                margin-left: 0.5rem;  /* Reducido de 1rem a 0.5rem */
+            }
+
+            .report-title {
+                text-align: right;
+                margin-right: 1rem;  /* Añadido margen derecho */
+            }
+
+            .report-title h1 {
+                font-size: 2.2rem;  /* Reducido de 2.5rem a 2.2rem */
+                margin: 0 0 0.5rem 0;  /* Reducido de 1rem a 0.5rem */
+                font-weight: 700;
+                line-height: 1.1;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+            }
+
+            .report-title p {
+                margin: 0;
+                font-size: 1.2rem;  /* Aumentado de 1rem a 1.2rem */
+                opacity: 0.95;
+                font-weight: 500;
+                letter-spacing: 0.5px;  /* Añadido espaciado entre letras */
+            }
+
+            .module::before {
+                background-color: var(--secondary-color);
+            }
+
+            .module-title {
+                color: var(--secondary-color);
+            }
+
+            .table-header {
+                background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            }
+
+            .table-cell.highlight {
+                color: var(--secondary-color);
+            }
+
+            .print-btn, .search-btn {
+                background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            }
+
+            .final-payment-section {
+                background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            }
+
+            .summary-section {
+                background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
+            }
+
+
+            .report-data-header {
+                background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+                border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+                display: flex;
+                margin: -1.75rem -1.75rem 1.5rem -1.75rem;
+                padding: 0;
+                overflow: hidden;
+                box-shadow: var(--box-shadow-sm);
+            }
+
+            .report-data-header-cell {
+                color: white;
+                font-weight: 600;
+                text-align: center;
+                padding: 1rem;
+                flex: 1;
+                font-size: 0.95rem;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 100px;
+            }
+
+            .report-data-header-cell:not(:last-child)::after {
+                content: "";
+                position: absolute;
+                right: 0;
+                top: 20%;
+                height: 60%;
+                width: 1px;
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+
+            .report-data-header-cell:first-child {
+                text-align: left;
+                justify-content: flex-start;
+                padding-left: 1.5rem;
+                flex: 0.8;
+            }
+
+            .report-data-header-cell:last-child {
+                text-align: right;
+                justify-content: flex-end;
+                padding-right: 1.5rem;
+                flex: 0.8;
+            }
+
+            /* Actualizar los estilos de las filas de la tabla para alinear con el encabezado */
+            .table-row {
+                display: flex;
+                border-bottom: 1px solid var(--neutral-200);
+                transition: var(--transition);
+                align-items: center;
+            }
+
+            .table-cell {
+                padding: 1rem;
+                flex: 1;
+                text-align: center;
+                min-width: 100px;
+            }
+
+            .table-cell.label {
+                text-align: left;
+                font-weight: 500;
+                color: var(--neutral-700);
+                background-color: var(--neutral-50);
+                display: flex;
+                align-items: center;
+                padding-left: 1.5rem;  /* Añadido para mantener el alineamiento */
+            }
+            
+            /* Removemos el pseudo-elemento que creaba los puntos */
+            .table-cell.label::before {
+                display: none;  /* Oculta los puntos */
+            }
+
+            .table-cell:last-child {
+                flex: 0.8;
+                text-align: right;
+                padding-right: 1.5rem;
+            }
+
+            @media (max-width: 768px) {
+                .report-data-header {
+                    margin: -1.25rem -1.25rem 1.25rem -1.25rem;
+                }
+
+                .report-data-header-cell,
+                .table-cell {
+                    padding: 0.75rem;
+                    font-size: 0.875rem;
+                    min-width: auto;
+                }
+
+                .report-data-header-cell:first-child,
+                .table-cell.label {
+                    padding-left: 1rem;
+                }
+
+                .report-data-header-cell:last-child,
+                .table-cell:last-child {
+                    padding-right: 1rem;
+                }
+            }
+
+            /* El resto del código permanece igual */
             body {
                 font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 background-color: var(--neutral-100);
@@ -66,19 +249,8 @@
                 transition: var(--transition);
             }
 
-            .reporte-header {
-                position: relative;
-                background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-                color: white;
-                padding: 2.5rem;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 1px solid var(--neutral-200);
-            }
-
             .logo img {
-                height: 80px;
+                height: 200px;
                 filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
                 transition: var(--transition);
             }
@@ -98,6 +270,7 @@
                 line-height: 1.2;
                 margin-bottom: 0.5rem;
                 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                color: white;
             }
 
             .report-title p {
@@ -105,36 +278,43 @@
                 font-size: 1rem;
                 opacity: 0.9;
                 font-weight: 500;
+                color: white;
             }
 
             .reporte-content {
-                padding: 2.5rem;
+                padding: 1.5rem 2rem;  /* Reducido y ajustado el padding */
+            }
+
+            .report-info-container {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1.5rem;
+                padding-bottom: 0.75rem;
+                border-bottom: 1px solid var(--neutral-200);
             }
 
             .report-location-date {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 1.25rem;
                 font-weight: 500;
                 color: var(--neutral-600);
-                font-size: 0.95rem;
+                font-size: 0.9rem;
+                display: flex;
+                align-items: center;
             }
 
             .report-number {
-                text-align: right;
-                margin-bottom: 2rem;
+                margin: 0;  /* Eliminado margin-bottom */
                 font-weight: 600;
-                color: var (--primary-color);
-                font-size: 1.1rem;
+                color: var(--primary-color);
+                font-size: 1rem;
                 display: flex;
-                justify-content: flex-end;
                 align-items: center;
                 gap: 0.5rem;
             }
             
             .report-number::before {
                 content: "📋";
-                font-size: 1.2rem;
+                font-size: 1.1rem;
             }
 
             .module {
@@ -149,26 +329,15 @@
                 overflow: hidden;
             }
 
-            .module::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 4px;
-                height: 100%;
-                background-color: var(--primary-color);
-            }
-
             .module:hover {
                 box-shadow: var(--box-shadow);
                 transform: translateY(-2px);
             }
 
             .module-title {
-                color: var(--primary-color);
                 font-size: 1.25rem;
                 margin-top: 0;
-                margin-bottom: 1.5rem;
+                margin-bottom: 1.9rem;
                 padding-bottom: 0.75rem;
                 border-bottom: 1px solid var(--neutral-200);
                 position: relative;
@@ -182,21 +351,25 @@
                 font-family: "Bootstrap Icons";
                 font-size: 1.2rem;
             }
+
+            .module:nth-child(2) .module-title::before {
+                content: "👤";  /* person icon */
+            }
             
             .module:nth-child(3) .module-title::before {
-                content: "\F4D7";  /* person icon */
+                content: "🚛";  /* person icon */
             }
             
             .module:nth-child(4) .module-title::before {
-                content: "\F4FE";  /* box-seam icon */
+                content: "📦";  /* box-seam icon */
             }
             
             .module:nth-child(5) .module-title::before {
-                content: "\F565";  /* clipboard-data icon */
+                content: "📊";  /* clipboard-data icon */
             }
             
             .module:nth-child(6) .module-title::before {
-                content: "\F2ED";  /* calculator icon */
+                content: "🧮";  /* calculator icon */
             }
 
             .data-table {
@@ -222,21 +395,13 @@
                 padding-left: 1rem;
                 background-color: var(--neutral-50);
                 border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+                text-align: right;
             }
 
             .dual-table {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 1.5rem;
-            }
-
-            .table-header {
-                background-color: var(--primary-color);
-                color: white;
-                font-weight: 600;
-                padding: 0.875rem;
-                text-align: center;
-                border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
             }
 
             .table-row {
@@ -256,14 +421,14 @@
             .table-cell {
                 padding: 0.875rem;
                 flex: 1;
-                text-align: center;
+                text-align: right;
             }
 
             .table-cell.label {
                 text-align: left;
                 font-weight: 500;
                 color: var(--neutral-700);
-                background-color: var(--neutral-50);
+                background-color: var (--neutral-50);
                 display: flex;
                 align-items: center;
             }
@@ -274,11 +439,6 @@
                 font-size: 1.5rem;
                 margin-right: 0.5rem;
                 line-height: 0.5;
-            }
-
-            .table-cell.highlight {
-                font-weight: 600;
-                color: var(--primary-color);
             }
 
             .table-summary {
@@ -298,28 +458,6 @@
                 content: "Total:";
                 font-weight: 600;
                 color: var(--primary-color);
-            }
-
-            .summary-section {
-                background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
-                padding: 2rem;
-                border-radius: var(--border-radius);
-                margin-top: 2rem;
-                box-shadow: var(--box-shadow-sm);
-                position: relative;
-                overflow: hidden;
-            }
-            
-            .summary-section::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
-                opacity: 0.5;
-                z-index: 0;
             }
 
             .summary-title {
@@ -400,21 +538,15 @@
                 margin: 0.25rem 0;
             }
 
-            .print-button {
-                text-align: center;
-                margin: 2rem auto;
-            }
-
             .print-btn {
                 padding: 0.875rem 1.5rem;
-                background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
                 color: white;
                 border: none;
                 border-radius: 50px;
                 cursor: pointer;
                 font-size: 1rem;
                 font-weight: 600;
-                transition: var(--transition);
+                transition: var (--transition);
                 box-shadow: 0 4px 10px rgba(29, 112, 67, 0.25);
                 display: inline-flex;
                 align-items: center;
@@ -536,14 +668,13 @@
 
             .search-btn {
                 padding: 0.875rem 1.5rem;
-                background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
                 color: white;
                 border: none;
                 border-radius: 50px;
                 cursor: pointer;
                 font-size: 1rem;
                 font-weight: 600;
-                transition: var(--transition);
+                transition: var (--transition);
                 box-shadow: 0 4px 10px rgba(29, 112, 67, 0.2);
                 align-self: center;
                 width: auto;
@@ -716,8 +847,12 @@
             }
 
             @media print {
-                .no-print, .no-print, .no-imprimir * {
+                .no-print, .no-print * {
                     display: none !important;
+                }
+
+                .no-imprimir {
+                    display: none;
                 }
                 
                 body {
@@ -768,6 +903,47 @@
             }
 
             @media (max-width: 768px) {
+                .reporte-header {
+                    padding: 2rem;
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 1.5rem;
+                }
+
+                .logo img {
+                    height: 150px;
+                    margin-left: 0;
+                }
+
+                .report-title {
+                    text-align: center;
+                    margin-right: 0;
+                }
+
+                .report-title h1 {
+                    font-size: 2rem;
+                    margin-bottom: 0.75rem;
+                }
+
+                .report-title p {
+                    font-size: 1.1rem;
+                }
+
+                .report-data-header {
+                    grid-template-columns: 1fr;
+                    gap: 0.5rem;
+                }
+
+                .report-data-header-cell {
+                    border-right: none;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+                    padding: 0.75rem;
+                }
+
+                .report-data-header-cell:last-child {
+                    border-bottom: none;
+                }
+                
                 .dual-table {
                     grid-template-columns: 1fr;
                 }
@@ -835,17 +1011,7 @@
                 border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
                 flex: 1;
             }
-
-            /* Enhanced Final Summary Section */
-            .distribution-chart {
-                display: flex;
-                height: 30px;
-                border-radius: var(--border-radius);
-                overflow: hidden;
-                margin: 1.5rem 0;
-                box-shadow: var(--box-shadow-sm);
-            }
-
+            
             .chart-segment {
                 height: 100%;
                 display: flex;
@@ -995,13 +1161,52 @@
                 padding-top: 0.5rem;
                 border-top: 1px dashed var(--neutral-200);
                 font-size: 0.85rem;
-                color: var(--neutral-700);
+                color: var (--neutral-700);
                 display: flex;
                 justify-content: space-between;
             }
 
             .breakdown-price-value {
                 font-weight: 600;
+            }
+
+            .final-payment-section {
+                margin-top: 2rem;
+                padding: 1.5rem;
+                border-radius: var(--border-radius);
+                color: white;
+                box-shadow: var(--box-shadow);
+            }
+
+            .final-payment-amount {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .final-payment-label {
+                font-size: 1.25rem;
+                font-weight: 600;
+            }
+
+            .final-payment-value {
+                font-size: 1.75rem;
+                font-weight: 700;
+            }
+
+            .total-words {
+                text-align: center;
+                font-style: italic;
+                font-size: 1.125rem;
+                color: white;
+                background: rgba(255, 255, 255, 0.1);
+                padding: 1rem;
+                border-radius: var(--border-radius);
+                margin-top: 0;
+                border: 1px solid rgba(255, 255, 255, 0.2);
             }
         </style>
     </head>
@@ -1010,7 +1215,7 @@
     <!-- Toast notification system -->
     <div id="toastNotification" class="toast" role="alert" aria-live="polite" aria-atomic="true">
         <div class="toast-icon">
-            <i class="bi bi-check-circle-fill"></i>
+            <span>✔️</span>
         </div>
         <div class="toast-content">
             <div class="toast-title">Notificación</div>
@@ -1029,7 +1234,7 @@
                 <label for="{{ form.numero_guia.id_for_label }}">{{ form.numero_guia.label }}</label>
                 {{ form.numero_guia }}
                 <div class="loader" id="searchLoader"></div>
-                <span class="search-icon"><i class="bi bi-search"></i></span>
+                <span class="search-icon">🔍</span>
             </div>
             <button type="submit" class="search-btn">Buscar Reporte</button>
         </form>
@@ -1051,16 +1256,18 @@
 
         <div class="reporte-content">
             <!-- Ubicación, fecha y número de reporte -->
-            <div class="report-location-date">
-                <div>Bogotá, {{ today|date:"d/m/Y" }}</div>
-            </div>
-            <div class="report-number">
-                Reporte # {{ reporte_proveedor.pk }}
+            <div class="report-info-container">
+                <div class="report-location-date">
+                    Bogotá, {{ today|date:"d/m/Y" }}
+                </div>
+                <div class="report-number">
+                    Reporte # {{ reporte_proveedor.pk }}
+                </div>
             </div>
             
             <!-- Módulo 1: Datos Proveedor - Optimizado -->
             <div class="module">
-                <h2 class="module-title">Datos Proveedor</h2>
+                <h2 class="module-title person">Datos Proveedor</h2>
                 <div class="supplier-data-module">
                     <div class="supplier-data-item">
                         <span class="supplier-data-label">Proveedor:</span>
@@ -1124,12 +1331,11 @@
             <div class="module">
                 <h2 class="module-title">Datos Del Reporte</h2>
                 
-                <!-- Encabezados de la tabla -->
-                <div class="table-row">
-                    <div class="table-cell table-header">Detalles</div>
-                    <div class="table-cell table-header">Distribución de porcentajes</div>
-                    <div class="table-cell table-header">Precio</div>
-                    <div class="table-cell table-header">Total</div>
+                <div class="report-data-header">
+                    <div class="report-data-header-cell">Detalles</div>
+                    <div class="report-data-header-cell">Distribución</div>
+                    <div class="report-data-header-cell">Precio</div>
+                    <div class="report-data-header-cell">Total</div>
                 </div>
                 
                 <!-- Fila de exportación -->
@@ -1203,34 +1409,6 @@
             <div class="summary-section">
                 <h2 class="summary-title">Resumen Final</h2>
                 
-                <!-- Gráfico de distribución de porcentajes -->
-                <div class="distribution-chart">
-                    <div class="chart-segment export" style="width: {{ reporte_proveedor.p_porcentaje_exportacion|floatformat:2 }}%">
-                        {% if reporte_proveedor.p_porcentaje_exportacion > 8 %}
-                            {{ reporte_proveedor.p_porcentaje_exportacion|floatformat:1 }}%
-                        {% endif %}
-                        <div class="chart-tooltip">
-                            Exportación: {{ reporte_proveedor.p_porcentaje_exportacion|floatformat:2 }}%
-                        </div>
-                    </div>
-                    <div class="chart-segment national" style="width: {{ reporte_proveedor.p_porcentaje_nacional|floatformat:2 }}%">
-                        {% if reporte_proveedor.p_porcentaje_nacional > 8 %}
-                            {{ reporte_proveedor.p_porcentaje_nacional|floatformat:1 }}%
-                        {% endif %}
-                        <div class="chart-tooltip">
-                            Nacional: {{ reporte_proveedor.p_porcentaje_nacional|floatformat:2 }}%
-                        </div>
-                    </div>
-                    <div class="chart-segment loss" style="width: {{ reporte_proveedor.p_porcentaje_merma|floatformat:2 }}%">
-                        {% if reporte_proveedor.p_porcentaje_merma > 8 %}
-                            {{ reporte_proveedor.p_porcentaje_merma|floatformat:1 }}%
-                        {% endif %}
-                        <div class="chart-tooltip">
-                            Merma: {{ reporte_proveedor.p_porcentaje_merma|floatformat:2 }}%
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Desglose detallado por categoría -->
                 <div class="summary-breakdown">
                     <div class="breakdown-card export">
@@ -1293,12 +1471,18 @@
                         <td>{% with total_impuestos=reporte_proveedor.asohofrucol|add:reporte_proveedor.rte_fte|add:reporte_proveedor.rte_ica %}
                             {{ total_impuestos|format_currency }}
                             {% endwith %}</td>
-                        <td>Total a pagar:</td>
-                        <td>{{ reporte_proveedor.p_total_pagar|format_currency }}</td>
                     </tr>
                 </table>
-                <div class="total-words">
-                    Son: {{ reporte_proveedor.p_total_pagar|numero_a_letras|capfirst }}
+
+                <!-- Nueva sección separada para el total a pagar -->
+                <div class="final-payment-section">
+                    <div class="final-payment-amount">
+                        <span class="final-payment-label">Total a pagar:</span>
+                        <span class="final-payment-value">{{ reporte_proveedor.p_total_pagar|format_currency }}</span>
+                    </div>
+                    <div class="total-words">
+                        Son: {{ reporte_proveedor.p_total_pagar|numero_a_letras|capfirst }}
+                    </div>
                 </div>
             </div>
         </div>

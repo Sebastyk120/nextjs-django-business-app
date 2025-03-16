@@ -137,7 +137,7 @@ def numero_a_letras(value):
         
         # Formatear texto final
         if decimal > 0:
-            return f"{texto_entero.capitalize()} pesos colombianos {decimal:02d}/100 M.N."
+            return f"{texto_entero.capitalize()} pesos colombianos con {decimal:02d} centavos."
         else:
             return f"{texto_entero.capitalize()} pesos colombianos."
             

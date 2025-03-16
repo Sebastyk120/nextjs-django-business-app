@@ -543,3 +543,33 @@ body {
 .chart-filter-btn.active:hover {
     background-color: var(--primary);
 }
+
+/* Añadir estos estilos a tu archivo CSS existente */
+
+/* Estilos para el modal de balance */
+#balanceProveedorData {
+    border-radius: 8px;
+    border: 1px solid #e3e6f0;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.btn-small {
+    display: inline-block;
+    padding: 5px 8px;
+    background-color: #4e73df;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.btn-small:hover {
+    background-color: #2e59d9;
+}
+
+.balance-search {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}

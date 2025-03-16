@@ -174,7 +174,7 @@
                     </span>
                 </div>
                 <div class="model-info mt-2">
-                    <i class="fas fa-cog me-1"></i> Método de proyección: <strong>seasonal_naive_single</strong> (Personalizado para Heavens) - Optimizado para captar patrones estacionales y tendencias de ventas
+                    <i class="fas fa-cog me-1"></i> Me base en la estacionalidad deacuerdo a la reunión, mes a mes con año anterior. Intente cambiar los parametros estadisticos, para mejorar la proyeccion con crecimiento dinamico, dos nuevas tablas [Análisis de Patrones Estacionales] [Clientes Estacionales, Distribución Mensual]. Att: Sebas.
                 </div>
             </div>
         </div>
@@ -393,24 +393,39 @@
                         <h5 class="mb-3 fw-bold text-success d-flex align-items-center">
                             <i class="fas fa-arrow-trend-up me-2"></i> Clientes en Crecimiento
                         </h5>
+                        <p class="small text-muted mb-2">
+                            <i class="fas fa-info-circle me-1"></i> Clientes con mayor crecimiento en kilos comparando mes a mes con el año anterior. 
+                            <strong>Nota:</strong> El % muestra el crecimiento promedio mensual, que puede diferir del cambio en el total anual.
+                        </p>
                         <div class="table-responsive shadow-sm rounded">
                             <table class="table table-hover table-compact mb-0">
                                 <thead>
                                     <tr>
                                         <th>Cliente</th>
                                         <th>Crecimiento</th>
-                                        <th>Kilos</th>
+                                        <!-- Se eliminó la columna "Cambio Total" -->
+                                        <th>Kilos Actuales</th>
+                                        <th>Kilos Año Anterior</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for cliente in portfolio_changes.growing_customers %}
                                         <tr>
-                                            <td><i class="fas fa-building me-2 text-primary"></i>{{ cliente.cliente }}</td>
+                                            <td>
+                                                <i class="fas fa-building me-2 text-primary"></i>{{ cliente.cliente }}
+                                                {% if cliente.is_seasonal %}
+                                                <span class="badge bg-warning ms-1" data-bs-toggle="tooltip" title="Cliente Estacional">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                </span>
+                                                {% endif %}
+                                            </td>
                                             <td class="growth-positive">+{{ cliente.growth|floatformat:1 }}%</td>
-                                            <td>{{ cliente.second_kilos|format_number }} kg</td>
+                                            <!-- Se eliminó la celda con id "total-change-..." -->
+                                            <td>{{ cliente.current_year_kilos|format_number }} kg</td>
+                                            <td>{{ cliente.previous_year_kilos|format_number }} kg</td>
                                         </tr>
                                     {% empty %}
-                                        <tr><td colspan="3" class="text-center py-3">No hay datos disponibles</td></tr>
+                                        <tr><td colspan="4" class="text-center py-3">No hay datos disponibles</td></tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -419,27 +434,159 @@
                         <h5 class="mb-3 fw-bold text-danger mt-4 d-flex align-items-center">
                             <i class="fas fa-arrow-trend-down me-2"></i> Clientes en Declive
                         </h5>
+                        <p class="small text-muted mb-2">
+                            <i class="fas fa-info-circle me-1"></i> Clientes con mayor caída en kilos comparando mes a mes con el año anterior.
+                            <strong>Nota:</strong> El % muestra el declive promedio mensual, que puede diferir del cambio en el total anual.
+                        </p>
                         <div class="table-responsive shadow-sm rounded">
                             <table class="table table-hover table-compact mb-0">
                                 <thead>
                                     <tr>
                                         <th>Cliente</th>
                                         <th>Declive</th>
-                                        <th>Kilos</th>
+                                        <!-- Se eliminó la columna "Cambio Total" -->
+                                        <th>Kilos Actuales</th>
+                                        <th>Kilos Año Anterior</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for cliente in portfolio_changes.declining_customers %}
                                         <tr>
-                                            <td><i class="fas fa-building me-2 text-danger"></i>{{ cliente.cliente }}</td>
+                                            <td>
+                                                <i class="fas fa-building me-2 text-danger"></i>{{ cliente.cliente }}
+                                                {% if cliente.is_seasonal %}
+                                                <span class="badge bg-warning ms-1" data-bs-toggle="tooltip" title="Cliente Estacional">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                </span>
+                                                {% endif %}
+                                            </td>
                                             <td class="growth-negative">{{ cliente.growth|floatformat:1 }}%</td>
-                                            <td>{{ cliente.second_kilos|format_number }} kg</td>
+                                            <!-- Se eliminó la celda con id "decline-change-..." -->
+                                            <td>{{ cliente.current_year_kilos|format_number }} kg</td>
+                                            <td>{{ cliente.previous_year_kilos|format_number }} kg</td>
                                         </tr>
                                     {% empty %}
-                                        <tr><td colspan="3" class="text-center py-3">No hay datos disponibles</td></tr>
+                                        <tr><td colspan="4" class="text-center py-3">No hay datos disponibles</td></tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- NEW SECTION: Seasonal Pattern Analysis -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header" style="background-color: #f97316; color: white;">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h4>Análisis de Patrones Estacionales</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Información:</strong> Esta sección identifica clientes y frutas con patrones de compra estacionales marcados 
+                            (por ejemplo, clientes que solo compran en ciertos meses del año).
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Seasonal Clients -->
+                            <div class="col-lg-6 mb-4">
+                                <h5 class="mb-3 fw-bold d-flex align-items-center">
+                                    <i class="fas fa-users me-2 text-primary"></i> Clientes Estacionales
+                                </h5>
+                                <div class="table-responsive shadow-sm rounded">
+                                    <table class="table table-hover table-compact mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Cliente</th>
+                                                <th>Meses Activos</th>
+                                                <th>Concentración</th>
+                                                <th>Patrón</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for cliente in seasonal_patterns.seasonal_clients %}
+                                                <tr>
+                                                    <td><i class="fas fa-building me-2 text-primary"></i>{{ cliente.cliente }}</td>
+                                                    <td>
+                                                        {% for month in cliente.active_months %}
+                                                            <span class="badge bg-primary me-1">{{ month }}</span>
+                                                        {% endfor %}
+                                                    </td>
+                                                    <td>{{ cliente.concentration|floatformat:1 }}%</td>
+                                                    <td>
+                                                        {% if cliente.pattern_strength == 'Strong' %}
+                                                            <span class="badge bg-danger">Fuerte</span>
+                                                        {% else %}
+                                                            <span class="badge bg-warning text-dark">Moderado</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% empty %}
+                                                <tr><td colspan="4" class="text-center py-3">No se detectaron clientes con patrones estacionales marcados</td></tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Seasonal Fruits -->
+                            <div class="col-lg-6 mb-4">
+                                <h5 class="mb-3 fw-bold d-flex align-items-center">
+                                    <i class="fas fa-apple-alt me-2 text-success"></i> Frutas Estacionales
+                                </h5>
+                                <div class="table-responsive shadow-sm rounded">
+                                    <table class="table table-hover table-compact mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Fruta</th>
+                                                <th>Temporada</th>
+                                                <th>Concentración</th>
+                                                <th>Patrón</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for fruta in seasonal_patterns.seasonal_fruits %}
+                                                <tr>
+                                                    <td><i class="fas fa-apple-alt me-2 text-success"></i>{{ fruta.fruta }}</td>
+                                                    <td>
+                                                        {% for month in fruta.active_months %}
+                                                            <span class="badge bg-success me-1">{{ month }}</span>
+                                                        {% endfor %}
+                                                    </td>
+                                                    <td>{{ fruta.concentration|floatformat:1 }}%</td>
+                                                    <td>
+                                                        {% if fruta.pattern_strength == 'Strong' %}
+                                                            <span class="badge bg-danger">Fuerte</span>
+                                                        {% else %}
+                                                            <span class="badge bg-warning text-dark">Moderado</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% empty %}
+                                                <tr><td colspan="4" class="text-center py-3">No se detectaron frutas con patrones estacionales marcados</td></tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Monthly Distribution Chart -->
+                            <div class="col-12">
+                                <h5 class="mb-3 fw-bold d-flex align-items-center">
+                                    <i class="fas fa-chart-bar me-2 text-dark"></i> Distribución Mensual
+                                    <small class="ms-2 fw-normal text-muted" style="font-size: 0.75rem;">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Muestra el % de ventas anuales de cada cliente por mes (total anual = 100%) Solo clientes estacionales.
+                                    </small>
+                                </h5>
+                                <div class="chart-container-lg">
+                                    <canvas id="seasonalityChart"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -911,7 +1058,6 @@
         function generatePaginationButtons() {
             const totalPages = Math.ceil(filteredRows.length / RECORDS_PER_PAGE);
             
-            // Clear existing page buttons (except prev/next)
             const pageButtons = paginationContainer.querySelectorAll('.page-item:not(#pagination-prev):not(#pagination-next)');
             pageButtons.forEach(button => button.remove());
             
@@ -1053,7 +1199,6 @@
             
             console.log(`Found ${clientes.size} unique clientes and ${frutas.size} unique frutas`);
             
-            // Clear existing options (except the default)
             while (clienteFilter.options.length > 1) {
                 clienteFilter.remove(1);
             }
@@ -1144,6 +1289,139 @@
             // Update pagination
             window.tablePagination.updateFilteredRows(allRows);
         }
+    }
+    
+    // Datos para gráficos de estacionalidad
+    const seasonalPatterns = {{ seasonal_patterns|safe|default:"{}" }};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Initialize seasonality chart if we have data
+        initSeasonalityChart();
+        
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+    
+    // Function to initialize seasonality chart
+    function initSeasonalityChart() {
+        // Check if we have seasonal client data
+        if (!seasonalPatterns || !seasonalPatterns.seasonal_clients || seasonalPatterns.seasonal_clients.length === 0) {
+            return;
+        }
+        
+        const ctx = document.getElementById('seasonalityChart');
+        if (!ctx) return;
+        
+        // Prepare data structure
+        const monthNamesSpanish = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                           'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        
+        // English month names to match what's in the backend data
+        const monthNamesEnglish = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        // Check if we have data for debuggging
+        console.log("Seasonal patterns received:", seasonalPatterns);
+        if (seasonalPatterns.seasonal_clients.length > 0) {
+            console.log("First client data:", seasonalPatterns.seasonal_clients[0]);
+        }
+        
+        const datasets = [];
+        // Only show up to 5 clients to avoid overcrowding
+        const clientsToShow = seasonalPatterns.seasonal_clients.slice(0, 10);
+        
+        // Add datasets for each seasonal client
+        clientsToShow.forEach((client, index) => {
+            const data = [];
+            
+            // Create data points for each month (Jan-Dec)
+            for (let i = 0; i < 12; i++) {
+                // Get the percentage for this month using English month name
+                const monthNameEnglish = monthNamesEnglish[i];
+                let value = 0;
+                
+                // Check if we have data for this month in the monthly percentages
+                if (client.monthly_percentages && client.monthly_percentages[monthNameEnglish] !== undefined) {
+                    value = client.monthly_percentages[monthNameEnglish];
+                    console.log(`${client.cliente} - ${monthNameEnglish}: ${value}%`);
+                }
+                
+                data.push(value);
+            }
+            
+            // Generate a color based on index
+            const colors = [
+                'rgba(255, 99, 132, 0.7)',    // Rosa
+                'rgba(54, 162, 235, 0.7)',    // Azul
+                'rgba(255, 206, 86, 0.7)',    // Amarillo
+                'rgba(75, 192, 192, 0.7)',    // Turquesa
+                'rgba(153, 102, 255, 0.7)',   // Morado
+                'rgba(255, 159, 64, 0.7)',    // Naranja
+                'rgba(46, 204, 113, 0.7)',    // Verde esmeralda
+                'rgba(142, 68, 173, 0.7)',    // Púrpura
+                'rgba(52, 152, 219, 0.7)',    // Azul claro
+                'rgba(231, 76, 60, 0.7)',     // Rojo coral
+            ];
+            
+            datasets.push({
+                label: client.cliente,
+                data: data,
+                backgroundColor: colors[index % colors.length],
+                borderColor: colors[index % colors.length].replace('0.7', '1'),
+                borderWidth: 1
+            });
+        });
+        
+        // Create the chart - using Spanish month names for display
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: monthNamesSpanish,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Distribución de Ventas por Mes (Clientes Estacionales)',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.raw.toFixed(1) + '%';
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '% del Total Anual'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Mes'
+                        }
+                    }
+                }
+            }
+        });
     }
 </script>
 </body>

@@ -1,5 +1,4 @@
 import json
-import warnings
 from datetime import datetime, timedelta
 from decimal import Decimal
 import numpy as np
@@ -9,6 +8,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
 from comercial.models import Pedido, DetallePedido, Cliente, Fruta, Exportador
+import calendar
 
 
 def es_miembro_del_grupo(nombre_grupo):
@@ -20,10 +20,6 @@ def es_miembro_del_grupo(nombre_grupo):
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
 def proyeccion_ventas(request):
-    """
-    View for displaying sales projections using Holt-Winters method.
-    Forecasts sales 3 months into the future based on historical data.
-    """
     # Get filter parameters
     fecha_inicio_str = request.GET.get('fecha_inicio')
     fecha_fin_str = request.GET.get('fecha_fin')
@@ -61,6 +57,9 @@ def proyeccion_ventas(request):
     # Generate forecast
     forecast_data = generate_forecast(historical_data, forecast_months)
     
+    # Detect seasonal patterns
+    seasonal_patterns = detect_seasonal_patterns(historical_data)
+    
     # Get top customers, fruits, and exporters for filtering
     clientes = Cliente.objects.filter(pedido__isnull=False).distinct().order_by('nombre')
     frutas = Fruta.objects.filter(
@@ -74,7 +73,7 @@ def proyeccion_ventas(request):
     summary_metrics = calculate_summary_metrics(historical_data, forecast_data)
     
     # Prepare customer portfolio analysis
-    portfolio_changes = analyze_customer_portfolio(historical_data)
+    portfolio_changes = analyze_customer_portfolio(historical_data, seasonal_patterns)
     
     # Convert complex data types for template rendering
     def convert_to_serializable(df):
@@ -141,6 +140,7 @@ def proyeccion_ventas(request):
         'forecast_data': convert_to_serializable(forecast_data),
         'summary_metrics': summary_metrics,
         'portfolio_changes': portfolio_changes,
+        'seasonal_patterns': seasonal_patterns,
     }
     
     return render(request, 'proyeccion_ventas.html', context)
@@ -210,10 +210,7 @@ def get_historical_sales_data(fecha_inicio, fecha_fin, cliente_id=None, fruta_id
 
 def generate_forecast(historical_data, forecast_months=3):
     """
-    Apply a Seasonal Naive forecasting approach:
-    - Use same-month data from previous years when available
-    - Fall back to weighted average of previous months when needed
-    - Apply growth adjustments to refine forecasts
+    Apply Simple Seasonal Average forecasting with enhanced seasonal pattern detection.
     """
     if historical_data.empty:
         return pd.DataFrame()
@@ -229,146 +226,180 @@ def generate_forecast(historical_data, forecast_months=3):
     # Replace NaN values with 0
     historical_data = historical_data.fillna(0)
     
-    # Suppress warnings
-    warnings.filterwarnings('ignore')
+    # Add year and month columns
+    historical_data['year'] = historical_data['fecha'].dt.year
+    historical_data['month'] = historical_data['fecha'].dt.month
+    
+    # Detect seasonal patterns to enhance forecasting
+    seasonal_patterns = detect_seasonal_patterns(historical_data)
+    seasonal_clients = {client['cliente']: client for client in seasonal_patterns['seasonal_clients']}
+    seasonal_fruits = {fruit['fruta']: fruit for fruit in seasonal_patterns['seasonal_fruits']}
+    
+    # Calculate overall market growth rate from historical data
+    market_growth_rates = calculate_market_growth_rates(historical_data)
+    default_growth = market_growth_rates.get('overall', 0.02)  # Fallback to 2% if can't calculate
+    
+    # Get the latest date to start forecasting from
+    if not historical_data.empty:
+        last_date = historical_data['fecha'].max()
+    else:
+        return pd.DataFrame()
     
     # Group by cliente and fruta
     for (cliente, fruta), group in historical_data.groupby(['cliente', 'fruta']):
         # Sort by date
         group = group.sort_values('fecha')
         
-        # Get the latest date to start forecasting from
-        last_date = group['fecha'].max()
+        # Check if this is a seasonal client-fruit combination
+        is_seasonal_client = cliente in seasonal_clients
+        is_seasonal_fruit = fruta in seasonal_fruits
         
-        # Create a month and year column for seasonal matching
-        group['year'] = group['fecha'].dt.year
-        group['month'] = group['fecha'].dt.month
+        # Calculate client-specific growth rate
+        client_growth_rate = calculate_client_growth_rate(group, cliente, fruta)
         
-        # For each month to forecast
+        # Use client's growth rate if available, otherwise use market rate with adjustments
+        growth_rate = client_growth_rate if client_growth_rate is not None else default_growth
+        
+        # For strongly seasonal clients, adjust the growth rate to be more conservative
+        if is_seasonal_client:
+            # More conservative growth for seasonal clients
+            growth_rate = max(-0.05, min(growth_rate, 0.08))
+        
+        # Limit growth rate to reasonable bounds (-10% to +15%)
+        growth_rate = max(-0.10, min(growth_rate, 0.15))
+        
+        # Get latest date for this group
+        group_last_date = group['fecha'].max()
+        
+        # Prepare data for forecasting
         for i in range(1, forecast_months + 1):
-            forecast_date = last_date + pd.DateOffset(months=i)
+            # Calculate the month to forecast
+            forecast_date = group_last_date + pd.DateOffset(months=i)
             forecast_year = forecast_date.year
             forecast_month = forecast_date.month
             
-            # Check if we have data from the same month in previous years
-            same_month_data = group[group['month'] == forecast_month]
+            # Check if this month is part of the client's active season
+            is_active_month = True  # Default to active
+            if is_seasonal_client:
+                client_info = seasonal_clients[cliente]
+                month_name = calendar.month_name[forecast_month]
+                is_active_month = month_name in client_info['active_months']
             
-            if len(same_month_data) > 0:
-                # CASE 1: Use seasonal data (same month from previous years)
+            # For seasonal clients, if forecasting for inactive months, forecast minimal or zero activity
+            if is_seasonal_client and not is_active_month:
+                # Minimal forecast for inactive season
+                forecast_entry = pd.DataFrame({
+                    'fecha': [forecast_date],
+                    'cliente': [cliente],
+                    'fruta': [fruta],
+                    'kilos_enviados': [0],  # Zero or minimal volume
+                    'cajas_enviadas': [0],
+                    'valor_x_producto': [0],
+                    'tipo': ['forecast'],
+                    'modelo': ['seasonal_inactive_period']
+                })
+                all_forecasts.append(forecast_entry)
+                continue
+            
+            # Find data from the same month in the previous year (standard approach)
+            previous_year_data = group[
+                (group['month'] == forecast_month) & 
+                (group['year'] == forecast_year - 1)
+            ]
+            
+            if not previous_year_data.empty:
+                # DIRECT SEASONAL COMPARISON: use the same month from previous year
+                prev_kilos = previous_year_data['kilos_enviados'].iloc[0]
+                prev_cajas = previous_year_data['cajas_enviadas'].iloc[0]
+                prev_valor = previous_year_data['valor_x_producto'].iloc[0]
                 
-                # Calculate average with more weight to recent years
-                if len(same_month_data) > 1:
-                    # Create weights that give more importance to recent years
-                    years_diff = same_month_data['year'].max() - same_month_data['year']
-                    # Exponential weighting - more recent years have higher weight
-                    weights = np.exp(-0.5 * years_diff)
-                    weights = weights / weights.sum()  # Normalize
-                    
-                    forecast_kilos = np.average(same_month_data['kilos_enviados'], weights=weights)
-                    forecast_cajas = np.average(same_month_data['cajas_enviadas'], weights=weights)
-                    forecast_valor = np.average(same_month_data['valor_x_producto'], weights=weights)
-                    
-                    # Add growth factor (assume 5% annual growth if not specified)
-                    years_ahead = forecast_year - same_month_data['year'].max()
-                    growth_factor = 1.05 ** years_ahead  # 5% annual growth
-                    
-                    forecast_kilos *= growth_factor
-                    forecast_cajas *= growth_factor
-                    forecast_valor *= growth_factor
-                    
-                    model_name = "seasonal_naive_with_growth"
-                else:
-                    # Only one historical point for this month
-                    forecast_kilos = same_month_data['kilos_enviados'].iloc[0]
-                    forecast_cajas = same_month_data['cajas_enviadas'].iloc[0]
-                    forecast_valor = same_month_data['valor_x_producto'].iloc[0]
-                    
-                    # Add smaller growth factor (more conservative with single data point)
-                    years_ahead = forecast_year - same_month_data['year'].iloc[0]
-                    growth_factor = 1.03 ** years_ahead  # 3% annual growth
-                    
-                    forecast_kilos *= growth_factor
-                    forecast_cajas *= growth_factor
-                    forecast_valor *= growth_factor
-                    
-                    model_name = "seasonal_naive_single_point"
+                # Apply the calculated growth factor
+                growth_factor = 1 + growth_rate  # Convert from percentage to multiplier
+                
+                # Apply compound growth for multi-month forecasts
+                compound_growth = growth_factor ** i
+                
+                model_name = 'seasonal_trend'
+                if is_seasonal_client:
+                    model_name = 'strong_seasonal_client'
+                elif is_seasonal_fruit:
+                    model_name = 'seasonal_fruit_trend'
+                
+                forecast_entry = pd.DataFrame({
+                    'fecha': [forecast_date],
+                    'cliente': [cliente],
+                    'fruta': [fruta],
+                    'kilos_enviados': [prev_kilos * compound_growth],
+                    'cajas_enviadas': [prev_cajas * compound_growth],
+                    'valor_x_producto': [prev_valor * compound_growth],
+                    'tipo': ['forecast'],
+                    'modelo': [f'{model_name}_{growth_rate:.2%}']
+                })
+                
+                all_forecasts.append(forecast_entry)
             else:
-                # CASE 2: No seasonal data available, use weighted average of recent months
+
+                avg_kilos = group['kilos_enviados'].mean()
+                avg_cajas = group['cajas_enviadas'].mean()
+                avg_valor = group['valor_x_producto'].mean()
                 
-                # Get last 3 months if available, or all data if less than 3 points
-                recent_months = min(3, len(group))
-                recent_data = group.iloc[-recent_months:]
+                # Try to derive seasonal factors from overall data
+                all_seasonal_data = historical_data[historical_data['month'] == forecast_month]
                 
-                if len(recent_data) > 0:
-                    # Create weights with more importance to recent months
-                    weights = np.linspace(0.5, 1.0, recent_months)
-                    weights = weights / weights.sum()  # Normalize
+                if not all_seasonal_data.empty:
+                    # Calculate seasonal factor using all clients for this month
+                    overall_avg_kilos = historical_data['kilos_enviados'].mean()
+                    overall_avg_cajas = historical_data['cajas_enviadas'].mean()
+                    overall_avg_valor = historical_data['valor_x_producto'].mean()
                     
-                    forecast_kilos = np.average(recent_data['kilos_enviados'], weights=weights)
-                    forecast_cajas = np.average(recent_data['cajas_enviadas'], weights=weights)
-                    forecast_valor = np.average(recent_data['valor_x_producto'], weights=weights)
+                    month_avg_kilos = all_seasonal_data['kilos_enviados'].mean()
+                    month_avg_cajas = all_seasonal_data['cajas_enviadas'].mean()
+                    month_avg_valor = all_seasonal_data['valor_x_producto'].mean()
                     
-                    # Check for trend in recent months and apply adjustment
-                    if len(recent_data) >= 2:
-                        # Calculate month-to-month trend
-                        kilos_trend = np.diff(recent_data['kilos_enviados'].values).mean()
-                        cajas_trend = np.diff(recent_data['cajas_enviadas'].values).mean()
-                        valor_trend = np.diff(recent_data['valor_x_producto'].values).mean()
-                        
-                        # Apply dampened trend (less impact for longer forecasts)
-                        dampen_factor = 0.8 ** (i-1)
-                        forecast_kilos += kilos_trend * dampen_factor
-                        forecast_cajas += cajas_trend * dampen_factor
-                        forecast_valor += valor_trend * dampen_factor
+                    # Compute seasonal factors (avoid division by zero)
+                    seasonal_factor_kilos = (month_avg_kilos / overall_avg_kilos) if overall_avg_kilos > 0 else 1.0
+                    seasonal_factor_cajas = (month_avg_cajas / overall_avg_cajas) if overall_avg_cajas > 0 else 1.0
+                    seasonal_factor_valor = (month_avg_valor / overall_avg_valor) if overall_avg_valor > 0 else 1.0
                     
-                    # Apply seasonal adjustment factor if we can detect seasonality
-                    # This is a simple adjustment based on month-to-month patterns
-                    month_factors = {
-                        1: 0.95,  # January typically slower after holidays
-                        2: 0.97,
-                        3: 1.02,
-                        4: 1.03,
-                        5: 1.05,
-                        6: 1.07,  # Summer often has higher demand
-                        7: 1.08,
-                        8: 1.06,
-                        9: 1.03,
-                        10: 1.02,
-                        11: 1.04,
-                        12: 1.10,  # December holiday season boost
-                    }
-                    
-                    seasonal_factor = month_factors.get(forecast_month, 1.0)
-                    forecast_kilos *= seasonal_factor
-                    forecast_cajas *= seasonal_factor
-                    forecast_valor *= seasonal_factor
-                    
-                    model_name = "weighted_average_with_trend"
+                    # Limit extreme values
+                    seasonal_factor_kilos = max(0.7, min(seasonal_factor_kilos, 1.3))
+                    seasonal_factor_cajas = max(0.7, min(seasonal_factor_cajas, 1.3))
+                    seasonal_factor_valor = max(0.7, min(seasonal_factor_valor, 1.3))
                 else:
-                    # No data case - highly unlikely given our previous checks
-                    forecast_kilos = 0
-                    forecast_cajas = 0
-                    forecast_valor = 0
-                    model_name = "no_data_available"
-            
-            # Ensure non-negative values
-            forecast_kilos = max(0, float(forecast_kilos))
-            forecast_cajas = max(0, float(forecast_cajas))
-            forecast_valor = max(0, float(forecast_valor))
-            
-            # Create forecast entry
-            forecast = pd.DataFrame({
-                'fecha': [forecast_date],
-                'cliente': [cliente],
-                'fruta': [fruta],
-                'kilos_enviados': [forecast_kilos],
-                'cajas_enviadas': [forecast_cajas],
-                'valor_x_producto': [forecast_valor],
-                'tipo': ['forecast'],
-                'modelo': [model_name]
-            })
-            
-            all_forecasts.append(forecast)
+                    # No seasonal data at all, use neutral factors
+                    seasonal_factor_kilos = seasonal_factor_cajas = seasonal_factor_valor = 1.0
+                
+                # Apply compound growth for each month ahead using the calculated growth rate
+                compound_growth = (1 + growth_rate) ** i
+                
+                model_name = 'seasonal_avg'
+                if is_seasonal_client:
+                    model_name = 'seasonal_client_avg'
+                    # For seasonal clients in active months but without direct comparison,
+                    # we can try to enhance the forecast using their seasonal pattern
+                    if is_active_month and cliente in seasonal_clients:
+                        client_pattern = seasonal_clients[cliente]
+                        month_name = calendar.month_name[forecast_month]
+                        if month_name in client_pattern['monthly_percentages']:
+                            # Adjust based on typical month percentage
+                            month_factor = max(0.5, min(client_pattern['monthly_percentages'][month_name] / 10, 1.5))
+                            seasonal_factor_kilos *= month_factor
+                            seasonal_factor_cajas *= month_factor
+                            seasonal_factor_valor *= month_factor
+                            model_name = 'seasonal_pattern_enhanced'
+                
+                forecast_entry = pd.DataFrame({
+                    'fecha': [forecast_date],
+                    'cliente': [cliente],
+                    'fruta': [fruta],
+                    'kilos_enviados': [avg_kilos * compound_growth * seasonal_factor_kilos],
+                    'cajas_enviadas': [avg_cajas * compound_growth * seasonal_factor_cajas],
+                    'valor_x_producto': [avg_valor * compound_growth * seasonal_factor_valor],
+                    'tipo': ['forecast'],
+                    'modelo': [f'{model_name}_{growth_rate:.2%}']
+                })
+                
+                all_forecasts.append(forecast_entry)
     
     # Combine all forecasts
     if not all_forecasts:
@@ -378,6 +409,106 @@ def generate_forecast(historical_data, forecast_months=3):
     forecast_df['mes_año'] = forecast_df['fecha'].dt.to_period('M')
     
     return forecast_df
+
+def calculate_market_growth_rates(historical_data):
+    """
+    Calculate market-wide growth rates from historical data.
+    Returns a dictionary with overall and monthly growth rates.
+    """
+    if historical_data.empty:
+        return {'overall': 0.02}  # Default 2% if no data
+    
+    # Group by year and month for monthly comparisons
+    monthly_totals = historical_data.groupby(['year', 'month']).agg({
+        'kilos_enviados': 'sum',
+        'valor_x_producto': 'sum'
+    }).reset_index()
+    
+    # Calculate YoY growth rates for each month
+    growth_rates = []
+    
+    # Get list of years
+    years = sorted(monthly_totals['year'].unique())
+    
+    for i in range(1, len(years)):
+        current_year = years[i]
+        previous_year = years[i-1]
+        
+        # For each month, calculate growth rate if data exists for both years
+        for month in range(1, 13):
+            current_data = monthly_totals[(monthly_totals['year'] == current_year) & 
+                                          (monthly_totals['month'] == month)]
+            
+            previous_data = monthly_totals[(monthly_totals['year'] == previous_year) & 
+                                           (monthly_totals['month'] == month)]
+            
+            if not current_data.empty and not previous_data.empty:
+                current_kilos = current_data['kilos_enviados'].iloc[0]
+                previous_kilos = previous_data['kilos_enviados'].iloc[0]
+                
+                if previous_kilos > 0:
+                    growth_rate = (current_kilos / previous_kilos) - 1
+                    growth_rates.append(growth_rate)
+    
+    # Calculate overall average growth rate
+    if growth_rates:
+        overall_growth = sum(growth_rates) / len(growth_rates)
+        # Limit to reasonable bounds
+        overall_growth = max(-0.10, min(overall_growth, 0.15))
+    else:
+        overall_growth = 0.02  # Default 2% if can't calculate
+    
+    return {'overall': overall_growth}
+
+def calculate_client_growth_rate(client_data, cliente, fruta):
+    """
+    Calculate the historical growth rate for a specific client and fruit.
+    Returns None if insufficient data.
+    """
+    if len(client_data) < 4:  # Need at least a few data points
+        return None
+    
+    # Calculate year-over-year growth rates
+    growth_rates = []
+    
+    # Group by year and month
+    monthly_data = client_data.groupby(['year', 'month']).agg({
+        'kilos_enviados': 'sum',
+        'valor_x_producto': 'sum'
+    }).reset_index()
+    
+    # Get unique years
+    years = sorted(monthly_data['year'].unique())
+    
+    if len(years) < 2:  # Need at least two years to calculate growth
+        return None
+    
+    for i in range(1, len(years)):
+        current_year = years[i]
+        previous_year = years[i-1]
+        
+        # For each month, calculate growth rate if data exists for both years
+        for month in range(1, 13):
+            current_data = monthly_data[(monthly_data['year'] == current_year) & 
+                                        (monthly_data['month'] == month)]
+            
+            previous_data = monthly_data[(monthly_data['year'] == previous_year) & 
+                                         (monthly_data['month'] == month)]
+            
+            if not current_data.empty and not previous_data.empty:
+                current_kilos = current_data['kilos_enviados'].iloc[0]
+                previous_kilos = previous_data['kilos_enviados'].iloc[0]
+                
+                if previous_kilos > 0:
+                    growth_rate = (current_kilos / previous_kilos) - 1
+                    growth_rates.append(growth_rate)
+    
+    # Calculate average growth rate
+    if growth_rates:
+        avg_growth = sum(growth_rates) / len(growth_rates)
+        return avg_growth
+    else:
+        return None
 
 def calculate_summary_metrics(historical_data, forecast_data):
     """
@@ -433,50 +564,128 @@ def calculate_summary_metrics(historical_data, forecast_data):
         'growth_valor': growth_valor
     }
 
-def analyze_customer_portfolio(historical_data):
+def analyze_customer_portfolio(historical_data, seasonal_patterns=None):
     """
     Analyze changes in customer portfolio over time.
     Identifies new customers, lost customers, and changes in purchase patterns.
+    Includes seasonal patterns in the analysis when available.
     """
     if historical_data.empty:
         return {
             'new_customers': [],
+            'lost_customers': [],
             'declining_customers': [],
-            'growing_customers': []
+            'growing_customers': [],
+            'seasonal_customers': []
         }
     
-    # Create a period for comparison (first half vs second half)
-    historical_data = historical_data.sort_values('fecha')
-    mid_date = historical_data['fecha'].min() + (historical_data['fecha'].max() - historical_data['fecha'].min()) / 2
+    # Convert to datetime if not already
+    if not pd.api.types.is_datetime64_any_dtype(historical_data['fecha']):
+        historical_data['fecha'] = pd.to_datetime(historical_data['fecha'])
     
-    first_half = historical_data[historical_data['fecha'] < mid_date]
-    second_half = historical_data[historical_data['fecha'] >= mid_date]
+    # Add year and month columns for year-over-year comparison
+    historical_data['year'] = historical_data['fecha'].dt.year
+    historical_data['month'] = historical_data['fecha'].dt.month
     
-    # Get list of customers in each period
-    first_half_customers = set(first_half['cliente'].unique())
-    second_half_customers = set(second_half['cliente'].unique())
+    # Get the list of unique years in the data
+    years = sorted(historical_data['year'].unique())
+    
+    if len(years) <= 1:
+        # Not enough years for year-over-year comparison
+        return {
+            'new_customers': [],
+            'lost_customers': [],
+            'declining_customers': [],
+            'growing_customers': [],
+            'seasonal_customers': []
+        }
+    
+    # Define the comparison years (latest complete year vs previous year)
+    latest_year = years[-1]
+    previous_year = years[-2]
+    
+    # Filter data for these two years
+    current_year_data = historical_data[historical_data['year'] == latest_year]
+    previous_year_data = historical_data[historical_data['year'] == previous_year]
+    
+    # Get list of customers in each year
+    current_year_customers = set(current_year_data['cliente'].unique())
+    previous_year_customers = set(previous_year_data['cliente'].unique())
     
     # Identify new and lost customers
-    new_customers = list(second_half_customers - first_half_customers)
-    lost_customers = list(first_half_customers - second_half_customers)
+    new_customers = list(current_year_customers - previous_year_customers)
+    lost_customers = list(previous_year_customers - current_year_customers)
     
     # Calculate growth for continuing customers
-    continuing_customers = list(first_half_customers.intersection(second_half_customers))
+    continuing_customers = list(current_year_customers.intersection(previous_year_customers))
     
     customer_growth = []
     
     for cliente in continuing_customers:
-        first_kilos = first_half[first_half['cliente'] == cliente]['kilos_enviados'].sum()
-        second_kilos = second_half[second_half['cliente'] == cliente]['kilos_enviados'].sum()
+        # Group by month to ensure we compare same months across years
+        client_current = current_year_data[current_year_data['cliente'] == cliente].groupby('month').agg({
+            'kilos_enviados': 'sum',
+            'valor_x_producto': 'sum'
+        })
         
-        if first_kilos > 0:
-            growth = ((second_kilos / first_kilos) - 1) * 100
-            customer_growth.append({
-                'cliente': cliente,
-                'first_kilos': first_kilos,
-                'second_kilos': second_kilos,
-                'growth': growth
-            })
+        client_previous = previous_year_data[previous_year_data['cliente'] == cliente].groupby('month').agg({
+            'kilos_enviados': 'sum',
+            'valor_x_producto': 'sum'
+        })
+        
+        # Get common months for proper comparison
+        common_months = set(client_current.index).intersection(set(client_previous.index))
+        
+        if common_months:
+            # Calculate year-over-year growth for each month and then average
+            monthly_growth = []
+            
+            for month in common_months:
+                current_kilos = client_current.loc[month, 'kilos_enviados']
+                previous_kilos = client_previous.loc[month, 'kilos_enviados']
+                
+                if previous_kilos > 0:
+                    growth_pct = ((current_kilos / previous_kilos) - 1) * 100
+                    monthly_growth.append(growth_pct)
+            
+            if monthly_growth:
+                # Calculate average year-over-year growth across all months
+                avg_growth = sum(monthly_growth) / len(monthly_growth)
+                
+                # Get total volumes for context
+                total_current_kilos = client_current['kilos_enviados'].sum()
+                total_previous_kilos = client_previous['kilos_enviados'].sum()
+                
+                # Check for seasonality in this client
+                is_seasonal = False
+                seasonal_info = None
+                if seasonal_patterns and 'seasonal_clients' in seasonal_patterns:
+                    for sc in seasonal_patterns['seasonal_clients']:
+                        if sc['cliente'] == cliente:
+                            is_seasonal = True
+                            seasonal_info = sc
+                            break
+                
+                growth_data = {
+                    'cliente': cliente,
+                    'previous_year_kilos': float(total_previous_kilos),
+                    'current_year_kilos': float(total_current_kilos),
+                    'growth': float(avg_growth),
+                    'months_compared': len(common_months),
+                    'growth_detail': ', '.join([f"{month}: {growth:.1f}%" for month, growth in 
+                                               zip(common_months, monthly_growth)]),
+                    'is_seasonal': is_seasonal
+                }
+                
+                # Add seasonal details if available
+                if seasonal_info:
+                    growth_data['seasonal_pattern'] = {
+                        'active_months': seasonal_info['active_months'],
+                        'concentration': seasonal_info['concentration'],
+                        'pattern_strength': seasonal_info['pattern_strength']
+                    }
+                
+                customer_growth.append(growth_data)
     
     # Sort by growth
     customer_growth.sort(key=lambda x: x['growth'])
@@ -486,11 +695,134 @@ def analyze_customer_portfolio(historical_data):
     growing_customers = [c for c in customer_growth if c['growth'] > 2][-10:]
     growing_customers.reverse()  # Sort from highest to lowest
     
+    # Extract seasonal customers for specific analysis
+    seasonal_customers = [c for c in customer_growth if c.get('is_seasonal', False)]
+    
     return {
         'new_customers': new_customers,
-        'lost_customers': lost_customers,
+        'lost_customers': list(lost_customers),
         'declining_customers': declining_customers,
-        'growing_customers': growing_customers
+        'growing_customers': growing_customers,
+        'seasonal_customers': seasonal_customers
+    }
+
+def detect_seasonal_patterns(historical_data):
+    """
+    Detect clients with strong seasonal purchasing patterns.
+    Identifies seasonal clients (e.g., those who only buy in specific months).
+    """
+    if historical_data.empty or len(historical_data) < 4:
+        return {'seasonal_clients': [], 'seasonal_fruits': []}
+    
+    # Ensure we have year and month columns
+    if 'year' not in historical_data.columns:
+        historical_data['year'] = historical_data['fecha'].dt.year
+    if 'month' not in historical_data.columns:
+        historical_data['month'] = historical_data['fecha'].dt.month
+    
+    # Get month names for better readability
+    month_names = {i: calendar.month_name[i] for i in range(1, 13)}
+    
+    # Analysis for clients
+    seasonal_clients = []
+    client_month_data = historical_data.groupby(['cliente', 'month']).agg({
+        'kilos_enviados': 'sum'
+    }).reset_index()
+    
+    for client, client_data in client_month_data.groupby('cliente'):
+        # Need a reasonable amount of data to detect patterns
+        if len(client_data) < 2:
+            continue
+            
+        # Calculate what percentage of annual volume happens in each month
+        total_volume = client_data['kilos_enviados'].sum()
+        if total_volume == 0:
+            continue
+            
+        # Calculate monthly percentages
+        monthly_percentages = []
+        active_months = []
+        
+        for month in range(1, 13):
+            month_data = client_data[client_data['month'] == month]
+            if not month_data.empty:
+                volume = month_data['kilos_enviados'].iloc[0]
+                percentage = (volume / total_volume) * 100
+                monthly_percentages.append(percentage)
+                
+                if percentage > 5:  # Considering months with >5% as "active"
+                    active_months.append(month)
+            else:
+                monthly_percentages.append(0)
+        
+        # Detect seasonality patterns
+        if len(active_months) <= 4:  # Client active in 4 or fewer months = strongly seasonal
+            # Calculate concentration - how much volume is in the top months
+            concentration = sum(sorted(monthly_percentages, reverse=True)[:len(active_months)])
+            
+            # Format active months for display
+            active_month_names = [month_names[m] for m in active_months]
+            
+            seasonal_clients.append({
+                'cliente': client,
+                'active_months': active_month_names,
+                'concentration': float(concentration),
+                'pattern_strength': 'Strong' if concentration > 80 else 'Moderate',
+                'monthly_percentages': {month_names[i+1]: float(pct) for i, pct in enumerate(monthly_percentages)}
+            })
+    
+    # Sort by concentration (highest first)
+    seasonal_clients.sort(key=lambda x: x['concentration'], reverse=True)
+    
+    # Analysis for fruits
+    seasonal_fruits = []
+    fruit_month_data = historical_data.groupby(['fruta', 'month']).agg({
+        'kilos_enviados': 'sum'
+    }).reset_index()
+    
+    for fruit, fruit_data in fruit_month_data.groupby('fruta'):
+        if len(fruit_data) < 2:
+            continue
+            
+        total_volume = fruit_data['kilos_enviados'].sum()
+        if total_volume == 0:
+            continue
+        
+        monthly_percentages = []
+        active_months = []
+        
+        for month in range(1, 13):
+            month_data = fruit_data[fruit_data['month'] == month]
+            if not month_data.empty:
+                volume = month_data['kilos_enviados'].iloc[0]
+                percentage = (volume / total_volume) * 100
+                monthly_percentages.append(percentage)
+                
+                if percentage > 5:
+                    active_months.append(month)
+            else:
+                monthly_percentages.append(0)
+        
+        # Detect seasonality for fruits
+        if len(active_months) <= 6:  # Fruits often have wider seasons
+            concentration = sum(sorted(monthly_percentages, reverse=True)[:len(active_months)])
+            
+            active_month_names = [month_names[m] for m in active_months]
+            
+            seasonal_fruits.append({
+                'fruta': fruit,
+                'active_months': active_month_names,
+                'concentration': float(concentration),
+                'pattern_strength': 'Strong' if concentration > 70 else 'Moderate',
+                'monthly_percentages': {month_names[i+1]: float(pct) for i, pct in enumerate(monthly_percentages)}
+            })
+    
+    # Sort by concentration (highest first)
+    seasonal_fruits.sort(key=lambda x: x['concentration'], reverse=True)
+    
+    return {
+        'seasonal_clients': seasonal_clients,
+        'seasonal_fruits': seasonal_fruits
     }
 
 def proyeccion_ventas_api(request):
@@ -523,6 +855,9 @@ def proyeccion_ventas_api(request):
         fruta_id, 
         exportador_id
     )
+    
+    # Detect seasonal patterns
+    seasonal_patterns = detect_seasonal_patterns(historical_data)
     
     forecast_data = generate_forecast(historical_data, forecast_months)
     
@@ -560,7 +895,7 @@ def proyeccion_ventas_api(request):
         return result
 
     # Process portfolio changes to ensure JSON serializability
-    portfolio = analyze_customer_portfolio(historical_data)
+    portfolio = analyze_customer_portfolio(historical_data, seasonal_patterns)
     for key in portfolio:
         if isinstance(portfolio[key], list):
             # For numerical fields in dictionaries within lists
@@ -581,7 +916,8 @@ def proyeccion_ventas_api(request):
         'historical_data': convert_to_serializable(historical_data),
         'forecast_data': convert_to_serializable(forecast_data),
         'summary_metrics': metrics,
-        'portfolio_changes': portfolio
+        'portfolio_changes': portfolio,
+        'seasonal_patterns': seasonal_patterns
     }
     
     # Use dumps and loads to ensure valid JSON

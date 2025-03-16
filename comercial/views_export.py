@@ -272,7 +272,7 @@ def exportar_utilidades_excel(request):
     
     # Encabezados para la segunda hoja - Separando "Por Facturar" y "Facturada"
     headers = ["Exportadora", "Total Utilidades USD", "Total Recuperación USD", 
-               "Pendiente Pago", "Factura en Abono", "Por Facturar", "Facturada", "Pagada"]
+               "Pendiente Pago Cliente", "Factura en Abono", "Por Facturar", "Facturada", "Pagada"]
     header_widths = [30, 20, 20, 20, 20, 20, 20, 20]
     
     for col_num, (header, width) in enumerate(zip(headers, header_widths), start=1):

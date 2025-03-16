@@ -295,8 +295,23 @@
                 <i class="fas fa-file-invoice-dollar"></i>Listado Completo de Facturas
             </div>
             <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                            <select id="estadoFilter" class="form-select">
+                                <option value="">Todos los estados</option>
+                                <option value="Pagada">Pagada</option>
+                                <option value="Pendiente">Pendiente De Cancelacion</option>
+                                <option value="Vencida">Factura Vencida</option>
+                                <option value="Sin valor">Factura Sin Valor</option>
+                                <option value="Cancelado"> Pedido Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 <div class="table-responsive">
-                    <table class="table table-hover table-highlight table-compact">
+                    <table class="table table-hover table-highlight table-compact" id="tablaFacturas">
                         <thead>
                         <tr>
                             <th>Factura</th>
@@ -433,6 +448,52 @@
         document.getElementById('filtroForm').submit();
     }
 
+    // Table filtering function for invoices
+    document.addEventListener('DOMContentLoaded', function() {
+        const estadoFilter = document.getElementById('estadoFilter');
+        if (estadoFilter) {
+            estadoFilter.addEventListener('change', function() {
+                const filterValue = this.value.toLowerCase();
+                const tabla = document.getElementById('tablaFacturas');
+                const filas = tabla.querySelectorAll('tbody tr');
+                
+                filas.forEach(function(fila) {
+                    const estadoCell = fila.querySelector('td:nth-child(12)');
+                    if (!estadoCell) return;
+                    
+                    const estadoBadge = estadoCell.querySelector('.badge');
+                    if (!estadoBadge) return;
+                    
+                    const estadoTexto = estadoBadge.textContent.toLowerCase();
+                    
+                    if (filterValue === '' || estadoTexto.includes(filterValue)) {
+                        fila.style.display = '';
+                    } else {
+                        fila.style.display = 'none';
+                    }
+                });
+                
+                // Show "no results" message if all rows are hidden
+                const visibleRows = Array.from(filas).filter(row => row.style.display !== 'none');
+                const noResultsRow = document.querySelector('#tablaFacturas tbody tr.no-results');
+                
+                if (visibleRows.length === 0) {
+                    if (!noResultsRow) {
+                        const tbody = tabla.querySelector('tbody');
+                        const newRow = document.createElement('tr');
+                        newRow.className = 'no-results';
+                        newRow.innerHTML = '<td colspan="12" class="text-center">No hay facturas que coincidan con el filtro seleccionado.</td>';
+                        tbody.appendChild(newRow);
+                    } else {
+                        noResultsRow.style.display = '';
+                    }
+                } else if (noResultsRow) {
+                    noResultsRow.style.display = 'none';
+                }
+            });
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', function () {
         {% if selected_cliente %}
             // Chart colors
@@ -534,27 +595,27 @@
                             data: {{ dias_de_pago|safe }},
                             backgroundColor: 'rgba(79, 70, 229, 0.1)',
                             borderColor: chartColors.purple,
-                            borderWidth: 3,
+                            borderWidth: 2,
                             pointBackgroundColor: '#ffffff',
                             pointBorderColor: chartColors.purple,
                             pointBorderWidth: 2,
-                            pointRadius: 5,
-                            pointHoverRadius: 8,
-                            tension: 0.4,
-                            fill: false,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            tension: 0.3,
+                            fill: true,
                             yAxisID: 'y'
                         },
                         {
                             label: 'Días de Cartera',
                             data: {{ dias_cartera|safe }},
-                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            backgroundColor: 'rgba(245, 158, 11, 0.05)',
                             borderColor: chartColors.orange,
-                            borderWidth: 3,
+                            borderWidth: 2,
                             borderDash: [5, 5],
                             pointRadius: 0,
                             pointHoverRadius: 0,
                             tension: 0,
-                            fill: false,
+                            fill: true,
                             yAxisID: 'y'
                         }
                     ]
@@ -562,6 +623,10 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
                     scales: {
                         x: {
                             grid: {
@@ -574,11 +639,14 @@
                                 },
                                 color: '#64748b',
                                 maxRotation: 45,
-                                minRotation: 45
+                                minRotation: 45,
+                                autoSkip: true,
+                                maxTicksLimit: 10
                             }
                         },
                         y: {
                             beginAtZero: true,
+                            suggestedMax: Math.max(...{{ dias_de_pago|safe }}, ...{{ dias_cartera|safe }}) * 1.1,
                             title: {
                                 display: true,
                                 text: 'Días',
@@ -589,14 +657,15 @@
                                 }
                             },
                             grid: {
-                                color: 'rgba(226, 232, 240, 0.6)'
+                                color: 'rgba(226, 232, 240, 0.4)'
                             },
                             ticks: {
                                 font: {
                                     family: 'Poppins',
                                     size: 11
                                 },
-                                color: '#64748b'
+                                color: '#64748b',
+                                stepSize: 15
                             }
                         }
                     },
@@ -605,7 +674,7 @@
                             display: false
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
                             titleColor: '#334155',
                             bodyColor: '#334155',
                             bodyFont: {
@@ -619,18 +688,27 @@
                             },
                             borderWidth: 1,
                             borderColor: '#e2e8f0',
+                            padding: 12,
+                            displayColors: true,
                             callbacks: {
+                                title: function(tooltipItems) {
+                                    return 'Fecha: ' + tooltipItems[0].label;
+                                },
                                 label: function(context) {
                                     let label = context.dataset.label || '';
                                     let value = context.parsed.y || 0;
                                     if (label === 'Días para Pago') {
-                                        return label + ': ' + value + ' días';
+                                        return `${label}: ${value.toFixed(0)} días`;
                                     } else {
-                                        return 'Términos acordados: ' + value + ' días';
+                                        return `Término acordado: ${value.toFixed(0)} días`;
                                     }
                                 }
                             }
                         }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
                     }
                 }
             });

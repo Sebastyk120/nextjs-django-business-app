@@ -42,54 +42,96 @@
 
     <div class="filter-panel">
         <form class="filter-form" id="filterForm" method="get" action="">
-            <div class="form-group">
-                <label for="fecha_inicio">Fecha Inicio:</label>
-                <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio"
-                       value="{{ fecha_inicio }}">
-            </div>
-            <div class="form-group">
-                <label for="fecha_fin">Fecha Fin:</label>
-                <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}">
-            </div>
-            <div class="form-group">
-                <label for="cliente">Cliente:</label>
-                <select class="form-control" id="cliente" name="cliente">
-                    <option value="">Todos</option>
-                    {% for cliente in clientes %}
-                        <option value="{{ cliente.id }}"
-                                {% if cliente_id == cliente.id|stringformat:"i" %}selected{% endif %}>{{ cliente.nombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="intermediario">Intermediario:</label>
-                <select class="form-control" id="intermediario" name="intermediario">
-                    <option value="">Todos</option>
-                    {% for intermediario in intermediarios %}
-                        <option value="{{ intermediario.id }}"
-                                {% if intermediario_id == intermediario.id|stringformat:"i" %}selected{% endif %}>{{ intermediario.nombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="fruta">Fruta:</label>
-                <select class="form-control" id="fruta" name="fruta">
-                    <option value="">Todas</option>
-                    {% for fruta in frutas %}
-                        <option value="{{ fruta.id }}"
-                                {% if fruta_id == fruta.id|stringformat:"i" %}selected{% endif %}>{{ fruta.nombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="exportador">Exportador:</label>
-                <select class="form-control" id="exportador" name="exportador">
-                    <option value="">Todos</option>
-                    {% for exportador in exportadores %}
-                        <option value="{{ exportador.id }}"
-                                {% if exportador_id == exportador.id|stringformat:"i" %}selected{% endif %}>{{ exportador.nombre }}</option>
-                    {% endfor %}
-                </select>
+            <div class="filter-grid">
+                <div class="filter-section dates-section">
+                    <div class="date-range-group">
+                        <div class="date-group">
+                            <h3>Periodo Actual</h3>
+                            <div class="date-inputs">
+                                <div class="date-field">
+                                    <label for="fecha_inicio">Inicio:</label>
+                                    <input type="date" class="form-control compact" id="fecha_inicio"
+                                           name="fecha_inicio"
+                                           value="{{ fecha_inicio }}">
+                                </div>
+                                <div class="date-field">
+                                    <label for="fecha_fin">Fin:</label>
+                                    <input type="date" class="form-control compact" id="fecha_fin" name="fecha_fin"
+                                           value="{{ fecha_fin }}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="date-group">
+                            <h3>Periodo Comparativo</h3>
+                            <div class="date-inputs">
+                                <div class="date-field">
+                                    <label for="fecha_inicio_anterior">Inicio:</label>
+                                    <input type="date" class="form-control compact" id="fecha_inicio_anterior"
+                                           name="fecha_inicio_anterior"
+                                           value="{{ fecha_inicio_anterior }}">
+                                </div>
+                                <div class="date-field">
+                                    <label for="fecha_fin_anterior">Fin:</label>
+                                    <input type="date" class="form-control compact" id="fecha_fin_anterior"
+                                           name="fecha_fin_anterior"
+                                           value="{{ fecha_fin_anterior }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-section entity-filters">
+                    <div class="select-group">
+                        <div class="select-field">
+                            <label for="cliente">Cliente:</label>
+                            <select class="form-control compact" id="cliente" name="cliente">
+                                <option value="">Todos</option>
+                                {% for cliente in clientes %}
+                                    <option value="{{ cliente.id }}"
+                                            {% if cliente_id == cliente.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ cliente.nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="select-field">
+                            <label for="intermediario">Intermediario:</label>
+                            <select class="form-control compact" id="intermediario" name="intermediario">
+                                <option value="">Todos</option>
+                                {% for intermediario in intermediarios %}
+                                    <option value="{{ intermediario.id }}"
+                                            {% if intermediario_id == intermediario.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ intermediario.nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="select-field">
+                            <label for="fruta">Fruta:</label>
+                            <select class="form-control compact" id="fruta" name="fruta">
+                                <option value="">Todas</option>
+                                {% for fruta in frutas %}
+                                    <option value="{{ fruta.id }}"
+                                            {% if fruta_id == fruta.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ fruta.nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="select-field">
+                            <label for="exportador">Exportador:</label>
+                            <select class="form-control compact" id="exportador" name="exportador">
+                                <option value="">Todos</option>
+                                {% for exportador in exportadores %}
+                                    <option value="{{ exportador.id }}"
+                                            {% if exportador_id == exportador.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ exportador.nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
@@ -97,7 +139,7 @@
     <div class="card-grid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title">TOTAL KILOS VENDIDOS</span>
+                <span class="card-title">KILOS VENDIDOS</span>
                 <div class="card-icon bg-success">
                     <i class="fas fa-weight-hanging"></i>
                 </div>
@@ -113,7 +155,7 @@
         </div>
         <div class="card">
             <div class="card-header">
-                <span class="card-title">TOTAL CAJAS ENVIADAS</span>
+                <span class="card-title">CAJAS ENVIADAS</span>
                 <div class="card-icon bg-info">
                     <i class="fas fa-box"></i>
                 </div>
@@ -129,7 +171,7 @@
         </div>
         <div class="card">
             <div class="card-header">
-                <span class="card-title">TOTAL FACTURADO USD</span>
+                <span class="card-title">FACTURADO USD</span>
                 <div class="card-icon bg-primary">
                     <i class="fas fa-dollar-sign"></i>
                 </div>
@@ -145,7 +187,7 @@
         </div>
         <div class="card">
             <div class="card-header">
-                <span class="card-title">TOTAL UTILIDAD USD</span>
+                <span class="card-title">UTILIDAD USD</span>
                 <div class="card-icon bg-warning">
                     <i class="fas fa-chart-line"></i>
                 </div>
@@ -159,9 +201,26 @@
                 {% endif %}
             </div>
         </div>
+        <!-- Nueva card para mostrar Total Recuperaciones -->
         <div class="card">
             <div class="card-header">
-                <span class="card-title">TOTAL NOTAS CRÉDITO USD</span>
+                <span class="card-title">RECUPERACIONES USD</span>
+                <div class="card-icon bg-purple">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+            </div>
+            <div class="card-value">{{ global_total_recuperacion|floatformat:0|format_currency }}</div>
+            <div class="card-description">
+                {% if recuperacion_prev %}
+                    <span class="{% if recuperacion_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ recuperacion_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">NOTAS CRÉDITO USD</span>
                 <div class="card-icon bg-danger">
                     <i class="fas fa-file-invoice-dollar"></i>
                 </div>
@@ -177,7 +236,7 @@
         </div>
         <div class="card">
             <div class="card-header">
-                <span class="card-title">TOTAL PEDIDOS CANCELADOS</span>
+                <span class="card-title">PEDIDOS ANULADOS</span>
                 <div class="card-icon bg-orange">
                     <i class="fas fa-ban"></i>
                 </div>
@@ -213,7 +272,7 @@
         </div>
     </div>
     <div class="chart-wrapper">
-    <h2>Evolución Mensual</h2>
+        <h2>Evolución Mensual</h2>
         <div class="chart-card full-width">
             <div class="chart-filter">
                 <button class="chart-filter-btn active" id="kilosBtn">Kilos Enviados</button>
@@ -234,8 +293,11 @@
                 <th>Total Kilos Enviados</th>
                 <th>Total Facturado USD</th>
                 <th>Total Utilidades USD</th>
+                <th>Total Notas Crédito USD</th>
                 <th>% Participación kilos</th>
                 <th>% Participación utilidades</th>
+                <th>% Utilidad sobre total facturado</th>
+                <th>% NC sobre total facturado</th>
             </tr>
             </thead>
             <tbody>
@@ -246,12 +308,19 @@
                     <td class="numeric">{{ item.total_kilos|floatformat:0|format_number }}</td>
                     <td class="numeric">{{ item.total_facturado|floatformat:0|format_currency }}</td>
                     <td class="numeric">{{ item.total_utilidades|floatformat:0|format_currency }}</td>
+                    <td class="numeric">{{ item.total_nc|floatformat:0|format_currency }}</td>
                     <td class="numeric">{{ item.percent_kilos|floatformat:2 }}%</td>
                     <td class="numeric">{{ item.percent_utilidad|floatformat:2 }}%</td>
+                    <td class="numeric">
+                        {% widthratio item.total_utilidades item.total_facturado 100 as porcentaje %}{{ porcentaje|floatformat:2 }}%
+                    </td>
+                    <td class="numeric">
+                        {% widthratio item.total_nc item.total_facturado 100 as porcentaje_nc %}{{ porcentaje_nc|floatformat:2 }}%
+                    </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center">No hay datos disponibles</td>
+                    <td colspan="10" class="text-center">No hay datos disponibles</td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -353,17 +422,22 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script>
     // Establecer fechas por defecto
     document.addEventListener('DOMContentLoaded', function () {
         // Configurar fechas por defecto solo si no están ya configuradas
         const fechaFin = document.getElementById('fecha_fin');
         const fechaInicio = document.getElementById('fecha_inicio');
+        const fechaInicioAnterior = document.getElementById('fecha_inicio_anterior');
+        const fechaFinAnterior = document.getElementById('fecha_fin_anterior');
 
         // Obtener los valores de la URL si existen
         const urlParams = new URLSearchParams(window.location.search);
         const fechaInicioParam = urlParams.get('fecha_inicio');
         const fechaFinParam = urlParams.get('fecha_fin');
+        const fechaInicioAnteriorParam = urlParams.get('fecha_inicio_anterior');
+        const fechaFinAnteriorParam = urlParams.get('fecha_fin_anterior');
 
         // Usar los valores de la URL si están disponibles
         if (fechaInicioParam) {
@@ -382,6 +456,64 @@
             const today = new Date();
             fechaFin.valueAsDate = today;
         }
+
+        // Fechas para el periodo anterior
+        if (fechaInicioAnteriorParam) {
+            fechaInicioAnterior.value = fechaInicioAnteriorParam;
+        } else if (!fechaInicioAnterior.value) {
+            // Calcular 30 días antes del periodo actual como valor por defecto
+            if (fechaInicio.value) {
+                const inicioDate = new Date(fechaInicio.value);
+                const anteriorDate = new Date(inicioDate);
+                anteriorDate.setDate(inicioDate.getDate() - 30);
+                fechaInicioAnterior.valueAsDate = anteriorDate;
+            }
+        }
+
+        if (fechaFinAnteriorParam) {
+            fechaFinAnterior.value = fechaFinAnteriorParam;
+        } else if (!fechaFinAnterior.value) {
+            // Un día antes del periodo actual como valor por defecto
+            if (fechaInicio.value) {
+                const inicioDate = new Date(fechaInicio.value);
+                const anteriorDate = new Date(inicioDate);
+                anteriorDate.setDate(inicioDate.getDate() - 1);
+                fechaFinAnterior.valueAsDate = anteriorDate;
+            }
+        }
+
+        // Cuando se cambia el periodo actual, actualizar el periodo anterior si no se ha establecido manualmente
+        fechaInicio.addEventListener('change', function () {
+            if (!urlParams.has('fecha_inicio_anterior')) {
+                const inicioDate = new Date(this.value);
+                const finDate = new Date(fechaFin.value || new Date());
+                const duracion = (finDate - inicioDate) / (1000 * 60 * 60 * 24); // días
+
+                const anteriorInicioDate = new Date(inicioDate);
+                anteriorInicioDate.setDate(inicioDate.getDate() - duracion);
+                fechaInicioAnterior.valueAsDate = anteriorInicioDate;
+
+                const anteriorFinDate = new Date(inicioDate);
+                anteriorFinDate.setDate(inicioDate.getDate() - 1);
+                fechaFinAnterior.valueAsDate = anteriorFinDate;
+            }
+        });
+
+        fechaFin.addEventListener('change', function () {
+            if (!urlParams.has('fecha_fin_anterior') && fechaInicio.value) {
+                const inicioDate = new Date(fechaInicio.value);
+                const finDate = new Date(this.value);
+                const duracion = (finDate - inicioDate) / (1000 * 60 * 60 * 24); // días
+
+                const anteriorInicioDate = new Date(inicioDate);
+                anteriorInicioDate.setDate(inicioDate.getDate() - duracion);
+                fechaInicioAnterior.valueAsDate = anteriorInicioDate;
+
+                const anteriorFinDate = new Date(inicioDate);
+                anteriorFinDate.setDate(inicioDate.getDate() - 1);
+                fechaFinAnterior.valueAsDate = anteriorFinDate;
+            }
+        });
 
         // Botón de restablecer filtros
         document.getElementById('resetBtn').addEventListener('click', function () {
@@ -446,10 +578,24 @@
     let monthlyChart;
 
     function inicializarGraficos() {
+        console.log("Inicializando gráficos");
+
+        // Comprobar datos de utilidad disponibles
+        const hayDatosUtilidad = {% if utilidad_por_cliente %}true{% else %}false{% endif %};
+        console.log("¿Hay datos de utilidad disponibles?", hayDatosUtilidad);
+
+        // Mostrar información de depuración en la consola
+        mostrarInformacionPeriodos();
+
         // Inicializar gráfico de kilos
         const kilosCtx = document.getElementById('kilosChart').getContext('2d');
-        const kilosLabels = [{% for item in kilos_por_fruta %}'{{ item.fruta__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
-        const kilosData = [{% for item in kilos_por_fruta %}{{ item.total_kilos|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const kilosLabels = [{% for item in kilos_por_fruta %}'{{ item.fruta__nombre|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const kilosData = [{% for item in kilos_por_fruta %}{{ item.total_kilos|default:0|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+        console.log("Datos de kilos por fruta:", {kilosLabels, kilosData});
+
+
+        Chart.register(ChartDataLabels);
 
         kilosChart = new Chart(kilosCtx, {
             type: 'doughnut',
@@ -458,28 +604,38 @@
                 datasets: [{
                     data: kilosData,
                     backgroundColor: [
-                        'rgba(52, 152, 219, 0.7)',  // Azul claro
-                        'rgba(46, 204, 113, 0.7)',  // Verde claro
-                        'rgba(26, 188, 156, 0.7)',  // Turquesa
-                        'rgba(155, 89, 182, 0.7)',  // Morado
-                        'rgba(241, 196, 15, 0.7)',  // Amarillo
-                        'rgba(231, 76, 60, 0.7)',   // Rojo
-                        'rgba(52, 73, 94, 0.7)',    // Gris azulado
-                        'rgba(230, 126, 34, 0.7)',  // Naranja
-                        'rgba(142, 68, 173, 0.7)',  // Púrpura oscuro
-                        'rgba(39, 174, 96, 0.7)'    // Verde esmeralda
+                        'rgba(52, 152, 219, 0.7)',   // Azul claro
+                        'rgba(46, 204, 113, 0.7)',   // Verde claro
+                        'rgba(155, 89, 182, 0.7)',   // Morado
+                        'rgba(241, 196, 15, 0.7)',   // Amarillo
+                        'rgba(230, 126, 34, 0.7)',   // Naranja
+                        'rgba(231, 76, 60, 0.7)',    // Rojo
+                        'rgba(26, 188, 156, 0.7)',   // Turquesa
+                        'rgba(153, 102, 255, 0.7)',  // Violeta
+                        'rgba(149, 165, 166, 0.7)',  // Gris
+                        'rgba(211, 84, 0, 0.7)',     // Naranja oscuro
+                        'rgba(41, 128, 185, 0.7)',   // Azul oceano
+                        'rgba(192, 57, 43, 0.7)',    // Rojo oscuro
+                        'rgba(22, 160, 133, 0.7)',   // Verde azulado
+                        'rgba(142, 68, 173, 0.7)',   // Púrpura
+                        'rgba(243, 156, 18, 0.7)',   // Amarillo oscuro
                     ],
                     borderColor: [
-                        'rgba(52, 152, 219, 1)',
-                        'rgba(46, 204, 113, 1)',
-                        'rgba(26, 188, 156, 1)',
-                        'rgba(155, 89, 182, 1)',
-                        'rgba(241, 196, 15, 1)',
-                        'rgba(231, 76, 60, 1)',
-                        'rgba(52, 73, 94, 1)',
-                        'rgba(230, 126, 34, 1)',
-                        'rgba(142, 68, 173, 1)',
-                        'rgba(39, 174, 96, 1)'
+                        'rgba(52, 152, 219, 1)',     // Azul claro
+                        'rgba(46, 204, 113, 1)',     // Verde claro
+                        'rgba(155, 89, 182, 1)',     // Morado
+                        'rgba(241, 196, 15, 1)',     // Amarillo
+                        'rgba(230, 126, 34, 1)',     // Naranja
+                        'rgba(231, 76, 60, 1)',      // Rojo
+                        'rgba(26, 188, 156, 1)',     // Turquesa
+                        'rgba(153, 102, 255, 1)',    // Violeta
+                        'rgba(149, 165, 166, 1)',    // Gris
+                        'rgba(211, 84, 0, 1)',       // Naranja oscuro
+                        'rgba(41, 128, 185, 1)',     // Azul oceano
+                        'rgba(192, 57, 43, 1)',      // Rojo oscuro
+                        'rgba(22, 160, 133, 1)',     // Verde azulado
+                        'rgba(142, 68, 173, 1)',     // Púrpura
+                        'rgba(243, 156, 18, 1)',     // Amarillo oscuro
                     ],
                     borderWidth: 1
                 }]
@@ -492,14 +648,85 @@
                     tooltip: {
                         callbacks: {
                             label: function (context) {
-                                return context.label + ': ' + context.parsed.toLocaleString() + ' kg';
+                                // Calcular el porcentaje
+                                const total = context.dataset.data.reduce((acc, curr) => acc + curr, 0);
+                                const percentage = ((context.parsed * 100) / total).toFixed(1);
+                                return `${context.label}: ${context.parsed.toLocaleString()} kg (${percentage}%)`;
                             }
                         }
                     },
                     legend: {
                         position: 'left',
-                        labels: {font: {size: 10}}
+                        labels: {
+                            font: {size: 10},
+                            generateLabels: function (chart) {
+                                const data = chart.data;
+                                const total = data.datasets[0].data.reduce((acc, curr) => acc + curr, 0);
+                                return data.labels.map((label, i) => {
+                                    const value = data.datasets[0].data[i];
+                                    const percentage = ((value * 100) / total).toFixed(1);
+                                    // Obtener el estado actual de visibilidad desde el metadatos del dataset
+                                    const meta = chart.getDatasetMeta(0);
+                                    const hidden = meta.data[i].hidden || false;
+                                    
+                                    return {
+                                        text: `${label} (${percentage}%)`,
+                                        fillStyle: data.datasets[0].backgroundColor[i],
+                                        strokeStyle: data.datasets[0].borderColor[i],
+                                        lineWidth: 1,
+                                        hidden: hidden,
+                                        index: i
+                                    };
+                                });
+                            }
+                        },
+                        onClick: function(e, legendItem, legend) {
+                            // Recuperar el índice del elemento clicado
+                            const index = legendItem.index;
+                            const chart = legend.chart;
+                            
+                            // Obtener los metadatos del dataset
+                            const meta = chart.getDatasetMeta(0);
+                            
+                            // Cambiar el estado de visibilidad del elemento
+                            const hidden = !meta.data[index].hidden;
+                            meta.data[index].hidden = hidden;
+                            
+                            // Actualizar el estado de visibilidad en el item de leyenda correspondiente
+                            if (legendItem.hidden !== hidden) {
+                                legendItem.hidden = hidden;
+                            }
+                            
+                            // Redibujar el gráfico
+                            chart.update();
+                        }
                     },
+                    datalabels: {
+                        formatter: (value, ctx) => {
+                            const total = ctx.dataset.data.reduce((acc, curr) => acc + curr, 0);
+                            const percentage = ((value * 100) / total).toFixed(1);
+                            return percentage + '%';
+                        },
+                        color: '#fff',
+                        font: {
+                            weight: 'bold',
+                            size: 14 // Aumentando el tamaño de la fuente para mejor visibilidad
+                        },
+                        display: function (context) {
+                            // Solo mostrar etiquetas para segmentos con porcentaje mayor al umbral
+                            const total = context.dataset.data.reduce((acc, curr) => acc + curr, 0);
+                            const value = context.dataset.data[context.dataIndex];
+                            const percentage = (value / total) * 100;
+
+                            // Ajustar este valor según se necesite (5% como umbral inicial)
+                            const umbral = 5;
+                            return percentage >= umbral;
+                        },
+                        offset: 0, // Sin desplazamiento
+                        anchor: 'center', // Centrar en cada segmento
+                        align: 'center', // Alinear al centro
+                        clamp: true // Evitar que las etiquetas se salgan del gráfico
+                    }
                 },
                 animation: {
                     animateScale: true,
@@ -507,6 +734,7 @@
                     duration: 1000
                 }
             }
+            // Eliminando el plugin que dibuja el texto en el centro
         });
 
         // Por defecto mostramos utilidad por cliente
@@ -514,6 +742,40 @@
 
         // Inicializar el gráfico mensual
         inicializarGraficoMensual();
+    }
+
+    // Agregar una función para mostrar información detallada de los períodos
+    function mostrarInformacionPeriodos() {
+        console.log("=== INFORMACIÓN DE PERÍODOS ===");
+        console.log("Período actual:", "{{ periodo_actual_inicio }} a {{ periodo_actual_fin }}");
+        console.log("Período anterior:", "{{ periodo_anterior_inicio }} a {{ periodo_anterior_fin }}");
+
+        // Datos mensuales para período actual
+        const datosMensuales = [
+            {% for item in datos_mensuales %}
+                {
+                    fecha: '{{ item.fecha }}',
+                    mes: '{{ item.nombre_mes }}',
+                    año: {{ item.año }},
+                    totalKilos: {{ item.total_kilos|floatformat:0 }}
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        // Datos mensuales para período anterior
+        const datosMensualesAnterior = [
+            {% for item in datos_mensuales_anterior %}
+                {
+                    fecha: '{{ item.fecha }}',
+                    mes: '{{ item.nombre_mes }}',
+                    año: {{ item.año }},
+                    totalKilos: {{ item.total_kilos|floatformat:0 }}
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+
+        console.log("Datos mensuales - período actual:", datosMensuales.map(d => `${d.mes} ${d.año}: ${d.totalKilos}kg`));
+        console.log("Datos mensuales - período anterior:", datosMensualesAnterior.map(d => `${d.mes} ${d.año}: ${d.totalKilos}kg`));
     }
 
     function inicializarGraficoMensual() {
@@ -549,31 +811,39 @@
 
         // Preparar datos para el gráfico
         const labels = datosMensuales.map(item => `${item.mes} ${item.año}`);
+        const labelsAnterior = datosMensualesAnterior.map(item => `${item.mes} ${item.año}`);
+
         const kilosData = datosMensuales.map(item => item.totalKilos);
+        const kilosPrevData = datosMensualesAnterior.map(item => item.totalKilos);
 
-        // Crear datos para el período anterior usando datos reales
-        const kilosPrevData = organizarDatosPeriodoAnterior(datosMensuales, datosMensualesAnterior, 'totalKilos');
-
-        // Crear el gráfico de barras con datos comparativos
+        // Crear el gráfico de línea con datos comparativos
         const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
         monthlyChart = new Chart(monthlyCtx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Kilos Enviados (Período Actual)',
-                        data: kilosData,
-                        backgroundColor: 'rgba(46, 204, 113, 0.7)', // Verde
-                        borderColor: 'rgba(46, 204, 113, 1)',
-                        borderWidth: 1
+                        label: 'Período Anterior',
+                        data: kilosPrevData,
+                        borderColor: 'rgba(46, 204, 113, 0.3)',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointBackgroundColor: 'rgba(46, 204, 113, 0.3)',
+                        fill: true,
+                        tension: 0.3
                     },
                     {
-                        label: 'Kilos Enviados (Período Anterior)',
-                        data: kilosPrevData,
-                        backgroundColor: 'rgba(46, 204, 113, 0.3)', // Verde más claro
-                        borderColor: 'rgba(46, 204, 113, 0.6)',
-                        borderWidth: 1
+                        label: 'Período Actual',
+                        data: kilosData,
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointBackgroundColor: 'rgba(46, 204, 113, 1)',
+                        fill: true,
+                        tension: 0.3
                     }
                 ]
             },
@@ -584,7 +854,7 @@
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) {
+                            callback: function (value) {
                                 return value.toLocaleString() + ' kg';
                             }
                         }
@@ -599,12 +869,23 @@
                     title: {
                         display: true,
                         text: 'Evolución Mensual de Kilos Enviados',
-                        font: { size: 18 }
+                        font: {size: 18}
                     },
                     tooltip: {
                         callbacks: {
-                            label: function(context) {
-                                return context.dataset.label + ': ' + context.raw.toLocaleString() + ' kg';
+                            title: function (tooltipItems) {
+                                const dataIndex = tooltipItems[0].dataIndex;
+                                const datasetIndex = tooltipItems[0].datasetIndex;
+
+                                if (datasetIndex === 0 && dataIndex < labelsAnterior.length) {
+                                    // Para el período anterior
+                                    return `Período anterior: ${labelsAnterior[dataIndex]}`;
+                                }
+                                // Para el período actual
+                                return `Período actual: ${labels[dataIndex]}`;
+                            },
+                            label: function (context) {
+                                return `${context.raw.toLocaleString()} kg`;
                             }
                         }
                     },
@@ -613,27 +894,31 @@
                         position: 'top'
                     }
                 },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
                 animation: {
                     duration: 1000,
-                    easing: 'easeOutQuart'
+                    easing: 'easeInOutQuart'
                 }
             }
         });
 
         // Event listeners para los botones de filtro
-        document.getElementById('kilosBtn').addEventListener('click', function() {
+        document.getElementById('kilosBtn').addEventListener('click', function () {
             actualizarGraficoMensual('kilos', this);
         });
 
-        document.getElementById('cajasBtn').addEventListener('click', function() {
+        document.getElementById('cajasBtn').addEventListener('click', function () {
             actualizarGraficoMensual('cajas', this);
         });
 
-        document.getElementById('utilidadBtn').addEventListener('click', function() {
+        document.getElementById('utilidadBtn').addEventListener('click', function () {
             actualizarGraficoMensual('utilidad', this);
         });
 
-        document.getElementById('ncBtn').addEventListener('click', function() {
+        document.getElementById('ncBtn').addEventListener('click', function () {
             actualizarGraficoMensual('nc', this);
         });
     }
@@ -677,32 +962,43 @@
 
         // Preparar datos para el gráfico actual
         const labels = datosMensuales.map(item => `${item.mes} ${item.año}`);
+        const labelsAnterior = datosMensualesAnterior.map(item => `${item.mes} ${item.año}`);
+
         let datos, datosPrevios, titulo, etiqueta, unidad;
 
         // Colores base por tipo de dato
         const colorSchemes = {
             'kilos': {
-                actual: 'rgba(46, 204, 113, 0.7)',
-                previo: 'rgba(46, 204, 113, 0.3)'
+                actual: 'rgba(46, 204, 113, 1)',
+                actualBg: 'rgba(46, 204, 113, 0.2)',
+                previo: 'rgba(46, 204, 113, 0.3)',
+                previoBg: 'rgba(46, 204, 113, 0.1)'
             },
             'cajas': {
-                actual: 'rgba(52, 152, 219, 0.7)',
-                previo: 'rgba(52, 152, 219, 0.3)'
+                actual: 'rgba(52, 152, 219, 1)',
+                actualBg: 'rgba(52, 152, 219, 0.2)',
+                previo: 'rgba(52, 152, 219, 0.3)',
+                previoBg: 'rgba(52, 152, 219, 0.1)'
             },
             'utilidad': {
-                actual: 'rgba(241, 196, 15, 0.7)',
-                previo: 'rgba(241, 196, 15, 0.3)'
+                actual: 'rgba(241, 196, 15, 1)',
+                actualBg: 'rgba(241, 196, 15, 0.2)',
+                previo: 'rgba(241, 196, 15, 0.3)',
+                previoBg: 'rgba(241, 196, 15, 0.1)'
             },
             'nc': {
-                actual: 'rgba(231, 76, 60, 0.7)',
-                previo: 'rgba(231, 76, 60, 0.3)'
+                actual: 'rgba(231, 76, 60, 1)',
+                actualBg: 'rgba(231, 76, 60, 0.2)',
+                previo: 'rgba(231, 76, 60, 0.3)',
+                previoBg: 'rgba(231, 76, 60, 0.1)'
             }
         };
 
-        switch(tipo) {
+        let colorBase;
+        switch (tipo) {
             case 'kilos':
                 datos = datosMensuales.map(item => item.totalKilos);
-                datosPrevios = organizarDatosPeriodoAnterior(datosMensuales, datosMensualesAnterior, 'totalKilos');
+                datosPrevios = datosMensualesAnterior.map(item => item.totalKilos);
                 titulo = 'Evolución Mensual de Kilos Enviados';
                 etiqueta = 'Kilos Enviados';
                 unidad = ' kg';
@@ -710,7 +1006,7 @@
                 break;
             case 'cajas':
                 datos = datosMensuales.map(item => item.totalCajas);
-                datosPrevios = organizarDatosPeriodoAnterior(datosMensuales, datosMensualesAnterior, 'totalCajas');
+                datosPrevios = datosMensualesAnterior.map(item => item.totalCajas);
                 titulo = 'Evolución Mensual de Cajas Enviadas';
                 etiqueta = 'Cajas Enviadas';
                 unidad = '';
@@ -718,7 +1014,7 @@
                 break;
             case 'utilidad':
                 datos = datosMensuales.map(item => item.totalUtilidad);
-                datosPrevios = organizarDatosPeriodoAnterior(datosMensuales, datosMensualesAnterior, 'totalUtilidad');
+                datosPrevios = datosMensualesAnterior.map(item => item.totalUtilidad);
                 titulo = 'Evolución Mensual de Utilidad Total';
                 etiqueta = 'Utilidad USD';
                 unidad = ' USD';
@@ -726,7 +1022,7 @@
                 break;
             case 'nc':
                 datos = datosMensuales.map(item => item.totalNC);
-                datosPrevios = organizarDatosPeriodoAnterior(datosMensuales, datosMensualesAnterior, 'totalNC');
+                datosPrevios = datosMensualesAnterior.map(item => item.totalNC);
                 titulo = 'Evolución Mensual de Notas de Crédito';
                 etiqueta = 'Notas de Crédito USD';
                 unidad = ' USD';
@@ -734,35 +1030,66 @@
                 break;
         }
 
-        // Actualizar dataset para mostrar barras agrupadas (período actual y anterior)
+        // Actualizar dataset para mostrar líneas de tendencia
         monthlyChart.data.datasets = [
-            {
-                label: `${etiqueta} (Período Actual)`,
-                data: datos,
-                backgroundColor: colorBase.actual,
-                borderColor: colorBase.actual,
-                borderWidth: 1
-            },
             {
                 label: `${etiqueta} (Período Anterior)`,
                 data: datosPrevios,
-                backgroundColor: colorBase.previo,
                 borderColor: colorBase.previo,
-                borderWidth: 1
+                backgroundColor: colorBase.previoBg,
+                borderWidth: 2,
+                pointRadius: 4,
+                pointBackgroundColor: colorBase.previo,
+                fill: true,
+                tension: 0.3
+            },
+            {
+                label: `${etiqueta} (Período Actual)`,
+                data: datos,
+                borderColor: colorBase.actual,
+                backgroundColor: colorBase.actualBg,
+                borderWidth: 2,
+                pointRadius: 4,
+                pointBackgroundColor: colorBase.actual,
+                fill: true,
+                tension: 0.3
             }
         ];
 
         // Actualizar opciones
         monthlyChart.options.plugins.title.text = titulo;
-        monthlyChart.options.scales.y.ticks.callback = function(value) {
+        monthlyChart.options.scales.y.ticks.callback = function (value) {
             return value.toLocaleString() + unidad;
         };
-        monthlyChart.options.plugins.tooltip.callbacks.label = function(context) {
-            let prefix = '';
-            if (tipo === 'utilidad' || tipo === 'nc') {
-                prefix = '$';
+
+        // Mejorar el tooltip para mostrar claramente a qué período corresponde cada valor
+        monthlyChart.options.plugins.tooltip = {
+            callbacks: {
+                title: function (tooltipItems) {
+                    const dataIndex = tooltipItems[0].dataIndex;
+                    const datasetIndex = tooltipItems[0].datasetIndex;
+
+                    if (datasetIndex === 0 && dataIndex < labelsAnterior.length) {
+                        // Para el período anterior
+                        return `Período anterior: ${labelsAnterior[dataIndex]}`;
+                    }
+                    // Para el período actual
+                    return `Período actual: ${labels[dataIndex]}`;
+                },
+                label: function (context) {
+                    let prefix = '';
+                    if (tipo === 'utilidad' || tipo === 'nc') {
+                        prefix = '$';
+                    }
+                    return `${context.dataset.label.split('(')[0].trim()}: ${prefix}${context.raw.toLocaleString()}${unidad}`;
+                }
             }
-            return context.dataset.label + ': ' + prefix + context.raw.toLocaleString() + unidad;
+        };
+
+        // Actualizar opciones del gráfico
+        monthlyChart.options.interaction = {
+            intersect: false,
+            mode: 'index'
         };
 
         // Actualizar el gráfico
@@ -770,48 +1097,58 @@
     }
 
     function mostrarUtilidadPorCliente() {
-        // Obtener datos para gráfico de utilidad por cliente
-        const clienteLabels = [{% for item in utilidad_por_cliente %}'{{ item.cliente__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
-        const clienteData = [{% for item in utilidad_por_cliente %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        console.log("Ejecutando mostrarUtilidadPorCliente");
+        const ctx = document.getElementById('utilidadChart').getContext('2d');
 
-        // Obtener datos reales del periodo anterior
-        const clienteLabelsAnterior = [{% for item in utilidad_por_cliente_anterior %}'{{ item.cliente__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
-        const clienteDataAnterior = [{% for item in utilidad_por_cliente_anterior %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        if (utilidadChart) utilidadChart.destroy();
 
-        // Destruir gráfico existente si hay uno
-        if (utilidadChart) {
-            utilidadChart.destroy();
+        // Datos de utilidad por cliente - periodo actual
+        const labels = [{% for item in utilidad_por_cliente %}'{{ item.cliente__nombre|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const data = [{% for item in utilidad_por_cliente %}{{ item.total_utilidad|default:0|floatformat:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+        // Datos de utilidad por cliente - periodo anterior
+        const dataPrevious = [];
+        const clientesAnteriores = {};
+
+        // Crear diccionario de clientes del periodo anterior para búsqueda rápida
+        {% for item in utilidad_por_cliente_anterior %}
+            clientesAnteriores['{{ item.cliente__nombre|escapejs }}'] = {{ item.total_utilidad|default:0|floatformat:0 }};
+        {% endfor %}
+
+        // Para cada cliente en el periodo actual, buscar su valor en el periodo anterior
+        for (let i = 0; i < labels.length; i++) {
+            const valorAnterior = clientesAnteriores[labels[i]] || 0;
+            dataPrevious.push(valorAnterior);
         }
 
-        // Crear datos para el período anterior alineados con los clientes actuales
-        const clienteDataPrevio = [];
-        for (const cliente of clienteLabels) {
-            const index = clienteLabelsAnterior.indexOf(cliente);
-            clienteDataPrevio.push(index !== -1 ? clienteDataAnterior[index] : 0);
+        console.log("Datos de utilidad por cliente (actual vs anterior):", {labels, data, dataPrevious});
+
+        // Si no hay datos, mostrar mensaje
+        if (labels.length === 0) {
+            console.log("No hay datos de utilidad por cliente");
+            mostrarMensajeSinDatos(ctx, 'No hay datos disponibles para utilidad por cliente');
+            return;
         }
 
-        // Crear nuevo gráfico por cliente con datos reales
-        const utilidadCtx = document.getElementById('utilidadChart').getContext('2d');
-        utilidadChart = new Chart(utilidadCtx, {
+        // Crear nuevo gráfico
+        utilidadChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: clienteLabels,
-                datasets: [
-                    {
-                        label: 'Período Actual',
-                        data: clienteData,
-                        backgroundColor: 'rgba(52, 152, 219, 0.7)', // Azul
-                        borderColor: 'rgba(52, 152, 219, 1)',
-                        borderWidth: 1
-                    },
+                labels: labels,
+                datasets: [{
+                    label: 'Período Actual',
+                    data: data,
+                    backgroundColor: 'rgb(46, 204, 113)',
+                    borderColor: 'rgb(39, 174, 96)',
+                    borderWidth: 1
+                },
                     {
                         label: 'Período Anterior',
-                        data: clienteDataPrevio,
-                        backgroundColor: 'rgba(52, 152, 219, 0.3)', // Azul más claro
-                        borderColor: 'rgba(52, 152, 219, 0.6)',
+                        data: dataPrevious,
+                        backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                        borderColor: 'rgb(39, 174, 96)',
                         borderWidth: 1
-                    }
-                ]
+                    }]
             },
             options: {
                 responsive: true,
@@ -824,19 +1161,44 @@
                                 return '$' + value.toLocaleString();
                             }
                         }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 90,
+                            minRotation: 0,
+                            font: {
+                                size: 10
+                            }
+                        }
                     }
                 },
                 plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const label = context.dataset.label || '';
+                                return label + ': $' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    },
                     legend: {
                         display: true,
                         position: 'top'
                     },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return context.dataset.label + ': $' + context.raw.toLocaleString();
-                            }
-                        }
+                    // Configurar datalabels con fuente más pequeña
+                    datalabels: {
+                        color: '#333',
+                        font: {
+                            size: 9,
+                            weight: 'bold'
+                        },
+                        formatter: function(value) {
+                            return value ? '$' + value.toLocaleString() : '';
+                        },
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 0
                     }
                 }
             }
@@ -844,73 +1206,59 @@
     }
 
     function mostrarUtilidadPorFruta() {
-        // Verificar si hay un filtro de cliente aplicado
-        const hayFiltroCliente = {% if cliente_id %} true {% else %} false {% endif %};
+        console.log("Ejecutando mostrarUtilidadPorFruta");
+        const ctx = document.getElementById('utilidadChart').getContext('2d');
 
-        // Obtener datos para gráfico de utilidad por fruta (normal o filtrado por cliente)
-        let frutaLabels, frutaData;
+        // Destruir el gráfico anterior si existe
+        if (utilidadChart) utilidadChart.destroy();
 
-        if (hayFiltroCliente) {
-            // Usar datos filtrados por cliente si hay un filtro de cliente aplicado
-            frutaLabels = [{% for item in utilidad_por_fruta_cliente %}'{{ item.fruta__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
-            frutaData = [{% for item in utilidad_por_fruta_cliente %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
-        } else {
-            // Usar datos generales si no hay filtro de cliente
-            frutaLabels = [{% for item in utilidad_por_fruta %}'{{ item.fruta__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
-            frutaData = [{% for item in utilidad_por_fruta %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        // Datos de utilidad por fruta - periodo actual
+        const labels = [{% for item in utilidad_por_fruta %}'{{ item.fruta__nombre|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const data = [{% for item in utilidad_por_fruta %}{{ item.total_utilidad|default:0|floatformat:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+        // Datos de utilidad por fruta - periodo anterior
+        const dataPrevious = [];
+        const frutasAnteriores = {};
+
+        // Crear diccionario de frutas del periodo anterior para búsqueda rápida
+        {% for item in utilidad_por_fruta_anterior %}
+            frutasAnteriores['{{ item.fruta__nombre|escapejs }}'] = {{ item.total_utilidad|default:0|floatformat:0 }};
+        {% endfor %}
+
+        // Para cada fruta en el periodo actual, buscar su valor en el periodo anterior
+        for (let i = 0; i < labels.length; i++) {
+            const valorAnterior = frutasAnteriores[labels[i]] || 0;
+            dataPrevious.push(valorAnterior);
         }
 
-        // Destruir gráfico existente si hay uno
-        if (utilidadChart) {
-            utilidadChart.destroy();
+        console.log("Datos de utilidad por fruta (actual vs anterior):", {labels, data, dataPrevious});
+
+        // Si no hay datos, mostrar mensaje
+        if (labels.length === 0) {
+            console.log("No hay datos de utilidad por fruta");
+            mostrarMensajeSinDatos(ctx, 'No hay datos disponibles para utilidad por fruta');
+            return;
         }
 
-        // Obtener fechas para el título
-        const fechaInicio = document.getElementById('fecha_inicio').value;
-        const fechaFin = document.getElementById('fecha_fin').value;
-        const rangoFechas = `${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`;
-
-        // Título del gráfico con cliente y fechas
-        {% if cliente_id %}
-            {% for cliente in clientes %}
-                {% if cliente.id|stringformat:"i" == cliente_id %}
-                    const nombreCliente = '{{ cliente.nombre }}';
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-
-        let tituloGrafico = 'Utilidad USD por Fruta';
-
-        if (hayFiltroCliente) {
-            tituloGrafico += ' para ' + (typeof nombreCliente !== 'undefined' ? nombreCliente : 'Cliente Seleccionado');
-        }
-
-        // Crear datos para el período anterior
-        const factorCambioUtilidad = obtenerFactorCambio({{ utilidad_usd_percent|default:0|stringformat:"f" }});
-        const frutaDataPrevio = calcularDatosPeriodoAnterior(frutaData, 'utilidad', factorCambioUtilidad);
-
-        // Crear nuevo gráfico por fruta
-        const utilidadCtx = document.getElementById('utilidadChart').getContext('2d');
-        utilidadChart = new Chart(utilidadCtx, {
+        // Crear nuevo gráfico
+        utilidadChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: frutaLabels,
-                datasets: [
-                    {
-                        label: 'Período Actual',
-                        data: frutaData,
-                        backgroundColor: 'rgba(46, 204, 113, 0.7)', // Verde
-                        borderColor: 'rgba(46, 204, 113, 1)',
-                        borderWidth: 1
-                    },
+                labels: labels,
+                datasets: [{
+                    label: 'Período Actual',
+                    data: data,
+                    backgroundColor: 'rgba(26, 188, 156, 0.7)',
+                    borderColor: 'rgba(26, 188, 156, 1)',
+                    borderWidth: 1
+                },
                     {
                         label: 'Período Anterior',
-                        data: frutaDataPrevio,
-                        backgroundColor: 'rgba(46, 204, 113, 0.3)', // Verde más claro
-                        borderColor: 'rgba(46, 204, 113, 0.6)',
+                        data: dataPrevious,
+                        backgroundColor: 'rgba(26, 188, 156, 0.3)',
+                        borderColor: 'rgba(26, 188, 156, 0.5)',
                         borderWidth: 1
-                    }
-                ]
+                    }]
             },
             options: {
                 responsive: true,
@@ -923,19 +1271,44 @@
                                 return '$' + value.toLocaleString();
                             }
                         }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 90,
+                            minRotation: 0,
+                            font: {
+                                size: 10
+                            }
+                        }
                     }
                 },
                 plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const label = context.dataset.label || '';
+                                return label + ': $' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    },
                     legend: {
                         display: true,
                         position: 'top'
                     },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return context.dataset.label + ': $' + context.raw.toLocaleString();
-                            }
-                        }
+                    // Configurar datalabels con fuente más pequeña
+                    datalabels: {
+                        color: '#333',
+                        font: {
+                            size: 9,
+                            weight: 'bold'
+                        },
+                        formatter: function(value) {
+                            return value ? '$' + value.toLocaleString() : '';
+                        },
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 0
                     }
                 }
             }
@@ -943,57 +1316,59 @@
     }
 
     function mostrarUtilidadPorExportador() {
-        // Obtener datos para gráfico de utilidad por exportador
-        const exportadorLabels = [{% for item in utilidad_por_exportador %}'{{ item.exportadora__nombre }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
-        const exportadorData = [{% for item in utilidad_por_exportador %}{{ item.total_utilidad|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        console.log("Ejecutando mostrarUtilidadPorExportador");
+        const ctx = document.getElementById('utilidadChart').getContext('2d');
 
-        // Destruir gráfico existente si hay uno
-        if (utilidadChart) {
-            utilidadChart.destroy();
+        // Destruir el gráfico anterior si existe
+        if (utilidadChart) utilidadChart.destroy();
+
+        // Datos de utilidad por exportador - periodo actual
+        const labels = [{% for item in utilidad_por_exportador %}'{{ item.exportadora__nombre|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const data = [{% for item in utilidad_por_exportador %}{{ item.total_utilidad|default:0|floatformat:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+        // Datos de utilidad por exportador - periodo anterior
+        const dataPrevious = [];
+        const exportadoresAnteriores = {};
+
+        // Crear diccionario de exportadores del periodo anterior para búsqueda rápida
+        {% for item in utilidad_por_exportador_anterior %}
+            exportadoresAnteriores['{{ item.exportadora__nombre|escapejs }}'] = {{ item.total_utilidad|default:0|floatformat:0 }};
+        {% endfor %}
+
+        // Para cada exportador en el periodo actual, buscar su valor en el periodo anterior
+        for (let i = 0; i < labels.length; i++) {
+            const valorAnterior = exportadoresAnteriores[labels[i]] || 0;
+            dataPrevious.push(valorAnterior);
         }
 
-        // Obtener fechas para el título
-        const fechaInicio = document.getElementById('fecha_inicio').value;
-        const fechaFin = document.getElementById('fecha_fin').value;
-        const rangoFechas = `${formatDate(fechaInicio)} - ${formatDate(fechaFin)}`;
+        console.log("Datos de utilidad por exportador (actual vs anterior):", {labels, data, dataPrevious});
 
-        // Crear datos para el período anterior
-        const factorCambioUtilidad = obtenerFactorCambio({{ utilidad_usd_percent|default:0|stringformat:"f" }});
-        const exportadorDataPrevio = calcularDatosPeriodoAnterior(exportadorData, 'utilidad', factorCambioUtilidad);
+        // Si no hay datos, mostrar mensaje
+        if (labels.length === 0) {
+            console.log("No hay datos de utilidad por exportador");
+            mostrarMensajeSinDatos(ctx, 'No hay datos disponibles para utilidad por exportador');
+            return;
+        }
 
-        // Título del gráfico con cliente y fechas
-        let tituloGrafico = 'Utilidad USD por Exportador';
-
-        {% if cliente_id %}
-            {% for cliente in clientes %}
-                {% if cliente.id|stringformat:"i" == cliente_id %}
-                    tituloGrafico += ' para {{ cliente.nombre }}';
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-
-        // Crear nuevo gráfico por exportador
-        const utilidadCtx = document.getElementById('utilidadChart').getContext('2d');
-        utilidadChart = new Chart(utilidadCtx, {
+        // Crear nuevo gráfico
+        utilidadChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: exportadorLabels,
-                datasets: [
-                    {
-                        label: 'Período Actual',
-                        data: exportadorData,
-                        backgroundColor: 'rgba(155, 89, 182, 0.7)', // Morado
-                        borderColor: 'rgba(155, 89, 182, 1)',
-                        borderWidth: 1
-                    },
+                labels: labels,
+                datasets: [{
+                    label: 'Período Actual',
+                    data: data,
+                    backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                    borderColor: 'rgba(52, 152, 219, 1)',
+                    borderWidth: 1
+                },
                     {
                         label: 'Período Anterior',
-                        data: exportadorDataPrevio,
-                        backgroundColor: 'rgba(155, 89, 182, 0.3)', // Morado más claro
-                        borderColor: 'rgba(155, 89, 182, 0.6)',
+                        data: dataPrevious,
+                        backgroundColor: 'rgba(52, 152, 219, 0.3)',
+                        borderColor: 'rgba(52, 152, 219, 0.5)',
                         borderWidth: 1
-                    }
-                ]
+                    }]
             },
             options: {
                 responsive: true,
@@ -1006,123 +1381,86 @@
                                 return '$' + value.toLocaleString();
                             }
                         }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 90,
+                            minRotation: 0,
+                            font: {
+                                size: 10
+                            }
+                        }
                     }
                 },
                 plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const label = context.dataset.label || '';
+                                return label + ': $' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    },
                     legend: {
                         display: true,
                         position: 'top'
                     },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                return context.dataset.label + ': $' + context.raw.toLocaleString();
-                            }
-                        }
+                    // Configurar datalabels con fuente más pequeña
+                    datalabels: {
+                        color: '#333',
+                        font: {
+                            size: 9,
+                            weight: 'bold'
+                        },
+                        formatter: function(value) {
+                            return value ? '$' + value.toLocaleString() : '';
+                        },
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 0
                     }
                 }
             }
         });
     }
 
-    // Añadir esta función auxiliar para manejar los porcentajes
-    function obtenerFactorCambio(porcentaje) {
-        if (typeof porcentaje === 'undefined' || porcentaje === null || isNaN(parseFloat(porcentaje))) {
-            return 0;
-        }
-        return parseFloat(porcentaje) / 100;
-    }
+    // Función para mostrar un mensaje cuando no hay datos disponibles
+    function mostrarMensajeSinDatos(ctx, mensaje) {
+        if (utilidadChart) utilidadChart.destroy();
 
-    // Nueva función para determinar si había datos en el periodo anterior
-    function hayDatosEnPeriodoAnterior(indicador) {
-        // Verificamos si el valor existe y es mayor que cero
-        switch(indicador) {
-            case 'kilos':
-                return {{ kilos_prev|yesno:"true,false" }};
-            case 'cajas':
-                return {{ cajas_prev|yesno:"true,false" }};
-            case 'facturado':
-                return {{ facturado_prev|yesno:"true,false" }};
-            case 'utilidad':
-                return {{ utilidad_usd_prev|yesno:"true,false" }};
-            case 'nc':
-                return {{ notas_credito_prev|yesno:"true,false" }};
-            case 'cancelados':
-                return {{ cancelados_prev|yesno:"true,false" }};
-            default:
-                return false;
-        }
-    }
+        // Limpiar el canvas
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    // Función para calcular datos del periodo anterior
-    function calcularDatosPeriodoAnterior(datosActuales, tipoIndicador, factorCambio) {
-        // Si no hay datos en el periodo anterior, devolver todo ceros
-        if (!hayDatosEnPeriodoAnterior(tipoIndicador)) {
-            return datosActuales.map(() => 0);
-        }
+        // Dibujar mensaje
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#666';
+        ctx.fillText(mensaje, ctx.canvas.width / 2, ctx.canvas.height / 2);
 
-        // Si hay datos, usar el factor de cambio para estimar valores
-        return datosActuales.map(valor => {
-            return Math.max(0, valor / (1 + factorCambio));
-        });
-    }
-
-    // Nueva función para determinar si estamos comparando datos de años diferentes
-    function hayComparacionEntreAniosDiferentes() {
-        // Obtener el rango de fechas seleccionado
-        const fechaInicio = document.getElementById('fecha_inicio').value;
-        const fechaFin = document.getElementById('fecha_fin').value;
-
-        // Si no hay fechas seleccionadas, asumimos que es una comparación segura
-        if (!fechaInicio || !fechaFin) return false;
-
-        // Extraer el año de las fechas
-        const anioInicio = new Date(fechaInicio).getFullYear();
-        const anioFin = new Date(fechaFin).getFullYear();
-
-        // Si los años son diferentes o el rango es mayor a 12 meses,
-        // consideramos que la comparación con el período anterior no es confiable
-        if (anioInicio !== anioFin) return true;
-
-        // También verificamos si el rango de fechas es demasiado amplio (más de 12 meses)
-        const msEnUnAnio = 365 * 24 * 60 * 60 * 1000;
-        const diferenciaMs = new Date(fechaFin) - new Date(fechaInicio);
-
-        return diferenciaMs > msEnUnAnio;
-    }
-
-    // Función para formatear fechas
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
-    }
-
-    // Función para organizar los datos del período anterior en correspondencia con los datos actuales
-    function organizarDatosPeriodoAnterior(datosPeriodoActual, datosPeriodoAnterior, campoDatos) {
-        // Si no hay datos en el periodo anterior, devolver todo ceros
-        if (!datosPeriodoAnterior || datosPeriodoAnterior.length === 0) {
-            return datosPeriodoActual.map(() => 0);
-        }
-
-        // Crear un mapa de los datos del período anterior por mes y año
-        const mapaDatosPrevios = {};
-        datosPeriodoAnterior.forEach(item => {
-            // La clave es mes+año para hacer una búsqueda exacta
-            const clave = `${item.mes}-${item.año}`;
-            mapaDatosPrevios[clave] = item[campoDatos];
-        });
-
-        // Para cada mes del período actual, buscar el mes correspondiente
-        // en el período anterior (mismo mes, año anterior)
-        return datosPeriodoActual.map(itemActual => {
-            const mesActual = itemActual.mes;
-            const añoActual = itemActual.año;
-            const añoAnterior = añoActual - 1;
-
-            // Buscar datos del mismo mes pero año anterior
-            const clave = `${mesActual}-${añoAnterior}`;
-            return mapaDatosPrevios[clave] || 0;
+        // Crear un "gráfico vacío" para mantener la referencia
+        utilidadChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: 'rgba(241, 196, 15, 0.7)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {display: false},
+                    tooltip: {enabled: false}
+                },
+                scales: {
+                    y: {display: false},
+                    x: {display: false}
+                }
+            }
         });
     }
 </script>

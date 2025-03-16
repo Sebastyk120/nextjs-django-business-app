@@ -217,7 +217,7 @@ class ReporteCalidadExportadorForm(forms.ModelForm):
 class ReporteCalidadProveedorForm(forms.ModelForm):
     class Meta:
         model = ReporteCalidadProveedor
-        exclude = ['rep_cal_exp']
+        exclude = ['rep_cal_exp',]
 
     def __init__(self, *args, **kwargs):
         self.rep_cal_exp = kwargs.pop('rep_cal_exp', None)
@@ -239,7 +239,6 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
                 HTML('<h5 class="text-primary mb-4">Estado del Reporte</h5>'),
                 Row(
                     Column('reporte_enviado', css_class='col-md-4'),
-                    Column('reporte_pago', css_class='col-md-4'),
                     Column('completado', css_class='col-md-4'),
                     css_class='g-3'
                 ),

@@ -58,7 +58,14 @@
         <div class="summary-box">
             <div class="summary-item">
                 <div class="summary-title">
-                    <i class="bi bi-wallet2"></i> SALDO ACTUAL
+                    <i class="bi bi-cash-stack"></i> TOTAL POR PAGAR
+                </div>
+                <p class="summary-value">{{ total_por_pagar|format_currency|default:"0.00" }}</p>
+                <p class="summary-words">{{ total_por_pagar|numero_a_letras }}</p>
+            </div>
+            <div class="summary-item">
+                <div class="summary-title">
+                    <i class="bi bi-wallet2"></i> SALDO DISPONIBLE
                 </div>
                 <p class="summary-value {% if saldo_actual > 0 %}positive{% else %}negative{% endif %}">
                     {{ saldo_actual|format_currency|default:"0.00" }}
@@ -67,17 +74,16 @@
             </div>
             <div class="summary-item">
                 <div class="summary-title">
-                    <i class="bi bi-cash-stack"></i> TOTAL POR PAGAR
+                    <i class="bi bi-currency-dollar"></i> SALDO PENDIENTE POR PAGAR
                 </div>
-                <p class="summary-value">{{ total_por_pagar|format_currency|default:"0.00" }}</p>
-                <p class="summary-words">{{ total_por_pagar|numero_a_letras }}</p>
-            </div>
-            <div class="summary-item">
-                <div class="summary-title">
-                    <i class="bi bi-currency-dollar"></i> TOTAL PAGADO
-                </div>
-                <p class="summary-value">{{ total_pagado|format_currency|default:"0.00" }}</p>
-                <p class="summary-words">{{ total_pagado|numero_a_letras }}</p>
+                {% if valor_consignar > 0 %}
+                    <p class="summary-value">{{ valor_consignar|format_currency|default:"0.00" }}</p>
+                    <p class="summary-words">{{ valor_consignar|numero_a_letras }}</p>
+                {% else %}
+                    <p class="summary-value">$ 0.00 </p>
+                    <p class="summary-words">{{ 0|numero_a_letras }}</p>
+                {% endif %}
+                
             </div>
         </div>
         
@@ -85,11 +91,70 @@
         <div class="report-columns">
             <!-- Left Column -->
             <div class="report-column">
+                <!-- Reportes Pendientes de Pago Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="bi bi-clock-history"></i> Reportes Pendientes de Pago
+                        </h3>
+                    </div>
+                    
+                    {% if reportes_pendientes %}
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Guía</th>
+                                    <th>Fecha Compra</th>
+                                    <th>Fecha Reporte</th>
+                                    <th>Peso Total</th>
+                                    <th>Export.</th>
+                                    <th>Nacional</th>
+                                    <th>Total a Pagar</th>
+                                </tr>
+                            </thead>
+                            <tbody class="data-container" data-type="pendientes">
+                                {% for reporte in reportes_pendientes %}
+                                <tr>
+                                    <td>{{ reporte.rep_cal_exp.venta_nacional.compra_nacional.numero_guia }}</td>
+                                    <td>{{ reporte.rep_cal_exp.venta_nacional.compra_nacional.fecha_compra|date:"d/m/Y" }}</td>
+                                    <td>{{ reporte.p_fecha_reporte|date:"d/m/Y" }}</td>
+                                    <td>{{ reporte.p_kg_totales|format_number }} kg</td>
+                                    <td>
+                                        <span class="percentage percentage-good">{{ reporte.p_porcentaje_exportacion|floatformat:1 }}%</span>
+                                    </td>
+                                    <td>
+                                        <span class="percentage percentage-medium">{{ reporte.p_porcentaje_nacional|floatformat:1 }}%</span>
+                                    </td>
+                                    <td class="amount">{{ reporte.p_total_pagar|format_currency }}</td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="total-row">
+                                    <td colspan="6" class="text-right"><strong>Total pendiente:</strong></td>
+                                    <td class="amount">{{ total_pendientes|format_currency }}</td>
+                                </tr>
+                                {% if saldo_disponible > 0 %}
+                                <tr class="total-row">
+                                    <td colspan="6" class="text-right"><strong>Saldo disponible:</strong></td>
+                                    <td class="amount positive">-{{ saldo_disponible|format_currency }}</td>
+                                </tr>
+                                {% endif %}
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>No hay reportes pendientes de pago para mostrar</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
                 <!-- Compras Completadas Table -->
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">
-                            <i class="bi bi-box-seam"></i> Compras Completadas
+                            <i class="bi bi-box-seam"></i> Reportes Pagados
                         </h3>
                     </div>
                     
@@ -132,48 +197,11 @@
                     </div>
                     {% endif %}
                 </div>
-
-                <!-- Transferencias Table -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="bi bi-cash-coin"></i> Transferencias Realizadas
-                        </h3>
-                    </div>
-                    
-                    {% if transferencias %}
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Referencia</th>
-                                    <th>Origen</th>
-                                    <th>Valor</th>
-                                </tr>
-                            </thead>
-                            <tbody class="data-container" data-type="transferencias">
-                                {% for transferencia in transferencias %}
-                                <tr>
-                                    <td>{{ transferencia.fecha_transferencia|date:"d/m/Y" }}</td>
-                                    <td>{{ transferencia.referencia }}</td>
-                                    <td>{{ transferencia.origen_transferencia }}</td>
-                                    <td class="amount positive">{{ transferencia.valor_transferencia|format_currency }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="empty-state">
-                        <p>No hay transferencias para mostrar</p>
-                    </div>
-                    {% endif %}
-                </div>
             </div>
             
             <!-- Right Column -->
             <div class="report-column">
+                
                 <!-- Compras en Proceso Table -->
                 <div class="card">
                     <div class="card-header">
@@ -213,6 +241,86 @@
                     </div>
                     {% endif %}
                 </div>
+
+                <!-- Reportes Sin Factura Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="bi bi-file-earmark-x"></i> Reportes Sin Factura del Proveedor
+                        </h3>
+                    </div>
+                    
+                    {% if reportes_sin_factura %}
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Guía</th>
+                                    <th>Fecha Compra</th>
+                                    <th>Fecha Reporte</th>
+                                    <th>Total a Facturar</th>
+                                </tr>
+                            </thead>
+                            <tbody class="data-container" data-type="sinfactura">
+                                {% for reporte in reportes_sin_factura %}
+                                <tr>
+                                    <td>{{ reporte.rep_cal_exp.venta_nacional.compra_nacional.numero_guia }}</td>
+                                    <td>{{ reporte.rep_cal_exp.venta_nacional.compra_nacional.fecha_compra|date:"d/m/Y" }}</td>
+                                    <td>{{ reporte.p_fecha_reporte|date:"d/m/Y" }}</td>
+                                    <td class="amount">{{ reporte.p_total_facturar|format_currency }}</td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="total-row">
+                                    <td colspan="3" class="text-right"><strong>Total sin factura:</strong></td>
+                                    <td class="amount">{{ total_sin_factura|format_currency }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>No hay reportes sin factura para mostrar</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Transferencias Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="bi bi-cash-coin"></i> Transferencias Realizadas
+                        </h3>
+                    </div>
+                    
+                    {% if transferencias %}
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Referencia</th>
+                                    <th>Origen</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody class="data-container" data-type="transferencias">
+                                {% for transferencia in transferencias %}
+                                <tr>
+                                    <td>{{ transferencia.fecha_transferencia|date:"d/m/Y" }}</td>
+                                    <td>{{ transferencia.referencia }}</td>
+                                    <td>{{ transferencia.origen_transferencia }}</td>
+                                    <td class="amount positive">{{ transferencia.valor_transferencia|format_currency }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>No hay transferencias para mostrar</p>
+                    </div>
+                    {% endif %}
+                </div>
                 
                 <!-- Detalle del Saldo -->
                 <div class="card">
@@ -232,17 +340,19 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>Total por Pagar</td>
-                                    <td class="amount">{{ total_por_pagar|format_currency|default:"0.00" }}</td>
+                                    <td>Total por Pagar (Reportes pendientes)</td>
+                                    <td class="amount">{{ total_pendientes|format_currency|default:"0.00" }}</td>
                                 </tr>
+                                {% if saldo_disponible > 0 %}
                                 <tr>
-                                    <td>Total Transferido</td>
-                                    <td class="amount positive">{{ total_pagado|format_currency|default:"0.00" }}</td>
+                                    <td>Abono Disponible</td>
+                                    <td class="amount positive">-{{ saldo_disponible|format_currency|default:"0.00" }}</td>
                                 </tr>
+                                {% endif %}
                                 <tr class="total-row">
                                     <td><strong>Saldo Actual</strong></td>
                                     <td class="amount {% if saldo_actual > 0 %}positive{% else %}negative{% endif %}">
-                                        {{ saldo_actual|format_currency|default:"0.00" }}
+                                        {{ valor_consignar|format_currency|default:"0.00" }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -253,15 +363,15 @@
         </div>
         
         <!-- Final Balance Statement -->
-        <div class="final-balance {% if saldo_actual > 0 %}positive-balance{% else %}negative-balance{% endif %}">
+        <div class="final-balance {% if valor_consignar > 0 %}positive-balance{% else %}negative-balance{% endif %}">
             <h4>
-                {% if saldo_actual > 0 %}
-                    SALDO A FAVOR DEL PROVEEDOR
+                {% if valor_consignar > 0 %}
+                    TOTAL A PAGAR AL PROVEEDOR
                 {% else %}
-                    SALDO EN CONTRA DEL PROVEEDOR
+                    TOTAL A COBRAR AL PROVEEDOR
                 {% endif %}
             </h4>
-            <p>{{ saldo_actual|abs|format_currency }} ({{ saldo_actual|abs|numero_a_letras }})</p>
+            <p>{{ valor_consignar|abs|format_currency }} ({{ valor_consignar|abs|numero_a_letras }})</p>
         </div>
         
         <div class="footer">

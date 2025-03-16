@@ -1,8 +1,8 @@
-from import_export import resources, fields
+from import_export import resources, fields, widgets
 from .models import (
     ProveedorNacional, Empaque, CompraNacional, VentaNacional,
     ReporteCalidadExportador, ReporteCalidadProveedor,
-    TransferenciasProveedor, FacturacionExportadores
+    TransferenciasProveedor, FacturacionExportadores, BalanceProveedor
 )
 
 
@@ -51,4 +51,17 @@ class TransferenciasProveedorResource(resources.ModelResource):
 class FacturacionExportadoresResource(resources.ModelResource):
     class Meta:
         model = FacturacionExportadores
+
+
+class BalanceProveedorResource(resources.ModelResource):
+    proveedor = fields.Field(
+        column_name='proveedor',
+        attribute='proveedor',
+        widget=widgets.ForeignKeyWidget(ProveedorNacional, 'nombre')
+    )
+    
+    class Meta:
+        model = BalanceProveedor
+        fields = ('id', 'proveedor', 'saldo_disponible', 'ultima_actualizacion')
+        export_order = fields
 

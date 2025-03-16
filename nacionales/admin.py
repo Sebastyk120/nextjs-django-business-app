@@ -4,12 +4,12 @@ from import_export.admin import ImportExportModelAdmin
 from .models import (
     ProveedorNacional, Empaque, CompraNacional, VentaNacional,
     ReporteCalidadExportador, ReporteCalidadProveedor,
-    TransferenciasProveedor, FacturacionExportadores
+    TransferenciasProveedor, FacturacionExportadores, BalanceProveedor
 )
 from .resources import (
     ProveedorNacionalResource, EmpaqueResource, CompraNacionalResource,
     VentaNacionalResource, ReporteCalidadExportadorResource, ReporteCalidadProveedorResource,
-    TransferenciasProveedorResource, FacturacionExportadoresResource
+    TransferenciasProveedorResource, FacturacionExportadoresResource, BalanceProveedorResource
 )
 from comercial.templatetags.custom_filters import format_currency
 from unfold.admin import ModelAdmin
@@ -120,3 +120,23 @@ class FacturacionExportadoresAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHis
         return format_currency(obj.precio_kg)
 
     precio_kg_moneda.short_description = 'Precio Kg'
+
+@admin.register(BalanceProveedor)
+class BalanceProveedorAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin):
+    import_form_class = ImportForm
+    export_form_class = SelectableFieldsExportForm
+    list_display = ('proveedor', 'saldo_disponible_moneda', 'ultima_actualizacion')
+    search_fields = ('proveedor__nombre',)
+    search_help_text = "Buscar por: nombre del proveedor."
+    list_filter = ('ultima_actualizacion',)
+    resource_class = BalanceProveedorResource
+    readonly_fields = ('proveedor', 'saldo_disponible', 'ultima_actualizacion')
+    
+    def saldo_disponible_moneda(self, obj):
+        return format_currency(obj.saldo_disponible)
+    
+    saldo_disponible_moneda.short_description = 'Saldo Disponible'
+    
+    def has_add_permission(self, request):
+        # Disable manual creation as balances are created by signals
+        return False

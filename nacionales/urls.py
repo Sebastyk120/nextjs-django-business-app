@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path
-from . import views, views2
+from . import views, views2, views_report_prov, views_api
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -25,8 +25,11 @@ urlpatterns = [
     path('estado-cuenta/<int:proveedor_id>/', views.estado_cuenta_proveedor, name='estado_cuenta_proveedor'),
     path('relacion_facturas_vencidas/', views2.relacion_facturas_vencidas, name='relacion_facturas_vencidas'),
     path('relacion_reportes_vencidos/', views2.relacion_reportes_vencidos, name='relacion_reportes_vencidos'),
-    path('reporte_estado_cuenta_proveedor/<int:proveedor_id>/', views2.reporte_cuenta_proveedor, name='reporte_estado_cuenta_proveedor'),
+    path('reporte_estado_cuenta_proveedor/<int:proveedor_id>/', views_report_prov.reporte_cuenta_proveedor, name='reporte_estado_cuenta_proveedor'),
     path('reporte-individual/', views2.reporte_individual_proveedor, name='reporte_individual_proveedor'),  # Nueva URL sin parámetro de ID
     # Mantener la antigua URL por compatibilidad
     path('reporte-individual/<int:reporte_id>/', views2.reporte_individual_proveedor, name='reporte_individual_proveedor_legacy'),
+
+    # API endpoints
+    path('api/balance-proveedores/', views_api.api_balance_proveedores, name='api_balance_proveedores'),
 ]

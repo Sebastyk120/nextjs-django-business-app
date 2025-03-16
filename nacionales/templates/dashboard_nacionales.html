@@ -28,6 +28,9 @@
             <button class="btn btn-secondary" id="openEnvioReportesModalLink">
                 <i class="fas fa-paper-plane"></i> Enviar Reportes
             </button>
+            <button class="btn btn-secondary" id="openBalanceProveedorModal">
+                <i class="fas fa-balance-scale"></i> Balance Proveedores
+            </button>
             <button class="btn btn-primary" id="refreshBtn">
                 <i class="fas fa-sync-alt"></i> Actualizar
             </button>
@@ -166,7 +169,7 @@
 
     <!-- Nueva sección para gráfico de análisis de calidad de ancho completo -->
     <div class="full-width-chart">
-        <h2>Análisis de Calidad</h2>
+        <h2>Análisis de Calidad Promedio</h2>
         <div class="chart-filters">
             <button class="chart-filter-btn active" data-chart="calidad">Calidad</button>
             <button class="chart-filter-btn" data-chart="evolucion">Evolución por Proveedor</button>
@@ -395,6 +398,63 @@
     </div>
 </div>
 
+<!-- Modal para Balance de Proveedores -->
+<div id="balanceProveedorModal" class="modal">
+    <div class="modal-content" style="max-width: 750px;">
+        <span class="close" id="closeBalanceProveedorModal">&times;</span>
+        <h3 style="margin-bottom: 20px; color: var(--dark); font-size: 22px; text-align: center;">
+            <i class="fas fa-balance-scale"></i> Balance de Proveedores
+        </h3>
+        <div style="margin-bottom: 20px;">
+            <div class="balance-search">
+                <label for="balanceProveedorSelect" style="display: block; margin-bottom: 8px; font-weight: 500; color: #555;">Filtrar por Proveedor:</label>
+                <select id="balanceProveedorSelect" class="form-control" style="width: 100%; padding: 12px; border-radius: var(--radius); border: 1px solid #ddd;">
+                    <option value="todos">Todos los proveedores</option>
+                    {% for p in proveedores %}
+                        <option value="{{ p.id }}">{{ p.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div id="balanceProveedorData" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
+            <div class="loading-spinner" style="display: none; text-align: center; padding: 20px;">
+                <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--primary);"></i>
+                <p>Cargando datos...</p>
+            </div>
+            <table class="data-table" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Proveedor</th>
+                        <th>Saldo Disponible</th>
+                        <th>Última Actualización</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="balanceProveedorTableBody">
+                    <!-- Aquí se cargarán los datos de balance -->
+                </tbody>
+            </table>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 25px;">
+            <div class="balance-stats" style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; width: 48%;">
+                <h4 style="margin-bottom: 10px; font-size: 16px; color: #495057;">Resumen</h4>
+                <p><strong>Total Proveedores:</strong> <span id="totalProveedores">-</span></p>
+                <p><strong>Saldo Promedio:</strong> <span id="saldoPromedio">-</span></p>
+            </div>
+            <div style="display: flex; justify-content: flex-end; align-items: flex-end; width: 48%;">
+                <button class="btn btn-secondary" id="closeBalanceProveedorBtn" style="margin-right: 10px;">
+                    <i class="fas fa-times-circle"></i> Cerrar
+                </button>
+                <button class="btn btn-primary" id="refreshBalanceBtn">
+                    <i class="fas fa-sync-alt"></i> Actualizar Datos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
     // Establecer fechas por defecto
@@ -549,6 +609,14 @@
         const generarReportesBtn = document.getElementById('generarReportesBtn');
         const proveedorReportesSelect = document.getElementById('proveedorReportesSelect');
 
+        // Modal de Balance de Proveedores
+        const openBalanceProveedorBtn = document.getElementById('openBalanceProveedorModal');
+        const balanceProveedorModal = document.getElementById('balanceProveedorModal');
+        const closeBalanceProveedorModal = document.getElementById('closeBalanceProveedorModal');
+        const closeBalanceProveedorBtn = document.getElementById('closeBalanceProveedorBtn');
+        const balanceProveedorSelect = document.getElementById('balanceProveedorSelect');
+        const refreshBalanceBtn = document.getElementById('refreshBalanceBtn');
+
         // Abrir modal de Estado de Cuenta
         openEstadoCuentaBtn.onclick = function() {
             estadoCuentaModal.style.display = 'block';
@@ -577,6 +645,31 @@
             envioReportesModal.style.display = 'none';
         };
 
+        // Abrir modal de Balance de Proveedores
+        openBalanceProveedorBtn.onclick = function() {
+            balanceProveedorModal.style.display = 'block';
+            cargarDatosBalance();
+        };
+
+        // Cerrar modal de Balance de Proveedores
+        closeBalanceProveedorModal.onclick = function() {
+            balanceProveedorModal.style.display = 'none';
+        };
+
+        closeBalanceProveedorBtn.onclick = function() {
+            balanceProveedorModal.style.display = 'none';
+        };
+
+        // Actualizar datos de balance
+        refreshBalanceBtn.onclick = function() {
+            cargarDatosBalance();
+        };
+
+        // Filtrar por proveedor
+        balanceProveedorSelect.onchange = function() {
+            cargarDatosBalance();
+        };
+
         // Cerrar modales al hacer clic fuera de ellos
         window.onclick = function(e) {
             if(e.target == estadoCuentaModal) {
@@ -590,6 +683,9 @@
             }
             if(e.target == exportModal) {
                 exportModal.style.display = "none";
+            }
+            if(e.target == balanceProveedorModal) {
+                balanceProveedorModal.style.display = 'none';
             }
         };
 
@@ -868,6 +964,45 @@
             }
         });
 
+        // Datos para evolución de calidad por proveedor
+        const evolucionMeses = [{% for mes in evolucion_calidad_meses %}'{{ mes }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const evolucionProveedores = {{ evolucion_proveedores|safe }};
+
+        // Crear datasets para la evolución mensual de calidad por proveedor - Solo exportación
+        const generarDatasetsEvolucion = () => {
+            const colores = [
+                { bg: 'rgba(52, 152, 219, 0.7)', border: 'rgba(52, 152, 219, 1)' },  // Azul
+                { bg: 'rgba(46, 204, 113, 0.7)', border: 'rgba(46, 204, 113, 1)' },  // Verde
+                { bg: 'rgba(155, 89, 182, 0.7)', border: 'rgba(155, 89, 182, 1)' },  // Morado
+                { bg: 'rgba(241, 196, 15, 0.7)', border: 'rgba(241, 196, 15, 1)' },  // Amarillo
+                { bg: 'rgba(231, 76, 60, 0.7)', border: 'rgba(231, 76, 60, 1)' },    // Rojo
+                { bg: 'rgba(26, 188, 156, 0.7)', border: 'rgba(26, 188, 156, 1)' },  // Turquesa
+                { bg: 'rgba(230, 126, 34, 0.7)', border: 'rgba(230, 126, 34, 1)' },  // Naranja
+            ];
+            
+            const datasets = [];
+            evolucionProveedores.forEach((prov, idx) => {
+                const colorIdx = idx % colores.length;
+                const color = colores[colorIdx];
+                
+                // Solo dataset para exportación
+                datasets.push({
+                    label: `${prov.proveedor}`,
+                    data: prov.exportacion,
+                    backgroundColor: color.bg,
+                    borderColor: color.border,
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: false,
+                    type: 'line',
+                    yAxisID: 'y',
+                    hidden: false  // Mostrar todos por defecto, ya que solo tenemos exportación
+                });
+            });
+            
+            return datasets;
+        };
+
         // Guardar datos para switch entre vistas
         window.chartData = {
             utilidades: {
@@ -905,14 +1040,8 @@
                     }]
                 },
                 evolucion: {
-                    labels: evolucionLabels,
-                    datasets: [{
-                        label: 'Peso Recibido',
-                        data: evolucionData,
-                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
-                        borderColor: 'rgba(52, 152, 219, 1)',
-                        yAxisID: 'y'
-                    }]
+                    labels: evolucionMeses,
+                    datasets: generarDatasetsEvolucion()
                 }
             }
         };
@@ -972,25 +1101,127 @@
                 fill: false,
                 tension: 0.4
             }];
+            
+            chart.options.plugins.tooltip = {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.datasetIndex === 0) {
+                            return label + context.parsed.y.toLocaleString() + ' kg';
+                        } else {
+                            return label + context.parsed.y + '%';
+                        }
+                    }
+                }
+            };
         } else {
-            chart.options.scales.y.title.text = 'Peso Recibido (kg)';
+            // Configuración para la vista de evolución
+            chart.options.scales.y.title.text = 'Porcentaje de Exportación (%)';
             chart.options.scales.y1.display = false;
             
-            chart.data.datasets = [{
-                label: 'Peso Recibido',
-                data: data.datasets[0].data,
-                backgroundColor: Array(data.labels.length).fill('rgba(52, 152, 219, 0.7)'),
-                borderColor: Array(data.labels.length).fill('rgba(52, 152, 219, 1)'),
-                borderWidth: 1,
-                yAxisID: 'y'
-            }];
+            chart.data.datasets = data.datasets;
+            
+            chart.options.plugins.tooltip = {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.dataset.label || '';
+                        return label + ': ' + context.parsed.y + '% exportación';
+                    }
+                }
+            };
         }
         
         chart.update();
     }
+
+    // Función para cargar datos de balance
+    function cargarDatosBalance() {
+        const tableBody = document.getElementById('balanceProveedorTableBody');
+        const loadingSpinner = document.querySelector('.loading-spinner');
+        const proveedorId = balanceProveedorSelect.value;
+        
+        // Mostrar spinner de carga
+        tableBody.innerHTML = '';
+        loadingSpinner.style.display = 'block';
+        
+        // Construir URL para la petición AJAX
+        let url = '{% url "api_balance_proveedores" %}';
+        if (proveedorId !== 'todos') {
+            url += `?proveedor=${proveedorId}`;
+        }
+        
+        // Realizar petición AJAX
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                loadingSpinner.style.display = 'none';
+                
+                if (data.balances.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align: center;">No se encontraron registros de balance</td>
+                        </tr>
+                    `;
+                    document.getElementById('totalProveedores').textContent = '0';
+                    document.getElementById('saldoPromedio').textContent = '$0';
+                    return;
+                }
+                
+                // Actualizar estadísticas
+                document.getElementById('totalProveedores').textContent = data.balances.length;
+                document.getElementById('saldoPromedio').textContent = 
+                    '$' + parseFloat(data.promedio_saldo).toLocaleString('es-CO');
+                
+                // Obtener la base URL para reportes
+                const urlBase = "{% url 'reporte_estado_cuenta_proveedor' 0 %}".replace('0', '');
+                
+                // Llenar tabla con datos
+                data.balances.forEach(balance => {
+                    const row = document.createElement('tr');
+                    
+                    // Formatear fecha a formato local
+                    const fecha = new Date(balance.ultima_actualizacion);
+                    const fechaFormateada = fecha.toLocaleString('es-CO');
+                    
+                    // Formatear saldo con separadores de miles
+                    const saldoFormateado = parseFloat(balance.saldo_disponible).toLocaleString('es-CO');
+                    
+                    // Construir URL correctamente
+                    const reporteUrl = urlBase + balance.proveedor_id + '/';
+                    
+                    row.innerHTML = `
+                        <td>${balance.proveedor_nombre}</td>
+                        <td class="numeric">$${saldoFormateado}</td>
+                        <td>${fechaFormateada}</td>
+                        <td>
+                            <a href="${reporteUrl}" class="btn-small" title="Enviar reporte">
+                                <i class="fas fa-paper-plane"></i>
+                            </a>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                loadingSpinner.style.display = 'none';
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center;">
+                            Error al cargar los datos: ${error.message}
+                        </td>
+                    </tr>
+                `;
+                console.error('Error:', error);
+            });
+    }
 </script>
-
-
-
-</html></body></body>
+</body>
 </html>

@@ -42,10 +42,7 @@ def obtener_nombre_mes(mes):
 @login_required
 @user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def exportar_dashboard_comercial(request):
-    """
-    Exporta los datos del dashboard comercial a un archivo Excel con múltiples hojas
-    y formato profesional, utilizando los mismos filtros que el dashboard.
-    """
+    
     # Obtener los mismos parámetros de filtro que el dashboard
     fecha_inicio_str = request.GET.get('fecha_inicio')
     fecha_fin_str = request.GET.get('fecha_fin')
@@ -258,7 +255,6 @@ def exportar_dashboard_comercial(request):
     ws_mensual.write(row, 3, 'Total Cajas', header_format)
     ws_mensual.write(row, 4, 'Total Utilidad (USD)', header_format)
     ws_mensual.write(row, 5, 'Notas Crédito (USD)', header_format)
-    ws_mensual.write(row, 6, 'Utilidad Neta (USD)', header_format)
     row += 1
     
     # Datos mensuales
@@ -269,10 +265,6 @@ def exportar_dashboard_comercial(request):
         ws_mensual.write(row, 3, dato['total_cajas'], integer_format)
         ws_mensual.write(row, 4, dato['total_utilidad'], money_format)
         ws_mensual.write(row, 5, dato['total_nc'], money_format)
-        
-        # Calcular utilidad neta (utilidad - notas crédito)
-        utilidad_neta = dato['total_utilidad'] - dato['total_nc']
-        ws_mensual.write(row, 6, utilidad_neta, money_format)
         
         row += 1
     
@@ -298,15 +290,33 @@ def exportar_dashboard_comercial(request):
     ws_clientes.write(row, 6, '% Utilidad', header_format)
     row += 1
     
+    # Recalcular los totales de kilos y utilidades a partir de los datos de los clientes
+    # para garantizar que los porcentajes sumen exactamente 100%
+    total_kilos_clientes = sum(cliente['total_kilos'] for cliente in context['clientes_data'])
+    total_utilidades_clientes = sum(cliente['total_utilidades'] for cliente in context['clientes_data'])
+    
     # Datos de clientes
     for cliente in context['clientes_data']:
         ws_clientes.write(row, 0, cliente['cliente__nombre'], text_format)
         ws_clientes.write(row, 1, cliente['num_pedidos'], integer_format)
         ws_clientes.write(row, 2, cliente['total_kilos'], integer_format)
-        ws_clientes.write(row, 3, cliente['percent_kilos'] / 100, percent_format)  # Convertir a decimal para el formato
+        
+        # Calcular el porcentaje correcto usando el total recalculado
+        if total_kilos_clientes > 0:
+            percent_kilos = cliente['total_kilos'] / total_kilos_clientes
+        else:
+            percent_kilos = 0
+        ws_clientes.write(row, 3, percent_kilos, percent_format)
+        
         ws_clientes.write(row, 4, cliente['total_facturado'], money_format)
         ws_clientes.write(row, 5, cliente['total_utilidades'], money_format)
-        ws_clientes.write(row, 6, cliente['percent_utilidad'] / 100, percent_format)  # Convertir a decimal para el formato
+        
+        # Calcular el porcentaje correcto usando el total recalculado
+        if total_utilidades_clientes > 0:
+            percent_utilidad = cliente['total_utilidades'] / total_utilidades_clientes
+        else:
+            percent_utilidad = 0
+        ws_clientes.write(row, 6, percent_utilidad, percent_format)
         
         row += 1
     
@@ -423,9 +433,9 @@ def exportar_dashboard_comercial(request):
     
     # Serie para utilidad
     chart_mensual.add_series({
-        'name': 'Utilidad Neta (USD)',
+        'name': 'Total Utilidad (USD)',
         'categories': ['Datos Mensuales', 4, 1, 3 + num_meses, 1],  # Rango de etiquetas
-        'values': ['Datos Mensuales', 4, 6, 3 + num_meses, 6],  # Rango de valores
+        'values': ['Datos Mensuales', 4, 4, 3 + num_meses, 4],  # Rango de valores (ahora columna 4/E en lugar de 6/G)
         'data_labels': {'value': True},
     })
     
@@ -476,48 +486,115 @@ def exportar_dashboard_comercial(request):
     return response
 
 
-def get_dashboard_comercial_data(request):
-    # Obtener parámetros del filtro
-    fecha_inicio_str = request.GET.get('fecha_inicio')
-    fecha_fin_str = request.GET.get('fecha_fin')
-    cliente_id = request.GET.get('cliente')
-    intermediario_id = request.GET.get('intermediario')
-    fruta_id = request.GET.get('fruta')
-    exportador_id = request.GET.get('exportador')
-
-    # Establecer fechas por defecto si no están definidas
-    if not fecha_inicio_str:
-        fecha_inicio = datetime.now().date() - timedelta(days=30)
-        fecha_inicio_str = fecha_inicio.strftime('%Y-%m-%d')
-    else:
-        fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
-
-    if not fecha_fin_str:
-        fecha_fin = datetime.now().date()
-        fecha_fin_str = fecha_fin.strftime('%Y-%m-%d')
-    else:
-        fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
-
-    # Construir filtro base
-    filter_args = {
-        'fecha_entrega__range': [fecha_inicio, fecha_fin],
-    }
-
-    # Aplicar filtros adicionales si están presentes
-    if cliente_id:
-        filter_args['cliente_id'] = cliente_id
-    if intermediario_id:
-        filter_args['intermediario_id'] = intermediario_id
-    if exportador_id:
-        filter_args['exportadora_id'] = exportador_id
-
-    # Base queryset
-    pedidos = Pedido.objects.filter(**filter_args)
-    pedidos_ids = pedidos.values_list('id', flat=True)
-
-    # Obtener datos mensuales para el gráfico temporal
+def get_datos_por_entidad(pedidos_ids, fruta_id=None, tipo='cliente'):
+    """Función auxiliar para obtener datos de utilidad agrupados por una entidad específica"""
+    
     with connection.cursor() as cursor:
-        # Construir el filtro para la consulta SQL
+        if tipo == 'cliente':
+            # Consulta para cliente
+            if fruta_id:
+                query = """
+                    SELECT c.nombre, SUM(dp.valor_total_utilidad_x_producto) as total_utilidad
+                    FROM comercial_pedido p
+                    JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
+                    JOIN comercial_cliente c ON p.cliente_id = c.id
+                    WHERE p.id IN %s AND dp.fruta_id = %s
+                    GROUP BY c.nombre
+                    ORDER BY total_utilidad DESC
+                    LIMIT 10
+                """
+                cursor.execute(query, [tuple(pedidos_ids) or (0,), fruta_id])
+            else:
+                query = """
+                    SELECT c.nombre, SUM(p.valor_total_utilidad_usd) as total_utilidad
+                    FROM comercial_pedido p
+                    JOIN comercial_cliente c ON p.cliente_id = c.id
+                    WHERE p.id IN %s
+                    GROUP BY c.nombre
+                    ORDER BY total_utilidad DESC
+                    LIMIT 10
+                """
+                cursor.execute(query, [tuple(pedidos_ids) or (0,)])
+            return [{'cliente__nombre': row[0], 'total_utilidad': float(row[1])} for row in cursor.fetchall()]
+            
+        elif tipo == 'fruta':
+            # Consulta para fruta
+            query = """
+                SELECT f.nombre, SUM(dp.valor_total_utilidad_x_producto) as total_utilidad
+                FROM comercial_pedido p
+                JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
+                JOIN comercial_fruta f ON dp.fruta_id = f.id
+                WHERE p.id IN %s
+            """
+            params = [tuple(pedidos_ids) or (0,)]
+            
+            if fruta_id:
+                query += " AND dp.fruta_id = %s"
+                params.append(fruta_id)
+                
+            query += """
+                GROUP BY f.nombre
+                ORDER BY total_utilidad DESC
+                LIMIT 10
+            """
+            cursor.execute(query, params)
+            return [{'fruta__nombre': row[0], 'total_utilidad': float(row[1])} for row in cursor.fetchall()]
+            
+        elif tipo == 'exportador':
+            # Consulta para exportador
+            if fruta_id:
+                query = """
+                    SELECT e.nombre, SUM(dp.valor_total_utilidad_x_producto) as total_utilidad
+                    FROM comercial_pedido p
+                    JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
+                    JOIN comercial_exportador e ON p.exportadora_id = e.id
+                    WHERE p.id IN %s AND dp.fruta_id = %s
+                    GROUP BY e.nombre
+                    ORDER BY total_utilidad DESC
+                    LIMIT 10
+                """
+                cursor.execute(query, [tuple(pedidos_ids) or (0,), fruta_id])
+            else:
+                query = """
+                    SELECT e.nombre, SUM(p.valor_total_utilidad_usd) as total_utilidad
+                    FROM comercial_pedido p
+                    JOIN comercial_exportador e ON p.exportadora_id = e.id
+                    WHERE p.id IN %s
+                    GROUP BY e.nombre
+                    ORDER BY total_utilidad DESC
+                    LIMIT 10
+                """
+                cursor.execute(query, [tuple(pedidos_ids) or (0,)])
+            return [{'exportadora__nombre': row[0], 'total_utilidad': float(row[1])} for row in cursor.fetchall()]
+            
+        elif tipo == 'kilos_fruta':
+            # Consulta para kilos por fruta
+            query = """
+                SELECT f.nombre, SUM(dp.kilos_enviados) as total_kilos
+                FROM comercial_pedido p
+                JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
+                JOIN comercial_fruta f ON dp.fruta_id = f.id
+                WHERE p.id IN %s
+            """
+            params = [tuple(pedidos_ids) or (0,)]
+            
+            if fruta_id:
+                query += " AND dp.fruta_id = %s"
+                params.append(fruta_id)
+                
+            query += """
+                GROUP BY f.nombre
+                ORDER BY total_kilos DESC
+            """
+            cursor.execute(query, params)
+            return [{'fruta__nombre': row[0], 'total_kilos': float(row[1])} for row in cursor.fetchall()]
+        
+        return []
+
+def get_datos_mensuales(fecha_inicio, fecha_fin, cliente_id=None, intermediario_id=None, 
+                        exportador_id=None, fruta_id=None):
+    """Función auxiliar para obtener datos mensuales"""
+    with connection.cursor() as cursor:
         where_clause = "WHERE p.fecha_entrega BETWEEN %s AND %s"
         params = [fecha_inicio, fecha_fin]
 
@@ -563,63 +640,75 @@ def get_dashboard_comercial_data(request):
                 'total_utilidad': float(row[4]) if row[4] else 0,
                 'total_nc': float(row[5]) if row[5] else 0
             })
+        return datos_mensuales
 
-    # Calcular periodos comparativos
-    periodo_anterior_inicio = fecha_inicio - timedelta(days=(fecha_fin - fecha_inicio).days)
-    periodo_anterior_fin = fecha_inicio - timedelta(days=1)
+def get_dashboard_comercial_data(request):
+    # Obtener parámetros del filtro
+    fecha_inicio_str = request.GET.get('fecha_inicio')
+    fecha_fin_str = request.GET.get('fecha_fin')
+    cliente_id = request.GET.get('cliente')
+    intermediario_id = request.GET.get('intermediario')
+    fruta_id = request.GET.get('fruta')
+    exportador_id = request.GET.get('exportador')
+    
+    # Obtener parámetros del periodo anterior (nuevos)
+    fecha_inicio_anterior_str = request.GET.get('fecha_inicio_anterior')
+    fecha_fin_anterior_str = request.GET.get('fecha_fin_anterior')
 
+    # Establecer fechas por defecto si no están definidas
+    if not fecha_inicio_str:
+        fecha_inicio = datetime.now().date() - timedelta(days=30)
+        fecha_inicio_str = fecha_inicio.strftime('%Y-%m-%d')
+    else:
+        fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+
+    if not fecha_fin_str:
+        fecha_fin = datetime.now().date()
+        fecha_fin_str = fecha_fin.strftime('%Y-%m-%d')
+    else:
+        fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+
+    # Establecer fechas del periodo anterior (por defecto se calcula automáticamente si no se proporciona)
+    if not fecha_inicio_anterior_str:
+        periodo_anterior_inicio = fecha_inicio - timedelta(days=(fecha_fin - fecha_inicio).days)
+        fecha_inicio_anterior_str = periodo_anterior_inicio.strftime('%Y-%m-%d')
+    else:
+        periodo_anterior_inicio = datetime.strptime(fecha_inicio_anterior_str, '%Y-%m-%d').date()
+
+    if not fecha_fin_anterior_str:
+        periodo_anterior_fin = fecha_inicio - timedelta(days=1)
+        fecha_fin_anterior_str = periodo_anterior_fin.strftime('%Y-%m-%d')
+    else:
+        periodo_anterior_fin = datetime.strptime(fecha_fin_anterior_str, '%Y-%m-%d').date()
+
+    # Construir filtro base
+    filter_args = {
+        'fecha_entrega__range': [fecha_inicio, fecha_fin],
+    }
+
+    # Aplicar filtros adicionales si están presentes
+    if cliente_id:
+        filter_args['cliente_id'] = cliente_id
+    if intermediario_id:
+        filter_args['intermediario_id'] = intermediario_id
+    if exportador_id:
+        filter_args['exportadora_id'] = exportador_id
+
+    # Base queryset
+    pedidos = Pedido.objects.filter(**filter_args)
+    pedidos_ids = pedidos.values_list('id', flat=True)
+
+    # Obtener datos mensuales para el gráfico temporal
+    datos_mensuales = get_datos_mensuales(fecha_inicio, fecha_fin, cliente_id, intermediario_id, exportador_id, fruta_id)
+
+    # Calcular periodos comparativos - USAR SIEMPRE los valores proporcionados por el usuario
     filtros_periodo_anterior = filter_args.copy()
+    # Actualización clave: usar periodo_anterior_inicio y periodo_anterior_fin definidos desde los inputs del usuario
     filtros_periodo_anterior['fecha_entrega__range'] = [periodo_anterior_inicio, periodo_anterior_fin]
     pedidos_periodo_anterior = Pedido.objects.filter(**filtros_periodo_anterior)
 
     # Obtener datos mensuales del periodo anterior para comparación en gráficos
-    datos_mensuales_anterior = []
-    with connection.cursor() as cursor:
-        # Construir el filtro para la consulta SQL del periodo anterior
-        where_clause = "WHERE p.fecha_entrega BETWEEN %s AND %s"
-        params = [periodo_anterior_inicio, periodo_anterior_fin]
-
-        if cliente_id:
-            where_clause += " AND p.cliente_id = %s"
-            params.append(cliente_id)
-        if intermediario_id:
-            where_clause += " AND p.intermediario_id = %s"
-            params.append(intermediario_id)
-        if exportador_id:
-            where_clause += " AND p.exportadora_id = %s"
-            params.append(exportador_id)
-        if fruta_id:
-            where_clause += " AND dp.fruta_id = %s"
-            params.append(fruta_id)
-
-        cursor.execute(f"""
-            SELECT 
-                EXTRACT(YEAR FROM p.fecha_entrega) AS año,
-                EXTRACT(MONTH FROM p.fecha_entrega) AS mes, 
-                SUM(dp.kilos_enviados) AS total_kilos,
-                SUM(dp.cajas_enviadas) AS total_cajas,
-                SUM(dp.valor_total_utilidad_x_producto) AS total_utilidad,
-                SUM(dp.valor_nota_credito_usd) AS total_nc
-            FROM comercial_pedido p
-            JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
-            {where_clause}
-            GROUP BY año, mes
-            ORDER BY año, mes
-        """, params)
-
-        for row in cursor.fetchall():
-            año = int(row[0])
-            mes = int(row[1])
-            datos_mensuales_anterior.append({
-                'año': año,
-                'mes': mes,
-                'fecha': f"{año}-{mes:02d}",
-                'nombre_mes': obtener_nombre_mes(mes),
-                'total_kilos': float(row[2]) if row[2] else 0,
-                'total_cajas': int(row[3]) if row[3] else 0,
-                'total_utilidad': float(row[4]) if row[4] else 0,
-                'total_nc': float(row[5]) if row[5] else 0
-            })
+    datos_mensuales_anterior = get_datos_mensuales(periodo_anterior_inicio, periodo_anterior_fin, cliente_id, intermediario_id, exportador_id, fruta_id)
 
     # Calcular métricas principales
     if fruta_id:
@@ -637,6 +726,9 @@ def get_dashboard_comercial_data(request):
                 'total']
         total_notas_credito = \
             detalles.aggregate(total=Coalesce(Sum('valor_nota_credito_usd'), 0.0, output_field=DecimalField()))['total']
+        # Añadir cálculo de total de recuperaciones
+        total_recuperacion = \
+            detalles.aggregate(total=Coalesce(Sum('valor_total_recuperacion_x_producto'), 0.0, output_field=DecimalField()))['total']
     else:
         # Sin filtro de fruta, usamos DetallePedido sumando todos los pedidos
         detalles = DetallePedido.objects.filter(pedido__in=pedidos)
@@ -653,150 +745,49 @@ def get_dashboard_comercial_data(request):
             pedidos.aggregate(total=Coalesce(Sum('valor_total_utilidad_usd'), 0.0, output_field=DecimalField()))[
                 'total']
         total_notas_credito = \
-            pedidos.aggregate(total=Coalesce(Sum('valor_total_nota_credito_usd'), 0.0, output_field=DecimalField()))[
-                'total']
+            pedidos.aggregate(total=Coalesce(Sum('valor_total_nota_credito_usd'), 0.0, output_field=DecimalField()))['total']
+        # Añadir cálculo de total de recuperaciones
+        total_recuperacion = \
+            detalles.aggregate(total=Coalesce(Sum('valor_total_recuperacion_x_producto'), 0.0, output_field=DecimalField()))['total']
 
     # Conteo de pedidos cancelados (siempre a nivel de pedido)
     total_pedidos_cancelados = pedidos.filter(
-        Q(estado_cancelacion='Autorizado') | Q(estado_cancelacion='Pendiente')
+        Q(estado_cancelacion='autorizado') | Q(estado_cancelacion='pendiente')
     ).count()
 
     # Datos para gráfico de utilidad por cliente
-    if fruta_id:
-        # Si hay filtro de fruta, calculamos desde DetallePedido agrupando por cliente
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT c.nombre, SUM(dp.valor_total_utilidad_x_producto) as total_utilidad
-                FROM comercial_pedido p
-                JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
-                JOIN comercial_cliente c ON p.cliente_id = c.id
-                WHERE p.id IN %s AND dp.fruta_id = %s
-                GROUP BY c.nombre
-                ORDER BY total_utilidad DESC
-                LIMIT 10
-            """, [tuple(pedidos_ids) or (0,), fruta_id])
-            utilidad_por_cliente = [{'cliente__nombre': row[0], 'total_utilidad': float(row[1])}
-                                    for row in cursor.fetchall()]
-    else:
-        # Sin filtro de fruta, usamos la consulta original
-        utilidad_por_cliente = list(pedidos.values('cliente__nombre').annotate(
-            total_utilidad=Coalesce(Sum('valor_total_utilidad_usd'), 0.0, output_field=DecimalField())
-        ).order_by('-total_utilidad')[:10])
+    utilidad_por_cliente = get_datos_por_entidad(pedidos_ids, fruta_id, 'cliente')
 
     # Datos para gráfico de utilidad por fruta
-    # Aquí necesitamos agrupar por fruta, pero como la relación es a través de DetallePedido
-    # y un pedido puede tener múltiples frutas, debemos usar un enfoque diferente
-    with connection.cursor() as cursor:
-        cursor.execute("""
-            SELECT f.nombre, SUM(dp.valor_total_utilidad_x_producto) as total_utilidad
-            FROM comercial_pedido p
-            JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
-            JOIN comercial_fruta f ON dp.fruta_id = f.id
-            WHERE p.id IN %s
-            GROUP BY f.nombre
-            ORDER BY total_utilidad DESC
-            LIMIT 10
-        """, [tuple(pedidos_ids) or (0,)])
-        utilidad_por_fruta = [{'fruta__nombre': row[0], 'total_utilidad': float(row[1])}
-                              for row in cursor.fetchall()]
+    utilidad_por_fruta = get_datos_por_entidad(pedidos_ids, fruta_id, 'fruta')
 
     # Datos para gráfico de utilidad por fruta específicos del cliente (cuando se filtra por cliente)
     utilidad_por_fruta_cliente = []
     if cliente_id:
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT f.nombre, SUM(dp.valor_total_utilidad_x_producto) as total_utilidad
-                FROM comercial_pedido p
-                JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
-                JOIN comercial_fruta f ON dp.fruta_id = f.id
-                WHERE p.id IN %s AND p.cliente_id = %s
-                GROUP BY f.nombre
-                ORDER BY total_utilidad DESC
-                LIMIT 10
-            """, [tuple(pedidos_ids) or (0,), cliente_id])
-            utilidad_por_fruta_cliente = [{'fruta__nombre': row[0], 'total_utilidad': float(row[1])}
-                                          for row in cursor.fetchall()]
+        utilidad_por_fruta_cliente = get_datos_por_entidad(pedidos_ids, fruta_id, 'fruta')
 
     # Datos para gráfico de participación de kilos por fruta
-    # Usamos el mismo enfoque SQL para obtener datos precisos
-    with connection.cursor() as cursor:
-        cursor.execute("""
-            SELECT f.nombre, SUM(dp.kilos_enviados) as total_kilos
-            FROM comercial_pedido p
-            JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
-            JOIN comercial_fruta f ON dp.fruta_id = f.id
-            WHERE p.id IN %s
-            GROUP BY f.nombre
-            ORDER BY total_kilos DESC
-        """, [tuple(pedidos_ids) or (0,)])
-        kilos_por_fruta = [{'fruta__nombre': row[0], 'total_kilos': float(row[1])}
-                           for row in cursor.fetchall()]
+    kilos_por_fruta = get_datos_por_entidad(pedidos_ids, fruta_id, 'kilos_fruta')
 
     # Datos para gráfico de utilidad por exportador
-    with connection.cursor() as cursor:
-        cursor.execute("""
-            SELECT e.nombre, SUM(p.valor_total_utilidad_usd) as total_utilidad
-            FROM comercial_pedido p
-            JOIN comercial_exportador e ON p.exportadora_id = e.id
-            WHERE p.id IN %s
-            GROUP BY e.nombre
-            ORDER BY total_utilidad DESC
-            LIMIT 10
-        """, [tuple(pedidos_ids) or (0,)])
-        utilidad_por_exportador = [{'exportadora__nombre': row[0], 'total_utilidad': float(row[1])}
-                                   for row in cursor.fetchall()]
+    utilidad_por_exportador = get_datos_por_entidad(pedidos_ids, fruta_id, 'exportador')
 
     # Get real data for client, fruit and exporter comparison for previous period
     utilidad_por_cliente_anterior = []
     pedidos_anterior_ids = pedidos_periodo_anterior.values_list('id', flat=True)
     
     if pedidos_anterior_ids:
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT c.nombre, SUM(dp.valor_total_utilidad_x_producto) as total_utilidad
-                FROM comercial_pedido p
-                JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
-                JOIN comercial_cliente c ON p.cliente_id = c.id
-                WHERE p.id IN %s
-                GROUP BY c.nombre
-                ORDER BY total_utilidad DESC
-                LIMIT 10
-            """, [tuple(pedidos_anterior_ids) or (0,)])
-            utilidad_por_cliente_anterior = [{'cliente__nombre': row[0], 'total_utilidad': float(row[1])}
-                                        for row in cursor.fetchall()]
+        utilidad_por_cliente_anterior = get_datos_por_entidad(pedidos_anterior_ids, fruta_id, 'cliente')
     
     # Get real data for fruit utilidad for previous period
     utilidad_por_fruta_anterior = []
     if pedidos_anterior_ids:
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT f.nombre, SUM(dp.valor_total_utilidad_x_producto) as total_utilidad
-                FROM comercial_pedido p
-                JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
-                JOIN comercial_fruta f ON dp.fruta_id = f.id
-                WHERE p.id IN %s
-                GROUP BY f.nombre
-                ORDER BY total_utilidad DESC
-                LIMIT 10
-            """, [tuple(pedidos_anterior_ids) or (0,)])
-            utilidad_por_fruta_anterior = [{'fruta__nombre': row[0], 'total_utilidad': float(row[1])}
-                                      for row in cursor.fetchall()]
+        utilidad_por_fruta_anterior = get_datos_por_entidad(pedidos_anterior_ids, fruta_id, 'fruta')
     
     # Get real data for exportador utilidad for previous period
     utilidad_por_exportador_anterior = []
     if pedidos_anterior_ids:
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT e.nombre, SUM(p.valor_total_utilidad_usd) as total_utilidad
-                FROM comercial_pedido p
-                JOIN comercial_exportador e ON p.exportadora_id = e.id
-                WHERE p.id IN %s
-                GROUP BY e.nombre
-                ORDER BY total_utilidad DESC
-                LIMIT 10
-            """, [tuple(pedidos_anterior_ids) or (0,)])
-            utilidad_por_exportador_anterior = [{'exportadora__nombre': row[0], 'total_utilidad': float(row[1])}
-                                           for row in cursor.fetchall()]
+        utilidad_por_exportador_anterior = get_datos_por_entidad(pedidos_anterior_ids, fruta_id, 'exportador')
 
     # Datos para tabla de clientes
     clientes_data = []
@@ -810,7 +801,8 @@ def get_dashboard_comercial_data(request):
                         COUNT(DISTINCT p.id) as num_pedidos,
                         SUM(dp.kilos_enviados) as total_kilos,
                         SUM(dp.valor_x_producto) as total_facturado,
-                        SUM(dp.valor_total_utilidad_x_producto) as total_utilidades
+                        SUM(dp.valor_total_utilidad_x_producto) as total_utilidades,
+                        SUM(dp.valor_nota_credito_usd) as total_nc
                     FROM comercial_pedido p
                     JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
                     JOIN comercial_cliente c ON p.cliente_id = c.id
@@ -827,6 +819,7 @@ def get_dashboard_comercial_data(request):
                         'total_kilos': float(row[2]),
                         'total_facturado': float(row[3]),
                         'total_utilidades': float(row[4]),
+                        'total_nc': float(row[5]),
                     }
                     for row in cursor.fetchall()
                 ]
@@ -837,6 +830,7 @@ def get_dashboard_comercial_data(request):
                 total_kilos=Coalesce(Sum('total_peso_bruto_enviado'), 0.0, output_field=DecimalField()),
                 total_facturado=Coalesce(Sum('valor_total_factura_usd'), 0.0, output_field=DecimalField()),
                 total_utilidades=Coalesce(Sum('valor_total_utilidad_usd'), 0.0, output_field=DecimalField()),
+                total_nc=Coalesce(Sum('valor_total_nota_credito_usd'), 0.0, output_field=DecimalField()),
             ).order_by('-total_utilidades'))
 
         # Calcular porcentajes
@@ -852,14 +846,7 @@ def get_dashboard_comercial_data(request):
     frutas = Fruta.objects.all().order_by('nombre')
     exportadores = Exportador.objects.all().order_by('nombre')
 
-    # Calcular periodos comparativos
-    periodo_anterior_inicio = fecha_inicio - timedelta(days=(fecha_fin - fecha_inicio).days)
-    periodo_anterior_fin = fecha_inicio - timedelta(days=1)
-
-    filtros_periodo_anterior = filter_args.copy()
-    filtros_periodo_anterior['fecha_entrega__range'] = [periodo_anterior_inicio, periodo_anterior_fin]
-    pedidos_periodo_anterior = Pedido.objects.filter(**filtros_periodo_anterior)
-
+    # Modificamos esta línea para asegurar que se aplique el mismo filtro de fruta al periodo anterior
     if fruta_id:
         pedidos_periodo_anterior = pedidos_periodo_anterior.filter(detallepedido__fruta_id=fruta_id).distinct()
 
@@ -882,6 +869,9 @@ def get_dashboard_comercial_data(request):
         notas_credito_prev = \
             detalles_prev.aggregate(total=Coalesce(Sum('valor_nota_credito_usd'), 0.0, output_field=DecimalField()))[
                 'total']
+        # Añadir cálculo de recuperación para el periodo anterior
+        recuperacion_prev = \
+            detalles_prev.aggregate(total=Coalesce(Sum('valor_total_recuperacion_x_producto'), 0.0, output_field=DecimalField()))['total']
     else:
         # Sin filtro de fruta, usamos DetallePedido para calcular kilos_prev
         detalles_prev = DetallePedido.objects.filter(pedido__in=pedidos_periodo_anterior)
@@ -897,8 +887,13 @@ def get_dashboard_comercial_data(request):
             total=Coalesce(Sum('valor_total_factura_usd'), 0.0, output_field=DecimalField()))['total']
         utilidad_usd_prev = pedidos_periodo_anterior.aggregate(
             total=Coalesce(Sum('valor_total_utilidad_usd'), 0.0, output_field=DecimalField()))['total']
+        
+        # Aquí termina la parte seleccionada
         notas_credito_prev = pedidos_periodo_anterior.aggregate(
             total=Coalesce(Sum('valor_total_nota_credito_usd'), 0.0, output_field=DecimalField()))['total']
+        # Añadir cálculo de recuperación para el periodo anterior
+        recuperacion_prev = \
+            detalles_prev.aggregate(total=Coalesce(Sum('valor_total_recuperacion_x_producto'), 0.0, output_field=DecimalField()))['total']
 
     # Conteo de pedidos cancelados periodo anterior (siempre a nivel de pedido)
     cancelados_prev = pedidos_periodo_anterior.filter(
@@ -917,10 +912,47 @@ def get_dashboard_comercial_data(request):
     utilidad_usd_percent = calcular_porcentaje(total_utilidad_usd, utilidad_usd_prev)
     notas_credito_percent = calcular_porcentaje(total_notas_credito, notas_credito_prev)
     cancelados_percent = calcular_porcentaje(total_pedidos_cancelados, cancelados_prev)
+    recuperacion_percent = calcular_porcentaje(total_recuperacion, recuperacion_prev)
+    
+    # Datos para gráfico de utilidad por cliente
+    utilidad_por_cliente = get_datos_por_entidad(pedidos_ids, fruta_id, 'cliente')
+
+    # Datos para gráfico de utilidad por fruta
+    utilidad_por_fruta = get_datos_por_entidad(pedidos_ids, fruta_id, 'fruta')
+
+    # Datos para gráfico de utilidad por fruta específicos del cliente (cuando se filtra por cliente)
+    utilidad_por_fruta_cliente = []
+    if cliente_id:
+        utilidad_por_fruta_cliente = get_datos_por_entidad(pedidos_ids, fruta_id, 'fruta')
+
+    # Datos para gráfico de participación de kilos por fruta
+    kilos_por_fruta = get_datos_por_entidad(pedidos_ids, fruta_id, 'kilos_fruta')
+
+    # Datos para gráfico de utilidad por exportador
+    utilidad_por_exportador = get_datos_por_entidad(pedidos_ids, fruta_id, 'exportador')
+
+    # Get real data for client, fruit and exporter comparison for previous period
+    utilidad_por_cliente_anterior = []
+    pedidos_anterior_ids = pedidos_periodo_anterior.values_list('id', flat=True)
+    
+    if pedidos_anterior_ids:
+        utilidad_por_cliente_anterior = get_datos_por_entidad(pedidos_anterior_ids, fruta_id, 'cliente')
+    
+    # Get real data for fruit utilidad for previous period
+    utilidad_por_fruta_anterior = []
+    if pedidos_anterior_ids:
+        utilidad_por_fruta_anterior = get_datos_por_entidad(pedidos_anterior_ids, fruta_id, 'fruta')
+    
+    # Get real data for exportador utilidad for previous period
+    utilidad_por_exportador_anterior = []
+    if pedidos_anterior_ids:
+        utilidad_por_exportador_anterior = get_datos_por_entidad(pedidos_anterior_ids, fruta_id, 'exportador')
 
     context = {
         'fecha_inicio': fecha_inicio_str,
         'fecha_fin': fecha_fin_str,
+        'fecha_inicio_anterior': fecha_inicio_anterior_str,
+        'fecha_fin_anterior': fecha_fin_anterior_str,
         'cliente_id': cliente_id,
         'intermediario_id': intermediario_id,
         'fruta_id': fruta_id,
@@ -938,6 +970,7 @@ def get_dashboard_comercial_data(request):
         'global_total_utilidades_usd': total_utilidad_usd,
         'global_total_notas_credito': total_notas_credito,
         'global_total_cancelados': total_pedidos_cancelados,
+        'global_total_recuperacion': total_recuperacion,  # Añadir total recuperación al contexto
 
         # Datos para gráficos
         'utilidad_por_cliente': utilidad_por_cliente,
@@ -977,6 +1010,8 @@ def get_dashboard_comercial_data(request):
         'notas_credito_percent': notas_credito_percent,
         'cancelados_prev': cancelados_prev > 0,
         'cancelados_percent': cancelados_percent,
+        'recuperacion_prev': recuperacion_prev > 0,  # Añadir dato comparativo para recuperación
+        'recuperacion_percent': recuperacion_percent,  # Añadir porcentaje de recuperación
     }
 
     return context

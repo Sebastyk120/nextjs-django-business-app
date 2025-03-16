@@ -190,128 +190,9 @@ def relacion_reportes_vencidos(request):
     return render(request, 'relacion_reportes_vencidos.html', context)
 
 
-
- # Vistas para el estado de cuenta de proveedores: #
-@login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
-def reporte_cuenta_proveedor(request, proveedor_id):
-    # Obtener el proveedor
-    proveedor = get_object_or_404(ProveedorNacional, id=proveedor_id)
-    fecha_actual = timezone.now().date()
-    
-    # Obtener compras completas (completado=True y reporte_enviado=True)
-    compras_completas = ReporteCalidadProveedor.objects.filter(
-        rep_cal_exp__venta_nacional__compra_nacional__proveedor=proveedor,
-        completado=True,
-        reporte_enviado=True
-    ).select_related(
-        'rep_cal_exp', 
-        'rep_cal_exp__venta_nacional', 
-        'rep_cal_exp__venta_nacional__compra_nacional',
-        'rep_cal_exp__venta_nacional__compra_nacional__fruta'
-    ).order_by('-p_fecha_reporte')
-    
-    # Obtener todas las compras del proveedor
-    todas_compras = CompraNacional.objects.filter(
-        proveedor=proveedor
-    ).select_related('fruta', 'tipo_empaque')
-    
-    # Crear un conjunto para almacenar los IDs de las compras que ya están completas
-    compras_completas_ids = set(
-        ReporteCalidadProveedor.objects.filter(
-            rep_cal_exp__venta_nacional__compra_nacional__proveedor=proveedor,
-            completado=True, 
-            reporte_enviado=True
-        ).values_list('rep_cal_exp__venta_nacional__compra_nacional_id', flat=True)
-    )
-    
-    # Preparar datos para compras en proceso
-    compras_proceso = []
-    for compra in todas_compras:
-        # Excluir compras ya completadas
-        if compra.id in compras_completas_ids:
-            continue
-            
-        # Datos básicos de la compra
-        datos_compra = {
-            'numero_guia': compra.numero_guia,
-            'fecha_compra': compra.fecha_compra,
-            'peso_recibido': None,
-            'fecha_reporte': None,
-            'estado': 'Registrado',
-        }
-        
-        # Verificar si tiene venta relacionada
-        try:
-            venta = VentaNacional.objects.get(compra_nacional=compra)
-            datos_compra['peso_recibido'] = venta.peso_neto_recibido
-            datos_compra['estado'] = venta.estado_venta
-            
-            # Verificar si tiene reporte de exportador
-            try:
-                reporte_exp = ReporteCalidadExportador.objects.get(venta_nacional=venta)
-                datos_compra['estado'] = reporte_exp.estado_reporte_exp
-                
-                # Verificar si tiene reporte de proveedor
-                try:
-                    reporte_prov = ReporteCalidadProveedor.objects.get(rep_cal_exp=reporte_exp)
-                    datos_compra['fecha_reporte'] = reporte_prov.p_fecha_reporte
-                    datos_compra['estado'] = reporte_prov.estado_reporte_prov
-                except ReporteCalidadProveedor.DoesNotExist:
-                    datos_compra['estado'] = 'Sin Reporte Proveedor'
-            except ReporteCalidadExportador.DoesNotExist:
-                datos_compra['estado'] = 'Sin Reporte Calidad'
-        except VentaNacional.DoesNotExist:
-            datos_compra['estado'] = 'Sin Ingreso'
-        
-        compras_proceso.append(datos_compra)
-    
-    # Obtener transferencias realizadas al proveedor
-    transferencias = TransferenciasProveedor.objects.filter(
-        proveedor=proveedor
-    ).order_by('-fecha_transferencia')
-    
-    # Calcular el saldo total
-    total_por_pagar = ReporteCalidadProveedor.objects.filter(
-        rep_cal_exp__venta_nacional__compra_nacional__proveedor=proveedor,
-        completado=True,
-        reporte_enviado=True
-    ).aggregate(total=Sum('p_total_pagar'))['total'] or 0
-    
-    total_pagado = TransferenciasProveedor.objects.filter(
-        proveedor=proveedor
-    ).aggregate(total=Sum('valor_transferencia'))['total'] or 0
-    
-    saldo_actual = total_por_pagar - total_pagado
-    
-    # Calcular la utilidad total para mostrar en tarjeta adicional
-    total_utilidad = ReporteCalidadProveedor.objects.filter(
-        rep_cal_exp__venta_nacional__compra_nacional__proveedor=proveedor,
-        completado=True,
-        reporte_enviado=True
-    ).aggregate(total=Sum('p_utilidad'))['total'] or 0
-    
-    context = {
-        'proveedor': proveedor,
-        'fecha_actual': fecha_actual,
-        'compras_completas': compras_completas,
-        'compras_proceso': compras_proceso,
-        'transferencias': transferencias,
-        'saldo_actual': saldo_actual,
-        'total_por_pagar': total_por_pagar,
-        'total_pagado': total_pagado,
-        'total_utilidad': total_utilidad,
-    }
-    
-    return render(request, 'reporte_estado_cuenta_proveedor.html', context)
-
 @login_required
 @user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
 def reporte_individual_proveedor(request):
-    """
-    Muestra un reporte individual detallado para un reporte de calidad de proveedor 
-    basado en la búsqueda por número de guía.
-    """
     form = GuiaSearchForm(request.GET or None)
     reporte_proveedor = None
     reporte_exportador = None
@@ -604,6 +485,60 @@ def dashboard_nacionales(request):
     else:
         reportes_percent = 0
 
+    # Generar datos para evolución mensual de calidad por proveedor
+    evolucion_calidad_meses = []
+    current_date = fecha_inicio.replace(day=1)
+    
+    # Generar lista de meses entre las fechas seleccionadas
+    while current_date <= fecha_fin:
+        evolucion_calidad_meses.append(current_date.strftime('%Y-%m'))
+        # Avanzar al siguiente mes
+        if current_date.month == 12:
+            current_date = current_date.replace(year=current_date.year + 1, month=1)
+        else:
+            current_date = current_date.replace(month=current_date.month + 1)
+    
+    # Datos de evolución por proveedor - Simplificado para mostrar solo exportación
+    evolucion_proveedores = []
+    
+    for proveedor in proveedores:
+        datos_proveedor = {
+            'proveedor': proveedor.nombre,
+            'exportacion': []
+        }
+        
+        for mes_str in evolucion_calidad_meses:
+            año, mes = mes_str.split('-')
+            mes_inicio = datetime.date(int(año), int(mes), 1)
+            
+            # Calcular final del mes
+            if int(mes) == 12:
+                mes_fin = datetime.date(int(año) + 1, 1, 1) - datetime.timedelta(days=1)
+            else:
+                mes_fin = datetime.date(int(año), int(mes) + 1, 1) - datetime.timedelta(days=1)
+            
+            # Limitar al rango de fechas del filtro
+            if mes_fin > fecha_fin:
+                mes_fin = fecha_fin
+            
+            # Reportes para este proveedor en este mes
+            reportes_mes = ReporteCalidadExportador.objects.filter(
+                venta_nacional__compra_nacional__proveedor=proveedor,
+                fecha_reporte__gte=mes_inicio,
+                fecha_reporte__lte=mes_fin
+            )
+            
+            if fruta_id:
+                reportes_mes = reportes_mes.filter(venta_nacional__compra_nacional__fruta_id=fruta_id)
+            
+            # Solo obtenemos el promedio de exportación
+            prom_exp = reportes_mes.aggregate(prom_exp=Avg('porcentaje_exportacion'))['prom_exp'] or 0
+            
+            # Convertir a float para asegurar que es serializable a JSON
+            datos_proveedor['exportacion'].append(float(round(prom_exp, 2)))
+        
+        evolucion_proveedores.append(datos_proveedor)
+    
     context = {
         'proveedores_data': proveedores_data,
         'global_total_compras': total_compras_valor,
@@ -632,6 +567,8 @@ def dashboard_nacionales(request):
         'porcentaje_exportacion': porcentaje_exportacion,
         'porcentaje_nacional': porcentaje_nacional,
         'porcentaje_merma': porcentaje_merma,
+        'evolucion_calidad_meses': evolucion_calidad_meses,
+        'evolucion_proveedores': evolucion_proveedores,
     }
 
     return render(request, 'dashboard_nacionales.html', context)
