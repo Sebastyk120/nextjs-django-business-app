@@ -1181,7 +1181,8 @@
                     '$' + parseFloat(data.promedio_saldo).toLocaleString('es-CO');
                 
                 // Obtener la base URL para reportes
-                const urlBase = "{% url 'reporte_estado_cuenta_proveedor' 0 %}".replace('0', '');
+                const urlBase = "{% url 'reporte_estado_cuenta_proveedor' 0 %}".replace('/0/', '/');
+                console.log(urlBase);
                 
                 // Llenar tabla con datos
                 data.balances.forEach(balance => {
