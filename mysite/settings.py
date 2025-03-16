@@ -455,6 +455,11 @@ UNFOLD = {
                         "icon": "receipt_long",
                         "link": reverse_lazy("admin:nacionales_facturacionexportadores_changelist"),
                     },
+                    {
+                        "title": _("Balance Proveedor"),
+                        "icon": "account_balance",
+                        "link": reverse_lazy("admin:nacionales_balanceproveedor_changelist"),
+                    },
                 ],
             },
             {
