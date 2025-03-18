@@ -191,25 +191,34 @@ class ReporteCalidadExportador(models.Model):
         # Se evita el acceso a venta_nacional si aún no ha sido asignada.
         if not self.venta_nacional_id:
             return
-        if self.venta_nacional.peso_neto_recibido and self.kg_exportacion and self.kg_nacional:
+            
+        if self.venta_nacional.peso_neto_recibido:
             total = self.venta_nacional.peso_neto_recibido
-            if self.kg_exportacion > total:
+            
+            # Validación kg_exportacion
+            if self.kg_exportacion and self.kg_exportacion > total:
                 raise ValidationError({
-                    'kg_exportacion': "El valor no puede ser mayor que el peso neto recibido."
+                    'kg_exportacion': f"El valor no puede ser mayor que el peso neto recibido. ({total})"
                 })
-            if self.kg_nacional > total:
+                
+            # Validación kg_nacional
+            if self.kg_nacional and self.kg_nacional > total:
                 raise ValidationError({
-                    'kg_nacional': "El valor no puede ser mayor que el peso neto recibido."
+                    'kg_nacional': f"El valor no puede ser mayor que el peso neto recibido. ({total})"
                 })
-            # Se asume que kg_merma se calcula como:
-            computed_kg_merma = total - self.kg_exportacion - self.kg_nacional
-            if computed_kg_merma < Decimal('0.00'):
-                raise ValidationError("La suma de Kg exportacion y Kg nacional no puede superar el peso neto recibido.")
-        if self.pagado and (self.fecha_factura is None or self.factura is None):
+                
+            # Validación suma total
+            if self.kg_exportacion and self.kg_nacional:
+                computed_kg_merma = total - self.kg_exportacion - self.kg_nacional
+                if computed_kg_merma < Decimal('0.00'):
+                    raise ValidationError(f"La suma de Kg exportación y Kg nacional no puede superar el peso neto recibido. ({total})")
+            
+        # Validación de facturación
+        if self.pagado and (self.factura is None or self.fecha_factura is None):
             raise ValidationError({
-                'fecha_factura': "Debe ingresar la fecha de la factura.",
-                'factura': "Debe ingresar el número de la factura."
+                'pagado': 'No se puede marcar como pagado si no se ha registrado una factura válida y su fecha correspondiente.'
             })
+        
         super().clean()
 
     def save(self, *args, **kwargs):
@@ -267,29 +276,54 @@ class ReporteCalidadProveedor(models.Model):
         # RreporteCalidadExportador no ha sido asignado.
         if not self.rep_cal_exp_id:
             return
-        if self.completado and not (self.reporte_pago or self.factura_prov or self.reporte_enviado):
-            raise ValidationError({
-                'completado': "No se puede marcar como completado si no se ha pagado."
-            })
+            
+        # Validación de completado
+        pago_exportador = self.rep_cal_exp.pagado
+        
+        if self.completado:
+            if self.factura_prov is None:
+                raise ValidationError({
+                    'factura_prov': 'Este campo es obligatorio si el reporte está completado.'
+                })
+            elif not self.reporte_enviado:
+                raise ValidationError({
+                    'reporte_enviado': 'Este campo es obligatorio si el reporte está completado.'
+                })
+            elif not pago_exportador:
+                raise ValidationError(
+                    'El reporte no puede ser completado si el exportador(Reporte Calidad Exportador) no ha registrado el pago.'
+                )
+            elif not self.reporte_pago:
+                raise ValidationError(
+                    'El reporte no puede ser completado si no se ha registrado el pago por el sistema.'
+                )
 
+        # Validación de campos relacionados
         if (self.p_kg_exportacion is None and self.p_kg_nacional is not None) or \
                 (self.p_kg_exportacion is not None and self.p_kg_nacional is None):
             raise ValidationError("Ambos campos (Kg exportación y Kg nacional) deben estar completos o vacíos.")
 
+        # Validaciones de pesos cuando tenemos la información necesaria
         if self.rep_cal_exp.venta_nacional.peso_neto_recibido and self.p_kg_exportacion and self.p_kg_nacional:
             total = self.rep_cal_exp.venta_nacional.peso_neto_recibido
+            
+            # Validación kg_exportacion
             if self.p_kg_exportacion > total:
                 raise ValidationError({
-                    'p_kg_exportacion': "El valor no puede ser mayor que el peso neto recibido."
+                    'p_kg_exportacion': f"El valor no puede ser mayor que el peso neto recibido. ({total})"
                 })
+                
+            # Validación kg_nacional
             if self.p_kg_nacional > total:
                 raise ValidationError({
-                    'p_kg_nacional': "El valor no puede ser mayor que el peso neto recibido."
+                    'p_kg_nacional': f"El valor no puede ser mayor que el peso neto recibido. ({total})"
                 })
-            # kg_merma se calcula como:
+                
+            # Validación suma total
             computed_p_kg_merma = total - self.p_kg_exportacion - self.p_kg_nacional
             if computed_p_kg_merma < Decimal('0.00'):
-                raise ValidationError("La suma de Kg exportacion y Kg nacional no puede superar el peso neto recibido.")
+                raise ValidationError(f"La suma de Kg exportación y Kg nacional no puede superar el peso neto recibido. ({total})")
+                
         super().clean()
 
     def save(self, *args, **kwargs):

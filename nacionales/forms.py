@@ -136,6 +136,13 @@ class ReporteCalidadExportadorForm(forms.ModelForm):
                                                           attrs={'type': 'date', 'class': 'form-control'}), )
     fecha_factura = forms.DateField(widget=forms.DateInput(format='%Y-%m-%d',
                                                           attrs={'type': 'date', 'class': 'form-control'}), required=False)
+    pagado = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input',
+            'role': 'switch',
+        })
+    )
 
     class Meta:
         model = ReporteCalidadExportador
@@ -171,9 +178,18 @@ class ReporteCalidadExportadorForm(forms.ModelForm):
                 HTML('<hr class="my-4">'),
                 HTML('<h5 class="text-primary mb-4">Facturación</h5>'),
                 Row(
-                    Column('pagado', css_class='col-md-4'),
                     Column('factura', css_class='col-md-4'),
                     Column('fecha_factura', css_class='col-md-4'),
+                    Column(
+                        Div(
+                            Div(
+                                'pagado', 
+                                css_class='form-check form-switch d-flex justify-content-center align-items-center h-100'
+                            ),
+                            css_class='d-flex justify-content-center align-items-center h-100'
+                        ),
+                        css_class='col-md-4'
+                    ),
                     css_class='g-3'
                 ),
                 css_class='p-4 bg-white rounded shadow-sm'
@@ -208,13 +224,28 @@ class ReporteCalidadExportadorForm(forms.ModelForm):
                         f"La suma de Kg exportación y Kg nacional no puede superar el peso neto recibido. ({total})")
 
             if pagado and (factura is None or fecha_factura is None):
-                self.add_error('fecha_factura', 'Este campo es obligatorio si se ha ingresado una factura.')
-                self.add_error('factura', 'Este campo es obligatorio si se ha ingresado una factura.')
+                self.add_error('pagado', 'No se puede marcar como pagado si no se ha registrado una factura válida y su fecha correspondiente.')
 
         return cleaned_data
 
 
 class ReporteCalidadProveedorForm(forms.ModelForm):
+    reporte_enviado = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input',
+            'role': 'switch',
+        })
+    )
+    
+    completado = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input',
+            'role': 'switch',
+        })
+    )
+    
     class Meta:
         model = ReporteCalidadProveedor
         exclude = ['rep_cal_exp',]
@@ -238,8 +269,26 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
                 HTML('<hr class="my-4">'),
                 HTML('<h5 class="text-primary mb-4">Estado del Reporte</h5>'),
                 Row(
-                    Column('reporte_enviado', css_class='col-md-4'),
-                    Column('completado', css_class='col-md-4'),
+                    Column(
+                        Div(
+                            Div(
+                                'reporte_enviado', 
+                                css_class='form-check form-switch d-flex justify-content-center align-items-center h-100'
+                            ),
+                            css_class='d-flex justify-content-center align-items-center h-100'
+                        ),
+                        css_class='col-md-4'
+                    ),
+                    Column(
+                        Div(
+                            Div(
+                                'completado', 
+                                css_class='form-check form-switch d-flex justify-content-center align-items-center h-100'
+                            ),
+                            css_class='d-flex justify-content-center align-items-center h-100'
+                        ),
+                        css_class='col-md-4'
+                    ),
                     css_class='g-3'
                 ),
                 css_class='p-4 bg-white rounded shadow-sm'
@@ -251,6 +300,7 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
 
         if self.rep_cal_exp and self.rep_cal_exp.venta_nacional.peso_neto_recibido:
             total = self.rep_cal_exp.venta_nacional.peso_neto_recibido
+            pago_exportador = self.rep_cal_exp.pagado
             p_kg_exportacion = cleaned_data.get('p_kg_exportacion')
             p_kg_nacional = cleaned_data.get('p_kg_nacional')
             completado = cleaned_data.get('completado')
@@ -258,8 +308,17 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
             reporte_enviado = cleaned_data.get('reporte_enviado')
             factura_prov = cleaned_data.get('factura_prov')
 
-            if completado and not (pagado or reporte_enviado) and factura_prov is None:
-                self.add_error('reporte_pago', 'Este campo es obligatorio si el reporte está completado.')
+            if completado and (factura_prov is None or not reporte_enviado or not pagado or not pago_exportador):
+                if factura_prov is None:
+                    self.add_error('factura_prov', 'Este campo es obligatorio si el reporte está completado.')
+                elif not reporte_enviado:
+                    self.add_error('reporte_enviado', 'Este campo es obligatorio si el reporte está completado.')
+                elif not pago_exportador:
+                    raise forms.ValidationError(
+                        'El reporte no puede ser completado si el exportador(Reporte Calidad Exportador) no ha registrado')
+                elif not pagado:
+                    raise forms.ValidationError(
+                        'El reporte no puede ser completado si no se ha registrado el pago por el sistema.')
 
             if (p_kg_exportacion is None and p_kg_nacional is not None) or (
                     p_kg_exportacion is not None and p_kg_nacional is None):

@@ -21,14 +21,14 @@
                 <div class="company-brand">
                     <div class="logo-title">
                         <img src="{% static 'img/heavens2.png' %}" alt="Logo Heavens"/>
-                        <h1>Heaven's Fruit SAS</h1>
+                        <h1>Heaven's Fruits SAS</h1>
                     </div>
                     <p>Estado de Cuenta de Proveedor</p>
                 </div>
                 <div class="company-info">
                     <h2>{{ proveedor.nombre }}</h2>
                     <p>NIT/CC: {{ proveedor.nit|default:"N/A" }}</p>
-                    <p>Fecha Del Saldo: {{ fecha_actual|date:"d/m/Y" }}</p>
+                    <p>Fecha Del Saldo: {{ fecha_actual }}</p>
                 </div>
             </div>
         </div>

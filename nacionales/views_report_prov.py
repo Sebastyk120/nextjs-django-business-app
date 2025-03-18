@@ -36,7 +36,6 @@ def reporte_cuenta_proveedor(request, proveedor_id):
     reportes_pendientes = ReporteCalidadProveedor.objects.filter(
         rep_cal_exp__venta_nacional__compra_nacional__proveedor=proveedor,
         reporte_pago=False,
-        completado=False,
         reporte_enviado=True
     ).select_related(
         'rep_cal_exp',
