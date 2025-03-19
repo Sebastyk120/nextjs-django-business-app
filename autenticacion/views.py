@@ -101,11 +101,11 @@ class CustomPasswordResetView(PasswordResetView):
     email_template_name = 'registration/password_reset_email.html'
     subject_template_name = 'registration/password_reset_subject.txt'
     success_url = '/autenticacion/reset_password_sent/'
-    title = 'Restablecer Contraseña - Heavens Fruits'
+    title = 'Restablecer Contraseña - Heaven\'s Fruits Connect'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['site_name'] = "Administración Heavens Fruits"
+        context['site_name'] = "Heaven's Fruits Connect"
         context['site_header'] = "Heaven's Fruits Connect"
         return context
 
