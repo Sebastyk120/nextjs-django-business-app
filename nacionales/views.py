@@ -561,8 +561,27 @@ def export_data(request):
         sheet_relacionados = workbook.add_worksheet('Datos Completos')
         row = 0
         
+        # Definir los tamaños de cada sección
+        compra_nacional_cols = 12  # 12 columnas para compra nacional
+        venta_nacional_cols = 8    # 8 columnas para venta nacional
+        reporte_exp_cols = 16      # 16 columnas para reporte exportador
+        reporte_prov_cols = 17     # 17 columnas para reporte proveedor
+        
+        # Calcular el rango total de columnas basado en los data_types seleccionados
+        total_columns = 0
+        if 'compra_nacional' in data_types: total_columns += compra_nacional_cols
+        if 'venta_nacional' in data_types: total_columns += venta_nacional_cols
+        if 'reporte_exportador' in data_types: total_columns += reporte_exp_cols
+        if 'reporte_proveedor' in data_types: total_columns += reporte_prov_cols
+        
+        # Calcular posiciones iniciales de cada sección para referencia posterior
+        compra_start = 0
+        venta_start = compra_start + (compra_nacional_cols if 'compra_nacional' in data_types else 0)
+        reporte_exp_start = venta_start + (venta_nacional_cols if 'venta_nacional' in data_types else 0)
+        reporte_prov_start = reporte_exp_start + (reporte_exp_cols if 'reporte_exportador' in data_types else 0)
+        
         # Título principal
-        sheet_relacionados.merge_range(row, 0, row, 19, 'REPORTE COMPLETO COMPRAS NACIONALES', subheader_format)
+        sheet_relacionados.merge_range(row, 0, row, total_columns-1, 'REPORTE COMPLETO COMPRAS NACIONALES', subheader_format)
         row += 2
         
         # Información de filtros
@@ -589,7 +608,6 @@ def export_data(request):
         
         # Preparar encabezados
         headers = []
-        col_start = 0
         
         # Crear formato para encabezados de sección
         section_header_format = workbook.add_format({
@@ -602,53 +620,51 @@ def export_data(request):
             'font_size': 12
         })
         
+        # Definir los encabezados para cada sección
+        compra_headers = [
+            'ID Compra', 'Proveedor', 'Origen', 'Fruta', 'Peso Compra', 
+            'Fecha Compra', 'Número Guía', 'Remisión', 'Precio Compra Exp', 
+            'Precio Compra Nal', 'Tipo Empaque', 'Cantidad Empaque'
+        ]
+        
+        venta_headers = [
+            'Exportador', 'Fecha Llegada', 'Fecha Vencimiento', 
+            'Cantidad Empaque Recibida', 'Peso Bruto Recibido', 
+            'Peso Neto Recibido', 'Diferencia Peso', 'Diferencia Empaque'
+        ]
+        
+        reporte_exp_headers = [
+            'Remisión Exp', 'Fecha Reporte Exp', 'Kg Totales', 'Kg Exportación', 
+            '% Exportación', 'Precio Venta Kg Exp', 'Kg Nacional', '% Nacional', 
+            'Precio Venta Kg Nal', 'Kg Merma', '% Merma', 'Precio Total', 
+            'Factura', 'Fecha Factura', 'Vencimiento Factura', 'Finalizado'
+        ]
+        
+        reporte_prov_headers = [
+            'Fecha Reporte Prov', 'P Kg Totales', 'P Kg Exportación', 
+            'P % Exportación', 'P Precio Kg Exp', 'P Kg Nacional', 
+            'P % Nacional', 'P Precio Kg Nal', 'P Kg Merma', 
+            'P % Merma', 'P Total Facturar', 'Asohofrucol', 
+            'Rte Fte', 'Rte Ica', 'P Total Pagar', 
+            'P Utilidad', 'P % Utilidad'
+        ]
+        
+        # Escribir encabezados de sección
         if 'compra_nacional' in data_types:
-            compra_headers = [
-                'ID Compra', 'Proveedor', 'Origen', 'Fruta', 'Peso Compra', 
-                'Fecha Compra', 'Número Guía', 'Remisión', 'Precio Compra Exp', 
-                'Precio Compra Nal', 'Tipo Empaque', 'Cantidad Empaque'
-            ]
-            # Agregar encabezado de sección para CompraNacional
-            sheet_relacionados.merge_range(row, col_start, row, col_start + len(compra_headers) - 1, 'COMPRA NACIONAL', section_header_format)
+            sheet_relacionados.merge_range(row, compra_start, row, compra_start + compra_nacional_cols - 1, 'COMPRA NACIONAL', section_header_format)
             headers.extend(compra_headers)
-            col_start += len(compra_headers)
         
         if 'venta_nacional' in data_types:
-            venta_headers = [
-                'Exportador', 'Fecha Llegada', 'Fecha Vencimiento', 
-                'Cantidad Empaque Recibida', 'Peso Bruto Recibido', 
-                'Peso Neto Recibido', 'Diferencia Peso', 'Diferencia Empaque'
-            ]
-            # Agregar encabezado de sección para VentaNacional
-            sheet_relacionados.merge_range(row, col_start, row, col_start + len(venta_headers) - 1, 'VENTA NACIONAL', section_header_format)
+            sheet_relacionados.merge_range(row, venta_start, row, venta_start + venta_nacional_cols - 1, 'VENTA NACIONAL', section_header_format)
             headers.extend(venta_headers)
-            col_start += len(venta_headers)
         
         if 'reporte_exportador' in data_types:
-            reporte_exp_headers = [
-                'Remisión Exp', 'Fecha Reporte Exp', 'Kg Totales', 'Kg Exportación', 
-                '% Exportación', 'Precio Venta Kg Exp', 'Kg Nacional', '% Nacional', 
-                'Precio Venta Kg Nal', 'Kg Merma', '% Merma', 'Precio Total', 
-                'Factura', 'Fecha Factura', 'Vencimiento Factura', 'Finalizado'
-            ]
-            # Agregar encabezado de sección para ReporteCalidadExportador
-            sheet_relacionados.merge_range(row, col_start, row, col_start + len(reporte_exp_headers) - 1, 'REPORTE CALIDAD EXPORTADOR', section_header_format)
+            sheet_relacionados.merge_range(row, reporte_exp_start, row, reporte_exp_start + reporte_exp_cols - 1, 'REPORTE CALIDAD EXPORTADOR', section_header_format)
             headers.extend(reporte_exp_headers)
-            col_start += len(reporte_exp_headers)
         
         if 'reporte_proveedor' in data_types:
-            reporte_prov_headers = [
-                'Fecha Reporte Prov', 'P Kg Totales', 'P Kg Exportación', 
-                'P % Exportación', 'P Precio Kg Exp', 'P Kg Nacional', 
-                'P % Nacional', 'P Precio Kg Nal', 'P Kg Merma', 
-                'P % Merma', 'P Total Facturar', 'Asohofrucol', 
-                'Rte Fte', 'Rte Ica', 'P Total Pagar', 
-                'P Utilidad', 'P % Utilidad'
-            ]
-            # Agregar encabezado de sección para ReporteCalidadProveedor
-            sheet_relacionados.merge_range(row, col_start, row, col_start + len(reporte_prov_headers) - 1, 'REPORTE CALIDAD PROVEEDOR', section_header_format)
+            sheet_relacionados.merge_range(row, reporte_prov_start, row, reporte_prov_start + reporte_prov_cols - 1, 'REPORTE CALIDAD PROVEEDOR', section_header_format)
             headers.extend(reporte_prov_headers)
-            col_start += len(reporte_prov_headers)
         
         row += 1
         
@@ -661,9 +677,11 @@ def export_data(request):
         
         # Escribir datos
         for compra in compras:
-            col = 0
+            # Usar las posiciones iniciales calculadas anteriormente para cada sección
             
+            # Compra Nacional
             if 'compra_nacional' in data_types:
+                col = compra_start
                 sheet_relacionados.write(row, col, compra.id, cell_format)
                 col += 1
                 sheet_relacionados.write(row, col, compra.proveedor.nombre, cell_format)
@@ -687,10 +705,10 @@ def export_data(request):
                 sheet_relacionados.write(row, col, compra.tipo_empaque.nombre, cell_format)
                 col += 1
                 sheet_relacionados.write(row, col, compra.cantidad_empaque, cell_format)
-                col += 1
             
             # Venta Nacional
             if 'venta_nacional' in data_types:
+                col = venta_start
                 try:
                     venta = compra.ventanacional
                     sheet_relacionados.write(row, col, venta.exportador.nombre, cell_format)
@@ -708,14 +726,13 @@ def export_data(request):
                     sheet_relacionados.write(row, col, float(venta.diferencia_peso) if venta.diferencia_peso else 0, number_format)
                     col += 1
                     sheet_relacionados.write(row, col, venta.diferencia_empaque if venta.diferencia_empaque else 0, cell_format)
-                    col += 1
                 except:
-                    for _ in range(8):  # 8 columnas para venta nacional
-                        sheet_relacionados.write(row, col, 'N/A', cell_format)
-                        col += 1
+                    for i in range(venta_nacional_cols):
+                        sheet_relacionados.write(row, col + i, 'N/A', cell_format)
             
             # Reporte Calidad Exportador
             if 'reporte_exportador' in data_types:
+                col = reporte_exp_start
                 try:
                     reporte_exp = compra.ventanacional.reportecalidadexportador
                     sheet_relacionados.write(row, col, reporte_exp.remision_exp or 'N/A', cell_format)
@@ -749,14 +766,13 @@ def export_data(request):
                     sheet_relacionados.write(row, col, reporte_exp.vencimiento_factura or '', date_format)
                     col += 1
                     sheet_relacionados.write(row, col, "Sí" if reporte_exp.finalizado else "No", cell_format)
-                    col += 1
                 except:
-                    for _ in range(16):  # 16 columnas para reporte exportador
-                        sheet_relacionados.write(row, col, 'N/A', cell_format)
-                        col += 1
+                    for i in range(reporte_exp_cols):
+                        sheet_relacionados.write(row, col + i, 'N/A', cell_format)
             
             # Reporte Calidad Proveedor
             if 'reporte_proveedor' in data_types:
+                col = reporte_prov_start
                 try:
                     reporte_prov = compra.ventanacional.reportecalidadexportador.reportecalidadproveedor
                     sheet_relacionados.write(row, col, reporte_prov.p_fecha_reporte, date_format)
@@ -792,20 +808,32 @@ def export_data(request):
                     sheet_relacionados.write(row, col, float(reporte_prov.p_utilidad), currency_format)
                     col += 1
                     sheet_relacionados.write(row, col, float(reporte_prov.p_porcentaje_utilidad) / 100, percent_format)
-                    col += 1
                 except:
-                    for _ in range(17):  # 17 columnas para reporte proveedor
-                        sheet_relacionados.write(row, col, 'N/A', cell_format)
-                        col += 1
+                    for i in range(reporte_prov_cols):
+                        sheet_relacionados.write(row, col + i, 'N/A', cell_format)
             
             row += 1
         
-        # Ajustar anchos de columna automáticamente
-        for i, width in enumerate([15, 25, 15, 20, 15, 15, 15, 15, 15, 15, 20, 15, 25, 15, 15, 20, 15, 15, 15, 15,
-                                20, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-                                15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15]):
-            if i < len(headers):
-                sheet_relacionados.set_column(i, i, width)
+        # Definir anchos de columna para cada sección
+        section_widths = {
+            # Compra Nacional
+            'compra_nacional': [10, 25, 15, 20, 15, 15, 15, 15, 15, 15, 20, 15],
+            # Venta Nacional
+            'venta_nacional': [25, 15, 15, 15, 15, 15, 15, 15],
+            # Reporte Exportador
+            'reporte_exportador': [15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15],
+            # Reporte Proveedor
+            'reporte_proveedor': [15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15]
+        }
+        
+        # Aplicar anchos de columna por sección
+        col_index = 0
+        for section in ['compra_nacional', 'venta_nacional', 'reporte_exportador', 'reporte_proveedor']:
+            if section in data_types:
+                widths = section_widths[section]
+                for i, width in enumerate(widths):
+                    sheet_relacionados.set_column(col_index + i, col_index + i, width)
+                col_index += len(widths)
 
     # 2. Exportar transferencias
     if 'transferencias' in data_types:
@@ -881,7 +909,7 @@ def export_data(request):
         row = 0
         
         # Título principal
-        sheet_dashboard.merge_range(row, 0, row, 9, 'RESUMEN DEL DASHBOARD', subheader_format)
+        sheet_dashboard.merge_range(row, 0, row, 10, 'RESUMEN DEL DASHBOARD', subheader_format)
         row += 2
         
         # Información de filtros
@@ -904,7 +932,7 @@ def export_data(request):
         row += 2
         
         # Indicadores de cabecera (KPIs)
-        sheet_dashboard.merge_range(row, 0, row, 9, 'INDICADORES PRINCIPALES', header_format)
+        sheet_dashboard.merge_range(row, 0, row, 10, 'INDICADORES PRINCIPALES', header_format)
         row += 1
         
         # Calcular datos del dashboard similar a la vista dashboard_nacionales
@@ -928,19 +956,38 @@ def export_data(request):
             compras_base = compras_base.filter(fruta_id=fruta_id)
             compras_periodo_anterior = compras_periodo_anterior.filter(fruta_id=fruta_id)
 
-        # Calcular métricas
+        # Calcular métricas de forma coherente
+        # Usar prefetch_related para optimizar consultas
+        compras_base = compras_base.prefetch_related(
+            Prefetch('ventanacional', 
+                     queryset=VentaNacional.objects.prefetch_related(
+                         'reportecalidadexportador',
+                         'reportecalidadexportador__reportecalidadproveedor'
+                     )
+            )
+        )
         
         total_compras_valor = ReporteCalidadProveedor.objects.filter(
             rep_cal_exp__venta_nacional__compra_nacional__in=compras_base
         ).aggregate(total=Sum('p_total_facturar'))['total'] or Decimal('0')
         
-        total_kilos = compras_base.aggregate(
-            total=Sum('peso_compra')
+        # Cambiar a usar VentaNacional para el peso neto recibido (más preciso)
+        total_kilos = VentaNacional.objects.filter(
+            compra_nacional__in=compras_base
+        ).aggregate(
+            total=Sum('peso_neto_recibido')
         )['total'] or Decimal('0')
+        
+        total_facturado_exportadores = ReporteCalidadExportador.objects.filter(
+            venta_nacional__compra_nacional__in=compras_base
+        ).aggregate(total=Sum('precio_total'))['total'] or Decimal('0')
         
         total_utilidades = ReporteCalidadProveedor.objects.filter(
             rep_cal_exp__venta_nacional__compra_nacional__in=compras_base
         ).aggregate(total=Sum('p_utilidad'))['total'] or Decimal('0')
+        
+        # Calcular porcentaje de utilidad sobre facturado total
+        percent_utilidad_facturado_total = (total_utilidades / total_facturado_exportadores * 100) if total_facturado_exportadores else 0
         
         total_reportes_pendientes = 0
         for compra in compras_base:
@@ -961,10 +1008,11 @@ def export_data(request):
         # Escribir KPIs en el Excel
         # Encabezados de KPIs
         kpis = [
-            {'title': 'COMPRAS TOTALES', 'value': float(total_compras_valor), 'format': currency_format, 'icon': 'fa-shopping-cart'},
-            {'title': 'KILOS COMPRADOS', 'value': float(total_kilos), 'format': number_format, 'icon': 'fa-weight-hanging'},
-            {'title': 'UTILIDADES TOTALES', 'value': float(total_utilidades), 'format': currency_format, 'icon': 'fa-dollar-sign'},
-            {'title': 'REPORTES PENDIENTES', 'value': total_reportes_pendientes, 'format': cell_format, 'icon': 'fa-exclamation-triangle'},
+            {'title': 'COMPRAS TOTALES', 'value': float(total_compras_valor), 'format': currency_format},
+            {'title': 'KILOS COMPRADOS', 'value': float(total_kilos), 'format': number_format},
+            {'title': 'FACTURADO EXP.', 'value': float(total_facturado_exportadores), 'format': currency_format},
+            {'title': 'UTILIDADES TOTALES', 'value': float(total_utilidades), 'format': currency_format},
+            {'title': '% UTILIDAD/FACTURADO', 'value': float(percent_utilidad_facturado_total/100), 'format': percent_format},
         ]
         
         for i, kpi in enumerate(kpis):
@@ -975,12 +1023,12 @@ def export_data(request):
         row += 3
         
         # Tabla de proveedores
-        sheet_dashboard.merge_range(row, 0, row, 9, 'DETALLE DE PROVEEDORES', header_format)
+        sheet_dashboard.merge_range(row, 0, row, 10, 'DETALLE DE PROVEEDORES', header_format)
         row += 1
         
-        # Encabezados de tabla
+        # Encabezados de tabla - Añadir la nueva columna
         headers = ['Proveedor', 'Nº Compras', 'Rep. Pendientes', 'Valor Compras', 'Total Pagado', 
-                   'Facturado Exp.', 'Kilos Comprados', 'Utilidades', '% Kilos', '% Utilidad']
+                   'Facturado Exp.', 'Kilos Comprados', 'Utilidades', '% Kilos', '% Utilidad', '% Util/Fact']
         
         for col, header in enumerate(headers):
             sheet_dashboard.write(row, col, header, header_format)
@@ -989,8 +1037,6 @@ def export_data(request):
         row += 1
         
         # Calcular datos para cada proveedor
-        proveedores_data = []
-        
         for proveedor in proveedores:
             compras = compras_base.filter(proveedor=proveedor)
             numero_de_compras = compras.count()
@@ -1012,7 +1058,7 @@ def export_data(request):
                 if not (tiene_venta and tiene_reporte_exp and tiene_reporte_prov):
                     reportes_pendientes += 1
             
-            # Calcular valores totales
+            # Calcular valores totales coherentes con los totales generales
             valor_total_compras = ReporteCalidadProveedor.objects.filter(
                 rep_cal_exp__venta_nacional__compra_nacional__in=compras
             ).aggregate(total=Sum('p_total_facturar'))['total'] or Decimal('0')
@@ -1023,12 +1069,15 @@ def export_data(request):
                 fecha_transferencia__lte=fecha_fin,
             ).aggregate(total=Sum('valor_transferencia'))['total'] or Decimal('0')
             
-            total_facturado_exportadores = ReporteCalidadExportador.objects.filter(
+            total_facturado_exportadores_prov = ReporteCalidadExportador.objects.filter(
                 venta_nacional__compra_nacional__in=compras
             ).aggregate(total=Sum('precio_total'))['total'] or Decimal('0')
             
-            total_kilos_comprados = compras.aggregate(
-                total=Sum('peso_compra')
+            # Usar peso_neto_recibido para consistencia
+            total_kilos_comprados = VentaNacional.objects.filter(
+                compra_nacional__in=compras
+            ).aggregate(
+                total=Sum('peso_neto_recibido')
             )['total'] or Decimal('0')
             
             total_utilidad = ReporteCalidadProveedor.objects.filter(
@@ -1039,17 +1088,22 @@ def export_data(request):
             percent_kilos = (total_kilos_comprados / total_kilos * 100) if total_kilos else 0
             percent_utilidad = (total_utilidad / total_utilidades * 100) if total_utilidades else 0
             
+            # Calcular porcentaje de utilidad sobre facturado para este proveedor
+            percent_utilidad_facturado_prov = (total_utilidad / total_facturado_exportadores_prov * 100) if total_facturado_exportadores_prov else 0
+            
             # Escribir fila de datos
             sheet_dashboard.write(row, 0, proveedor.nombre, cell_format)
             sheet_dashboard.write(row, 1, numero_de_compras, cell_format)
             sheet_dashboard.write(row, 2, reportes_pendientes, cell_format)
             sheet_dashboard.write(row, 3, float(valor_total_compras), currency_format)
             sheet_dashboard.write(row, 4, float(total_pagado_proveedor), currency_format)
-            sheet_dashboard.write(row, 5, float(total_facturado_exportadores), currency_format)
+            sheet_dashboard.write(row, 5, float(total_facturado_exportadores_prov), currency_format)
             sheet_dashboard.write(row, 6, float(total_kilos_comprados), number_format)
             sheet_dashboard.write(row, 7, float(total_utilidad), currency_format)
-            sheet_dashboard.write(row, 8, float(percent_kilos), percent_format)
-            sheet_dashboard.write(row, 9, float(percent_utilidad), percent_format)
+            # Dividir por 100 los porcentajes para el formato correcto
+            sheet_dashboard.write(row, 8, float(percent_kilos/100), percent_format)
+            sheet_dashboard.write(row, 9, float(percent_utilidad/100), percent_format)
+            sheet_dashboard.write(row, 10, float(percent_utilidad_facturado_prov/100), percent_format)
             
             row += 1
         
@@ -1057,7 +1111,7 @@ def export_data(request):
         sheet_dashboard.set_column(0, 0, 30)  # Proveedor
         sheet_dashboard.set_column(1, 2, 15)  # Nº Compras, Rep. Pendientes
         sheet_dashboard.set_column(3, 7, 20)  # Valores monetarios y kilos
-        sheet_dashboard.set_column(8, 9, 10)  # Porcentajes
+        sheet_dashboard.set_column(8, 10, 12)  # Porcentajes
 
     # Cerrar el libro y preparar la respuesta
     workbook.close()

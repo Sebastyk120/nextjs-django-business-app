@@ -91,6 +91,7 @@ def relacion_facturas_vencidas(request):
             if reporte.factura not in facturas_agrupadas:
                 facturas_agrupadas[reporte.factura] = {
                     'factura': reporte.factura,
+                    'fecha_factura': reporte.fecha_factura,
                     'vencimiento_factura': reporte.vencimiento_factura,
                     'exportador': reporte.venta_nacional.compra_nacional.proveedor,
                     'dias_vencidos': dias_vencidos,  # Añadir días vencidos
@@ -459,10 +460,16 @@ def dashboard_nacionales(request):
     porcentaje_nacional = calidad_data['porcentaje_nacional'] or 0
     porcentaje_merma = calidad_data['porcentaje_merma'] or 0
 
-    # Calculate global totals and percentages
+
     for item in proveedores_data:
-        item['percent_kilos'] = (item['total_kilos_comprados'] / total_kilos * 100) if total_kilos else 0
-        item['percent_utilidad'] = (item['total_utilidades'] / total_utilidades * 100) if total_utilidades else 0
+        if total_utilidades < 0:
+            item['percent_kilos'] = (item['total_kilos_comprados'] / total_kilos * 100) if total_kilos else 0
+            item['percent_utilidad'] = ((item['total_utilidades'] / total_utilidades * 100) * - 1) if total_utilidades else 0
+            item['percent_utilidad_facturado'] = (item['total_utilidades'] / item['valor_total_compras'] * 100) if item['valor_total_compras'] else 0
+        else:
+            item['percent_kilos'] = (item['total_kilos_comprados'] / total_kilos * 100) if total_kilos else 0
+            item['percent_utilidad'] = (item['total_utilidades'] / total_utilidades * 100) if total_utilidades else 0
+            item['percent_utilidad_facturado'] = (item['total_utilidades'] / item['valor_total_compras'] * 100) if item['valor_total_compras'] else 0
 
     # Calcular porcentajes comparativos
     if compras_prev:

@@ -194,6 +194,7 @@
                 <th>Utilidades</th>
                 <th>% Kilos</th>
                 <th>% Utilidad</th>
+                <th>% Utilidad Compra</th>
             </tr>
             </thead>
             <tbody>
@@ -209,6 +210,7 @@
                     <td class="numeric">{{ item.total_utilidades|floatformat:0|format_currency }}</td>
                     <td class="numeric">{{ item.percent_kilos|floatformat:2 }}%</td>
                     <td class="numeric">{{ item.percent_utilidad|floatformat:2 }}%</td>
+                    <td class="numeric">{{ item.percent_utilidad_facturado|floatformat:2 }}%</td>
                 </tr>
             {% empty %}
                 <tr>
@@ -441,7 +443,7 @@
             <div class="balance-stats" style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; width: 48%;">
                 <h4 style="margin-bottom: 10px; font-size: 16px; color: #495057;">Resumen</h4>
                 <p><strong>Total Proveedores:</strong> <span id="totalProveedores">-</span></p>
-                <p><strong>Saldo Promedio:</strong> <span id="saldoPromedio">-</span></p>
+                <p><strong>Saldo Total:</strong> <span id="saldoPromedio">-</span></p>
             </div>
             <div style="display: flex; justify-content: flex-end; align-items: flex-end; width: 48%;">
                 <button class="btn btn-secondary" id="closeBalanceProveedorBtn" style="margin-right: 10px;">
@@ -1178,7 +1180,7 @@
                 // Actualizar estadísticas
                 document.getElementById('totalProveedores').textContent = data.balances.length;
                 document.getElementById('saldoPromedio').textContent = 
-                    '$' + parseFloat(data.promedio_saldo).toLocaleString('es-CO');
+                    '$' + parseFloat(data.total_saldo).toLocaleString('es-CO');
                 
                 // Obtener la base URL para reportes
                 const urlBase = "{% url 'reporte_estado_cuenta_proveedor' 0 %}".replace('/0/', '/');

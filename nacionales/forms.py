@@ -12,13 +12,8 @@ class CompraNacionalForm(forms.ModelForm):
             'data-type': 'currency',
         })
     )
-    fecha_compra = forms.DateField(
-        widget=forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'form-control',
-            'placeholder': 'YYYY-MM-DD'
-        })
-    )
+    fecha_compra = forms.DateField(widget=forms.DateInput(format='%Y-%m-%d',
+                                                           attrs={'type': 'date', 'class': 'form-control'}), )
 
     class Meta:
         model = CompraNacional
@@ -275,19 +270,19 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
                                 'reporte_enviado', 
                                 css_class='form-check form-switch d-flex justify-content-center align-items-center h-100'
                             ),
-                            css_class='d-flex justify-content-center align-items-center h-100'
+                            css_class='d-flex justify-content-center.align-items-center h-100'
                         ),
-                        css_class='col-md-4'
+                        css_class='col-md-6'
                     ),
                     Column(
                         Div(
                             Div(
                                 'completado', 
-                                css_class='form-check form-switch d-flex justify-content-center align-items-center h-100'
+                                css_class='form-check form-switch d-flex justify-content-center.align-items-center h-100'
                             ),
-                            css_class='d-flex justify-content-center align-items-center h-100'
+                            css_class='d-flex justify-content-center.align-items-center h-100'
                         ),
-                        css_class='col-md-4'
+                        css_class='col-md-6'
                     ),
                     css_class='g-3'
                 ),
@@ -304,11 +299,15 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
             p_kg_exportacion = cleaned_data.get('p_kg_exportacion')
             p_kg_nacional = cleaned_data.get('p_kg_nacional')
             completado = cleaned_data.get('completado')
-            pagado = cleaned_data.get('reporte_pago')
             reporte_enviado = cleaned_data.get('reporte_enviado')
             factura_prov = cleaned_data.get('factura_prov')
+            
+            # Get the reporte_pago value from the instance if it exists, otherwise assume it's False
+            reporte_pago = False
+            if self.instance and hasattr(self.instance, 'reporte_pago'):
+                reporte_pago = self.instance.reporte_pago
 
-            if completado and (factura_prov is None or not reporte_enviado or not pagado or not pago_exportador):
+            if completado and (factura_prov is None or not reporte_enviado or not reporte_pago or not pago_exportador):
                 if factura_prov is None:
                     self.add_error('factura_prov', 'Este campo es obligatorio si el reporte está completado.')
                 elif not reporte_enviado:
@@ -316,7 +315,7 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
                 elif not pago_exportador:
                     raise forms.ValidationError(
                         'El reporte no puede ser completado si el exportador(Reporte Calidad Exportador) no ha registrado')
-                elif not pagado:
+                elif not reporte_pago:
                     raise forms.ValidationError(
                         'El reporte no puede ser completado si no se ha registrado el pago por el sistema.')
 

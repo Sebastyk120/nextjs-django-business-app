@@ -151,7 +151,7 @@ class VentaNacional(models.Model):
         self.diferencia_peso = self.peso_bruto_recibido - self.compra_nacional.peso_compra
         if hasattr(self, 'reportecalidadexportador'):
             self.estado_venta = "Completado"
-        elif date.today() > self.fecha_vencimiento:
+        elif date.today() > self.fecha_vencimiento.date():
             self.estado_venta = "Vencido"
             
         super().save(*args, **kwargs)
@@ -434,11 +434,23 @@ def reevaluar_pagos_proveedor(proveedor):
         #print(f"Total transferencias: {total_transferencias}")
         
         # Obtenemos todos los reportes antes de modificarlos
-        reportes = ReporteCalidadProveedor.objects.filter(
+        reportes_query = ReporteCalidadProveedor.objects.filter(
             rep_cal_exp__venta_nacional__compra_nacional__proveedor=proveedor
-        ).order_by('rep_cal_exp__venta_nacional__fecha_llegada')
+        ).select_related('rep_cal_exp__venta_nacional')
         
-        #print(f"Reportes encontrados: {reportes.count()}")
+        # Agrupamos reportes por fecha de llegada
+        reportes_por_fecha = {}
+        for reporte in reportes_query:
+            fecha_llegada = reporte.rep_cal_exp.venta_nacional.fecha_llegada
+            if fecha_llegada not in reportes_por_fecha:
+                reportes_por_fecha[fecha_llegada] = []
+            reportes_por_fecha[fecha_llegada].append(reporte)
+        
+        # Para cada fecha, ordenamos los reportes por monto (menor a mayor)
+        for fecha in reportes_por_fecha:
+            reportes_por_fecha[fecha].sort(key=lambda r: r.p_total_pagar)
+        
+        #print(f"Reportes encontrados: {reportes_query.count()}")
         
         # Marcamos todos los reportes como no pagados directamente en BD
         ReporteCalidadProveedor.objects.filter(
@@ -449,16 +461,29 @@ def reevaluar_pagos_proveedor(proveedor):
         saldo_disponible = total_transferencias
         reportes_pagados_ids = []
         
-        for reporte in reportes:
-            monto_pagar = reporte.p_total_pagar
-            #print(f"Reporte #{reporte.pk}: monto={monto_pagar}, saldo={saldo_disponible}")
-            
-            if saldo_disponible >= monto_pagar:
-                saldo_disponible -= monto_pagar
-                reportes_pagados_ids.append(reporte.pk)
-                #print(f"  ✓ Marcado como pagado. Saldo restante: {saldo_disponible}")
-            #else:
-                #print(f"  ✗ Saldo insuficiente para pagar")
+        # Ordenamos las fechas cronológicamente
+        fechas_ordenadas = sorted(reportes_por_fecha.keys())
+        
+        # Para cada fecha, procesamos los reportes ordenados por valor
+        continuar_procesando = True
+        for fecha in fechas_ordenadas:
+            if not continuar_procesando:
+                break
+                
+            reportes = reportes_por_fecha[fecha]
+            for reporte in reportes:
+                monto_pagar = reporte.p_total_pagar
+                #print(f"Reporte #{reporte.pk}: monto={monto_pagar}, saldo={saldo_disponible}")
+                
+                if saldo_disponible >= monto_pagar:
+                    saldo_disponible -= monto_pagar
+                    reportes_pagados_ids.append(reporte.pk)
+                    #print(f"  ✓ Marcado como pagado. Saldo restante: {saldo_disponible}")
+                else:
+                    # Si no hay saldo suficiente para este reporte, no procesamos más fechas
+                    continuar_procesando = False
+                    #print(f"  ✗ Saldo insuficiente para pagar. No se procesarán más reportes.")
+                    break
         
         # Actualizamos los reportes pagados en una sola operación
         if reportes_pagados_ids:

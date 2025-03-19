@@ -30,7 +30,7 @@ def reporte_cuenta_proveedor(request, proveedor_id):
         'rep_cal_exp__venta_nacional',
         'rep_cal_exp__venta_nacional__compra_nacional',
         'rep_cal_exp__venta_nacional__compra_nacional__fruta'
-    ).order_by('-p_fecha_reporte')
+    ).order_by('-rep_cal_exp__venta_nacional__compra_nacional__fecha_compra')
 
     # Reportes pendientes de pago
     reportes_pendientes = ReporteCalidadProveedor.objects.filter(
@@ -73,7 +73,7 @@ def reporte_cuenta_proveedor(request, proveedor_id):
         ReporteCalidadProveedor.objects.filter(
             rep_cal_exp__venta_nacional__compra_nacional__proveedor=proveedor,
             reporte_enviado=True
-        ).values_list('rep_cal_exp__venta_nacional__compra_nacional_id', flat=True)
+        ).values_list('rep_cal_exp__venta_nacional__compra_nacional_id', flat=True).order_by('p_fecha_reporte')
     )
 
     # Preparar datos para compras en proceso

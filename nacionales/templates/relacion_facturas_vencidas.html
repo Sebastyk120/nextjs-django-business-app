@@ -11,11 +11,23 @@
     <div class="container my-3">
         <div class="facturas-vencidas-wrapper">
             <!-- Header Section -->
-            <div class="header-section mb-3">
+            <div class="header-section mb-4">
+                {% if exportador_seleccionado %}
+                    <h1 class="exportador-title text-center mb-2">
+                        <i class="bi bi-building"></i>
+                        {{ exportador_seleccionado }}
+                    </h1>
+                {% endif %}
                 <h2 class="section-title text-center">
-                    <i class="bi bi-calendar-x"></i> Relación de Facturas Vencidas
+                    <i class="bi bi-calendar-x"></i> Relación de Facturas Vencidas - Ventas Nacionales
                 </h2>
-                <div class="subtitle text-center">Consulta de facturas pendientes de pago</div>
+                <div class="subtitle text-center">
+                    {% if exportador_seleccionado %}
+                        Facturas pendientes de pago del exportador
+                    {% else %}
+                        Consulta de facturas pendientes de pago
+                    {% endif %}
+                </div>
             </div>
 
             <!-- Search Form Card -->
@@ -72,6 +84,9 @@
                                     <div class="factura-info">
                                         <h5><i class="bi bi-file-earmark-text"></i> Factura: {{ factura.factura }}</h5>
                                         <div class="factura-meta">
+                                            <span class="fecha-factura">
+                                                <i class="bi bi-calendar-check"></i> Fecha Factura: {{ factura.fecha_factura|date:"d/m/Y" }}
+                                            </span>
                                             <span class="vencimiento">
                                                 <i class="bi bi-calendar-event"></i> Vencimiento: {{ factura.vencimiento_factura|date:"d/m/Y" }}
                                             </span>

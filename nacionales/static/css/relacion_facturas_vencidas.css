@@ -443,4 +443,39 @@ body {
         background-color: #4f46e5 !important;
         color: white !important;
     }
+
+    .exportador-title {
+        font-size: 24pt;
+        background: none;
+        -webkit-text-fill-color: initial;
+        color: #2d3748;
+    }
+}
+
+/* Exportador Title Styles */
+.exportador-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    padding: 10px;
+}
+
+.exportador-title i {
+    margin-right: 15px;
+    font-size: 2rem;
+    vertical-align: middle;
+}
+
+.header-section {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(79, 70, 229, 0.1);
 }

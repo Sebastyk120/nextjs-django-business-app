@@ -1,4 +1,4 @@
-from django.db.models import Avg
+from django.db.models import Sum
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from nacionales.models import BalanceProveedor
@@ -20,8 +20,8 @@ def api_balance_proveedores(request):
     else:
         balances = BalanceProveedor.objects.all()
     
-    # Calcular promedio de saldo
-    promedio_saldo = balances.aggregate(promedio=Avg('saldo_disponible'))['promedio'] or 0
+    # Calcular total de saldo
+    total_saldo = balances.aggregate(total=Sum('saldo_disponible'))['total'] or 0
     
     # Preparar datos para JSON
     balances_data = []
@@ -38,5 +38,5 @@ def api_balance_proveedores(request):
     
     return JsonResponse({
         'balances': balances_data,
-        'promedio_saldo': float(promedio_saldo)
+        'total_saldo': float(total_saldo)
     })
