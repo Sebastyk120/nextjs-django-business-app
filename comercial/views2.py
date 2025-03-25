@@ -21,7 +21,7 @@ def es_miembro_del_grupo(nombre_grupo):
 
 # ------------------------------ Dashboard Cliente ---------------------------------------------------------------
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def dashboard_cliente(request):
     # Obtener parámetros de filtro
     cliente_id = request.GET.get('cliente')
@@ -208,7 +208,7 @@ def dashboard_cliente(request):
 # ------------------------------ Exportar Cartera O Estado De Cuenta Dashboard Cliente----------------------------
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def exportar_cartera_cliente_dashboard(request):
     cliente_id = request.GET.get('cliente', '')
     fecha_inicial_str = request.GET.get('fecha_inicial', '')

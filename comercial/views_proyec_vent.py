@@ -18,7 +18,7 @@ def es_miembro_del_grupo(nombre_grupo):
     return es_miembro
 
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def proyeccion_ventas(request):
     # Get filter parameters
     fecha_inicio_str = request.GET.get('fecha_inicio')

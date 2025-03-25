@@ -15,7 +15,7 @@ def es_miembro_del_grupo(nombre_grupo):
 
 # Vistas para el estado de cuenta de proveedores: #
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def reporte_cuenta_proveedor(request, proveedor_id):
     # Obtener el proveedor
     proveedor = get_object_or_404(ProveedorNacional, id=proveedor_id)

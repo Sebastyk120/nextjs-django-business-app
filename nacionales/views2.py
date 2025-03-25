@@ -46,7 +46,7 @@ class GuiaSearchForm(forms.Form):
     )
 
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def relacion_facturas_vencidas(request):
     today = timezone.now().date()
     form = DateRangeForm(request.GET or None)
@@ -128,7 +128,7 @@ def relacion_facturas_vencidas(request):
     return render(request, 'relacion_facturas_vencidas.html', context)
 
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def relacion_reportes_vencidos(request):
     today = timezone.now().date()
     form = DateRangeForm(request.GET or None)
@@ -192,7 +192,7 @@ def relacion_reportes_vencidos(request):
 
 
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def reporte_individual_proveedor(request):
     form = GuiaSearchForm(request.GET or None)
     reporte_proveedor = None
@@ -253,7 +253,7 @@ def reporte_individual_proveedor(request):
 
 
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def dashboard_nacionales(request):
     # Obtener parámetros de filtro
     fecha_inicio = request.GET.get('fecha_inicio')

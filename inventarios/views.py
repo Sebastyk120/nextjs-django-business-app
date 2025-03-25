@@ -31,7 +31,7 @@ def es_miembro_del_grupo(nombre_grupo):
 
 # -------------------------------------- Exportar Items Etnico (Movimientos) Excel: ---------------------------------
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Etnico'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Etnico'), login_url='home')
 def exportar_items_etnico(request):
     # Crear un libro de trabajo de Excel
     output = io.BytesIO()

@@ -9,7 +9,7 @@ def es_miembro_del_grupo(nombre_grupo):
     return es_miembro
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def api_balance_proveedores(request):
     """API para obtener datos de balance de proveedores para el dashboard"""
     proveedor_id = request.GET.get('proveedor')

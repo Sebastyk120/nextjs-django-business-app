@@ -49,7 +49,7 @@ def autocomplete_guia(request):
 
 
 @login_required
-@user_passes_test(user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def nacionales_list_general(request):
     filtro_completado = request.GET.get('completed') == 'true'
     if filtro_completado:
@@ -87,7 +87,8 @@ def nacionales_list_general(request):
         'filtro_completado': filtro_completado,
     })
 
-
+@login_required
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def nacionales_list_detallada(request):
     guia = request.GET.get('search', '')
     data = {}
@@ -175,7 +176,7 @@ def nacionales_list_detallada(request):
 
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def compra_nacional_create(request):
     if request.method == 'POST':
         form = CompraNacionalForm(request.POST)
@@ -197,7 +198,7 @@ def compra_nacional_create(request):
 
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def venta_nacional_create(request, compra_id):
     compra = get_object_or_404(CompraNacional, id=compra_id)
 
@@ -223,7 +224,7 @@ def venta_nacional_create(request, compra_id):
 
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def reporte_exportador_create(request, venta_id):
     venta = get_object_or_404(VentaNacional, compra_nacional_id=venta_id)
 
@@ -252,7 +253,7 @@ def reporte_exportador_create(request, venta_id):
 # Reporte proveedor
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def reporte_proveedor_create(request, reporte_exp_id):
     reporte_exp = get_object_or_404(ReporteCalidadExportador, venta_nacional_id=reporte_exp_id)
 
@@ -281,7 +282,7 @@ def reporte_proveedor_create(request, reporte_exp_id):
 
 # Vista para editar CompraNacional
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def compra_nacional_edit(request, pk):
     compra = get_object_or_404(CompraNacional, pk=pk)
     if request.method == 'POST':
@@ -304,7 +305,7 @@ def compra_nacional_edit(request, pk):
 
 # Vista para editar VentaNacional
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def venta_nacional_edit(request, pk):
     venta = get_object_or_404(VentaNacional, pk=pk)
     compra = venta.compra_nacional  # Obtén el objeto CompraNacional asociado
@@ -329,7 +330,7 @@ def venta_nacional_edit(request, pk):
 
 # Vista para editar ReporteCalidadExportador
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def reporte_exportador_edit(request, pk):
     reporte = get_object_or_404(ReporteCalidadExportador, pk=pk)
     if request.method == 'POST':
@@ -353,7 +354,7 @@ def reporte_exportador_edit(request, pk):
 
 # Vista para editar ReporteCalidadProveedor
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def reporte_proveedor_edit(request, pk):
     reporte = get_object_or_404(ReporteCalidadProveedor, pk=pk)
     if request.method == 'POST':
@@ -426,7 +427,7 @@ class TransferenciasListView(SingleTableView):
 
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def transferencia_nacional_create(request):
     if request.method == 'POST':
         form = TransferenciasProveedorForm(request.POST)
@@ -447,7 +448,7 @@ def transferencia_nacional_create(request):
     return JsonResponse({'html': html})
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def transferencia_nacional_edit(request, pk):
     transferencia = get_object_or_404(TransferenciasProveedor, pk=pk)
     if request.method == 'POST':
@@ -475,7 +476,7 @@ def transferencia_nacional_edit(request, pk):
 
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def export_data(request):
     # Obtener parámetros de filtro
     fecha_inicio = request.GET.get('fecha_inicio')
@@ -1138,7 +1139,7 @@ def export_data(request):
     return response
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'))
+@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def estado_cuenta_proveedor(request, proveedor_id):
     # Obtener proveedor
     proveedor = get_object_or_404(ProveedorNacional, id=proveedor_id)
