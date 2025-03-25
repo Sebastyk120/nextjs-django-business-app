@@ -1,5 +1,6 @@
 import io
 from datetime import datetime, timedelta
+
 import xlsxwriter
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import connection
@@ -37,9 +38,6 @@ def obtener_nombre_mes(mes):
 
 # ------------------------------ Exportacion Dashboard Comercial ---------------------------------------------------
 
-
-@login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def exportar_dashboard_comercial(request):
     # Obtener los mismos parámetros de filtro que el dashboard
     fecha_inicio_str = request.GET.get('fecha_inicio')
@@ -470,8 +468,7 @@ def exportar_dashboard_comercial(request):
     
     return response
 
-@login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
+
 def get_dashboard_comercial_data(request):
     # Obtener parámetros del filtro
     fecha_inicio_str = request.GET.get('fecha_inicio')
@@ -631,6 +628,10 @@ def get_dashboard_comercial_data(request):
             detalles.aggregate(
                 total=Coalesce(Sum('valor_total_utilidad_x_producto'), 0.0, output_field=DecimalField()))[
                 'total']
+        total_recuperacion = \
+            detalles.aggregate(
+                total=Coalesce(Sum('valor_total_recuperacion_x_producto'), 0.0, output_field=DecimalField()))[
+                'total']
         total_notas_credito = \
             detalles.aggregate(total=Coalesce(Sum('valor_nota_credito_usd'), 0.0, output_field=DecimalField()))['total']
     else:
@@ -647,6 +648,9 @@ def get_dashboard_comercial_data(request):
             pedidos.aggregate(total=Coalesce(Sum('valor_total_factura_usd'), 0.0, output_field=DecimalField()))['total']
         total_utilidad_usd = \
             pedidos.aggregate(total=Coalesce(Sum('valor_total_utilidad_usd'), 0.0, output_field=DecimalField()))[
+                'total']
+        total_recuperacion = \
+            pedidos.aggregate(total=Coalesce(Sum('valor_total_recuperacion_usd'), 0.0, output_field=DecimalField()))[
                 'total']
         total_notas_credito = \
             pedidos.aggregate(total=Coalesce(Sum('valor_total_nota_credito_usd'), 0.0, output_field=DecimalField()))[
@@ -688,18 +692,23 @@ def get_dashboard_comercial_data(request):
         
         # Ahora obtenemos las notas de crédito para estos clientes
         with connection.cursor() as cursor:
-            nombres_params = ', '.join(['%s'] * len(cliente_nombres))
-            cursor.execute(f"""
-                SELECT c.nombre, SUM(p.valor_total_nota_credito_usd) as total_nc
-                FROM comercial_pedido p
-                JOIN comercial_cliente c ON p.cliente_id = c.id
-                WHERE c.nombre IN ({nombres_params})
-                  AND p.fecha_entrega BETWEEN %s AND %s
-                GROUP BY c.nombre
-            """, cliente_nombres + [fecha_inicio, fecha_fin])
-            
-            # Crear un diccionario de notas de crédito por cliente
-            nc_por_cliente = {row[0]: float(row[1]) if row[1] else 0 for row in cursor.fetchall()}
+            # Check if cliente_nombres is empty to avoid SQL syntax error
+            if cliente_nombres:
+                nombres_params = ', '.join(['%s'] * len(cliente_nombres))
+                cursor.execute(f"""
+                    SELECT c.nombre, SUM(p.valor_total_nota_credito_usd) as total_nc
+                    FROM comercial_pedido p
+                    JOIN comercial_cliente c ON p.cliente_id = c.id
+                    WHERE c.nombre IN ({nombres_params})
+                      AND p.fecha_entrega BETWEEN %s AND %s
+                    GROUP BY c.nombre
+                """, cliente_nombres + [fecha_inicio, fecha_fin])
+                
+                # Crear un diccionario de notas de crédito por cliente
+                nc_por_cliente = {row[0]: float(row[1]) if row[1] else 0 for row in cursor.fetchall()}
+            else:
+                # Si no hay clientes, usar un diccionario vacío
+                nc_por_cliente = {}
             
         # Combinar los datos de utilidad y notas de crédito
         utilidad_por_cliente = []
@@ -930,6 +939,8 @@ def get_dashboard_comercial_data(request):
             detalles_prev.aggregate(total=Coalesce(Sum('valor_x_producto'), 0.0, output_field=DecimalField()))['total']
         utilidad_usd_prev = detalles_prev.aggregate(
             total=Coalesce(Sum('valor_total_utilidad_x_producto'), 0.0, output_field=DecimalField()))['total']
+        recuperacion_prev = detalles_prev.aggregate(
+            total=Coalesce(Sum('valor_total_recuperacion_x_producto'), 0.0, output_field=DecimalField()))['total']
         notas_credito_prev = \
             detalles_prev.aggregate(total=Coalesce(Sum('valor_nota_credito_usd'), 0.0, output_field=DecimalField()))[
                 'total']
@@ -947,6 +958,8 @@ def get_dashboard_comercial_data(request):
             total=Coalesce(Sum('valor_total_factura_usd'), 0.0, output_field=DecimalField()))['total']
         utilidad_usd_prev = pedidos_periodo_anterior.aggregate(
             total=Coalesce(Sum('valor_total_utilidad_usd'), 0.0, output_field=DecimalField()))['total']
+        recuperacion_prev = pedidos_periodo_anterior.aggregate(
+            total=Coalesce(Sum('valor_total_recuperacion_usd'), 0.0, output_field=DecimalField()))['total']
         notas_credito_prev = pedidos_periodo_anterior.aggregate(
             total=Coalesce(Sum('valor_total_nota_credito_usd'), 0.0, output_field=DecimalField()))['total']
 
@@ -965,6 +978,7 @@ def get_dashboard_comercial_data(request):
     cajas_percent = calcular_porcentaje(total_cajas, cajas_prev)
     facturado_percent = calcular_porcentaje(total_facturado, facturado_prev)
     utilidad_usd_percent = calcular_porcentaje(total_utilidad_usd, utilidad_usd_prev)
+    recuperacion_percent = calcular_porcentaje(total_recuperacion, recuperacion_prev)
     notas_credito_percent = calcular_porcentaje(total_notas_credito, notas_credito_prev)
     cancelados_percent = calcular_porcentaje(total_pedidos_cancelados, cancelados_prev)
 
@@ -984,6 +998,7 @@ def get_dashboard_comercial_data(request):
         'global_total_cajas': total_cajas,
         'global_total_facturado': total_facturado,
         'global_total_utilidades_usd': total_utilidad_usd,
+        'global_total_recuperacion': total_recuperacion,
         'global_total_notas_credito': total_notas_credito,
         'global_total_cancelados': total_pedidos_cancelados,
         # Datos para gráficos
@@ -1015,6 +1030,8 @@ def get_dashboard_comercial_data(request):
         'facturado_percent': facturado_percent,
         'utilidad_usd_prev': utilidad_usd_prev > 0,
         'utilidad_usd_percent': utilidad_usd_percent,
+        'recuperacion_prev': recuperacion_prev > 0,
+        'recuperacion_percent': recuperacion_percent,
         'notas_credito_prev': notas_credito_prev > 0,
         'notas_credito_percent': notas_credito_percent,
         'cancelados_prev': cancelados_prev > 0,
