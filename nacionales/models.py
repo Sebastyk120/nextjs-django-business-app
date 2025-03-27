@@ -495,6 +495,9 @@ def reevaluar_pagos_proveedor(proveedor):
         balance.save()
         #print(f"Balance final actualizado: {saldo_disponible}")
         
+        # Inicializamos la variable reportes
+        reportes = []
+
         # Actualizamos TODOS los reportes para reflejar el estado correcto 
         for reporte in reportes:
             # Recargamos el reporte para obtener el valor actualizado de reporte_pago
@@ -566,6 +569,7 @@ def actualizar_balance_tras_eliminar_reporte(sender, instance, **kwargs):
     
     # Siempre reevaluamos todos los pagos después de eliminar un reporte
     reevaluar_pagos_proveedor(proveedor)
+
 
 
 
