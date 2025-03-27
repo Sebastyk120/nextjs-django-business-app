@@ -151,7 +151,7 @@ class VentaNacional(models.Model):
         self.diferencia_peso = self.peso_bruto_recibido - self.compra_nacional.peso_compra
         if hasattr(self, 'reportecalidadexportador'):
             self.estado_venta = "Completado"
-        elif date.today() > self.fecha_vencimiento.date():
+        elif date.today() > self.fecha_vencimiento:
             self.estado_venta = "Vencido"
             
         super().save(*args, **kwargs)
@@ -566,6 +566,7 @@ def actualizar_balance_tras_eliminar_reporte(sender, instance, **kwargs):
     
     # Siempre reevaluamos todos los pagos después de eliminar un reporte
     reevaluar_pagos_proveedor(proveedor)
+
 
 
 
