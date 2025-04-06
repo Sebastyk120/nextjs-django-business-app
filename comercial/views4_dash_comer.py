@@ -473,6 +473,8 @@ def get_dashboard_comercial_data(request):
     # Obtener parámetros del filtro
     fecha_inicio_str = request.GET.get('fecha_inicio')
     fecha_fin_str = request.GET.get('fecha_fin')
+    fecha_inicio_anterior_str = request.GET.get('fecha_inicio_anterior')
+    fecha_fin_anterior_str = request.GET.get('fecha_fin_anterior')
     cliente_id = request.GET.get('cliente')
     intermediario_id = request.GET.get('intermediario')
     fruta_id = request.GET.get('fruta')
@@ -490,6 +492,21 @@ def get_dashboard_comercial_data(request):
         fecha_fin_str = fecha_fin.strftime('%Y-%m-%d')
     else:
         fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+
+    # Establecer fechas para el periodo anterior
+    if not fecha_inicio_anterior_str:
+        # Calcular automáticamente si no se proporciona
+        periodo_anterior_inicio = fecha_inicio - timedelta(days=(fecha_fin - fecha_inicio).days)
+        fecha_inicio_anterior_str = periodo_anterior_inicio.strftime('%Y-%m-%d')
+    else:
+        periodo_anterior_inicio = datetime.strptime(fecha_inicio_anterior_str, '%Y-%m-%d').date()
+
+    if not fecha_fin_anterior_str:
+        # Calcular automáticamente si no se proporciona
+        periodo_anterior_fin = fecha_inicio - timedelta(days=1)
+        fecha_fin_anterior_str = periodo_anterior_fin.strftime('%Y-%m-%d')
+    else:
+        periodo_anterior_fin = datetime.strptime(fecha_fin_anterior_str, '%Y-%m-%d').date()
 
     # Construir filtro base
     filter_args = {
@@ -558,9 +575,6 @@ def get_dashboard_comercial_data(request):
             })
 
     # Calcular periodos comparativos
-    periodo_anterior_inicio = fecha_inicio - timedelta(days=(fecha_fin - fecha_inicio).days)
-    periodo_anterior_fin = fecha_inicio - timedelta(days=1)
-
     filtros_periodo_anterior = filter_args.copy()
     filtros_periodo_anterior['fecha_entrega__range'] = [periodo_anterior_inicio, periodo_anterior_fin]
     pedidos_periodo_anterior = Pedido.objects.filter(**filtros_periodo_anterior)
@@ -570,7 +584,7 @@ def get_dashboard_comercial_data(request):
     with connection.cursor() as cursor:
         # Construir el filtro para la consulta SQL del periodo anterior
         where_clause = "WHERE p.fecha_entrega BETWEEN %s AND %s"
-        params = [periodo_anterior_inicio, periodo_anterior_fin]
+        params = [periodo_anterior_inicio, periodo_anterior_fin]  # Usar las fechas del periodo comparativo
 
         if cliente_id:
             where_clause += " AND p.cliente_id = %s"
@@ -985,6 +999,8 @@ def get_dashboard_comercial_data(request):
     context = {
         'fecha_inicio': fecha_inicio_str,
         'fecha_fin': fecha_fin_str,
+        'fecha_inicio_anterior': fecha_inicio_anterior_str,  # Agregar fechas del periodo anterior al contexto
+        'fecha_fin_anterior': fecha_fin_anterior_str,
         'cliente_id': cliente_id,
         'intermediario_id': intermediario_id,
         'fruta_id': fruta_id,
