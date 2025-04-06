@@ -816,10 +816,10 @@
         const kilosData = datosMensuales.map(item => item.totalKilos);
         const kilosPrevData = datosMensualesAnterior.map(item => item.totalKilos);
 
-        // Crear el gráfico de línea con datos comparativos
+        // Crear el gráfico de barra con datos comparativos (cambiado de línea a barra)
         const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
         monthlyChart = new Chart(monthlyCtx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: labels,
                 datasets: [
@@ -827,23 +827,19 @@
                         label: 'Período Anterior',
                         data: kilosPrevData,
                         borderColor: 'rgba(46, 204, 113, 0.3)',
-                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                        borderWidth: 2,
-                        pointRadius: 4,
-                        pointBackgroundColor: 'rgba(46, 204, 113, 0.3)',
-                        fill: true,
-                        tension: 0.3
+                        backgroundColor: 'rgba(46, 204, 113, 0.3)',
+                        borderWidth: 1,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
                     },
                     {
                         label: 'Período Actual',
                         data: kilosData,
                         borderColor: 'rgba(46, 204, 113, 1)',
-                        backgroundColor: 'rgba(46, 204, 113, 0.2)',
-                        borderWidth: 2,
-                        pointRadius: 4,
-                        pointBackgroundColor: 'rgba(46, 204, 113, 1)',
-                        fill: true,
-                        tension: 0.3
+                        backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                        borderWidth: 1,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
                     }
                 ]
             },
@@ -892,6 +888,9 @@
                     legend: {
                         display: true,
                         position: 'top'
+                    },
+                    datalabels: {
+                        display: false // Deshabilitar la visualización de valores encima de las barras
                     }
                 },
                 interaction: {
@@ -1030,29 +1029,25 @@
                 break;
         }
 
-        // Actualizar dataset para mostrar líneas de tendencia
+        // Actualizar dataset para mostrar barras (no lineas)
         monthlyChart.data.datasets = [
             {
                 label: `${etiqueta} (Período Anterior)`,
                 data: datosPrevios,
                 borderColor: colorBase.previo,
-                backgroundColor: colorBase.previoBg,
-                borderWidth: 2,
-                pointRadius: 4,
-                pointBackgroundColor: colorBase.previo,
-                fill: true,
-                tension: 0.3
+                backgroundColor: colorBase.previo,
+                borderWidth: 1,
+                barPercentage: 0.8,
+                categoryPercentage: 0.9
             },
             {
                 label: `${etiqueta} (Período Actual)`,
                 data: datos,
                 borderColor: colorBase.actual,
-                backgroundColor: colorBase.actualBg,
-                borderWidth: 2,
-                pointRadius: 4,
-                pointBackgroundColor: colorBase.actual,
-                fill: true,
-                tension: 0.3
+                backgroundColor: colorBase.actual,
+                borderWidth: 1,
+                barPercentage: 0.8,
+                categoryPercentage: 0.9
             }
         ];
 
@@ -1090,6 +1085,11 @@
         monthlyChart.options.interaction = {
             intersect: false,
             mode: 'index'
+        };
+
+        // Asegurar que los datalabels estén desactivados
+        monthlyChart.options.plugins.datalabels = {
+            display: false
         };
 
         // Actualizar el gráfico
