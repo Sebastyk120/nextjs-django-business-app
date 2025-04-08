@@ -478,29 +478,13 @@ class Pedido(models.Model):
         # Llama al método save de la clase base para realizar el guardado
         super().save(*args, **kwargs)
 
-    def calcular_dias_de_vencimiento(self):
-        """
-        Calcula el valor de 'dias_de_vencimiento' sin guardar el objeto.
-        """
-        if self.fecha_pago is not None:
-            return 0
-        else:
-            if isinstance(self.fecha_entrega, datetime):
-                fecha_entrega = self.fecha_entrega.date()
-            elif isinstance(self.fecha_entrega, date):
-                fecha_entrega = self.fecha_entrega
-            else:
-                raise ValueError("Tipo de fecha no soportado")
-
-            fecha_entrega += timedelta(days=self.dias_cartera)
-            hoy = timezone.now().date()
-
-            return (hoy - fecha_entrega).days
-
     def actualizar_tasa_representativa(self):
-        if self.fecha_monetizacion is None:
+        # Usar fecha_pago si fecha_monetizacion es None
+        fecha_base = self.fecha_monetizacion or self.fecha_pago
+
+        if fecha_base is None:
             self.tasa_representativa_usd_diaria = 0
-            self.save()
+            Pedido.objects.filter(pk=self.pk).update(tasa_representativa_usd_diaria=0)
             return
 
         url = "https://www.datos.gov.co/resource/mcec-87by.json"
@@ -511,12 +495,13 @@ class Pedido(models.Model):
             df = pd.DataFrame(data)
             df['vigenciadesde'] = pd.to_datetime(df['vigenciadesde'])
             df = df.sort_values('vigenciadesde')
-            fecha_monetizacion = pd.to_datetime(self.fecha_monetizacion)
-            df_filtrado = df[df['vigenciadesde'] <= fecha_monetizacion]
+            fecha_base = pd.to_datetime(fecha_base)
+            df_filtrado = df[df['vigenciadesde'] <= fecha_base]
+
             if not df_filtrado.empty:
                 tasa_valor = df_filtrado.iloc[-1]['valor']
                 self.tasa_representativa_usd_diaria = tasa_valor
-                self.save()
+                Pedido.objects.filter(pk=self.pk).update(tasa_representativa_usd_diaria=tasa_valor)
         else:
             print("Error al acceder al banco de la republica")
 
@@ -909,6 +894,10 @@ def detalle_pedido_post_delete(sender, instance, **kwargs):
     Se llama al eliminar un DetallePedido -> disminuye la fruta.
     """
     instance._disminuir_variedad()
+
+@receiver(post_save, sender=Pedido)
+def actualizar_tasa_representativa_post_save(sender, instance, **kwargs):
+    instance.actualizar_tasa_representativa()
 
 
 
