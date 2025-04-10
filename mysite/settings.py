@@ -176,7 +176,7 @@ EMAIL_HOST = 'smtp.office365.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = DEFAULT_FROM_EMAIL
-EMAIL_HOST_PASSWORD = 'Isabella2024+'
+EMAIL_HOST_PASSWORD = 'Isabella2025+'
 ADMIN_SITE_NAME = 'Administración Heavens Fruits'
 
 # Unfold Configuration
