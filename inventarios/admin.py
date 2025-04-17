@@ -126,7 +126,7 @@ admin.site.unregister(User)
 # Registrar de nuevo el modelo User con la clase personalizada
 @admin.register(User)
 class UserAdmin(ModelAdmin, ImportExportModelAdmin, BaseUserAdmin):
-    import_error_display = ("message", "row", "traceback")
+    iimport_error_display = ("message", "row", "traceback")
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
     resource_class = UserResource
@@ -134,6 +134,27 @@ class UserAdmin(ModelAdmin, ImportExportModelAdmin, BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
+
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff')
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
+    search_fields = ('username', 'first_name', 'last_name', 'email')
+    ordering = ('username',)
+
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Información Personal', {'fields': ('first_name', 'last_name', 'email')}),
+        ('Permisos', {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        }),
+        ('Fechas importantes', {'fields': ('last_login', 'date_joined')}),
+    )
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'password1', 'password2', 'email', 'first_name', 'last_name'),
+        }),
+    )
 
 
 # Anular el registro del modelo Group
