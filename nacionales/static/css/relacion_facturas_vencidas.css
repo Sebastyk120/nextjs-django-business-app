@@ -394,61 +394,36 @@ body {
 
 /* Print Styles */
 @media print {
-    /* Configurar tamaño de papel Tabloid (11x17 pulgadas) y orientación horizontal */
-    @page {
-        size: 17in 11in portrait; /* Tamaño Tabloid en horizontal */
-        margin: 0.5cm;
-        /* Márgenes pequeños */
-    }
-    
-    /* Forzar gráficos de fondo */
-    * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-    
+    /* Eliminar margen/padding superior */
     body, html {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        padding: 0;
-    }
-    
-    .container {
-        width: 100%;
-        max-width: none;
-        padding: 0;
-    }
-    
-    .facturas-vencidas-wrapper {
-        box-shadow: none;
-        padding: 0;
-    }
-    
-    .search-card, .action-buttons, .no-imprimir {
-        display: none !important;
-    }
-    
-    .card {
-        break-inside: avoid;
-        box-shadow: none;
-        border: 1px solid #eee;
-    }
-    
-    .table {
-        font-size: 9pt;
-    }
-    
-    .table thead th {
-        background-color: #4f46e5 !important;
-        color: white !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
     }
 
+    /* Ajustar header */
+    .header-section {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Eliminar padding del contenedor principal */
+    .facturas-vencidas-wrapper {
+        padding: 0 !important;
+    }
+
+    /* Reducir espacio en elementos del header */
     .exportador-title {
-        font-size: 24pt;
-        background: none;
-        -webkit-text-fill-color: initial;
-        color: #2d3748;
+        padding: 0 !important;
+        margin: 5px 0 !important;
+    }
+
+    .section-title {
+        margin: 5px 0 !important;
+    }
+
+    /* Eliminar bordes y fondos no necesarios */
+    .card-header {
+        padding: 5px !important;
     }
 }
 

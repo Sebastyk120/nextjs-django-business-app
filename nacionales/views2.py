@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Sum, Avg
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
 from comercial.models import Fruta
 from nacionales.models import CompraNacional, VentaNacional, ReporteCalidadExportador, ReporteCalidadProveedor, \
     Exportador, ProveedorNacional, TransferenciasProveedor
@@ -41,7 +43,7 @@ class GuiaSearchForm(forms.Form):
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'Buscar por número de guía...',
-            'id': 'id_numero_guia_search'
+            'id': 'id_numero_guia'  # <-- Cambia el id aquí para coincidir con el JS
         })
     )
 
@@ -579,3 +581,12 @@ def dashboard_nacionales(request):
     }
 
     return render(request, 'dashboard_nacionales.html', context)
+
+
+@require_GET
+@login_required
+def autocomplete_guia(request):
+    term = request.GET.get('term', '')
+    guias = CompraNacional.objects.filter(numero_guia__icontains=term).values_list('numero_guia', flat=True).distinct()[:10]
+    results = list(guias)
+    return JsonResponse(results, safe=False)

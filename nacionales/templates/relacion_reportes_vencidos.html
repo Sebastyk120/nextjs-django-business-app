@@ -1,20 +1,19 @@
 {% extends 'comercialbase.html' %}
 {% load static %}
-{% load django_tables2 %}
 {% load humanize %}
 {% load custom_filters %}
 {% block content %}
     <link rel="stylesheet" href="{% static 'css/resumen_pedido.css' %}"/>
-    <link rel="stylesheet" href="{% static 'css/relacion_facturas_vencidas.css' %}"/>
     <link rel="stylesheet" href="{% static 'css/relacion_reportes_vencidos.css' %}"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <div class="container my-3">
         <div class="reportes-vencidos-wrapper">
             <!-- Header Section -->
-            <div class="header-section mb-3">
+            <div class="header-section mb-4 no-imprimir">
                 <h2 class="section-title text-center">
-                    <i class="bi bi-clipboard-x"></i> Relación de Reportes Vencidos
+                    <i class="bi bi-clipboard-x"></i> Relación de Reportes Nacionales Vencidos
                 </h2>
                 <div class="subtitle text-center">Consulta de reportes pendientes por procesar</div>
             </div>
@@ -56,58 +55,74 @@
             </div>
 
             {% if reportes_vencidos %}
-                <!-- Results Card -->
-                <div class="card mb-4 results-card">
-                    <div class="card-header">
-                        <h4><i class="bi bi-clipboard-data"></i> Reportes Vencidos 
-                        {% if f_inicial and f_final %}
-                            Del {{ f_inicial|date:"d/m/Y" }} al {{ f_final|date:"d/m/Y" }}
+                <div id="pdf-content">
+                    <!-- Header Section for PDF -->
+                    <div class="header-section mb-3 d-none pdf-header-only">
+                        {% if exportador_seleccionado %}
+                            <h1 class="exportador-title text-center mb-1">
+                                <i class="bi bi-building"></i>
+                                {{ exportador_seleccionado }}
+                            </h1>
                         {% endif %}
-                        {% if exportador_seleccionado %} - {{ exportador_seleccionado }}{% endif %}</h4>
-                        <span class="fecha-consulta">Consulta: {{ fecha_actual|date:"d/m/Y" }}</span>
+                        <h2 class="section-title text-center">
+                            <i class="bi bi-clipboard-x"></i> Relación de Reportes Nacionales Vencidos
+                        </h2>
+                        <div class="subtitle text-center">Consulta de reportes pendientes por procesar</div>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                <tr>
-                                    <th>Guía</th>
-                                    <th>Fecha Recepción</th>
-                                    <th>Fecha Vencimiento</th>
-                                    <th>Días Vencidos</th>
-                                    <th>Fruta</th>
-                                    <th>Origen</th>
-                                    <th>Peso Bruto (Kg)</th>
-                                    <th>Peso Neto (Kg)</th>
-                                    <th>Cant. Empaque</th>
-                                    <th>Tipo Empaque</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for reporte in reportes_vencidos %}
-                                    <tr>
-                                        <td>{{ reporte.numero_guia }}</td>
-                                        <td>{{ reporte.fecha_llegada|date:"d/m/Y" }}</td>
-                                        <td>{{ reporte.fecha_vencimiento|date:"d/m/Y" }}</td>
-                                        <td class="dias-vencidos-valor">{{ reporte.dias_vencidos }}</td>
-                                        <td>{{ reporte.fruta }}</td>
-                                        <td>{{ reporte.origen }}</td>
-                                        <td>{{ reporte.peso_bruto_recibido|floatformat:2 }}</td>
-                                        <td>{{ reporte.peso_neto_recibido|floatformat:2 }}</td>
-                                        <td>{{ reporte.cantidad_empaque_recibida }}</td>
-                                        <td>{{ reporte.tipo_empaque }}</td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
+                    
+                    <!-- Results Card -->
+                    <div class="card mb-4 results-card">
+                        <div class="card-header">
+                            <h4><i class="bi bi-clipboard-data"></i> Reportes Vencidos 
+                            {% if f_inicial and f_final %}
+                                Del {{ f_inicial|date:"d/m/Y" }} al {{ f_final|date:"d/m/Y" }}
+                            {% endif %}
+                            {% if exportador_seleccionado %} - {{ exportador_seleccionado }}{% endif %}</h4>
+                            <span class="fecha-consulta">Consulta: {{ fecha_actual|date:"d/m/Y" }}</span>
                         </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th>Guía</th>
+                                        <th>F. Recep.</th>
+                                        <th>F. Venc.</th>
+                                        <th>Días</th>
+                                        <th>Fruta</th>
+                                        <th>Origen</th>
+                                        <th>P. Bruto</th>
+                                        <th>P. Neto</th>
+                                        <th>Cant.</th>
+                                        <th>Empaque</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for reporte in reportes_vencidos %}
+                                        <tr>
+                                            <td class="text-nowrap">{{ reporte.numero_guia }}</td>
+                                            <td class="text-nowrap">{{ reporte.fecha_llegada|date:"d/m/y" }}</td>
+                                            <td class="text-nowrap">{{ reporte.fecha_vencimiento|date:"d/m/y" }}</td>
+                                            <td class="dias-vencidos-valor" style="color: red; font-weight: bold;">{{ reporte.dias_vencidos }}</td>
+                                            <td class="text-nowrap">{{ reporte.fruta }}</td>
+                                            <td class="text-wrap">{{ reporte.origen }}</td>
+                                            <td class="text-nowrap">{{ reporte.peso_bruto_recibido|floatformat:2 }}</td>
+                                            <td class="text-nowrap">{{ reporte.peso_neto_recibido|floatformat:2 }}</td>
+                                            <td class="text-center">{{ reporte.cantidad_empaque_recibida }}</td>
+                                            <td class="text-nowrap">{{ reporte.tipo_empaque }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
 
-                        <!-- Total Section -->
-                        <div class="total-section">
-                            <div class="total-label">Total Reportes:</div>
-                            <div class="total-amount-container">
-                                <div class="total-amount">{{ total_reportes }}</div>
-                                <div class="total-in-words">Reportes vencidos pendientes por procesar</div>
+                            <!-- Total Section mejorado al estilo de facturas -->
+                            <div class="total-section">
+                                <div class="total-label">Total Reportes:</div>
+                                <div class="total-amount-container">
+                                    <div class="total-amount">{{ total_reportes }}</div>
+                                    <div class="total-in-words">Reportes pendientes por procesar</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -118,8 +133,8 @@
                     <button class="btn btn-back" onclick="history.back();">
                         <i class="bi bi-arrow-left"></i> Volver
                     </button>
-                    <button class="btn btn-export" onclick="window.print();">
-                        <i class="bi bi-printer"></i> Imprimir
+                    <button class="btn btn-export" onclick="exportToPDF();">
+                        <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
                     </button>
                 </div>
             {% elif form.is_valid %}
@@ -134,4 +149,81 @@
             {% endif %}
         </div>
     </div>
+
+    <script>
+        function exportToPDF() {
+            const element = document.getElementById('pdf-content');
+            const exportador = "{{ exportador_seleccionado|default:'Todos' }}";
+            const fechaIni = "{{ f_inicial|date:'Ymd'|default:'' }}";
+            const fechaFin = "{{ f_final|date:'Ymd'|default:'' }}";
+            const hoy = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+            
+            let filename = `ReportesVencidos_${exportador}_${hoy}.pdf`;
+            if (fechaIni && fechaFin) {
+                filename = `ReportesVencidos_${exportador}_${fechaIni}_${fechaFin}.pdf`;
+            } else if (fechaIni) {
+                filename = `ReportesVencidos_${exportador}_Desde_${fechaIni}.pdf`;
+            } else if (fechaFin) {
+                filename = `ReportesVencidos_${exportador}_Hasta_${fechaFin}.pdf`;
+            }
+
+            window.scrollTo(0, 0);
+
+            const opt = {
+                margin: [0, 0, 0, 0],
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true, 
+                    logging: true,
+                    letterRendering: true
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait',
+                    compress: true,
+                    hotfixes: ["px_scaling"]
+                }
+            };
+
+            document.body.classList.add('generating-pdf');
+            const pdfHeader = element.querySelector('.pdf-header-only');
+            if (pdfHeader) pdfHeader.classList.remove('d-none');
+
+            const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+            delay(500)
+                .then(() => {
+                    return html2pdf()
+                        .from(element)
+                        .set(opt)
+                        .toPdf()
+                        .get('pdf')
+                        .then((pdf) => {
+                            pdf.setProperties({
+                                title: 'Reportes Vencidos',
+                                subject: 'Reportes Nacionales Vencidos',
+                                creator: 'Sistema'
+                            });
+                            return pdf;
+                        })
+                        .save();
+                })
+                .then(() => {
+                    if (pdfHeader) {
+                        pdfHeader.classList.add('d-none');
+                    }
+                    document.body.classList.remove('generating-pdf');
+                })
+                .catch(err => {
+                    console.error("Error exportando PDF:", err);
+                    if (pdfHeader) {
+                        pdfHeader.classList.add('d-none');
+                    }
+                    document.body.classList.remove('generating-pdf');
+                });
+        }
+    </script>
 {% endblock %}

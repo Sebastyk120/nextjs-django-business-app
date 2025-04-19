@@ -1,6 +1,16 @@
 /* Relacion Reportes Vencidos CSS */
 
-/* Specific styles for the overdue reports view */
+/* General Styles */
+body {
+    background-color: #f5f7fa;
+    color: #333;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+}
+
 .reportes-vencidos-wrapper {
     background: white;
     border-radius: 12px;
@@ -9,66 +19,553 @@
     position: relative;
 }
 
-/* Different color scheme for this report type */
-.reportes-vencidos-wrapper .search-card {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+/* Header Section */
+.section-title {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 5px;
+    font-size: 1.5rem;
 }
 
-.reportes-vencidos-wrapper .results-card .card-header {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+.subtitle {
+    color: #718096;
+    font-size: 0.95rem;
+    margin-bottom: 15px;
 }
 
-/* Highlight days overdue value */
-.dias-vencidos-valor {
-    font-weight: bold !important;
-    color: #e53e3e !important;
-    padding: 3px 10px !important;
-    border-radius: 12px !important;
-    background-color: rgba(229, 62, 62, 0.1) !important;
-    text-align: center !important;
-    vertical-align: middle !important;
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    margin-bottom: 20px;
 }
 
-/* Different heading colors */
-.reportes-vencidos-wrapper .section-title {
-    color: #2e7d32;
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.reportes-vencidos-wrapper .btn-export {
-    background: linear-gradient(45deg, #2e7d32, #43a047);
+.card-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2d3748;
 }
 
-.reportes-vencidos-wrapper .btn-export:hover {
-    background: linear-gradient(45deg, #388e3c, #4caf50);
+.card-header i {
+    margin-right: 8px;
+    color: #4f46e5;
 }
 
-/* Alternate row colors for better readability */
-.reportes-vencidos-wrapper .table tbody tr:nth-child(odd) {
-    background-color: rgba(46, 125, 50, 0.05);
+.fecha-consulta {
+    font-size: 0.85rem;
+    color: #718096;
+    font-weight: 500;
 }
 
-.reportes-vencidos-wrapper .table tbody tr:hover {
-    background-color: rgba(46, 125, 50, 0.1);
+/* Search Card */
+.search-card {
+    background: linear-gradient(135deg, #e0f7fa 0%, #bbdefb 100%);
 }
 
-/* Total section styling */
-.reportes-vencidos-wrapper .total-section {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+.form-group {
+    margin-bottom: 15px;
 }
 
-.reportes-vencidos-wrapper .total-amount {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #2e7d32;
+.form-group label {
+    font-weight: 500;
+    color: #2d3748;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+}
+
+.form-control:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.btn-search {
+    background: linear-gradient(45deg, #4f46e5, #6366f1);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-weight: 500;
+    transition: all 0.3s;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-search:hover {
+    background: linear-gradient(45deg, #4338ca, #4f46e5);
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-search i {
+    margin-right: 8px;
+}
+
+/* Results Card */
+.results-card {
     background: white;
-    padding: 8px 25px;
 }
 
-/* Print styles */
+/* Table Styling */
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin: 0;
+    font-size: 0.82rem;
+}
+
+.table thead th {
+    background: #4f46e5;
+    color: white;
+    font-weight: 600;
+    padding: 8px 10px;
+    border: none;
+    position: sticky;
+    top: 0;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table thead th:first-child {
+    border-radius: 8px 0 0 8px;
+}
+
+.table thead th:last-child {
+    border-radius: 0 8px 8px 0;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #f1f1f1;
+    transition: background 0.2s;
+}
+
+.table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+}
+
+.table tbody td {
+    padding: 6px 10px;
+    color: #4a5568;
+    text-align: center;
+}
+
+/* Highlight días vencidos value - Mejorado para mayor visibilidad */
+.dias-vencidos-valor {
+    font-weight: 700;
+    color: #fff !important;
+    padding: 3px 6px;
+    border-radius: 8px;
+    background-color: #dc2626 !important;
+    text-align: center;
+    vertical-align: middle;
+    text-shadow: 0px 1px 1px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+}
+
+/* Total Section - Estilo similar a facturas vencidas */
+.total-section {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-top: 15px;
+    page-break-inside: avoid;
+}
+
+.total-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-right: 15px;
+}
+
+.total-amount-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.total-amount {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #047857;
+    background: white;
+    padding: 6px 15px;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.total-in-words {
+    font-size: 0.8rem;
+    font-style: italic;
+    color: #4a5568;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 4px 8px;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    border-top: 1px dashed #e2e8f0;
+}
+
+/* No Results State */
+.no-results-card {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+}
+
+.no-results-icon {
+    font-size: 3rem;
+    color: #a0aec0;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.no-results-text {
+    color: #4a5568;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+.btn i {
+    margin-right: 10px;
+    font-size: 1.1rem;
+}
+
+.btn-back {
+    background-color: #e2e8f0;
+    color: #4a5568;
+    border: none;
+}
+
+.btn-back:hover {
+    background-color: #cbd5e1;
+    color: #2d3748;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-export {
+    background: linear-gradient(45deg, #10b981, #059669);
+    color: white;
+    border: none;
+}
+
+.btn-export:hover {
+    background: linear-gradient(45deg, #059669, #047857);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    transform: translateY(-2px);
+    color: white;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column-reverse;
+        gap: 15px;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    .total-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .total-label {
+        margin-right: 0;
+        margin-bottom: 8px;
+    }
+    
+    .total-amount, .total-in-words {
+        text-align: center;
+    }
+}
+
+/* Utility classes */
+.text-wrap {
+    white-space: normal !important;
+    word-break: break-word;
+}
+
+.text-nowrap {
+    white-space: nowrap;
+}
+
+/* PDF Specific Styles */
+.no-imprimir {
+    display: block;
+}
+
+/* Exportador Title Styles */
+.exportador-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2d3748;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    padding: 5px;
+}
+
+.exportador-title i {
+    margin-right: 10px;
+    font-size: 1.6rem;
+    vertical-align: middle;
+}
+
+.header-section {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(79, 70, 229, 0.1);
+}
+
+/* PDF generation specific styles */
+/* Needed for PDF generation */
+.pdf-header-only {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 8px;
+    padding: 5px 8px;
+    margin: 0 0 8px 0;
+    border: 1px solid rgba(79, 70, 229, 0.1);
+}
+
+.pdf-header-only .section-title {
+    margin-top: 0;
+    margin-bottom: 2px;
+    font-size: 1.2rem;
+}
+
+.pdf-header-only .subtitle {
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
+.pdf-header-only .exportador-title {
+    font-size: 1.5rem;
+    margin: 0;
+    padding: 2px 0;
+}
+
+/* Configuración para formateo PDF a tamaño A4 vertical */
+#pdf-content {
+    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+/* PDF Generation mode */
+body.generating-pdf {
+    width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow-x: hidden !important;
+    /* Ensure consistent box sizing during PDF generation */
+    * {
+        box-sizing: border-box;
+    }
+}
+
+body.generating-pdf #pdf-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100%;
+}
+
+body.generating-pdf .card {
+    margin-bottom: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: none; /* Simplify for PDF */
+    border: 1px solid #eee; /* Add subtle border for PDF */
+}
+
+body.generating-pdf .card-header {
+    padding: 5px 8px; /* Reduce padding */
+    background-color: #f8f9fa; /* Lighter header for PDF */
+}
+
+body.generating-pdf .card-header h4 {
+    font-size: 0.9rem; /* Adjust font size */
+}
+
+body.generating-pdf .fecha-consulta {
+    font-size: 0.75rem; /* Adjust font size */
+}
+
+body.generating-pdf .card-body {
+    padding: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+body.generating-pdf .pdf-header-only {
+    padding: 4px !important;
+    margin-bottom: 5px !important;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    border: 1px solid #eee; /* Add subtle border */
+    background: #f8f9fa; /* Lighter background */
+}
+
+body.generating-pdf .pdf-header-only .exportador-title {
+    font-size: 1.2rem; /* Adjust size */
+    background: none; /* Remove gradient for PDF */
+    -webkit-text-fill-color: #2d3748; /* Use solid color */
+    color: #2d3748;
+}
+
+body.generating-pdf .pdf-header-only .section-title {
+    font-size: 1rem; /* Adjust size */
+}
+
+body.generating-pdf .pdf-header-only .subtitle {
+    font-size: 0.8rem; /* Adjust size */
+}
+
+body.generating-pdf .table {
+    width: 100%;
+    margin-bottom: 5px;
+    font-size: 7pt; /* Reduced font size for A4 fit */
+    table-layout: fixed; /* Use fixed layout for consistency */
+    border-collapse: collapse; /* Collapse borders for PDF */
+    border: 1px solid #ddd; /* Add table border */
+}
+
+body.generating-pdf .table th,
+body.generating-pdf .table td {
+    padding: 3px 2px; /* Reduced padding */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal; /* Allow wrapping */
+    text-align: center; /* Center align most */
+    border: 1px solid #ddd; /* Add cell borders */
+}
+
+/* Ensure header styles apply in PDF */
+body.generating-pdf .table thead th {
+    background-color: #4f46e5 !important;
+    color: white !important;
+    font-weight: 600 !important;
+    -webkit-print-color-adjust: exact; /* Force background color printing */
+    print-color-adjust: exact;
+    vertical-align: middle;
+}
+
+/* Define explicit column widths for fixed layout */
+body.generating-pdf .table th:nth-child(1), body.generating-pdf .table td:nth-child(1) { width: 15%; } /* Guía */
+body.generating-pdf .table th:nth-child(2), body.generating-pdf .table td:nth-child(2) { width: 8%; }  /* F. Recep. */
+body.generating-pdf .table th:nth-child(3), body.generating-pdf .table td:nth-child(3) { width: 8%; }  /* F. Venc. */
+body.generating-pdf .table th:nth-child(4), body.generating-pdf .table td:nth-child(4) { width: 8%; text-align: center; } /* Días */
+body.generating-pdf .table th:nth-child(5), body.generating-pdf .table td:nth-child(5) { width: 11%; text-align: left; } /* Fruta */
+body.generating-pdf .table th:nth-child(6), body.generating-pdf .table td:nth-child(6) { width: 10%; text-align: left; } /* Origen */
+body.generating-pdf .table th:nth-child(7), body.generating-pdf .table td:nth-child(7) { width: 8%; text-align: right; } /* P. Bruto */
+body.generating-pdf .table th:nth-child(8), body.generating-pdf .table td:nth-child(8) { width: 8%; text-align: right; } /* P. Neto */
+body.generating-pdf .table th:nth-child(9), body.generating-pdf .table td:nth-child(9) { width: 6%; text-align: center; } /* Cant. */
+body.generating-pdf .table th:nth-child(10), body.generating-pdf .table td:nth-child(10) { width: 18%; text-align: left; } /* Empaque */
+
+/* Ensure dias vencidos style applies in PDF */
+body.generating-pdf .dias-vencidos-valor {
+    background-color: #dc2626 !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+    padding: 2px 4px !important;
+    border-radius: 4px !important;
+    font-size: 7pt !important; /* Match table font size */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    box-shadow: none !important; /* Remove shadow for PDF */
+    text-shadow: none !important; /* Remove shadow for PDF */
+}
+
+/* Adjust total section for PDF */
+body.generating-pdf .total-section {
+    padding: 5px 10px;
+    margin-top: 5px;
+    background: #eef2f7; /* Simpler background */
+}
+
+body.generating-pdf .total-label {
+    font-size: 0.9rem;
+}
+
+body.generating-pdf .total-amount {
+    font-size: 1rem;
+    padding: 4px 10px;
+}
+
+body.generating-pdf .total-in-words {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+}
+
 @media print {
     @page {
-        size: 17in 11in portrait; /* Tabloid size */
-        margin: 0.5cm;
+        size: A4 portrait;
+        margin: 10mm;
     }
     
     * {
@@ -77,21 +574,43 @@
     }
     
     .reportes-vencidos-wrapper {
+        width: 100%;
+        max-width: 100%;
         box-shadow: none;
         padding: 0;
+        margin: 0;
     }
     
     .search-card, .action-buttons, .no-imprimir {
         display: none !important;
     }
+
+    /* Ensure the PDF header is visible for print */
+    .pdf-header-only {
+        display: block !important; 
+        margin-bottom: 10mm;
+    }
     
-    .table thead th {
-        background-color: #2e7d32 !important;
-        color: white !important;
+    .table {
+        width: 100%;
+        font-size: 11pt;
+    }
+    
+    .table th,
+    .table td {
+        padding: 3px 2px;
+    }
+    
+    .card {
+        width: 100%;
+        border: none;
     }
     
     .dias-vencidos-valor {
-        color: #e53e3e !important;
-        background-color: rgba(229, 62, 62, 0.1) !important;
+        color: #ffffff !important;
+        background-color: #dc2626 !important;
+        font-weight: 700 !important;
+        text-shadow: none !important;
+        box-shadow: none !important;
     }
 }

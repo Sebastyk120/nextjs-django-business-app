@@ -49,8 +49,8 @@
             <button class="btn btn-back" onclick="history.back();">
                 <i class="bi bi-arrow-left"></i> Volver
             </button>
-            <button class="btn btn-print" onclick="window.print();">
-                <i class="bi bi-printer"></i> Imprimir
+            <button class="btn btn-print" onclick="exportToPDF();">
+                <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
             </button>
         </div>
         
@@ -375,10 +375,12 @@
         </div>
         
         <div class="footer">
-            <p>Este documento es informativo y representa el estado actual de su cuenta con Heaven's Fruit.</p>
-            <p>Heavens Connect</p>
+            <p>Este documento es informativo y representa el estado actual de su cuenta con Heaven's Fruits SAS</p>
         </div>
     </div>
+
+    <!-- Include html2pdf.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <script>
         // Script to handle display limit changes
@@ -415,6 +417,41 @@
         document.addEventListener('DOMContentLoaded', function() {
             filterRows('5');
         });
+
+        // Function to export content to PDF using html2pdf.js
+        function exportToPDF() {
+            const element = document.querySelector('.container-fluid'); // Select the main container
+            const proveedorNombre = "{{ proveedor.nombre|escapejs }}"; // Get provider name safely
+            const fechaActual = "{{ fecha_actual|date:"Y-m-d" }}"; // Get current date safely
+            const filename = `estado_cuenta_${proveedorNombre}_${fechaActual}.pdf`;
+
+            // Temporarily show all rows for PDF export
+            const originalLimit = document.getElementById('limitSelector').value;
+            filterRows('all'); 
+
+            const opt = {
+              margin:       [0.5, 0.5, 0.5, 0.5], // Margins in inches [top, left, bottom, right]
+              filename:     filename,
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2, useCORS: true, logging: true }, // Increase scale for better quality, enable CORS
+              jsPDF:        { unit: 'in', format: 'tabloid', orientation: 'landscape' } // Tabloid size (11x17 inches), landscape
+            };
+
+            // Hide buttons before generating PDF
+            const buttons = document.querySelector('.action-buttons');
+            buttons.style.display = 'none';
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Restore buttons and original row limit after PDF is generated/saved
+                buttons.style.display = ''; 
+                filterRows(originalLimit); 
+            }).catch((error) => {
+                console.error("Error generating PDF:", error);
+                // Ensure buttons and limit are restored even if there's an error
+                buttons.style.display = ''; 
+                filterRows(originalLimit);
+            });
+        }
     </script>
 </body>
 </html>

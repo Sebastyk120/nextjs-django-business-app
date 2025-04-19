@@ -5,7 +5,7 @@ from . import views, views2, views_report_prov, views_api
 urlpatterns = [
     path("admin/", admin.site.urls),
     path('nacionales_list_general', views.nacionales_list_general, name='nacionales_list_general'),
-    path('autocomplete_guia/', views.autocomplete_guia, name='autocomplete_guia'),
+    path('autocomplete_guia/', views2.autocomplete_guia, name='autocomplete_guia'),
     path('nacionales_list_detallada', views.nacionales_list_detallada, name='nacionales_list_detallada'),
     path('compra/create/', views.compra_nacional_create, name='compra_nacional_create'),
     path('venta/create/<int:compra_id>/', views.venta_nacional_create, name='venta_nacional_create'),

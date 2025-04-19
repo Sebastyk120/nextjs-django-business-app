@@ -14,21 +14,22 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
         <style>
+            /* Variables y estilos base */
             :root {
-                /* Nueva paleta de colores vibrantes */
-                --primary-color: #2563eb;       /* Azul brillante */
-                --primary-dark: #1e40af;        /* Azul oscuro */
-                --primary-light: #dbeafe;       /* Azul claro */
-                --secondary-color: #7c3aed;     /* Púrpura vibrante */
-                --secondary-light: #ede9fe;     /* Púrpura claro */
-                --accent-color: #f59e0b;        /* Naranja brillante */
-                --danger-color: #ef4444;        /* Rojo vibrante */
-                --success-color: #10b981;       /* Verde esmeralda */
-                --export-color: #10b981;        /* Verde esmeralda para exportación */
-                --national-color: #f59e0b;      /* Naranja brillante para nacional */
-                --loss-color: #ef4444;          /* Rojo vibrante para pérdidas */
+                /* Colores principales */
+                --primary-color: #2563eb;
+                --primary-dark: #1e40af;
+                --primary-light: #dbeafe;
+                --secondary-color: #7c3aed;
+                --secondary-light: #ede9fe;
+                --accent-color: #f59e0b;
+                --danger-color: #ef4444;
+                --success-color: #10b981;
+                --export-color: #10b981;
+                --national-color: #f59e0b;
+                --loss-color: #ef4444;
                 
-                /* Escala de grises moderna */
+                /* Escala de grises */
                 --neutral-50: #f8fafc;
                 --neutral-100: #f1f5f9;
                 --neutral-200: #e2e8f0;
@@ -40,1183 +41,591 @@
                 --neutral-800: #1e293b;
                 --neutral-900: #0f172a;
                 
-                /* El resto de las variables permanecen igual */
-                --border-radius-sm: 6px;
-                --border-radius: 12px;
-                --border-radius-lg: 16px;
+                /* Elementos de UI */
+                --border-radius-sm: 4px;
+                --border-radius: 8px;
+                --border-radius-lg: 12px;
                 --box-shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-                --box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02);
-                --box-shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.08), 0 10px 10px -5px rgba(0,0,0,0.04);
-                --transition: all 0.2s ease-in-out;
+                --box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+                --transition: all 0.2s ease;
             }
 
-            /* Actualizaciones específicas para elementos que usan los colores */
-            .reporte-header {
-                position: relative;
-                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-                color: white;
-                padding: 2rem;  /* Reducido de 3rem a 2rem */
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 1px solid var(--neutral-200);
-                gap: 1.5rem;  /* Reducido de 2rem a 1.5rem */
-            }
-
-            .logo img {
-                height: 150px;  /* Reducido de 180px a 150px */
-                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-                transition: var(--transition);
-                margin-left: 0.5rem;  /* Reducido de 1rem a 0.5rem */
-            }
-
-            .report-title {
-                text-align: right;
-                margin-right: 1rem;  /* Añadido margen derecho */
-            }
-
-            .report-title h1 {
-                font-size: 2.2rem;  /* Reducido de 2.5rem a 2.2rem */
-                margin: 0 0 0.5rem 0;  /* Reducido de 1rem a 0.5rem */
-                font-weight: 700;
-                line-height: 1.1;
-                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-            }
-
-            .report-title p {
-                margin: 0;
-                font-size: 1.2rem;  /* Aumentado de 1rem a 1.2rem */
-                opacity: 0.95;
-                font-weight: 500;
-                letter-spacing: 0.5px;  /* Añadido espaciado entre letras */
-            }
-
-            .module::before {
-                background-color: var(--secondary-color);
-            }
-
-            .module-title {
-                color: var(--secondary-color);
-            }
-
-            .table-header {
-                background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
-            }
-
-            .table-cell.highlight {
-                color: var(--secondary-color);
-            }
-
-            .print-btn, .search-btn {
-                background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
-            }
-
-            .final-payment-section {
-                background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-            }
-
-            .summary-section {
-                background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
-            }
-
-
-            .report-data-header {
-                background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
-                border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
-                display: flex;
-                margin: -1.75rem -1.75rem 1.5rem -1.75rem;
-                padding: 0;
-                overflow: hidden;
-                box-shadow: var(--box-shadow-sm);
-            }
-
-            .report-data-header-cell {
-                color: white;
-                font-weight: 600;
-                text-align: center;
-                padding: 1rem;
-                flex: 1;
-                font-size: 0.95rem;
-                position: relative;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                min-width: 100px;
-            }
-
-            .report-data-header-cell:not(:last-child)::after {
-                content: "";
-                position: absolute;
-                right: 0;
-                top: 20%;
-                height: 60%;
-                width: 1px;
-                background-color: rgba(255, 255, 255, 0.2);
-            }
-
-            .report-data-header-cell:first-child {
-                text-align: left;
-                justify-content: flex-start;
-                padding-left: 1.5rem;
-                flex: 0.8;
-            }
-
-            .report-data-header-cell:last-child {
-                text-align: right;
-                justify-content: flex-end;
-                padding-right: 1.5rem;
-                flex: 0.8;
-            }
-
-            /* Actualizar los estilos de las filas de la tabla para alinear con el encabezado */
-            .table-row {
-                display: flex;
-                border-bottom: 1px solid var(--neutral-200);
-                transition: var(--transition);
-                align-items: center;
-            }
-
-            .table-cell {
-                padding: 1rem;
-                flex: 1;
-                text-align: center;
-                min-width: 100px;
-            }
-
-            .table-cell.label {
-                text-align: left;
-                font-weight: 500;
-                color: var(--neutral-700);
-                background-color: var(--neutral-50);
-                display: flex;
-                align-items: center;
-                padding-left: 1.5rem;  /* Añadido para mantener el alineamiento */
-            }
-            
-            /* Removemos el pseudo-elemento que creaba los puntos */
-            .table-cell.label::before {
-                display: none;  /* Oculta los puntos */
-            }
-
-            .table-cell:last-child {
-                flex: 0.8;
-                text-align: right;
-                padding-right: 1.5rem;
-            }
-
-            @media (max-width: 768px) {
-                .report-data-header {
-                    margin: -1.25rem -1.25rem 1.25rem -1.25rem;
-                }
-
-                .report-data-header-cell,
-                .table-cell {
-                    padding: 0.75rem;
-                    font-size: 0.875rem;
-                    min-width: auto;
-                }
-
-                .report-data-header-cell:first-child,
-                .table-cell.label {
-                    padding-left: 1rem;
-                }
-
-                .report-data-header-cell:last-child,
-                .table-cell:last-child {
-                    padding-right: 1rem;
-                }
-            }
-
-            /* El resto del código permanece igual */
+            /* Estilos para reset y base */
             body {
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                font-family: 'Inter', sans-serif;
+                margin: 0;
+                padding: 0;
                 background-color: var(--neutral-100);
                 color: var(--neutral-800);
                 line-height: 1.5;
-                margin: 0;
-                padding: 0;
                 -webkit-font-smoothing: antialiased;
-                -moz-osx-font-smoothing: grayscale;
             }
 
-            .reporte-container {
-                max-width: 800px;  /* Reducido de 1000px */
-                margin: 1rem auto; /* Reducido de 2rem */
-                background-color: white;
+            /* Estilo específico para A4 - Para visualización en pantalla */
+            .page-container {
+                max-width: 800px;
+                margin: 20px auto;
+                background: white;
                 box-shadow: var(--box-shadow);
-                border-radius: var(--border-radius-lg);
-                overflow: hidden;
-                transition: var(--transition);
-            }
-
-            .logo img {
-                height: 100px;    /* Reducido de 150px */
-                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-                transition: var(--transition);
+                border-radius: var(--border-radius);
             }
             
-            .logo img:hover {
-                transform: scale(1.05);
+            /* Estilo para la página A4 - Para exportación */
+            .invoice-page {
+                position: relative;
+                width: 210mm;
+                min-height: 297mm;
+                padding: 10mm 15mm;
+                margin: 0 auto;
+                background: white;
+                box-sizing: border-box;
+                /* Eliminar espacios innecesarios */
+                display: flex;
+                flex-direction: column;
             }
-
-            .report-title {
-                text-align: right;
-            }
-
-            .report-title h1 {
-                font-family: 'Poppins', sans-serif; /* Reducido de 2.2rem */
-                margin: 0;
-                font-weight: 500;
-                line-height: 1.2;
-                margin-bottom: 0.5rem;
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-                color: white;
-            }
-
-            .report-title p {
-                margin: 0.25rem 0 0;
-                font-size: 1rem;   /* Reducido de 1.2rem */
-                opacity: 0.9;
-                font-weight: 500;
-                color: white;
-            }
-
-            .reporte-content {
-                padding: 1rem;     /* Reducido de 1.5rem 2rem */
-            }
-
-            .report-info-container {
+            
+            /* Cabecera de la factura - Optimizado para espacio */
+            .invoice-header {
                 display: flex;
                 justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1.5rem;
-                padding-bottom: 0.75rem;
-                border-bottom: 1px solid var(--neutral-200);
+                padding-bottom: 12px;
+                border-bottom: 2px solid var(--primary-color);
+                margin-bottom: 12px;
             }
-
-            .report-location-date {
-                font-weight: 500;
+            
+            .invoice-logo {
+                width: 150px;
+            }
+            
+            .invoice-logo img {
+                max-width: 100%;
+                height: auto;
+            }
+            
+            .invoice-company {
+                text-align: right;
+            }
+            
+            .invoice-company h1 {
+                color: var(--primary-color);
+                margin: 0;
+                font-size: 24px;
+            }
+            
+            .invoice-company p {
+                margin: 5px 0 0;
                 color: var(--neutral-600);
-                font-size: 0.9rem;
-                display: flex;
-                align-items: center;
-            }
-
-            .report-number {
-                margin: 0;  /* Eliminado margin-bottom */
-                font-weight: 600;
-                color: var (--primary-color);
-                font-size: 1rem;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
             }
             
-            .report-number::before {
-                content: "📋";
-                font-size: 1.1rem;
-            }
-
-            .module {
-                background-color: white;
+            /* Sección info del documento - Optimizado para espacio */
+            .invoice-info {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 15px;
+                padding: 10px;
+                background-color: var(--neutral-50);
                 border-radius: var(--border-radius);
-                padding: 1rem;     /* Reducido de 1.75rem */
-                box-shadow: var(--box-shadow-sm);
+            }
+            
+            .invoice-info-block {
+                flex: 1;
+            }
+            
+            .invoice-info-block h2 {
+                font-size: 16px;
+                text-transform: uppercase;
+                color: var(--primary-color);
+                margin: 0 0 10px 0;
+                padding-bottom: 5px;
+                border-bottom: 1px solid var(--neutral-300);
+            }
+            
+            .invoice-info-block p {
+                margin: 5px 0;
+                font-size: 14px;
+            }
+            
+            .invoice-num {
+                font-weight: 700;
+                font-size: 18px;
+                color: var(--primary-dark);
+            }
+            
+            /* Sección Cliente - Optimizado para espacio */
+            .invoice-client {
+                margin-bottom: 15px;
+                padding: 10px;
                 border: 1px solid var(--neutral-200);
-                transition: var(--transition);
-                margin-bottom: 1rem; /* Reducido de 1.75rem */
-                position: relative;
-                overflow: hidden;
+                border-radius: var(--border-radius);
+                background-color: var(--neutral-50);
             }
-
-            .module:hover {
-                box-shadow: var(--box-shadow);
-                transform: translateY(-2px);
+            
+            .invoice-client h2 {
+                margin: 0 0 10px 0;
+                font-size: 16px;
+                color: var(--primary-color);
+                text-transform: uppercase;
             }
-
-            .module-title {
-                font-size: 1.1rem; /* Reducido de 1.25rem */
-                margin-top: 0;
-                margin-bottom: 1.9rem; /* Reducido de 1.9rem */
-                padding-bottom: 0.5rem; /* Reducido de 0.75rem */
-                border-bottom: 1px solid var(--neutral-200);
-                position: relative;
+            
+            .client-details {
                 display: flex;
-                align-items: center;
-                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+            
+            .client-detail {
+                flex: 1 0 50%;
+                margin-bottom: 10px;
+            }
+            
+            .detail-label {
                 font-weight: 600;
+                color: var(--neutral-700);
             }
             
-            .module-title::before {
-                font-family: "Bootstrap Icons";
-                font-size: 1.2rem;
-            }
-
-            .module:nth-child(2) .module-title::before {
-                content: "👤";  /* person icon */
+            /* Tabla de items facturados - Optimizado para espacio */
+            .invoice-items {
+                margin-bottom: 15px;
             }
             
-            .module:nth-child(3) .module-title::before {
-                content: "🚛";  /* person icon */
-            }
-            
-            .module:nth-child(4) .module-title::before {
-                content: "📦";  /* box-seam icon */
-            }
-            
-            .module:nth-child(5) .module-title::before {
-                content: "📊";  /* clipboard-data icon */
-            }
-            
-            .module:nth-child(6) .module-title::before {
-                content: "🧮";  /* calculator icon */
-            }
-
-            .data-table {
+            .items-table {
                 width: 100%;
                 border-collapse: collapse;
             }
-
-            .data-table td {
-                padding: 0.5rem;   /* Reducido de 0.75rem */
-                vertical-align: middle;
-            }
-
-            .data-table .label {
-                font-weight: 500;
-                color: var(--neutral-600);
-                width: 35%;
-            }
-
-            .data-table .value {
+            
+            .items-table th {
+                background: var(--primary-color);
+                color: white;
+                padding: 8px;
+                text-align: left;
                 font-weight: 600;
-                color: var (--neutral-800);
-                border-left: 3px solid var(--primary-light);
-                padding-left: 1rem;
-                background-color: var(--neutral-50);
-                border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
-                text-align: right;
-            }
-
-            .dual-table {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 1.5rem;
-            }
-
-            .table-row {
-                display: flex;
-                border-bottom: 1px solid var(--neutral-200);
-                transition: var(--transition);
+                font-size: 13px;
             }
             
-            .table-row:hover {
+            .items-table th:first-child {
+                border-radius: var(--border-radius-sm) 0 0 0;
+            }
+            
+            .items-table th:last-child {
+                border-radius: 0 var(--border-radius-sm) 0 0;
+                text-align: right;
+            }
+            
+            .items-table tbody tr:nth-child(even) {
                 background-color: var(--neutral-50);
             }
-
-            .table-row:last-child {
+            
+            .items-table td {
+                padding: 8px;
+                border-bottom: 1px solid var(--neutral-200);
+                font-size: 13px;
+            }
+            
+            .items-table td:last-child {
+                text-align: right;
+            }
+            
+            .items-table tfoot td {
+                padding: 12px;
+                font-weight: 700;
+                border-top: 2px solid var(--primary-color);
+            }
+            
+            .items-table tfoot td:last-child {
+                text-align: right;
+                color: var(--primary-dark);
+            }
+            
+            /* Sección impuestos y retenciones - Optimizado para espacio */
+            .invoice-taxes {
+                margin-bottom: 15px;
+                border: 1px solid var(--neutral-200);
+                border-radius: var(--border-radius);
+                overflow: hidden;
+            }
+            
+            .invoice-taxes h2 {
+                margin: 0;
+                padding: 8px 12px;
+                background: var(--secondary-color);
+                color: white;
+                font-size: 14px;
+                text-transform: uppercase;
+            }
+            
+            .taxes-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            
+            .taxes-table td {
+                padding: 6px 12px;
+                border-bottom: 1px solid var(--neutral-200);
+                font-size: 13px;
+            }
+            
+            .taxes-table tr:last-child td {
                 border-bottom: none;
             }
-
-            .table-cell {
-                padding: 0.5rem;   /* Reducido de 1rem */
-                flex: 1;
+            
+            .taxes-table td:last-child {
                 text-align: right;
-            }
-
-            .table-cell.label {
-                text-align: left;
-                font-weight: 500;
-                color: var(--neutral-700);
-                background-color: var (--neutral-50);
-                display: flex;
-                align-items: center;
+                font-weight: 600;
             }
             
-            .table-cell.label::before {
-                content: "•";
-                color: var(--primary-color);
-                font-size: 1.5rem;
-                margin-right: 0.5rem;
-                line-height: 0.5;
-            }
-
-            .table-summary {
-                margin-top: 1rem;
-                background-color: var(--primary-light);
+            /* Resumen Final - Optimizado para espacio */
+            .invoice-summary {
+                margin-bottom: 15px;
+                background: var(--primary-light);
+                padding: 10px;
                 border-radius: var(--border-radius);
-                padding: 1rem 1.25rem;
-                text-align: right;
-                font-weight: 700;
+            }
+            
+            .summary-title {
+                text-align: center;
                 color: var(--primary-dark);
+                font-size: 16px;
+                margin: 0 0 10px 0;
+                font-weight: 700;
+            }
+            
+            .summary-categories {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 0;
+            }
+            
+            .summary-category {
+                flex: 1;
+                padding: 8px;
+                margin: 0 5px;
+                background: white;
+                border-radius: var(--border-radius);
+                box-shadow: var(--box-shadow-sm);
+                text-align: center;
+            }
+            
+            .summary-category:first-child {
+                margin-left: 0;
+                border-top: 3px solid var(--export-color);
+            }
+            
+            .summary-category:nth-child(2) {
+                border-top: 3px solid var(--national-color);
+            }
+            
+            .summary-category:last-child {
+                margin-right: 0;
+                border-top: 3px solid var(--loss-color);
+            }
+            
+            .category-name {
+                font-weight: 600;
+                color: var(--neutral-700);
+                margin-bottom: 3px;
+                font-size: 13px;
+            }
+            
+            .category-value {
+                font-size: 16px;
+                font-weight: 700;
+                margin-bottom: 3px;
+            }
+            
+            .category-percent {
+                font-size: 12px;
+                color: var(--neutral-600);
+            }
+            
+            /* Total a pagar - Optimizado para espacio */
+            .invoice-total {
+                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+                color: white;
+                padding: 12px;
+                border-radius: var(--border-radius);
+                margin-bottom: 15px;
+            }
+            
+            .total-row {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                padding-bottom: 10px;
+                margin-bottom: 10px;
+                border-bottom: 1px solid rgba(255,255,255,0.2);
             }
             
-            .table-summary::before {
-                content: "Total:";
+            .total-label {
+                font-size: 18px;
                 font-weight: 600;
-                color: var(--primary-color);
             }
-
-            .summary-title {
-                color: var(--primary-dark);
-                font-size: 1.35rem;
-                text-align: center;
-                margin-bottom: 1.5rem;
+            
+            .total-value {
+                font-size: 24px;
                 font-weight: 700;
-                position: relative;
-                z-index: 1;
             }
             
-            .summary-title::before, .summary-title::after {
-                content: "—";
-                margin: 0 0.75rem;
-                color: var(--primary-color);
-                opacity: 0.7;
-            }
-
-            .summary-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 1.5rem;
-                position: relative;
-                z-index: 1;
-                background-color: rgba(255, 255, 255, 0.7);
-                border-radius: var(--border-radius);
-                overflow: hidden;
-                box-shadow: var(--box-shadow-sm);
-            }
-
-            .summary-table td {
-                padding: 0.75rem 0.5rem; /* Reducido de 1rem */
-                text-align: center;
-                font-weight: 500;
-                border: 1px solid rgba(0,0,0,0.05);
-            }
-            
-            .summary-table td:first-child {
-                text-align: left;
-                background-color: rgba(255,255,255,0.5);
-                font-weight: 600;
-                color: var(--primary-dark);
-            }
-            
-            .summary-table tr:last-child td {
-                font-weight: 700;
-                color: var(--primary-dark);
-                background-color: rgba(255,255,255,0.9);
-            }
-
             .total-words {
+                padding: 10px;
+                background: rgba(255,255,255,0.1);
+                border-radius: var(--border-radius-sm);
                 text-align: center;
                 font-style: italic;
-                font-size: 1rem;   /* Reducido de 1.125rem */
-                color: var(--primary-dark);
-                background: rgba(255, 255, 255, 0.8);
-                padding: 0.75rem;  /* Reducido de 1rem */
-                border-radius: var(--border-radius);
-                margin-top: 1.5rem;
-                box-shadow: var(--box-shadow-sm);
-                position: relative;
-                z-index: 1;
-                border: 1px solid rgba(0,0,0,0.05);
             }
-
-            .footer {
-                margin-top: 0;
+            
+            /* Pie de página - Optimizado para espacio */
+            .invoice-footer {
                 text-align: center;
                 color: var(--neutral-500);
-                font-size: 0.8rem; /* Reducido de 0.875rem */
-                background-color: var(--neutral-50);
-                padding: 1rem;     /* Reducido de 1.75rem */
+                font-size: 10px;
+                margin-top: 15px;
+                padding-top: 10px;
                 border-top: 1px solid var(--neutral-200);
             }
             
-            .footer p {
-                margin: 0.25rem 0;
+            /* Botones de acción */
+            .actions-bar {
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                margin: 30px 0;
             }
-
-            .print-btn {
-                padding: 0.875rem 1.5rem;
-                color: white;
+            
+            .action-btn {
+                padding: 10px 20px;
+                border-radius: 50px;
                 border: none;
-                border-radius: 50px;
-                cursor: pointer;
-                font-size: 1rem;
+                color: white;
                 font-weight: 600;
-                transition: var (--transition);
-                box-shadow: 0 4px 10px rgba(29, 112, 67, 0.25);
-                display: inline-flex;
+                cursor: pointer;
+                display: flex;
                 align-items: center;
-                gap: 0.625rem;
-                position: relative;
-                overflow: hidden;
-            }
-            
-            .print-btn::after {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(255,255,255,0.1);
-                opacity: 0;
+                gap: 8px;
                 transition: var(--transition);
+                box-shadow: var(--box-shadow-sm);
             }
-
-            .print-btn:hover {
+            
+            .export-btn {
+                background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            }
+            
+            .export-btn:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 6px 15px rgba(29, 112, 67, 0.35);
-            }
-            
-            .print-btn:hover::after {
-                opacity: 1;
-            }
-
-            .search-container {
-                max-width: 700px;
-                margin: 2rem auto;
-                padding: 2rem;
-                background-color: white;
                 box-shadow: var(--box-shadow);
+            }
+            
+            .go-back-btn {
+                background: var(--neutral-600);
+            }
+            
+            .go-back-btn:hover {
+                background: var(--neutral-700);
+            }
+            
+            /* Estilos para el formulario de búsqueda */
+            .search-container {
+                max-width: 600px;
+                margin: 30px auto;
+                padding: 25px;
+                background: white;
                 border-radius: var(--border-radius);
-                position: relative;
-                overflow: hidden;
+                box-shadow: var(--box-shadow);
             }
             
-            .search-container::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 6px;
-                height: 100%;
-                background-color: var(--primary-color);
-            }
-
             .search-title {
-                color: var(--neutral-800);
                 text-align: center;
-                margin-bottom: 1.75rem;
-                font-weight: 700;
-                font-size: 1.5rem;
-                position: relative;
-                display: inline-block;
-                padding-bottom: 0.5rem;
-                left: 50%;
-                transform: translateX(-50%);
+                color: var(--primary-color);
+                margin-bottom: 20px;
+                font-size: 20px;
             }
             
-            .search-title::after {
-                content: "";
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                width: 70%;
-                height: 3px;
-                background-color: var (--primary-color);
-                left: 50%;
-                transform: translateX(-50%);
-                border-radius: 50px;
-            }
-
             .search-form {
                 display: flex;
                 flex-direction: column;
-                gap: 1.5rem;
+                gap: 20px;
             }
-
+            
             .form-group {
-                margin-bottom: 0;
                 position: relative;
             }
             
             .form-group label {
                 display: block;
-                margin-bottom: 0.5rem;
+                margin-bottom: 8px;
                 font-weight: 500;
                 color: var(--neutral-700);
-                font-size: 0.95rem;
             }
             
             .form-group input {
                 width: 100%;
-                padding: 0.75rem 1rem;
+                padding: 10px 15px;
                 border: 1px solid var(--neutral-300);
                 border-radius: var(--border-radius);
-                font-size: 1rem;
+                font-size: 16px;
                 transition: var(--transition);
-                background-color: var(--neutral-50);
+                box-sizing: border-box;
             }
             
             .form-group input:focus {
                 outline: none;
                 border-color: var(--primary-color);
-                box-shadow: 0 0 0 3px rgba(29, 112, 67, 0.15);
-                background-color: white;
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
             }
             
-            .form-group .search-icon {
-                position: absolute;
-                right: 1rem;
-                bottom: 0.75rem;
-                color: var(--primary-color);
-            }
-
             .search-btn {
-                padding: 0.875rem 1.5rem;
+                background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
                 color: white;
+                padding: 12px 20px;
                 border: none;
                 border-radius: 50px;
-                cursor: pointer;
-                font-size: 1rem;
                 font-weight: 600;
-                transition: var (--transition);
-                box-shadow: 0 4px 10px rgba(29, 112, 67, 0.2);
-                align-self: center;
-                width: auto;
-                min-width: 180px;
-                position: relative;
-                overflow: hidden;
-            }
-            
-            .search-btn::before {
-                content: "\F52A";  /* search icon */
-                font-family: "Bootstrap Icons";
-                margin-right: 0.5rem;
-                font-size: 1.1rem;
-                position: relative;
-                top: 1px;
-            }
-            
-            .search-btn::after {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(255,255,255,0.1);
-                opacity: 0;
-                transition: var (--transition);
-            }
-
-            .search-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 15px rgba(29, 112, 67, 0.3);
-            }
-
-            .search-btn:hover::after {
-                opacity: 1;
-            }
-
-            .no-results {
-                text-align: center;
-                padding: 3rem 0;
-                color: var(--neutral-600);
-            }
-
-            .no-results i {
-                font-size: 3rem;
-                color: var(--neutral-400);
-                margin-bottom: 1.25rem;
-                display: block;
-            }
-
-            .no-results h3 {
-                font-weight: 600;
-                margin-bottom: 0.75rem;
-                color: var(--neutral-700);
-            }
-
-            .no-results p {
-                color: var(--neutral-500);
-            }
-
-            .ui-autocomplete {
-                background-color: white;
-                border-radius: 0 0 var(--border-radius) var(--border-radius);
-                box-shadow: var(--box-shadow);
-                border: 1px solid var(--neutral-200);
-                border-top: none;
-                max-height: 250px;
-                overflow-y: auto;
-            }
-
-            .ui-menu-item {
-                padding: 0.5rem 1rem;
                 cursor: pointer;
                 transition: var(--transition);
+                margin-top: 10px;
             }
-
-            .ui-menu-item:hover, .ui-state-active {
-                background-color: var(--primary-light);
-                color: var(--primary-dark);
+            
+            .search-btn:hover {
+                box-shadow: var(--box-shadow);
+                transform: translateY(-2px);
             }
-
-            /* Loading animation */
+            
             .loader {
                 display: none;
-                width: 24px;
-                height: 24px;
-                border: 3px solid var(--primary-light);
-                border-radius: 50%;
-                border-top: 3px solid var(--primary-color);
-                animation: spin 1s linear infinite;
                 position: absolute;
-                right: 2rem;
+                right: 15px;
                 top: 50%;
                 transform: translateY(-50%);
+                width: 20px;
+                height: 20px;
+                border: 3px solid var(--neutral-200);
+                border-top-color: var(--primary-color);
+                border-radius: 50%;
+                animation: spin 0.8s infinite linear;
             }
-
+            
             @keyframes spin {
                 0% { transform: translateY(-50%) rotate(0deg); }
                 100% { transform: translateY(-50%) rotate(360deg); }
             }
-
+            
             /* Toast notification */
             .toast {
                 position: fixed;
-                bottom: 2rem;
-                right: 2rem;
-                background-color: white;
+                bottom: 30px;
+                right: 30px;
+                background: white;
                 border-radius: var(--border-radius);
-                box-shadow: var(--box-shadow-lg);
-                padding: 1rem 1.5rem;
-                display: flex; /* Siempre usar flex para el layout */
+                box-shadow: var(--box-shadow);
+                padding: 15px 20px;
+                display: flex;
                 align-items: center;
-                gap: 0.75rem;
-                transform: translateY(150%); /* Inicialmente fuera de la pantalla */
-                transition: transform 0.3s ease, opacity 0.3s ease;
+                gap: 12px;
+                transform: translateY(150%);
+                transition: var(--transition);
                 z-index: 1000;
-                max-width: 350px;
                 opacity: 0;
-                pointer-events: none; /* No intercepta clics cuando está oculto */
             }
-
+            
             .toast.show {
-                transform: translateY(0); /* Mueve a la posición visible */
+                transform: translateY(0);
                 opacity: 1;
-                pointer-events: auto; /* Permite interacciones cuando es visible */
             }
-
+            
             .toast.success {
                 border-left: 4px solid var(--success-color);
             }
-
+            
             .toast.error {
                 border-left: 4px solid var(--danger-color);
             }
-
+            
             .toast-icon {
-                font-size: 1.25rem;
+                font-size: 20px;
             }
-
-            .toast.success .toast-icon {
-                color: var(--success-color);
-            }
-
-            .toast.error .toast-icon {
-                color: var(--danger-color);
-            }
-
+            
             .toast-content {
                 flex: 1;
             }
-
+            
             .toast-title {
                 font-weight: 600;
-                font-size: 0.95rem;
-                margin-bottom: 0.25rem;
+                font-size: 16px;
+                margin-bottom: 4px;
             }
-
+            
             .toast-message {
-                font-size: 0.875rem;
                 color: var(--neutral-600);
+                font-size: 14px;
             }
-
-            .toast-close {
-                color: var(--neutral-500);
-                background: none;
-                border: none;
-                cursor: pointer;
-                font-size: 1.25rem;
-                padding: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+            
+            /* Media queries para responsive */
+            @media (max-width: 768px) {
+                .invoice-page {
+                    padding: 10mm;
+                }
+                
+                .invoice-header {
+                    flex-direction: column;
+                    text-align: center;
+                }
+                
+                .invoice-logo {
+                    margin: 0 auto 15px;
+                }
+                
+                .invoice-company {
+                    text-align: center;
+                }
+                
+                .invoice-info {
+                    flex-direction: column;
+                    gap: 15px;
+                }
+                
+                .summary-categories {
+                    flex-direction: column;
+                    gap: 10px;
+                }
+                
+                .summary-category {
+                    margin: 0;
+                }
+                
+                .actions-bar {
+                    flex-direction: column;
+                }
             }
-
+            
+            /* Ocultar elementos en la exportación PDF */
             @media print {
-                .no-print, .no-print * {
+                .no-print {
                     display: none !important;
                 }
-
-                .no-imprimir {
-                    display: none;
-                }
-
+                
                 body {
-                    background-color: white;
-                }
-
-                .reporte-container {
-                    box-shadow: none;
+                    background: white;
                     margin: 0;
-                    width: 100%;
-                    max-width: none;
+                    padding: 0;
                 }
-
-                .reporte-header {
-                    background: var(--primary-color) !important;
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
-                }
-
-                .module {
-                    break-inside: avoid;
+                
+                .page-container {
                     box-shadow: none;
-                    transform: none !important;
-                }
-
-                .module::before {
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
-                }
-
-                .summary-section {
-                    background: var(--primary-light) !important;
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
-                }
-
-                .table-header {
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
-                    color: white !important;
-                }
-
-                .table-cell.label::before,
-                .module-title::before {
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
-                }
-            }
-
-            @media (max-width: 768px) {
-                .reporte-header {
-                    padding: 2rem;
-                    flex-direction: column;
-                    text-align: center;
-                    gap: 1.5rem;
-                }
-
-                .logo img {
-                    height: 150px;
-                    margin-left: 0;
-                }
-
-                .report-title {
-                    text-align: center;
-                    margin-right: 0;
-                }
-
-                .report-title h1 {
-                    font-size: 2rem;
-                    margin-bottom: 0.75rem;
-                }
-
-                .report-title p {
-                    font-size: 1.1rem;
-                }
-
-                .report-data-header {
-                    grid-template-columns: 1fr;
-                    gap: 0.5rem;
-                }
-
-                .report-data-header-cell {
-                    border-right: none;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-                    padding: 0.75rem;
-                }
-
-                .report-data-header-cell:last-child {
-                    border-bottom: none;
-                }
-
-                .dual-table {
-                    grid-template-columns: 1fr;
-                }
-
-                .reporte-content, .search-container {
-                    padding: 1.5rem;
-                }
-
-                .module {
-                    padding: 1.25rem;
-                }
-
-                .reporte-header {
-                    padding: 1.75rem;
-                    flex-direction: column;
-                    text-align: center;
-                    gap: 1rem;
-                }
-
-                .report-title {
-                    text-align: center;
-                }
-
-                .summary-table td {
-                    padding: 0.75rem 0.5rem;
-                    font-size: 0.875rem;
-                }
-
-                .toast {
-                    left: 1rem;
-                    right: 1rem;
-                    bottom: 1rem;
                     max-width: none;
+                    margin: 0;
+                    padding: 0;
                 }
-            }
-
-            /* Optimized Supplier Data Module */
-            .supplier-data-module {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.5rem;       /* Reducido de 1rem */
-                padding: 0.75rem;  /* Reducido de 1.25rem */
-            }
-
-            .supplier-data-item {
-                flex: 1;
-                min-width: 150px;  /* Reducido de 200px */
-                display: flex;
-                align-items: center;
-            }
-
-            .supplier-data-label {
-                font-weight: 500;
-                color: var(--neutral-600);
-                margin-right: 0.5rem;
-                white-space: nowrap;
-            }
-
-            .supplier-data-value {
-                font-weight: 600;
-                color: var(--neutral-800);
-                padding: 0.5rem 0.75rem;
-                background-color: var(--neutral-50);
-                border-left: 3px solid var(--primary-light);
-                border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
-                flex: 1;
-            }
-
-            .chart-segment {
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-weight: 600;
-                font-size: 0.85rem;
-                transition: var(--transition);
-                position: relative;
-                min-width: 40px;
-            }
-
-            .chart-segment:hover {
-                filter: brightness(1.1);
-            }
-
-            .chart-segment.export {
-                background-color: var(--export-color);
-            }
-
-            .chart-segment.national {
-                background-color: var(--national-color);
-            }
-
-            .chart-segment.loss {
-                background-color: var(--loss-color);
-            }
-
-            .chart-tooltip {
-                position: absolute;
-                bottom: 100%;
-                left: 50%;
-                transform: translateX(-50%);
-                background-color: var(--neutral-800);
-                color: white;
-                padding: 0.5rem 0.75rem;
-                border-radius: var(--border-radius-sm);
-                font-size: 0.75rem;
-                opacity: 0;
-                visibility: hidden;
-                transition: var (--transition);
-                white-space: nowrap;
-                margin-bottom: 8px;
-                z-index: 10;
-                box-shadow: var(--box-shadow);
-            }
-
-            .chart-tooltip::after {
-                content: '';
-                position: absolute;
-                top: 100%;
-                left: 50%;
-                transform: translateX(-50%);
-                border-width: 6px;
-                border-style: solid;
-                border-color: var(--neutral-800) transparent transparent transparent;
-            }
-
-            .chart-segment:hover .chart-tooltip {
-                opacity: 1;
-                visibility: visible;
-            }
-
-            .summary-breakdown {
-                display: flex;
-                gap: 0.75rem;     /* Reducido de 1rem */
-                margin-bottom: 1rem; /* Reducido de 1.5rem */
-                flex-wrap: wrap;
-            }
-
-            .breakdown-card {
-                flex: 1;
-                min-width: 140px; /* Reducido de 170px */
-                padding: 0.75rem; /* Reducido de 1rem */
-                border-radius: var(--border-radius);
-                display: flex;
-                flex-direction: column;
-                background-color: white;
-                box-shadow: var(--box-shadow-sm);
-                position: relative;
-                overflow: hidden;
-                border: 1px solid rgba(0,0,0,0.05);
-            }
-
-            .breakdown-card::after {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 4px;
-                height: 100%;
-            }
-
-            .breakdown-card.export::after {
-                background-color: var(--export-color);
-            }
-
-            .breakdown-card.national::after {
-                background-color: var(--national-color);
-            }
-
-            .breakdown-card.loss::after {
-                background-color: var(--loss-color);
-            }
-
-            .breakdown-title {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                font-weight: 600;
-                font-size: 0.9rem;
-                margin-bottom: 0.75rem;
-                padding-bottom: 0.5rem;
-                border-bottom: 1px dashed var(--neutral-200);
-            }
-
-            .breakdown-title i {
-                font-size: 1rem;
-            }
-
-            .breakdown-title.export {
-                color: var(--export-color);
-            }
-
-            .breakdown-title.national {
-                color: var(--national-color);
-            }
-
-            .breakdown-title.loss {
-                color: var(--loss-color);
-            }
-
-            .breakdown-amount {
-                font-size: 1.2rem;
-                font-weight: 700;
-                margin-bottom: 0.4rem;
-            }
-
-            .breakdown-percent {
-                font-size: 0.9rem;
-                color: var(--neutral-600);
-            }
-
-            .breakdown-price {
-                margin-top: auto;
-                padding-top: 0.5rem;
-                border-top: 1px dashed var(--neutral-200);
-                font-size: 0.85rem;
-                color: var (--neutral-700);
-                display: flex;
-                justify-content: space-between;
-            }
-
-            .breakdown-price-value {
-                font-weight: 600;
-            }
-
-            .final-payment-section {
-                margin-top: 1rem;  /* Reducido de 2rem */
-                padding: 1rem;     /* Reducido de 1.5rem */
-                border-radius: var(--border-radius);
-                color: white;
-                box-shadow: var(--box-shadow);
-            }
-
-            .final-payment-amount {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 0.75rem; /* Reducido de 1rem */
-                padding-bottom: 0.75rem; /* Reducido de 1rem */
-                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            }
-
-            .final-payment-label {
-                font-size: 1.1rem; /* Reducido de 1.25rem */
-                font-weight: 600;
-            }
-
-            .final-payment-value {
-                font-size: 1.5rem; /* Reducido de 1.75rem */
-                font-weight: 700;
-            }
-
-            .total-words {
-                text-align: center;
-                font-style: italic;
-                font-size: 1rem;   /* Reducido de 1.125rem */
-                color: white;
-                background: rgba(255, 255, 255, 0.1);
-                padding: 0.75rem;  /* Reducido de 1rem */
-                border-radius: var(--border-radius);
-                margin-top: 0;
-                border: 1px solid rgba(255, 255, 255, 0.2);
+                
+                .invoice-page {
+                    width: 100%;
+                    min-height: auto;
+                    padding: 0;
+                    margin: 0;
+                }
             }
         </style>
     </head>
     <body>
     
-    <!-- Toast notification system - Sin display:none -->
+    <!-- Toast notification system -->
     <div id="toastNotification" class="toast" role="alert" aria-live="polite" aria-atomic="true">
         <div class="toast-icon">
             <span>✔️</span>
@@ -1230,7 +639,7 @@
         </button>
     </div>
     
-    <!-- Formulario de búsqueda - Se oculta al imprimir -->
+    <!-- Formulario de búsqueda - No se incluirá en el PDF -->
     <div class="search-container no-print">
         <h2 class="search-title">Buscar Reporte Individual por Número de Guía</h2>
         <form method="get" class="search-form" id="searchForm">
@@ -1238,291 +647,282 @@
                 <label for="{{ form.numero_guia.id_for_label }}">{{ form.numero_guia.label }}</label>
                 {{ form.numero_guia }}
                 <div class="loader" id="searchLoader"></div>
-                <span class="search-icon">🔍</span>
             </div>
             <button type="submit" class="search-btn">Buscar Reporte</button>
         </form>
     </div>
 
     {% if reporte_proveedor %}
-    <!-- Contenido del reporte si se encuentra -->
-    <div class="reporte-container">
-        <!-- Header modernizado -->
-        <div class="reporte-header">
-            <div class="logo">
-                <img src="{% static 'img/heavens3.png' %}" alt="Logo Heavens">
-            </div>
-            <div class="report-title">
-                <h1>Heaven's Fruits SAS</h1>
-                <p>Reporte De Ingreso Fruta</p>
-            </div>
-        </div>
-
-        <div class="reporte-content">
-            <!-- Ubicación, fecha y número de reporte -->
-            <div class="report-info-container">
-                <div class="report-location-date">
-                    Bogotá {{ today }}
-                </div>
-                <div class="report-number">
-                    Reporte # {{ reporte_proveedor.pk }}
-                </div>
-            </div>
-            
-            <!-- Módulo 1: Datos Proveedor - Optimizado -->
-            <div class="module">
-                <h2 class="module-title person">Datos Proveedor</h2>
-                <div class="supplier-data-module">
-                    <div class="supplier-data-item">
-                        <span class="supplier-data-label">Proveedor:</span>
-                        <span class="supplier-data-value">{{ proveedor.nombre }}</span>
-                    </div>
-                    <div class="supplier-data-item">
-                        <span class="supplier-data-label">Nit:</span>
-                        <span class="supplier-data-value">{{ proveedor.nit }}</span>
-                    </div>
-                    <div class="supplier-data-item">
-                        <span class="supplier-data-label">Ciudad:</span>
-                        <span class="supplier-data-value">{{ proveedor.ciudad }}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Módulo 2: Datos Del Ingreso -->
-            <div class="module">
-                <h2 class="module-title">Datos Del Ingreso</h2>
-                <div class="dual-table">
-                    <table class="data-table">
-                        <tr>
-                            <td class="label">Fecha de ingreso:</td>
-                            <td class="value">{{ venta.fecha_llegada|date:"d/m/Y" }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Número de guía:</td>
-                            <td class="value">{{ compra.numero_guia }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Fruta:</td>
-                            <td class="value">{{ compra.fruta }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Cantidad Empaque:</td>
-                            <td class="value">{{ venta.cantidad_empaque_recibida }}</td>
-                        </tr>
-                    </table>
-                    <table class="data-table">
-                        <tr>
-                            <td class="label">Peso bruto:</td>
-                            <td class="value">{{ venta.peso_bruto_recibido|format_number }} Kg</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Peso neto:</td>
-                            <td class="value">{{ venta.peso_neto_recibido|format_number }} Kg</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Tipo de empaque:</td>
-                            <td class="value">{{ compra.tipo_empaque }}</td>
-                        </tr>
-                        <tr>
-                            <td class="label">Número de remisión proveedor:</td>
-                            <td class="value">{{ compra.remision }}</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Módulo 3: Datos Del Reporte -->
-            <div class="module">
-                <h2 class="module-title">Datos Del Reporte</h2>
-                
-                <div class="report-data-header">
-                    <div class="report-data-header-cell">Detalles</div>
-                    <div class="report-data-header-cell">Distribución</div>
-                    <div class="report-data-header-cell">Precio</div>
-                    <div class="report-data-header-cell">Total</div>
-                </div>
-                
-                <!-- Fila de exportación -->
-                <div class="table-row">
-                    <div class="table-cell label">Kg Exportación:</div>
-                    <div class="table-cell">{{ reporte_proveedor.p_kg_exportacion|format_number }} Kg ({{ reporte_proveedor.p_porcentaje_exportacion|floatformat:2 }}%)</div>
-                    <div class="table-cell">{{ reporte_proveedor.p_precio_kg_exp|format_currency }}</div>
-                    <div class="table-cell highlight">{{ reporte_proveedor.p_kg_exportacion|multiply:reporte_proveedor.p_precio_kg_exp|format_currency }}</div>
-                </div>
-                
-                <!-- Fila de nacional -->
-                <div class="table-row">
-                    <div class="table-cell label">Kg Nacional:</div>
-                    <div class="table-cell">{{ reporte_proveedor.p_kg_nacional|format_number }} Kg ({{ reporte_proveedor.p_porcentaje_nacional|floatformat:2 }}%)</div>
-                    <div class="table-cell">{{ reporte_proveedor.p_precio_kg_nal|format_currency }}</div>
-                    <div class="table-cell highlight">{{ reporte_proveedor.p_kg_nacional|multiply:reporte_proveedor.p_precio_kg_nal|format_currency }}</div>
-                </div>
-                
-                <!-- Fila de merma -->
-                <div class="table-row">
-                    <div class="table-cell label">Kg Merma:</div>
-                    <div class="table-cell">{{ reporte_proveedor.p_kg_merma|format_number }} Kg ({{ reporte_proveedor.p_porcentaje_merma|floatformat:2 }}%)</div>
-                    <div class="table-cell">$0.00</div>
-                    <div class="table-cell highlight">$0.00</div>
-                </div>
-                
-                <!-- Fila de totales -->
-                <div class="table-row">
-                    <div class="table-cell label">Kg Totales:</div>
-                    <div class="table-cell">{{ reporte_proveedor.p_kg_totales|format_number }} Kg (100.00%)</div>
-                    <div class="table-cell"></div>
-                    <div class="table-cell highlight">{{ reporte_proveedor.p_total_facturar|format_currency }}</div>
-                </div>
-                
-                <!-- Fila del total a facturar -->
-                <div class="table-summary">
-                    Total a Facturar proveedor: {{ reporte_proveedor.p_total_facturar|format_currency }}
-                </div>
-            </div>
-            
-            <!-- Módulo 4: Impuestos y retenciones -->
-            <div class="module">
-                <h2 class="module-title">Impuestos y retenciones</h2>
-                <table class="data-table">
-                    <tr>
-                        <td class="label">Asohofrucol:</td>
-                        <td>(1%)</td>
-                        <td class="value">{{ reporte_proveedor.asohofrucol|format_currency }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Retefuente:</td>
-                        <td>(1,50%)</td>
-                        <td class="value">{{ reporte_proveedor.rte_fte|format_currency }}</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Reteica:</td>
-                        <td>(4,14/1000)</td>
-                        <td class="value">{{ reporte_proveedor.rte_ica|format_currency }}</td>
-                    </tr>
-                </table>
-                
-                <!-- Total de impuestos -->
-                <div class="table-summary">
-                    {% with total_impuestos=reporte_proveedor.asohofrucol|add:reporte_proveedor.rte_fte|add:reporte_proveedor.rte_ica %}
-                    Total Impuestos: {{ total_impuestos|format_currency }}
-                    {% endwith %}
-                </div>
-            </div>
-            
-            <!-- Módulo 5: Resumen Final Mejorado -->
-            <div class="summary-section">
-                <h2 class="summary-title">Resumen Final</h2>
-                
-                <!-- Desglose detallado por categoría -->
-                <div class="summary-breakdown">
-                    <div class="breakdown-card export">
-                        <div class="breakdown-title export">
-                            <i class="bi bi-box-seam"></i>
-                            Exportación
-                        </div>
-                        <div class="breakdown-amount">
-                            {{ reporte_proveedor.p_kg_exportacion|format_number }} Kg
-                        </div>
-                        <div class="breakdown-percent">
-                            {{ reporte_proveedor.p_porcentaje_exportacion|floatformat:2 }}% del total
-                        </div>
-                        <div class="breakdown-price">
-                            <span>Precio/kg:</span>
-                            <span class="breakdown-price-value">{{ reporte_proveedor.p_precio_kg_exp|format_currency }}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="breakdown-card national">
-                        <div class="breakdown-title national">
-                            <i class="bi bi-basket"></i>
-                            Nacional
-                        </div>
-                        <div class="breakdown-amount">
-                            {{ reporte_proveedor.p_kg_nacional|format_number }} Kg
-                        </div>
-                        <div class="breakdown-percent">
-                            {{ reporte_proveedor.p_porcentaje_nacional|floatformat:2 }}% del total
-                        </div>
-                        <div class="breakdown-price">
-                            <span>Precio/kg:</span>
-                            <span class="breakdown-price-value">{{ reporte_proveedor.p_precio_kg_nal|format_currency }}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="breakdown-card loss">
-                        <div class="breakdown-title loss">
-                            <i class="bi bi-trash"></i>
-                            Merma
-                        </div>
-                        <div class="breakdown-amount">
-                            {{ reporte_proveedor.p_kg_merma|format_number }} Kg
-                        </div>
-                        <div class="breakdown-percent">
-                            {{ reporte_proveedor.p_porcentaje_merma|floatformat:2 }}% del total
-                        </div>
-                        <div class="breakdown-price">
-                            <span>Precio/kg:</span>
-                            <span class="breakdown-price-value">$0.00</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <table class="summary-table">
-                    <tr>
-                        <td>Total Facturar:</td>
-                        <td>{{ reporte_proveedor.p_total_facturar|format_currency }}</td>
-                        <td>Total Impuestos:</td>
-                        <td>{% with total_impuestos=reporte_proveedor.asohofrucol|add:reporte_proveedor.rte_fte|add:reporte_proveedor.rte_ica %}
-                            {{ total_impuestos|format_currency }}
-                            {% endwith %}</td>
-                    </tr>
-                </table>
-
-                <!-- Nueva sección separada para el total a pagar -->
-                <div class="final-payment-section">
-                    <div class="final-payment-amount">
-                        <span class="final-payment-label">Total a pagar:</span>
-                        <span class="final-payment-value">{{ reporte_proveedor.p_total_pagar|format_currency }}</span>
-                    </div>
-                    <div class="total-words">
-                        Son: {{ reporte_proveedor.p_total_pagar|numero_a_letras|capfirst }}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>Este reporte fue generado automáticamente por el sistema de Heaven's Fruits SAS.</p>
-            <p>© {% now "Y" %} - Heaven's Fruits SAS - Todos los derechos reservados</p>
-        </div>
-
-        <!-- Print Button - Only visible on screen -->
-        <div class="no-print print-button">
-            <button onclick="window.print()" class="print-btn">
-                <span style="font-size: 18px;">🖨️</span> Imprimir Reporte
+    <!-- Contenedor principal para el diseño tipo factura -->
+    <div class="page-container no-print">
+        <div class="actions-bar no-print">
+            <button id="exportPdfBtn" class="action-btn export-btn">
+                <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
             </button>
+            <button onclick="window.history.back()" class="action-btn go-back-btn">
+                <i class="bi bi-arrow-left"></i> Volver
+            </button>
+        </div>
+        
+        <!-- Este div se exportará a PDF -->
+        <div id="invoice" class="invoice-page">
+            <!-- Cabecera de la factura -->
+            <div class="invoice-header">
+                <div class="invoice-logo">
+                    <img src="{% static 'img/heavens3.png' %}" alt="Logo Heaven's Fruits">
+                </div>
+                <div class="invoice-company">
+                    <h1>Heaven's Fruits SAS</h1>
+                    <p>Reporte De Ingreso Fruta</p>
+                    <p>NIT: 900468802-4</p>
+                </div>
+            </div>
+            
+            <!-- Información del Documento -->
+            <div class="invoice-info">
+                <div class="invoice-info-block">
+                    <h2>Información del Documento</h2>
+                    <p>Fecha: <strong>{{ today }}</strong></p>
+                    <p>Ciudad: <strong>Bogotá</strong></p>
+                </div>
+                <div class="invoice-info-block">
+                    <h2>Reporte</h2>
+                    <p class="invoice-num">Nº {{ reporte_proveedor.pk }}</p>
+                    <p>Número de guía: <strong>{{ compra.numero_guia }}</strong></p>
+                </div>
+            </div>
+            
+            <!-- Datos del Proveedor -->
+            <div class="invoice-client">
+                <h2>Datos del Proveedor</h2>
+                <div class="client-details">
+                    <div class="client-detail">
+                        <span class="detail-label">Nombre:</span>
+                        <span>{{ proveedor.nombre }}</span>
+                    </div>
+                    <div class="client-detail">
+                        <span class="detail-label">NIT:</span>
+                        <span>{{ proveedor.nit }}</span>
+                    </div>
+                    <div class="client-detail">
+                        <span class="detail-label">Ciudad:</span>
+                        <span>{{ proveedor.ciudad }}</span>
+                    </div>
+                    <div class="client-detail">
+                        <span class="detail-label">Fecha de ingreso:</span>
+                        <span>{{ venta.fecha_llegada|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detalles del Ingreso -->
+            <div class="invoice-items">
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Detalle</th>
+                            <th>Fruta: {{ compra.fruta }}</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unit.</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Kg Exportación</td>
+                            <td>{{ reporte_proveedor.p_porcentaje_exportacion|floatformat:2 }}%</td>
+                            <td>{{ reporte_proveedor.p_kg_exportacion|format_number }} Kg</td>
+                            <td>{{ reporte_proveedor.p_precio_kg_exp|format_currency }}</td>
+                            <td>{{ reporte_proveedor.p_kg_exportacion|multiply:reporte_proveedor.p_precio_kg_exp|format_currency }}</td>
+                        </tr>
+                        <tr>
+                            <td>Kg Nacional</td>
+                            <td>{{ reporte_proveedor.p_porcentaje_nacional|floatformat:2 }}%</td>
+                            <td>{{ reporte_proveedor.p_kg_nacional|format_number }} Kg</td>
+                            <td>{{ reporte_proveedor.p_precio_kg_nal|format_currency }}</td>
+                            <td>{{ reporte_proveedor.p_kg_nacional|multiply:reporte_proveedor.p_precio_kg_nal|format_currency }}</td>
+                        </tr>
+                        <tr>
+                            <td>Kg Merma</td>
+                            <td>{{ reporte_proveedor.p_porcentaje_merma|floatformat:2 }}%</td>
+                            <td>{{ reporte_proveedor.p_kg_merma|format_number }} Kg</td>
+                            <td>$0.00</td>
+                            <td>$0.00</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2">Kg Totales: {{ reporte_proveedor.p_kg_totales|format_number }} Kg</td>
+                            <td colspan="2">Total a Facturar:</td>
+                            <td>{{ reporte_proveedor.p_total_facturar|format_currency }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <!-- Sección de impuestos y retenciones -->
+            <div class="invoice-taxes">
+                <h2>Impuestos y Retenciones</h2>
+                <table class="taxes-table">
+                    <tr>
+                        <td>Asohofrucol (1%)</td>
+                        <td>{{ reporte_proveedor.asohofrucol|format_currency }}</td>
+                    </tr>
+                    <tr>
+                        <td>Retefuente (1,50%)</td>
+                        <td>{{ reporte_proveedor.rte_fte|format_currency }}</td>
+                    </tr>
+                    <tr>
+                        <td>Reteica (4,14/1000)</td>
+                        <td>{{ reporte_proveedor.rte_ica|format_currency }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Impuestos:</strong></td>
+                        <td>
+                            <strong>
+                                {% with total_impuestos=reporte_proveedor.asohofrucol|add:reporte_proveedor.rte_fte|add:reporte_proveedor.rte_ica %}
+                                {{ total_impuestos|format_currency }}
+                                {% endwith %}
+                            </strong>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- Resumen por categorías -->
+            <div class="invoice-summary">
+                <h2 class="summary-title">Resumen de Categorías</h2>
+                <div class="summary-categories">
+                    <div class="summary-category">
+                        <div class="category-name">Exportación</div>
+                        <div class="category-value">{{ reporte_proveedor.p_kg_exportacion|format_number }} Kg</div>
+                        <div class="category-percent">{{ reporte_proveedor.p_porcentaje_exportacion|floatformat:2 }}%</div>
+                    </div>
+                    <div class="summary-category">
+                        <div class="category-name">Nacional</div>
+                        <div class="category-value">{{ reporte_proveedor.p_kg_nacional|format_number }} Kg</div>
+                        <div class="category-percent">{{ reporte_proveedor.p_porcentaje_nacional|floatformat:2 }}%</div>
+                    </div>
+                    <div class="summary-category">
+                        <div class="category-name">Merma</div>
+                        <div class="category-value">{{ reporte_proveedor.p_kg_merma|format_number }} Kg</div>
+                        <div class="category-percent">{{ reporte_proveedor.p_porcentaje_merma|floatformat:2 }}%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Total a pagar -->
+            <div class="invoice-total">
+                <div class="total-row">
+                    <span class="total-label">Total a pagar:</span>
+                    <span class="total-value">{{ reporte_proveedor.p_total_pagar|format_currency }}</span>
+                </div>
+                <div class="total-words">
+                    Son: {{ reporte_proveedor.p_total_pagar|numero_a_letras|capfirst }}
+                </div>
+            </div>
+            
+            <!-- Pie de página -->
+            <div class="invoice-footer">
+                <p>© {% now "Y" %} Heaven's Fruits SAS. Todos los derechos reservados.</p>
+                <p>Este documento fue generado automáticamente y no requiere firma.</p>
+            </div>
         </div>
     </div>
     {% elif search_submitted %}
-    <!-- Mensaje de no se encontraron resultados -->
+    <!-- Mensaje cuando no se encuentran resultados -->
     <div class="search-container no-print">
         <div class="no-results">
             <i class="bi bi-search"></i>
-            <h3>No se encontró ningún reporte para la guía "{{ form.cleaned_data.numero_guia }}" o esta incompleta"</h3>
+            <h3>No se encontró ningún reporte para la guía "{{ form.cleaned_data.numero_guia }}" o está incompleta</h3>
             <p>Verifique el número de guía e intente nuevamente.</p>
         </div>
     </div>
     {% endif %}
 
-    <!-- Cargar jQuery UI al final del documento -->
+    <!-- Cargar jQuery, jQuery UI y html2pdf.js -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
+        // Configuración para html2pdf - Añadir ajuste automático de contenido
+        const pdfOptions = {
+            margin: [0, 0, 0, 0],
+            filename: 'reporte_{{ proveedor.nombre|default:"proveedor" }}_{{ compra.numero_guia|default:"" }}.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true,
+                letterRendering: true,
+                scrollY: 0,
+                windowWidth: document.documentElement.offsetWidth,
+                windowHeight: document.documentElement.offsetHeight
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait',
+                compress: true,
+                precision: 16,
+                hotfixes: ['px_scaling']
+            },
+            pagebreak: { mode: 'avoid-all' }
+        };
+
+        // Exportar a PDF con ajustes para asegurar que todo cabe en una página
+        document.getElementById('exportPdfBtn')?.addEventListener('click', function() {
+            // Mostrar notificación de inicio
+            showToast('Generando PDF', 'Por favor espere mientras se genera el documento...', 'success');
+            
+            // Crear una copia del elemento para manipularlo sin afectar el original
+            const invoiceElement = document.getElementById('invoice');
+            
+            // Preparar el documento antes de exportar
+            const elementClone = invoiceElement.cloneNode(true);
+            const tempDiv = document.createElement('div');
+            tempDiv.appendChild(elementClone);
+            tempDiv.style.width = '210mm';
+            tempDiv.style.padding = '0';
+            tempDiv.style.margin = '0';
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            
+            // Añadir estilos específicos para la exportación
+            const styleTag = document.createElement('style');
+            styleTag.textContent = `
+                @page { margin: 0; }
+                .invoice-page { padding: 7mm 12mm !important; }
+                .invoice-header { margin-bottom: 8px; padding-bottom: 8px; }
+                .invoice-info, .invoice-client, .invoice-items, .invoice-taxes, 
+                .invoice-summary, .invoice-total { margin-bottom: 10px; }
+                .items-table td, .items-table th, .taxes-table td { padding: 5px; font-size: 12px; }
+                .invoice-footer { margin-top: 5px; padding-top: 5px; font-size: 9px; }
+                .invoice-footer p { margin: 2px 0; }
+            `;
+            tempDiv.appendChild(styleTag);
+            document.body.appendChild(tempDiv);
+            
+            // Generar PDF
+            html2pdf()
+                .from(elementClone)
+                .set(pdfOptions)
+                .save()
+                .then(() => {
+                    document.body.removeChild(tempDiv);
+                    showToast('PDF generado', 'El documento se ha generado correctamente', 'success');
+                })
+                .catch(err => {
+                    document.body.removeChild(tempDiv);
+                    console.error('Error al generar PDF:', err);
+                    showToast('Error', 'Hubo un problema al generar el PDF. Intente nuevamente.', 'error');
+                });
+        });
+
         // Usar jQuery en modo no conflicto para evitar problemas con otras bibliotecas
         jQuery(function($) {
             // Verificar si jQuery UI está disponible
             if ($.fn.autocomplete) {
-                $("#id_numero_guia_search").autocomplete({
+                $("#id_numero_guia").autocomplete({
                     source: "{% url 'autocomplete_guia' %}",
                     minLength: 2,
                     select: function(event, ui) {
