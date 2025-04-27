@@ -939,7 +939,6 @@ def get_dashboard_comercial_data(request):
 
     # Métricas del periodo anterior
     if fruta_id:
-        # Si hay filtro de fruta, calculamos desde DetallePedido para el periodo anterior
         detalles_prev = DetallePedido.objects.filter(
             pedido__in=pedidos_periodo_anterior,
             fruta_id=fruta_id
@@ -985,7 +984,7 @@ def get_dashboard_comercial_data(request):
     # Calcular porcentajes de cambio
     def calcular_porcentaje(actual, anterior):
         if anterior == 0:
-            return 100 if actual > 0 else 0
+            return "N/A"
         return round(((actual - anterior) / anterior) * 100, 2)
 
     kilos_percent = calcular_porcentaje(total_kilos, kilos_prev)
