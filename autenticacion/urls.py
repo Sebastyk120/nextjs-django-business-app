@@ -4,6 +4,8 @@ from django.conf.urls import handler404
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
+from .views import LandingPageView
+from django.contrib.auth.decorators import login_required
 
 # Crear clases personalizadas para las vistas de restablecimiento de contraseña
 class CustomPasswordResetDoneView(auth_views.PasswordResetDoneView):
@@ -26,14 +28,18 @@ class CustomPasswordResetCompleteView(auth_views.PasswordResetCompleteView):
         return [self.template_name]
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path('', views.home, name='home'),
+    # Landing page (pública)
+    path('', LandingPageView.as_view(), name='landing_page'),
+    
+    # Rutas de autenticación
     path('login/', views.login1, name='login'),
     path('signup/', views.signup, name='signup'),
     path('logout/', views.salir, name='logout'),
-    path('migrate/', views.MigrateView.as_view(), name='migrate'),
     
-    # Rutas personalizadas para el restablecimiento de contraseña
+    # Home (protegido)
+    path('home/', login_required(views.home), name='home'),
+    
+    # Rutas de restablecimiento de contraseña
     path('reset_password/', 
         views.CustomPasswordResetView.as_view(
             template_name='registration/password_reset_form.html',
@@ -62,6 +68,7 @@ urlpatterns = [
         ), 
         name='password_reset_complete'),
     
+    # Rutas de administración
     path('backup/', views.backup_database, name='backup_database'),
     path('restore/', views.RestoreDataView.as_view(), name='restore_data'),
 ]

@@ -202,7 +202,6 @@ def reporte_individual_proveedor(request):
     venta = None
     compra = None
     proveedor = None
-    valor_promedio_kg = 0
     today = timezone.now().date()
     
     if form.is_valid():
@@ -228,10 +227,6 @@ def reporte_individual_proveedor(request):
                 
                 # Obtener el proveedor
                 proveedor = compra.proveedor
-                
-                # Calcular el valor promedio por kilogramo
-                if reporte_proveedor.p_kg_totales > 0:
-                    valor_promedio_kg = reporte_proveedor.p_total_pagar / reporte_proveedor.p_kg_totales
         
         except (CompraNacional.DoesNotExist, VentaNacional.DoesNotExist, 
                 ReporteCalidadExportador.DoesNotExist, ReporteCalidadProveedor.DoesNotExist):
@@ -245,7 +240,6 @@ def reporte_individual_proveedor(request):
         'venta': venta,
         'compra': compra,
         'proveedor': proveedor,
-        'valor_promedio_kg': valor_promedio_kg,
         'today': today,
         'total_en_letras': reporte_proveedor.p_total_pagar if reporte_proveedor else 0,
         'search_submitted': form.is_valid(),  # Indica si se ha enviado una búsqueda

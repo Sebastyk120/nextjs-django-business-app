@@ -1,8 +1,17 @@
 from django.contrib import admin
-from django.contrib import admin
 from django.shortcuts import render
 from django.urls import path, include
 from autenticacion import views as principal
+from django.conf import settings
+from django.conf.urls.static import static
+from autenticacion.views import LandingPageView
+from django.contrib.sitemaps.views import sitemap # Import sitemap view
+from autenticacion.sitemaps import StaticViewSitemap # Import your sitemap
+from django.views.generic.base import TemplateView # Import TemplateView
+
+sitemaps = {
+    'static': StaticViewSitemap,
+}
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -11,9 +20,14 @@ urlpatterns = [
     path('inventarios/', include('inventarios.urls')),
     path('cartera/', include('cartera.urls')),
     path('nacionales/', include('nacionales.urls')),
-    path('', principal.home, name='home_principal')
+    path('', LandingPageView.as_view(), name='landing_page'),
+    path('captcha/', include('captcha.urls')),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'), # Sitemap URL
+    path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")), # robots.txt URL
 ]
 
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 def custom_404(request, exception):
     return render(request, '404.html', status=404)

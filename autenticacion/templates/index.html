@@ -1,0 +1,390 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>Heavens Fruits SAS - Exportadores de Frutas Exóticas Colombianas</title>
+    <meta name="description" content="Exportamos las mejores frutas exóticas colombianas al mundo. Calidad premium, frescura garantizada y sostenibilidad. Descubre Gulupa, Pitahaya, Granadilla y más.">
+    <link rel="canonical" href="{{ request.build_absolute_uri }}" /> 
+    <meta name="keywords" content="frutas exóticas, exportación colombia, frutas colombianas, gulupa, pitahaya, granadilla, uchuva, maracuyá, heavens fruits, agricultura sostenible">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph Meta Tags (for Facebook, LinkedIn, etc.) -->
+    <meta property="og:title" content="Heavens Fruits SAS - Exportadores de Frutas Exóticas Colombianas" />
+    <meta property="og:description" content="Exportamos las mejores frutas exóticas colombianas al mundo. Calidad premium, frescura garantizada y sostenibilidad." />
+    <meta property="og:image" content="{% static 'img/heavens_social_preview.webp' %}" />
+    <meta property="og:url" content="{{ request.build_absolute_uri }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Heavens Fruits SAS" />
+    <meta property="og:locale" content="es_CO" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Heavens Fruits SAS - Exportadores de Frutas Exóticas Colombianas">
+    <meta name="twitter:description" content="Exportamos las mejores frutas exóticas colombianas al mundo. Calidad premium, frescura garantizada y sostenibilidad.">
+    <meta name="twitter:image" content="{% static 'img/heavens_social_preview.webp' %}">
+
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Montserrat:wght@700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Heavens Fruits SAS",
+      "url": "{{ request.build_absolute_uri }}",
+      "logo": "{% static 'img/heavens.webp' %}",
+      "description": "Exportadores de frutas exóticas colombianas de alta calidad, cultivadas de forma sostenible.",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Cra. 33 #12 - 61",
+        "addressLocality": "Bogotá",
+        "postalCode": "110311",
+        "addressCountry": "CO"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+57-320-274-4313",
+        "contactType": "Customer Service" 
+      },
+      "sameAs": [
+        "https://www.facebook.com/HeavensFruits/",
+        "https://www.linkedin.com/company/heavens-fruits/"
+      ]
+    }
+    </script>
+</head>
+<body>
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <a href="#inicio">
+                    <img src="{% static 'img/heavens.webp' %}" alt="Heavens Fruits SAS Logo">
+                </a>
+            </div>
+            <nav class="nav">
+                <ul>
+                    <li><a href="#inicio">Inicio</a></li>
+                    <li><a href="#productos">Productos</a></li>
+                    <li><a href="#nosotros">Nosotros</a></li>
+                    <li><a href="#servicios">Servicios</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                </ul>
+            </nav>
+            <div class="header-buttons">
+                <a href="{% url 'login' %}" class="login-button">Iniciar Sesión</a>
+                <a href="#contacto" class="cta-button">Cotiza tu Importación</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+<section id="inicio" class="hero">
+    <div class="hero-background">
+        <div class="hero-overlay"></div>
+        <div class="animated-shape shape1"></div>
+        <div class="animated-shape shape2"></div>
+        <div class="animated-shape shape3"></div>
+    </div>
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-text">
+                <!-- Título impactante (H1) -->
+                <h1 class="animated-heading"> 
+                    <span class="highlight">Colombia en tu Paladar</span> 
+                    <span class="text-gradient">Sabores Exóticos Inolvidables</span>
+                </h1>
+
+                <!-- Subtítulo informativo (H2) -->
+                <p class="eslogan-hero">Exportamos frescura, calidad y sostenibilidad desde Colombia</p>
+
+                <!-- Descripción concisa con valor añadido -->
+                <p class="animated-subheading">
+                    Descubre la riqueza natural de Colombia. Nuestras frutas exóticas están cultivadas con prácticas sostenibles y preparadas para llegar a tu mercado con la máxima frescura y estándares internacionales de calidad.
+                </p>
+
+                <!-- CTAs claros y jerárquicos -->
+                <div class="hero-buttons">
+                    <a href="#productos" class="cta-button primary pulse-animation">Ver Catálogo</a>
+                    <a href="#contacto" class="cta-button secondary">Solicita una Cotización</a>
+                </div>
+
+                <!-- Características clave (elementos de confianza) -->
+                <div class="hero-features">
+                    <div class="feature">
+                        <div class="feature-icon">
+                            <i class="fas fa-seedling"></i>
+                        </div>
+                        <span>Cultivo Orgánico</span>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">
+                            <i class="fas fa-shipping-fast"></i>
+                        </div>
+                        <span>Entrega Internacional</span>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        <span>Certificaciones Globales</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Imagen destacada con enfoque visual -->
+            <div class="hero-image">
+                <div class="image-container">
+                    <img src="{% static 'pagina/index_principal_11zon.jpg' %}" alt="Variedad de frutas exóticas colombianas listas para exportar">
+                </div>
+                <div class="colombia-shape"></div>
+                <div class="floating-element elem1"><i class="fas fa-star"></i></div>
+                <div class="floating-element elem2"><i class="fas fa-heart"></i></div>
+                <div class="floating-element elem3"><i class="fas fa-leaf"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicador de scroll con llamado a la acción -->
+    <div class="scroll-indicator">
+        <span>Explora nuestros productos</span>
+        <i class="fas fa-chevron-down"></i>
+    </div>
+</section>
+
+    <!-- Quote Section -->
+    <section class="quote-section">
+        <div class="container">
+            <div class="quote-content">
+                <i class="fas fa-quote-left"></i>
+                <blockquote>
+                    <p>Dentro de cada semilla está el potencial para una gran cosecha. Quien recibe agradecido recoge una cosecha abundante</p>
+                    <footer>— William Blake</footer>
+                </blockquote>
+                <i class="fas fa-quote-right"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- Productos -->
+    <section id="productos" class="productos">
+        <div class="container">
+            <h2><i class="fas fa-seedling"></i> Descubre Nuestra Selección Exótica</h2>
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="fruitSearch" placeholder="Buscar frutas...">
+                </div>
+            </div>
+            <div class="carousel-container">
+                <button class="carousel-button prev" aria-label="Anterior">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="productos-carousel">
+                    {% for fruta in frutas %}
+                    <div class="producto-card" data-fruta-id="{{ fruta.id }}" data-descripcion="{{ fruta.descripcion|default:'Descripción detallada de la fruta...' }}" data-category="{{ fruta.categoria|default:'all' }}">
+                        {% if fruta.imagen %}
+                        <div class="producto-imagen">
+                            <img src="{{ fruta.imagen.url }}" alt="{{ fruta.nombre }}">
+                        </div>
+                        {% endif %}
+                        <div class="producto-info">
+                            <h3>{{ fruta.nombre }}</h3>
+                            <button class="info-button">Ver Detalles</button>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="no-products">
+                        <p>Actualmente estamos actualizando nuestro catálogo. ¡Vuelve pronto!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button class="carousel-button next" aria-label="Siguiente">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal de Producto -->
+    <div class="product-modal" id="productModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="modal-body">
+                <div class="modal-image">
+                    <img src="" alt="" id="modalImage">
+                </div>
+                <div class="modal-info">
+                    <h2 id="modalTitle"></h2>
+                    <p id="modalDescription"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nosotros -->
+    <section id="nosotros" class="nosotros">
+        <div class="container">
+            <div class="nosotros-content">
+                <div class="texto">
+                    <h2>Conoce la Pasión que Impulsa Nuestra Fruta Colombiana: </h2>
+                    <p>En Heavens Fruits, nos dedicamos a llevar la esencia de Colombia al mundo a través de sus frutas exóticas. Nuestro compromiso se basa en la agricultura sostenible, la calidad excepcional y relaciones justas con nuestros agricultores.</p>
+                    <div class="valores">
+                        <div class="valor">
+                            <i class="fas fa-leaf"></i>
+                            <h3>Compromiso Sostenible</h3>
+                        </div>
+                        <div class="valor">
+                            <i class="fas fa-globe"></i>
+                            <h3>Conexión Global</h3>
+                        </div>
+                        <div class="valor">
+                            <i class="fas fa-star"></i>
+                            <h3>Excelencia Garantizada</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="imagen">
+                    <img src="{% static 'pagina/canasta_fruta.jpg' %}" alt="Equipo de Heavens Fruits trabajando en campo">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Servicios -->
+    <section id="servicios" class="servicios">
+        <div class="container">
+            <h2>Nuestros Servicios de Exportación</h2>
+            <div class="servicios-grid">
+                <div class="servicio-card">
+                    <i class="fas fa-plane-departure"></i>
+                    <h3>Logística Global Eficiente</h3>
+                    <p>Gestionamos soluciones aéreas eficientes para tus necesidades de transporte.</p>
+                </div>
+                <div class="servicio-card">
+                    <i class="fas fa-box-open"></i>
+                    <h3>Empaque Especializado</h3>
+                    <p>Soluciones de empaque que preservan la frescura y cumplen normativas internacionales.</p>
+                </div>
+                <div class="servicio-card">
+                    <i class="fas fa-clipboard-check"></i>
+                    <h3>Control de Calidad Riguroso</h3>
+                    <p>Inspección detallada desde la cosecha hasta el embarque para garantizar la máxima calidad.</p>
+                </div>
+                <div class="servicio-card">
+                    <i class="fas fa-hands-helping"></i>
+                    <h3>Asesoría Personalizada</h3>
+                    <p>Te acompañamos en cada paso del proceso de importación, adaptándonos a tus necesidades.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contacto -->
+    <section id="contacto" class="contacto">
+        <div class="container">
+            <h2>¿Listo para Importar? Hablemos</h2>
+            <div class="contacto-content">
+                <div class="contacto-form fade-in">
+                    <form action="{% url 'landing_page' %}" method="post">
+                        {% csrf_token %}
+                        <input type="text" name="name" placeholder="Tu Nombre" required>
+                        <input type="email" name="email" placeholder="Tu Email Corporativo" required>
+                        <input type="text" name="country" placeholder="País de Destino" required>
+                        <textarea name="message" placeholder="Tu Consulta (Volumen, frutas de interés, etc.)" required></textarea>
+                        <div class="captcha-group">
+                            <label for="id_captcha" class="captcha-label">Verificación de seguridad:</label>
+                            {{ form.captcha }}
+                            {% if form.captcha.errors %}
+                                <div class="errorlist">{{ form.captcha.errors }}</div>
+                            {% endif %}
+                            <small class="captcha-help">Escribe los caracteres que ves en la imagen</small>
+                        </div>
+                        <button type="submit" class="cta-button">Solicitar Información</button>
+                    </form>
+                </div>
+                <div class="contacto-info">
+                    <div class="info-card">
+                        <h3>Información de Contacto</h3>
+                        <div class="info-item">
+                            <i class="fas fa-envelope"></i>
+                            <p><a href="mailto:info@heavensfruits.com">info@heavensfruits.com</a></p>
+                        </div>
+                        <div class="info-item">
+                            <i class="fab fa-whatsapp"></i>
+                            <p><a href="https://wa.me/573001234567" target="_blank">+57 3202744313</a></p>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <p>Bogotá, Colombia</p>
+                        </div>
+                    </div>
+                    <div class="social-card">
+                        <h3>Síguenos</h3>
+                        <div class="social-links">
+                            <a href="https://www.facebook.com/HeavensFruits/" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                            <a href="https://www.linkedin.com/company/heavens-fruits/" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="{% static 'img/heavens.webp' %}" alt="Heavens Fruits SAS Logo Footer">
+                </div>
+                <div class="footer-links">
+                    <a href="#inicio">Inicio</a>
+                    <a href="#productos">Productos</a>
+                    <a href="#nosotros">Nosotros</a>
+                    <a href="#servicios">Servicios</a>
+                    <a href="#contacto">Contacto</a>
+                </div>
+                <div class="footer-social">
+                    <a href="https://www.facebook.com/HeavensFruits/" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.linkedin.com/company/heavens-fruits/" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; {% now "Y" %} Heavens Fruits SAS. Exportadores de Frutas Colombianas. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Button -->
+    <a href="https://wa.me/573202744313?text=Hola%2C%20estoy%20interesado%20en%20importar%20frutas%20colombianas." class="whatsapp-button" target="_blank" aria-label="Contactar por WhatsApp" data-tooltip="¡Háblanos por WhatsApp!">
+        <i class="fab fa-whatsapp"></i>
+        <span class="tooltip">¡Háblanos por WhatsApp!</span>
+    </a>
+
+    <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

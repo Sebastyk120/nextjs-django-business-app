@@ -1,13 +1,13 @@
 setuptools==76.0
 asgiref==3.8.1
 chardet==5.2.0
-crispy-bootstrap5==2024.10
+crispy-bootstrap5==2025.4
 defusedxml==0.7.1
 diff-match-patch==20241021
 distlib==0.3.9
 Django==5.2
 django-cors-headers==4.7.0
-django-crispy-forms==2.3
+django-crispy-forms==2.4
 django-extensions==3.2.3
 django-forms-bootstrap==3.1.0
 django-import-export==4.3.7
@@ -15,8 +15,9 @@ django-simple-history==3.8.0
 django-tables2==2.7.5
 django-widget-tweaks==1.5.0
 djangorestframework==3.14.0
+django-simple-captcha==0.6.2
 dj-database-url==2.3.0
-django-unfold==0.54.0
+django-unfold==0.55.3
 et-xmlfile==2.0.0
 filelock==3.16.1
 gunicorn==23.0.0

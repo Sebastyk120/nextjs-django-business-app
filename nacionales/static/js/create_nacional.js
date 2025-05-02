@@ -438,6 +438,111 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const reportprovForm = formContainer.querySelector('#reporteProveedorForm');
                 if (reportprovForm) {
+                    // Agregar validación en tiempo real para p_kg_merma
+                    const pKgTotalesInput = reportprovForm.querySelector('[name="p_kg_totales"]');
+                    const pKgExportacionInput = reportprovForm.querySelector('[name="p_kg_exportacion"]');
+                    const pKgNacionalInput = reportprovForm.querySelector('[name="p_kg_nacional"]');
+                    const pKgMermaInput = reportprovForm.querySelector('[name="p_kg_merma"]');
+                    
+                    // Obtener los valores del ReporteCalidadExportador
+                    const reporteExportadorKgExportacion = reportprovForm.querySelector('#reporte_exportador_kg_exportacion');
+                    const reporteExportadorKgNacional = reportprovForm.querySelector('#reporte_exportador_kg_nacional');
+
+                    const validateMerma = () => {
+                        if (!pKgTotalesInput) {
+                            console.warn('El campo p_kg_totales no fue encontrado');
+                            return;
+                        }
+
+                        const pKgTotales = parseFloat(pKgTotalesInput.value) || 0;
+                        
+                        // Si los campos están vacíos, usar los valores del ReporteCalidadExportador
+                        let pKgExportacion = 0;
+                        let pKgNacional = 0;
+                        
+                        // Si el campo está vacío y existe el valor del reporte exportador, usar ese
+                        if ((!pKgExportacionInput || !pKgExportacionInput.value) && reporteExportadorKgExportacion) {
+                            pKgExportacion = parseFloat(reporteExportadorKgExportacion.value) || 0;
+                        } else if (pKgExportacionInput) {
+                            pKgExportacion = parseFloat(pKgExportacionInput.value) || 0;
+                        }
+                        
+                        // Si el campo está vacío y existe el valor del reporte exportador, usar ese
+                        if ((!pKgNacionalInput || !pKgNacionalInput.value) && reporteExportadorKgNacional) {
+                            pKgNacional = parseFloat(reporteExportadorKgNacional.value) || 0;
+                        } else if (pKgNacionalInput) {
+                            pKgNacional = parseFloat(pKgNacionalInput.value) || 0;
+                        }
+                        
+                        const merma = pKgTotales - pKgExportacion - pKgNacional;
+                        
+                        // Mostrar advertencia en el campo de totales si la merma sería negativa
+                        if (merma < 0) {
+                            pKgTotalesInput.classList.add('is-invalid');
+                            let errorDiv = pKgTotalesInput.nextElementSibling;
+                            if (!errorDiv || !errorDiv.classList.contains('invalid-feedback')) {
+                                errorDiv = document.createElement('div');
+                                errorDiv.className = 'invalid-feedback';
+                                pKgTotalesInput.parentNode.appendChild(errorDiv);
+                            }
+                            errorDiv.textContent = `El total es insuficiente para la suma de exportación (${pKgExportacion}) y nacional (${pKgNacional}). La merma no puede ser negativa.`;
+                        } else {
+                            pKgTotalesInput.classList.remove('is-invalid');
+                            const errorDiv = pKgTotalesInput.nextElementSibling;
+                            if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                                errorDiv.remove();
+                            }
+                        }
+
+                        // Mostrar el valor calculado de merma
+                        if (pKgMermaInput) {
+                            pKgMermaInput.value = Math.max(0, merma).toFixed(2);
+                        }
+
+                        // Validaciones adicionales para cada campo
+                        if (pKgExportacionInput && pKgExportacion > pKgTotales) {
+                            pKgExportacionInput.classList.add('is-invalid');
+                            let errorDiv = pKgExportacionInput.nextElementSibling;
+                            if (!errorDiv || !errorDiv.classList.contains('invalid-feedback')) {
+                                errorDiv = document.createElement('div');
+                                errorDiv.className = 'invalid-feedback';
+                                pKgExportacionInput.parentNode.appendChild(errorDiv);
+                            }
+                            errorDiv.textContent = `El valor no puede ser mayor que el peso total (${pKgTotales})`;
+                        } else if (pKgExportacionInput) {
+                            pKgExportacionInput.classList.remove('is-invalid');
+                            const errorDiv = pKgExportacionInput.nextElementSibling;
+                            if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                                errorDiv.remove();
+                            }
+                        }
+
+                        if (pKgNacionalInput && pKgNacional > pKgTotales) {
+                            pKgNacionalInput.classList.add('is-invalid');
+                            let errorDiv = pKgNacionalInput.nextElementSibling;
+                            if (!errorDiv || !errorDiv.classList.contains('invalid-feedback')) {
+                                errorDiv = document.createElement('div');
+                                errorDiv.className = 'invalid-feedback';
+                                pKgNacionalInput.parentNode.appendChild(errorDiv);
+                            }
+                            errorDiv.textContent = `El valor no puede ser mayor que el peso total (${pKgTotales})`;
+                        } else if (pKgNacionalInput) {
+                            pKgNacionalInput.classList.remove('is-invalid');
+                            const errorDiv = pKgNacionalInput.nextElementSibling;
+                            if (errorDiv && errorDiv.classList.contains('invalid-feedback')) {
+                                errorDiv.remove();
+                            }
+                        }
+                    };
+
+                    // Agregar event listeners para validación en tiempo real
+                    if (pKgTotalesInput) pKgTotalesInput.addEventListener('input', validateMerma);
+                    if (pKgExportacionInput) pKgExportacionInput.addEventListener('input', validateMerma);
+                    if (pKgNacionalInput) pKgNacionalInput.addEventListener('input', validateMerma);
+
+                    // Validar inicialmente
+                    validateMerma();
+
                     reportprovForm.addEventListener('submit', function (e) {
                         e.preventDefault();
                         const formData = new FormData(reportprovForm);
@@ -467,27 +572,23 @@ document.addEventListener('DOMContentLoaded', function () {
                                         window.location.reload();
                                     });
                                 } else {
-                                    // Actualizar el formulario con errores
                                     modalBody.innerHTML = data.html;
                                     initializeForm(modalBody);
-
-                                    // Mostrar mensaje general PERO NO TAPAR EL FORMULARIO
                                     Swal.fire({
                                         icon: 'error',
                                         title: 'Error en el formulario',
                                         html: data.message,
-                                        toast: true,  // Convertir en notificación tipo toast
+                                        toast: true,
                                         position: 'top-end',
                                         showConfirmButton: false,
                                         timer: 3000
                                     });
-
                                     submitButton.disabled = false;
                                     submitButton.innerHTML = originalText;
                                 }
                             })
                             .catch(error => {
-                                console.error('Error:', error);
+                                console.error('Error al enviar el formulario:', error);
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Error',
@@ -1054,4 +1155,115 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
+
+    const initializeForm = (formContainer) => {
+        const form = formContainer.querySelector('form');
+        const pKgTotalesInput = form.querySelector('[name="p_kg_totales"]');
+        const pKgExportacionInput = form.querySelector('[name="p_kg_exportacion"]');
+        const pKgNacionalInput = form.querySelector('[name="p_kg_nacional"]');
+        const pesoNetoRecibido = parseFloat(form.querySelector('[name="peso_neto_recibido"]').value);
+
+        // Función para mostrar/ocultar mensajes de error
+        const showError = (input, message) => {
+            let errorDiv = input.parentElement.querySelector('.invalid-feedback');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                input.parentElement.appendChild(errorDiv);
+            }
+            errorDiv.textContent = message;
+            input.classList.add('is-invalid');
+        };
+
+        const hideError = (input) => {
+            const errorDiv = input.parentElement.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+            input.classList.remove('is-invalid');
+        };
+
+        // Función para calcular y actualizar los porcentajes
+        const updatePercentages = () => {
+            const pKgTotales = parseFloat(pKgTotalesInput.value) || pesoNetoRecibido;
+            const pKgExportacion = parseFloat(pKgExportacionInput.value) || 0;
+            const pKgNacional = parseFloat(pKgNacionalInput.value) || 0;
+
+            // Actualizar los campos de porcentaje
+            const pPorcentajeExportacion = form.querySelector('[name="p_porcentaje_exportacion"]');
+            const pPorcentajeNacional = form.querySelector('[name="p_porcentaje_nacional"]');
+            const pPorcentajeMerma = form.querySelector('[name="p_porcentaje_merma"]');
+
+            if (pKgTotales > 0) {
+                const porcentajeExportacion = (pKgExportacion / pKgTotales * 100).toFixed(2);
+                const porcentajeNacional = (pKgNacional / pKgTotales * 100).toFixed(2);
+                const porcentajeMerma = ((pKgTotales - pKgExportacion - pKgNacional) / pKgTotales * 100).toFixed(2);
+
+                if (pPorcentajeExportacion) pPorcentajeExportacion.value = porcentajeExportacion;
+                if (pPorcentajeNacional) pPorcentajeNacional.value = porcentajeNacional;
+                if (pPorcentajeMerma) pPorcentajeMerma.value = porcentajeMerma;
+            }
+        };
+
+        // Función para validar los kilos
+        const validateKilos = () => {
+            const pKgTotales = parseFloat(pKgTotalesInput.value) || pesoNetoRecibido;
+            const pKgExportacion = parseFloat(pKgExportacionInput.value) || 0;
+            const pKgNacional = parseFloat(pKgNacionalInput.value) || 0;
+
+            // Limpiar errores previos
+            hideError(pKgExportacionInput);
+            hideError(pKgNacionalInput);
+
+            // Determinar si p_kg_totales es diferente a peso_neto_recibido
+            const isDifferentTotal = pKgTotales !== pesoNetoRecibido;
+
+            // Solo mostrar errores si ambos campos tienen valores
+            if (pKgExportacionInput.value && pKgNacionalInput.value) {
+                // Validar que los kilos no excedan el total
+                if (pKgExportacion > pKgTotales) {
+                    showError(pKgExportacionInput, `El valor no puede ser mayor que el peso total (${pKgTotales})`);
+                }
+
+                if (pKgNacional > pKgTotales) {
+                    showError(pKgNacionalInput, `El valor no puede ser mayor que el peso total (${pKgTotales})`);
+                }
+
+                // Validar que la suma no exceda el total
+                if (pKgExportacion + pKgNacional > pKgTotales) {
+                    if (isDifferentTotal) {
+                        showError(pKgNacionalInput, `La suma de Kg exportación y Kg nacional no puede superar el peso total (${pKgTotales})`);
+                    } else {
+                        showError(pKgNacionalInput, `La suma de Kg exportación y Kg nacional no puede superar el peso neto recibido (${pesoNetoRecibido})`);
+                    }
+                }
+            }
+        };
+
+        // Event listeners para actualizar los cálculos
+        if (pKgTotalesInput) {
+            pKgTotalesInput.addEventListener('input', () => {
+                updatePercentages();
+                validateKilos();
+            });
+        }
+
+        if (pKgExportacionInput) {
+            pKgExportacionInput.addEventListener('input', () => {
+                updatePercentages();
+                validateKilos();
+            });
+        }
+
+        if (pKgNacionalInput) {
+            pKgNacionalInput.addEventListener('input', () => {
+                updatePercentages();
+                validateKilos();
+            });
+        }
+
+        // Inicializar los cálculos
+        updatePercentages();
+        validateKilos();
+    };
 });

@@ -19,6 +19,11 @@ from django.http import HttpResponse, FileResponse
 from django.shortcuts import render, redirect
 from django.utils.timezone import now
 from django.views import View
+from django.views.generic import TemplateView
+from django.core.mail import send_mail
+from django.conf import settings
+from captcha.fields import CaptchaField
+from django import forms
 
 
 # Create your views here.
@@ -50,7 +55,7 @@ class MigrateView(LoginRequiredMixin, UserPassesTestMixin, View):
 
 def home(request):
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect('landing_page')
     return render(request, 'home.html')
 
 
@@ -215,3 +220,84 @@ class RestoreDataView(View):
         except Exception as e:
             os.remove(temp_file_name)
             return HttpResponse(f'Error during data restoration: {e}', content_type='text/plain')
+
+
+class ContactForm(forms.Form):
+    name = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Tu Nombre',
+            'required': True
+        })
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            'placeholder': 'Tu Email Corporativo',
+            'required': True
+        })
+    )
+    country = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'País de Destino',
+            'required': True
+        })
+    )
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'placeholder': 'Tu Consulta (Volumen, frutas de interés, etc.)',
+            'required': True
+        })
+    )
+    captcha = CaptchaField(
+        error_messages={'invalid': 'Texto de verificación incorrecto, inténtalo de nuevo.'}
+    )
+
+class LandingPageView(TemplateView):
+    template_name = 'index.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Get all fruits from the database
+        from comercial.models import Fruta
+        context['frutas'] = Fruta.objects.all()
+        context['form'] = ContactForm()
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            # Send email
+            name = form.cleaned_data['name']
+            email = form.cleaned_data['email']
+            country = form.cleaned_data['country']
+            subject = form.cleaned_data['subject']
+            message = form.cleaned_data['message']
+            
+            email_subject = f'Nueva consulta de {name}'
+            if subject:
+                email_subject += f' - {subject}'
+            
+            email_message = f'''
+            Nombre: {name}
+            Email: {email}
+            País de Importación: {country}
+            
+            Mensaje:
+            {message}
+            '''
+            
+            send_mail(
+                email_subject,
+                email_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [settings.DEFAULT_FROM_EMAIL],
+                fail_silently=False,
+            )
+            
+            messages.success(request, '¡Gracias por tu mensaje! Nos pondremos en contacto contigo pronto.')
+            return redirect('landing_page')
+        
+        context = self.get_context_data()
+        context['form'] = form
+        return render(request, self.template_name, context)

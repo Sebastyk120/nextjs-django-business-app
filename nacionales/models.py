@@ -126,13 +126,12 @@ class VentaNacional(models.Model):
         return self.pk
 
     def clean(self):
-        if not self.compra_nacional_id:
+        if not self.cantidad_empaque_recibida:
             return
-        if self.cantidad_empaque_recibida:
-            if self.cantidad_empaque_recibida > self.compra_nacional.cantidad_empaque:
-                raise ValidationError({
-                    'cantidad_empaque_recibida': "El valor no puede ser mayor que la cantidad de empaque de compra."
-                })
+        if self.cantidad_empaque_recibida > self.compra_nacional.cantidad_empaque:
+            raise ValidationError({
+                'cantidad_empaque_recibida': "El valor no puede ser mayor que la cantidad de empaque de compra."
+            })
         super().clean()
 
     def save(self, *args, **kwargs):
@@ -243,7 +242,7 @@ class ReporteCalidadExportador(models.Model):
 class ReporteCalidadProveedor(models.Model):
     rep_cal_exp = models.OneToOneField(ReporteCalidadExportador, on_delete=models.CASCADE, primary_key=True, verbose_name="Reporte Calidad Exportador")
     p_fecha_reporte = models.DateField(verbose_name="Fecha Reporte Prov", auto_now_add=True)
-    p_kg_totales = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Kg Totales", validators=[MinValueValidator(0.0)], editable=False)
+    p_kg_totales = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Kg Totales", validators=[MinValueValidator(0.0)], null=True, blank=True)
     p_kg_exportacion = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Kg Exp", validators=[MinValueValidator(0.0)], blank=True, null=True)
     p_porcentaje_exportacion = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="% Exp", validators=[MinValueValidator(0.0), MaxValueValidator(100.00)], editable=False)
     p_precio_kg_exp = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$ Kg Exp", validators=[MinValueValidator(0.0)], editable=False)
@@ -303,44 +302,80 @@ class ReporteCalidadProveedor(models.Model):
                 (self.p_kg_exportacion is not None and self.p_kg_nacional is None):
             raise ValidationError("Ambos campos (Kg exportación y Kg nacional) deben estar completos o vacíos.")
 
+        # Si p_kg_totales no está definido, usar peso_neto_recibido
+        if self.p_kg_totales is None:
+            self.p_kg_totales = self.rep_cal_exp.venta_nacional.peso_neto_recibido
+
         # Validaciones de pesos cuando tenemos la información necesaria
-        if self.rep_cal_exp.venta_nacional.peso_neto_recibido and self.p_kg_exportacion and self.p_kg_nacional:
-            total = self.rep_cal_exp.venta_nacional.peso_neto_recibido
-            
+        if self.p_kg_exportacion and self.p_kg_nacional:
             # Validación kg_exportacion
-            if self.p_kg_exportacion > total:
+            if self.p_kg_exportacion > self.p_kg_totales:
                 raise ValidationError({
-                    'p_kg_exportacion': f"El valor no puede ser mayor que el peso neto recibido. ({total})"
+                    'p_kg_exportacion': f"El valor no puede ser mayor que el peso total. ({self.p_kg_totales})"
                 })
-                
+            
             # Validación kg_nacional
-            if self.p_kg_nacional > total:
+            if self.p_kg_nacional > self.p_kg_totales:
                 raise ValidationError({
-                    'p_kg_nacional': f"El valor no puede ser mayor que el peso neto recibido. ({total})"
+                    'p_kg_nacional': f"El valor no puede ser mayor que el peso total. ({self.p_kg_totales})"
                 })
-                
+            
             # Validación suma total
-            computed_p_kg_merma = total - self.p_kg_exportacion - self.p_kg_nacional
+            computed_p_kg_merma = self.p_kg_totales - self.p_kg_exportacion - self.p_kg_nacional
             if computed_p_kg_merma < Decimal('0.00'):
-                raise ValidationError(f"La suma de Kg exportación y Kg nacional no puede superar el peso neto recibido. ({total})")
+                raise ValidationError(f"La suma de Kg exportación y Kg nacional no puede superar el peso total. ({self.p_kg_totales})")
                 
         super().clean()
 
     def save(self, *args, **kwargs):
+        # Si p_kg_totales no está definido, usar peso_neto_recibido
+        if self.p_kg_totales is None:
+            self.p_kg_totales = self.rep_cal_exp.venta_nacional.peso_neto_recibido
+
+        # Si p_kg_exportacion no está definido, usar kg_exportacion del reporte exportador
         if self.p_kg_exportacion is None:
             self.p_kg_exportacion = self.rep_cal_exp.kg_exportacion
+
+        # Si p_kg_nacional no está definido, usar kg_nacional del reporte exportador
         if self.p_kg_nacional is None:
             self.p_kg_nacional = self.rep_cal_exp.kg_nacional
-        if self.p_kg_merma is None:
-            self.p_kg_merma = self.rep_cal_exp.kg_merma
-        self.p_kg_totales = self.rep_cal_exp.venta_nacional.peso_neto_recibido
-        self.p_precio_kg_exp = self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_exp
-        self.p_porcentaje_exportacion = (self.p_kg_exportacion / self.p_kg_totales * Decimal("100.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        self.p_precio_kg_nal = self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_nal
-        self.p_porcentaje_nacional = (self.p_kg_nacional / self.p_kg_totales * Decimal("100.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        # Calcular kg_merma basado en p_kg_totales
         self.p_kg_merma = (self.p_kg_totales - self.p_kg_exportacion - self.p_kg_nacional).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        # Calcular porcentajes basados en p_kg_totales
+        self.p_porcentaje_exportacion = (self.p_kg_exportacion / self.p_kg_totales * Decimal("100.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        self.p_porcentaje_nacional = (self.p_kg_nacional / self.p_kg_totales * Decimal("100.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         self.p_porcentaje_merma = (self.p_kg_merma / self.p_kg_totales * Decimal("100.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        # Precios y totales
+        self.p_precio_kg_exp = self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_exp
+        self.p_precio_kg_nal = self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_nal
         self.p_total_facturar = (self.p_kg_exportacion * self.p_precio_kg_exp) + (self.p_kg_nacional * self.p_precio_kg_nal)
+
+        # Cálculos de retenciones
+        proveedor = self.rep_cal_exp.venta_nacional.compra_nacional.proveedor
+        if proveedor.asohofrucol:
+            self.asohofrucol = self.p_total_facturar * Decimal("1.00") / Decimal("100.00")
+        else:
+            self.asohofrucol = Decimal("0.00")
+
+        if proveedor.rte_fte:
+            self.rte_fte = self.p_total_facturar * Decimal("1.50") / Decimal("100.00")
+        else:
+            self.rte_fte = Decimal("0.00")
+
+        if proveedor.rte_ica:
+            self.rte_ica = self.p_total_facturar * Decimal("4.14") / Decimal("1000.00")
+        else:
+            self.rte_ica = Decimal("0.00")
+
+        # Total a pagar y utilidad
+        self.p_total_pagar = self.p_total_facturar - self.asohofrucol - self.rte_fte - self.rte_ica
+        self.p_utilidad = self.rep_cal_exp.precio_total - self.p_total_facturar
+        self.p_porcentaje_utilidad = (self.p_utilidad / self.rep_cal_exp.precio_total) * Decimal("100.00")
+
+        # Estado del reporte
         if self.reporte_enviado:
             self.estado_reporte_prov = "Reporte Enviado"
         if self.reporte_pago:
@@ -350,24 +385,6 @@ class ReporteCalidadProveedor(models.Model):
         if self.completado:
             self.estado_reporte_prov = "Completado"
 
-        proveedor = self.rep_cal_exp.venta_nacional.compra_nacional.proveedor
-        if proveedor.asohofrucol:
-            self.asohofrucol = self.p_total_facturar * Decimal("1.00") / Decimal("100.00")
-        else:
-            self.asohofrucol = Decimal("0.00")
-        if proveedor.rte_fte:
-            self.rte_fte = self.p_total_facturar * Decimal("1.50") / Decimal("100.00")
-        else:
-            self.rte_fte = Decimal("0.00")
-        if proveedor.rte_ica:
-            self.rte_ica = self.p_total_facturar * Decimal("4.14") / Decimal("1000.00")
-        else:
-            self.rte_ica = Decimal("0.00")
-            
-        self.p_total_pagar = self.p_total_facturar - self.asohofrucol - self.rte_fte - self.rte_ica
-        self.p_utilidad = self.rep_cal_exp.precio_total - self.p_total_facturar
-        self.p_porcentaje_utilidad = (self.p_utilidad / self.rep_cal_exp.precio_total) * Decimal("100.00")
-        
         super().save(*args, **kwargs)
 
 

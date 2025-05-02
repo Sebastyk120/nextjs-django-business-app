@@ -256,9 +256,13 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
             Div(
                 HTML('<h5 class="text-primary mb-4">Detalles del Reporte</h5>'),
                 Row(
+                    Column('p_kg_totales', css_class='col-md-4'),
                     Column('p_kg_exportacion', css_class='col-md-4'),
                     Column('p_kg_nacional', css_class='col-md-4'),
-                    Column('factura_prov', css_class='col-md-4'),
+                    css_class='g-3'
+                ),
+                Row(
+                    Column('factura_prov', css_class='col-md-12'),
                     css_class='g-3'
                 ),
                 HTML('<hr class="my-4">'),
@@ -290,11 +294,30 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
             )
         )
 
+    def clean_p_kg_totales(self):
+        p_kg_totales = self.cleaned_data.get('p_kg_totales')
+        p_kg_exportacion = self.cleaned_data.get('p_kg_exportacion')
+        p_kg_nacional = self.cleaned_data.get('p_kg_nacional')
+
+        # Si p_kg_totales no está definido, usar peso_neto_recibido
+        if p_kg_totales is None:
+            p_kg_totales = self.rep_cal_exp.venta_nacional.peso_neto_recibido
+
+        return p_kg_totales
+
     def clean(self):
         cleaned_data = super().clean()
 
         if self.rep_cal_exp and self.rep_cal_exp.venta_nacional.peso_neto_recibido:
-            total = self.rep_cal_exp.venta_nacional.peso_neto_recibido
+            # Obtener el peso total a usar para validaciones
+            p_kg_totales = cleaned_data.get('p_kg_totales')
+            peso_neto_recibido = self.rep_cal_exp.venta_nacional.peso_neto_recibido
+            
+            # Solo usar peso_neto_recibido si p_kg_totales no está definido
+            if p_kg_totales is None:
+                p_kg_totales = peso_neto_recibido
+                cleaned_data['p_kg_totales'] = p_kg_totales
+
             pago_exportador = self.rep_cal_exp.pagado
             p_kg_exportacion = cleaned_data.get('p_kg_exportacion')
             p_kg_nacional = cleaned_data.get('p_kg_nacional')
@@ -325,19 +348,18 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
                                "Ambos campos (Kg exportación y Kg nacional) deben estar completos o vacíos.")
 
             # Validación kg_exportacion
-            if p_kg_exportacion and p_kg_exportacion > total:
-                self.add_error('p_kg_exportacion', f"El valor no puede ser mayor que el peso neto recibido. ({total})")
+            if p_kg_exportacion and p_kg_exportacion > p_kg_totales:
+                self.add_error('p_kg_exportacion', f"El valor no puede ser mayor que el peso total. ({p_kg_totales})")
 
             # Validación kg_nacional
-            if p_kg_nacional and p_kg_nacional > total:
-                self.add_error('p_kg_nacional', f"El valor no puede ser mayor que el peso neto recibido. ({total})")
+            if p_kg_nacional and p_kg_nacional > p_kg_totales:
+                self.add_error('p_kg_nacional', f"El valor no puede ser mayor que el peso total. ({p_kg_totales})")
 
-            # Validación suma total
-            if p_kg_exportacion and p_kg_nacional:
-                computed_p_kg_merma = total - p_kg_exportacion - p_kg_nacional
-                if computed_p_kg_merma < Decimal('0.00'):
+            # Validación de la suma solo cuando se envíe el formulario
+            if self.is_bound and p_kg_exportacion is not None and p_kg_nacional is not None:
+                if p_kg_exportacion + p_kg_nacional > p_kg_totales:
                     raise forms.ValidationError(
-                        f"La suma de Kg exportación y Kg nacional no puede superar el peso neto recibido. ({total})"
+                        f"La suma de Kg exportación y Kg nacional no puede superar el peso total. ({p_kg_totales})"
                     )
 
         return cleaned_data

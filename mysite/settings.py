@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.sites',  # Added for sitemaps
+    'django.contrib.sitemaps',  # Added for sitemaps
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'django_tables2',
@@ -62,8 +64,11 @@ INSTALLED_APPS = [
     'cartera.apps.CarteraConfig',
     'comercial.apps.ComercialConfig',
     'inventarios.apps.InventariosConfig',
-    'nacionales.apps.NacionalesConfig'
+    'nacionales.apps.NacionalesConfig',
+    'captcha',
 ]
+
+SITE_ID = 1  # Added for sitemaps
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -162,11 +167,13 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 ALLOWED_HOSTS = [
-    'heavens-server.up.railway.app', 'localhost'
+    'heavens-server-private.up.railway.app', 'localhost',
+    'heavensfruit.com', 'www.heavensfruit.com',
 ]
 CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app"]
-CSRF_ALLOWED_ORIGINS = ["https://heavens-server.up.railway.app"]
-CORS_ORIGINS_WHITELIST = ["https://heavens-server.up.railway.app"]
+CSRF_ALLOWED_ORIGINS = ["https://heavens-server-private.up.railway.app", "https://*.heavensfruit.com"]
+CORS_ORIGINS_WHITELIST = ["https://heavens-server-private.up.railway.app",
+                          "https://*.heavensfruit.com"]
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # CONFIGURACIÓN MAIL:
@@ -489,3 +496,12 @@ UNFOLD = {
 }
 # Create necessary directories for static files referenced above
 # You'll need to add logo and favicon files to these locations
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Captcha Configuration
+CAPTCHA_FONT_SIZE = 40
+CAPTCHA_LENGTH = 6
+CAPTCHA_TIMEOUT = 5
+CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.random_char_challenge'

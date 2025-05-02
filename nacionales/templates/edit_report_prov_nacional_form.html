@@ -11,6 +11,11 @@
 <form method="post" id="editReporteProveedorForm" action="{% url 'reporte_proveedor_edit' reporte.id %}">
     {% csrf_token %}
     <input type="hidden" name="_method" value="put">
+    <!-- Valores del ReporteCalidadExportador como campos ocultos para validación JS -->
+    <input type="hidden" id="reporte_exportador_kg_exportacion" value="{{ reporte.rep_cal_exp.kg_exportacion }}" />
+    <input type="hidden" id="reporte_exportador_kg_nacional" value="{{ reporte.rep_cal_exp.kg_nacional }}" />
+    <input type="hidden" id="reporte_exportador_kg_totales" value="{{ reporte.rep_cal_exp.kg_totales }}" />
+    
     {% crispy form %}
     <button type="submit" class="btn btn-warning">Guardar Cambios</button>
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>

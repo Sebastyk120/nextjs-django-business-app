@@ -993,6 +993,8 @@ def get_dashboard_comercial_data(request):
     utilidad_usd_percent = calcular_porcentaje(total_utilidad_usd, utilidad_usd_prev)
     recuperacion_percent = calcular_porcentaje(total_recuperacion, recuperacion_prev)
     notas_credito_percent = calcular_porcentaje(total_notas_credito, notas_credito_prev)
+    print("Estas son las notas:", notas_credito_percent, total_notas_credito, notas_credito_prev)
+
     cancelados_percent = calcular_porcentaje(total_pedidos_cancelados, cancelados_prev)
 
     context = {
