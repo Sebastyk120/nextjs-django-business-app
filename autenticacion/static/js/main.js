@@ -69,7 +69,7 @@ document.querySelectorAll('section').forEach(section => {
 });
 
 // Form submission handling
-const contactForm = document.querySelector('.contacto-form');
+const contactForm = document.querySelector('.contacto-form form');
 if (contactForm) {
     contactForm.addEventListener('submit', function(e) {
         e.preventDefault();
