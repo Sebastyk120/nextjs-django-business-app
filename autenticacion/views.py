@@ -267,18 +267,16 @@ class LandingPageView(TemplateView):
     def post(self, request, *args, **kwargs):
         form = ContactForm(request.POST)
         if form.is_valid():
-            # Send email
+            # Obtener datos del formulario
             name = form.cleaned_data['name']
             email = form.cleaned_data['email']
             country = form.cleaned_data['country']
-            subject = form.cleaned_data['subject']
             message = form.cleaned_data['message']
             
-            email_subject = f'Nueva consulta de {name}'
-            if subject:
-                email_subject += f' - {subject}'
-            
+            # Construir el mensaje de correo
             email_message = f'''
+            Se ha recibido una nueva consulta desde el sitio web:
+            
             Nombre: {name}
             Email: {email}
             País de Importación: {country}
@@ -287,16 +285,32 @@ class LandingPageView(TemplateView):
             {message}
             '''
             
-            send_mail(
-                email_subject,
-                email_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [settings.DEFAULT_FROM_EMAIL],
-                fail_silently=False,
-            )
-            
-            messages.success(request, '¡Gracias por tu mensaje! Nos pondremos en contacto contigo pronto.')
+            # Mejorar el manejo de errores con detalles específicos
+            try:
+                import traceback
+                # Usar el mismo método que funciona para reset password
+                result = send_mail(
+                    f"Contacto sitio web: Consulta de {name} - {country}",
+                    email_message,
+                    settings.DEFAULT_FROM_EMAIL,  # Remitente
+                    ['subgerencia@heavensfruit.com'],  # Destinatario único para probar
+                    fail_silently=False,
+                )
+                
+                print(f"Resultado del envío: {result}")  # 1 significa éxito
+                
+                # Si llegamos aquí, el correo se envió correctamente
+                messages.success(request, 'Tu mensaje ha sido enviado con éxito. Nos pondremos en contacto contigo pronto.')
+            except Exception as e:
+                print(f"Error detallado al enviar correo: {e}")
+                print(traceback.format_exc())  # Imprime el stack trace completo
+                messages.error(request, f'Ha ocurrido un error al enviar el mensaje: {str(e)}')
+
+            # Redireccionar independientemente del resultado para evitar reenvíos
             return redirect('landing_page')
+        else:
+            # Si el formulario no es válido, imprimir los errores para depuración
+            print(f"Errores del formulario: {form.errors}")
         
         context = self.get_context_data()
         context['form'] = form

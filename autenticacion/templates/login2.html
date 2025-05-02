@@ -58,14 +58,16 @@
                             <input type="checkbox" id="remember" name="remember">
                             <label for="remember">Recordarme</label>
                         </div>
-                        <a href="{% url 'password_reset' %}" class="forgot-link">¿Olvidaste tu contraseña?</a>
-                    </div>
+                        <a href="{% url 'password_reset' %}" class="forgot-link">¿Olvidaste tu contraseña?</a>                    </div>
                     
-                    <button type="submit" class="login-btn ios-button">Iniciar Sesión</button>
+                    <button type="submit" class="login-btn ios-button"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
                 </form>
-                
-                <div class="register-link">
+                  <div class="register-link">
                     <p>¿No tienes una cuenta? <a href="{% url 'signup' %}">Regístrate</a></p>
+                </div>
+                
+                <div class="back-to-website">
+                    <a href="{% url 'landing_page' %}" class="website-btn"><i class="fas fa-home"></i> Volver a la página web</a>
                 </div>
             </div>
         </div>

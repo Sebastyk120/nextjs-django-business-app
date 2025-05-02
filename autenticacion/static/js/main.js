@@ -68,7 +68,8 @@ document.querySelectorAll('section').forEach(section => {
     observer.observe(section);
 });
 
-// Form submission handling
+// Form submission handling - Comentado para permitir el envío nativo del formulario
+/*
 const contactForm = document.querySelector('.contacto-form form');
 if (contactForm) {
     contactForm.addEventListener('submit', function(e) {
@@ -106,6 +107,7 @@ if (contactForm) {
         }, 1500);
     });
 }
+*/
 
 // Mobile menu toggle
 function createMobileMenu() {

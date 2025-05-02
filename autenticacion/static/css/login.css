@@ -228,26 +228,43 @@ input[type="checkbox"] {
 }
 
 .login-btn {
-    background: var(--gradient);
+    background: linear-gradient(135deg, var(--blue) 0%, #34aadc 100%);
     border: none;
     padding: 15px;
-    border-radius: 12px;
+    border-radius: 15px;
     color: var(--white);
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: all 0.3s ease;
     margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0, 122, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.login-btn i {
+    font-size: 18px;
+    transition: transform 0.3s ease;
 }
 
 .login-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 7px 15px rgba(0, 122, 255, 0.3);
+    background: linear-gradient(135deg, #34aadc 0%, var(--blue) 100%);
+}
+
+.login-btn:hover i {
+    transform: translateX(3px);
 }
 
 .login-btn:active {
     transform: translateY(0);
-    box-shadow: none;
+    box-shadow: 0 2px 5px rgba(0, 122, 255, 0.2);
 }
 
 .ios-button {
@@ -343,6 +360,34 @@ input[type="checkbox"] {
 .login-now-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 7px 15px rgba(0, 122, 255, 0.3);
+}
+
+.back-to-website {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.website-btn {
+    display: inline-block;
+    color: var(--blue);
+    text-decoration: none;
+    padding: 10px 15px;
+    border: 1px solid var(--blue);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.website-btn i {
+    margin-right: 5px;
+}
+
+.website-btn:hover {
+    background-color: var(--blue);
+    color: var(--white);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(0, 122, 255, 0.2);
 }
 
 /* Responsive */
