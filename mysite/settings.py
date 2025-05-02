@@ -170,10 +170,11 @@ ALLOWED_HOSTS = [
     'heavens-server-private.up.railway.app', 'localhost',
     'heavensfruit.com', 'www.heavensfruit.com',
 ]
-CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app"]
-CSRF_ALLOWED_ORIGINS = ["https://heavens-server-private.up.railway.app", "https://*.heavensfruit.com"]
+CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app", "https://*.heavensfruit.com"]
+
 CORS_ORIGINS_WHITELIST = ["https://heavens-server-private.up.railway.app",
-                          "https://*.heavensfruit.com"]
+                          "https://heavensfruit.com",
+                          "https://www.heavensfruit.com",]
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # CONFIGURACIÓN MAIL:
