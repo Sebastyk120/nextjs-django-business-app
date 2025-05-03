@@ -166,7 +166,12 @@ WHITENOISE_ALLOW_ALL_ORIGINS = True
 
 # Media files configuration
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+if DEBUG:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+else:
+    # En producción usamos la ruta montada
+    MEDIA_ROOT = '/media'
+
 # Añadir esta línea para que Whitenoise sirva archivos de medios en producción
 WHITENOISE_ROOT = MEDIA_ROOT
 
@@ -507,11 +512,6 @@ UNFOLD = {
         ],
     },
 }
-# Create necessary directories for static files referenced above
-# You'll need to add logo and favicon files to these locations
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Captcha Configuration
 CAPTCHA_FONT_SIZE = 40
