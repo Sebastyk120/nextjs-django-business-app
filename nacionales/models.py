@@ -126,12 +126,13 @@ class VentaNacional(models.Model):
         return self.pk
 
     def clean(self):
-        if not self.cantidad_empaque_recibida:
+        if not self.compra_nacional_id:
             return
-        if self.cantidad_empaque_recibida > self.compra_nacional.cantidad_empaque:
-            raise ValidationError({
-                'cantidad_empaque_recibida': "El valor no puede ser mayor que la cantidad de empaque de compra."
-            })
+        if self.cantidad_empaque_recibida:
+            if self.cantidad_empaque_recibida > self.compra_nacional.cantidad_empaque:
+                raise ValidationError({
+                    'cantidad_empaque_recibida': "El valor no puede ser mayor que la cantidad de empaque de compra."
+                })
         super().clean()
 
     def save(self, *args, **kwargs):
