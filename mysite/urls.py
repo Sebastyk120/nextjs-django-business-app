@@ -26,8 +26,16 @@ urlpatterns = [
     path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")), # robots.txt URL
 ]
 
+# Agregar estas líneas para servir archivos de medios tanto en desarrollo como en producción
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    # En producción, Whitenoise servirá los archivos estáticos y de medios
+    # pero necesitamos agregar un patrón para la URL de medios
+    from django.views.static import serve
+    urlpatterns += [
+        path('media/<path:path>', serve, {'document_root': settings.MEDIA_ROOT}),
+    ]
 
 def custom_404(request, exception):
     return render(request, '404.html', status=404)
