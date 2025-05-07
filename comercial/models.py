@@ -139,6 +139,8 @@ class Presentacion(models.Model):
 class Fruta(models.Model):
     nombre = models.CharField(max_length=20, unique=True)
     descripcion = models.TextField(verbose_name="Descripción", blank=True, null=True)
+    nombre_en = models.CharField(max_length=20, verbose_name="Nombre en inglés", blank=True, null=True)
+    descripcion_en = models.TextField(verbose_name="Descripción en inglés", blank=True, null=True)
     imagen = models.ImageField(upload_to='frutas/', verbose_name="Imagen", blank=True, null=True)
     presentaciones = models.ManyToManyField(Presentacion, through='ClientePresentacion', related_name='frutas')
 

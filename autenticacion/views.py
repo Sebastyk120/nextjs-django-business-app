@@ -315,3 +315,11 @@ class LandingPageView(TemplateView):
         context = self.get_context_data()
         context['form'] = form
         return render(request, self.template_name, context)
+
+class EnglishLandingPageView(LandingPageView):
+    template_name = 'index_en.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Optionally add any English-specific context here
+        return context

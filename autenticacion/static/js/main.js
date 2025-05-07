@@ -128,7 +128,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const modalImage = productModalEl.querySelector('#modalImage');
             const modalDescription = productModalEl.querySelector('#modalDescription');
 
-            const defaultDescription = "Fruta exótica colombiana de altísima calidad, cosechada en su punto óptimo y manejada con los más altos estándares para asegurar su frescura y sabor incomparable.";
+            // Get language from HTML lang attribute
+            const isEnglish = document.documentElement.lang === 'en';
+            
+            // Default descriptions in both languages
+            const defaultDescriptionES = "Fruta exótica colombiana de altísima calidad, cosechada en su punto óptimo y manejada con los más altos estándares para asegurar su frescura y sabor incomparable.";
+            const defaultDescriptionEN = "Colombian exotic fruit of the highest quality, harvested at its optimal point and handled with the highest standards to ensure its freshness and incomparable flavor.";
+            const defaultDescription = isEnglish ? defaultDescriptionEN : defaultDescriptionES;
+            
             const defaultImageUrl = modalImage.dataset.defaultImage || "{% static 'img/placeholder_fruit.webp' %}"; // Get from data- attribute or fallback
 
             if (cardElement) {
@@ -141,9 +148,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 modalImage.alt = title;
                 modalDescription.textContent = description;
             } else { // Fallback if triggered not from a card
-                modalTitle.textContent = "Detalles del Producto";
+                modalTitle.textContent = isEnglish ? "Product Details" : "Detalles del Producto";
                 modalImage.src = defaultImageUrl;
-                modalImage.alt = "Fruta exótica";
+                modalImage.alt = isEnglish ? "Exotic fruit" : "Fruta exótica";
                 modalDescription.textContent = defaultDescription;
             }
         });
@@ -224,10 +231,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 initialNoResultsPlaceholder.style.display = 'none';
             }
 
+            // Get language for correct message
+            const isEnglish = document.documentElement.lang === 'en';
+            const noResultsText = isEnglish 
+                ? 'No fruits found with that name. Try another search.'
+                : 'No se encontraron frutas con ese nombre. Intenta otra búsqueda.';
+
             if (visibleSlidesCount === 0 && searchTerm !== "") {
                 noResultsMessageDiv = document.createElement('div');
                 noResultsMessageDiv.className = 'col-12 text-center py-5';
-                noResultsMessageDiv.innerHTML = '<p class="lead">No se encontraron frutas con ese nombre. Intenta otra búsqueda.</p>';
+                noResultsMessageDiv.innerHTML = `<p class="lead">${noResultsText}</p>`;
                 swiperWrapper.appendChild(noResultsMessageDiv);
             } else if (visibleSlidesCount === 0 && searchTerm === "" && initialNoResultsPlaceholder) {
                 // Show initial placeholder if search is cleared and it exists
@@ -286,4 +299,54 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     */
+
+    // Language selector functionality
+    const languageOverlay = document.getElementById('languageOverlay');
+    const languageToggle = document.querySelector('.language-toggle');
+    const closeBtn = document.querySelector('.close-overlay');
+    const languageOptions = document.querySelectorAll('.language-option');
+    
+    if (languageToggle) {
+        languageToggle.addEventListener('click', function() {
+            if (languageOverlay) {
+                languageOverlay.classList.add('show');
+            }
+        });
+    }
+    
+    if (closeBtn && languageOverlay) {
+        closeBtn.addEventListener('click', function() {
+            languageOverlay.classList.remove('show');
+        });
+    }
+    
+    if (languageOptions.length > 0) {
+        languageOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const lang = this.getAttribute('data-lang');
+                localStorage.setItem('language_selected', lang);
+                
+                // If it's the same language, just close the overlay
+                if ((lang === 'es' && document.documentElement.lang === 'es') ||
+                    (lang === 'en' && document.documentElement.lang === 'en')) {
+                    languageOverlay.classList.remove('show');
+                }
+                // Navigation happens via the href attribute for other cases
+            });
+        });
+    }
+    
+    // On first visit, show language selector after a delay
+    if (languageOverlay && !localStorage.getItem('language_selected')) {
+        setTimeout(() => {
+            languageOverlay.classList.add('show');
+        }, 1000);
+    }
+    
+    // Close overlay on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && languageOverlay && languageOverlay.classList.contains('show')) {
+            languageOverlay.classList.remove('show');
+        }
+    });
 });

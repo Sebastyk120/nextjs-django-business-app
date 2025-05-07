@@ -211,18 +211,18 @@ UNFOLD = {
     "SITE_SUBHEADER": "Heavens Fruits SAS",
     "SITE_URL": "/",
     "SITE_ICON": {
-        "light": lambda request: static("img/favicon.png"),
-        "dark": lambda request: static("img/favicon.png"),
+        "light": lambda request: static("img/favicon.ico"),
+        "dark": lambda request: static("img/favicon.ico"),
     },
     "SITE_LOGO": {
-        "light": lambda request: static("img/favicon.png"),
-        "dark": lambda request: static("img/favicon.png"),
+        "light": lambda request: static("img/favicon.ico"),
+        "dark": lambda request: static("img/favicon.ico"),
     },
     "SITE_SYMBOL": "agriculture",
     "SITE_FAVICONS": [
         {
             "rel": "icon",
-            "sizes": "32x32",
+            "sizes": "48x48",
             "href": lambda request: static("img/favicon.ico"),
         },
     ],

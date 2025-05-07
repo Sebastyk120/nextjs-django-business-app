@@ -4,7 +4,7 @@ from django.urls import path, include
 from autenticacion import views as principal
 from django.conf import settings
 from django.conf.urls.static import static
-from autenticacion.views import LandingPageView
+from autenticacion.views import LandingPageView, EnglishLandingPageView
 from django.contrib.sitemaps.views import sitemap # Import sitemap view
 from autenticacion.sitemaps import StaticViewSitemap # Import your sitemap
 from django.views.generic.base import TemplateView # Import TemplateView
@@ -21,6 +21,7 @@ urlpatterns = [
     path('cartera/', include('cartera.urls')),
     path('nacionales/', include('nacionales.urls')),
     path('', LandingPageView.as_view(), name='landing_page'),
+    path('en/', EnglishLandingPageView.as_view(), name='english_landing_page'),  # Add English version URL
     path('captcha/', include('captcha.urls')),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'), # Sitemap URL
     path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")), # robots.txt URL
