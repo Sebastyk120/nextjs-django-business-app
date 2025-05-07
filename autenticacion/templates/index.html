@@ -6,47 +6,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- SEO Meta Tags Pure-->
-    <title>Heavens Fruits SAS - Exportadores de Frutas Exóticas Colombianas</title>
-    <meta name="description" content="Exportamos las mejores frutas exóticas colombianas al mundo. Calidad premium, frescura garantizada y sostenibilidad. Descubre Gulupa, Pitahaya, Granadilla y más.">
-    <link rel="canonical" href="{{ request.build_absolute_uri }}" /> 
-    <meta name="keywords" content="frutas exóticas, exportación colombia, frutas colombianas, gulupa, pitahaya, granadilla, uchuva, maracuyá, heavens fruits, agricultura sostenible">
+    <title>Heavens Fruits SAS - Exportadores de Frutas Exóticas Colombianas Premium</title>
+    <meta name="description" content="Descubre la frescura y calidad de las frutas exóticas colombianas. Heavens Fruits SAS exporta Gulupa, Pitahaya, Granadilla y más, con compromiso sostenible.">
+    <link rel="canonical" href="{{ request.build_absolute_uri }}" />
+    <meta name="keywords" content="frutas exóticas colombianas, exportación frutas colombia, gulupa, pitahaya, granadilla, uchuva, maracuyá, agronegocios colombia, heavens fruits, agricultura sostenible, fruta premium">
     <meta name="robots" content="index, follow">
 
-    <!-- Open Graph Meta Tags (for Facebook, LinkedIn, etc.) -->
-    <meta property="og:title" content="Heavens Fruits SAS - Exportadores de Frutas Exóticas Colombianas" />
-    <meta property="og:description" content="Exportamos las mejores frutas exóticas colombianas al mundo. Calidad premium, frescura garantizada y sostenibilidad." />
+    <meta property="og:title" content="Heavens Fruits SAS - Sabores Exóticos Que Cruzan Fronteras" />
+    <meta property="og:description" content="Calidad premium en frutas exóticas de Colombia para el mundo. Conoce nuestra oferta y procesos de exportación sostenibles." />
     <meta property="og:image" content="{% static 'img/heavens_social_preview.webp' %}" />
     <meta property="og:url" content="{{ request.build_absolute_uri }}" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Heavens Fruits SAS" />
     <meta property="og:locale" content="es_CO" />
 
-    <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Heavens Fruits SAS - Exportadores de Frutas Exóticas Colombianas">
-    <meta name="twitter:description" content="Exportamos las mejores frutas exóticas colombianas al mundo. Calidad premium, frescura garantizada y sostenibilidad.">
+    <meta name="twitter:title" content="Heavens Fruits SAS - Exportación de Frutas Colombianas de Alta Calidad">
+    <meta name="twitter:description" content="Exportamos lo mejor de Colombia: Gulupa, Pitahaya, Granadilla. Frescura y sabor garantizados.">
     <meta name="twitter:image" content="{% static 'img/heavens_social_preview.webp' %}">
 
-    <!-- Favicon -->
     <link rel="icon" href="{% static 'img/favicon.png' %}" type="image/png">
     <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
 
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://unpkg.com/swiper@8/swiper-bundle.min.css" />
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="{% static 'css/index.css' %}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Montserrat:wght@700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- AOS CSS -->
+    <link rel="stylesheet" href="{% static 'css/index.css' %}"> {/* TU NUEVO CSS IRÁ AQUÍ */}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
-    <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -54,7 +41,7 @@
       "name": "Heavens Fruits SAS",
       "url": "{{ request.build_absolute_uri }}",
       "logo": "{% static 'img/heavens.webp' %}",
-      "description": "Exportadores de frutas exóticas colombianas de alta calidad, cultivadas de forma sostenible.",
+      "description": "Exportadores de frutas exóticas colombianas de alta calidad, cultivadas de forma sostenible. Especialistas en Gulupa, Pitahaya, Granadilla.",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "Cra. 33 #12 - 61",
@@ -65,142 +52,145 @@
       "contactPoint": {
         "@type": "ContactPoint",
         "telephone": "+57-320-274-4313",
-        "contactType": "Customer Service" 
+        "contactType": "Customer Service",
+        "areaServed": "Global",
+        "availableLanguage": ["es", "en"]
       },
       "sameAs": [
         "https://www.facebook.com/HeavensFruits/",
         "https://www.linkedin.com/company/heavens-fruits/"
+        "https://www.instagram.com/heavensfruitscol/"
       ]
     }
     </script>
 </head>
 <body>
+    <!-- Preloader (Opcional, descomentar si se usa el CSS/JS para ello)
+    <div id="preloader">
+      <div class="spinner"></div>
+      <img src="{% static 'img/heavens.webp' %}" alt="Cargando Heavens Fruits..." height="60">
+    </div>
+    -->
+
     {% if messages %}
     <div class="messages-container">
         {% for message in messages %}
         <div class="message {{ message.tags }}">
             {{ message }}
+            <button type="button" class="btn-close btn-sm" aria-label="Close"></button>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Header -->
     <header class="header fixed-top">
-        <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <nav class="navbar navbar-expand-lg">
             <div class="container">
                 <a class="navbar-brand" href="#inicio">
-                    <img src="{% static 'img/heavens.webp' %}" alt="Heavens Fruits SAS Logo" height="50">
+                    <img src="{% static 'img/heavens.webp' %}" alt="Heavens Fruits SAS Logo" height="55">
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item"><a class="nav-link" href="#inicio">Inicio</a></li>
+                    <ul class="navbar-nav mx-auto">
+                        <li class="nav-item"><a class="nav-link active" href="#inicio">Inicio</a></li>
                         <li class="nav-item"><a class="nav-link" href="#productos">Productos</a></li>
                         <li class="nav-item"><a class="nav-link" href="#nosotros">Nosotros</a></li>
                         <li class="nav-item"><a class="nav-link" href="#servicios">Servicios</a></li>
                         <li class="nav-item"><a class="nav-link" href="#contacto">Contacto</a></li>
                     </ul>
-                    <div class="d-flex ms-3">
+                    <div class="d-flex align-items-center">
                         <a href="{% url 'login' %}" class="btn btn-outline-primary me-2">Iniciar Sesión</a>
-                        <a href="#contacto" class="btn btn-accent">Cotiza tu Importación</a>
+                        <a href="#contacto" class="btn btn-secondary">Cotiza Ahora</a>
                     </div>
                 </div>
             </div>
         </nav>
     </header>
 
-    <!-- Hero Section -->
-    <section id="inicio" class="hero min-vh-100 d-flex align-items-center">
+    <section id="inicio" class="hero">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6" data-aos="fade-right">
                     <div class="hero-content">
-                        <div class="feature-pill">
-                            <i class="fas fa-star"></i>Premium Export
-                        </div>
-                        <h1 class="display-3 fw-bold mb-4">
-                            <span class="d-block mt-2">Colombia en tu paladar</span>
-                            <span class="text-accent">¡Sabores Exóticos Inolvidables!</span>
+                        <span class="feature-pill mb-3"><i class="fas fa-star"></i> Calidad de Exportación Premium</span>
+                        <h1 class="display-3">
+                            Colombia en tu Paladar:
+                            <span class="d-block text-secondary">¡Sabores Exóticos Inolvidables!</span>
                         </h1>
-                        <p class="lead mb-4">Exportamos <span class="text-primary">frescura</span>, <span class="text-secondary">calidad</span> y <span class="text-accent">sostenibilidad</span> desde Colombia.</p>
+                        <p class="lead">Exportamos <span class="fw-bold text-primary">frescura</span>, <span class="fw-bold text-primary">calidad certificada</span> y <span class="fw-bold text-primary">compromiso sostenible</span> desde el corazón de Colombia al mundo.</p>
                         <div class="d-flex flex-wrap gap-3 mb-4">
-                            <div class="feature-pill"><i class="fas fa-leaf"></i>100% Orgánico</div>
-                            <div class="feature-pill"><i class="fas fa-certificate"></i>Certificado</div>
-                            <div class="feature-pill"><i class="fas fa-shipping-fast"></i>Envío Global</div>
+                            <div class="feature-pill"><i class="fas fa-leaf"></i>100% Natural</div>
+                            <div class="feature-pill"><i class="fas fa-certificate"></i>Certificación GlobalG.A.P.</div>
+                            <div class="feature-pill"><i class="fas fa-shipping-fast"></i>Logística Global</div>
                         </div>
                         <div class="d-flex gap-3">
-                            <a href="#productos" class="btn btn-primary btn-lg">Explorar Catálogo</a>
-                            <a href="#contacto" class="btn btn-outline-accent btn-lg">Contactar</a>
+                            <a href="#productos" class="btn btn-primary btn-lg">Ver Catálogo</a>
+                            <a href="#contacto" class="btn btn-outline-secondary btn-lg">Contáctanos</a>
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-6" data-aos="fade-left">
-                    <div class="hero-image">
-                        <img src="{% static 'pagina/index_principal_11zon.jpg' %}" alt="Variedad de frutas exóticas colombianas" class="img-fluid">
+                <div class="col-lg-6" data-aos="fade-left" data-aos-delay="200">
+                    <div class="hero-image mt-5 mt-lg-0">
+                        <img src="{% static 'pagina/index_principal_11zon.jpg' %}" alt="Variedad de frutas exóticas colombianas frescas" class="img-fluid">
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Quote Section -->
-    <section class="quote-section" data-aos="fade-up">
+    <section class="quote-section">
         <div class="container">
-            <div class="quote-content">
-                <i class="fas fa-quote-left" data-aos="fade-right" data-aos-delay="100"></i>
-                <blockquote data-aos="zoom-in" data-aos-delay="200">
-                    <p>Dentro de cada semilla está el potencial para una gran cosecha. Quien recibe agradecido recoge una cosecha abundante</p>
-                    <footer data-aos="fade-up" data-aos-delay="300">— William Blake</footer>
+            <div class="quote-content" data-aos="zoom-in">
+                <i class="fas fa-quote-left"></i>
+                <blockquote>
+                    <p>Dentro de cada semilla está el potencial para una gran cosecha. Quién recibe agredecido recoge una cosecha abundante</p>
+                    <footer>— William Blake</footer>
                 </blockquote>
-                <i class="fas fa-quote-right" data-aos="fade-left" data-aos-delay="100"></i>
+                <i class="fas fa-quote-right"></i>
             </div>
         </div>
     </section>
 
-    <!-- Productos -->
     <section id="productos" class="py-5">
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
-                <h2 class="display-4 fw-bold">Descubre Nuestra Selección Exótica</h2>
+                <h2 class="section-title">Descubre Nuestra Selección Exótica</h2>
+                <p class="section-subtitle">Frutas frescas de calidad superior, cultivadas con esmero y listas para exportar.</p>
                 <div class="row justify-content-center mt-4">
                     <div class="col-lg-6">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control border-start-0" id="fruitSearch" placeholder="Buscar frutas...">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-primary"></i></span>
+                            <input type="text" class="form-control border-start-0" id="fruitSearch" placeholder="Buscar por nombre de fruta...">
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Productos Carrusel -->
-            <div class="swiper product-swiper" data-aos="fade-up">
+
+            <div class="swiper product-swiper" data-aos="fade-up" data-aos-delay="200">
                 <div class="swiper-wrapper">
                     {% for fruta in frutas %}
                     <div class="swiper-slide">
-                        <div class="product-card h-100" data-fruta-id="{{ fruta.id }}" data-descripcion="{{ fruta.descripcion|default:'Fruta exótica colombiana de altísima calidad, cultivada bajo estrictos controles de calidad.' }}">
+                        <div class="product-card h-100" data-fruta-id="{{ fruta.id }}" data-descripcion="{{ fruta.descripcion|default:'Fruta exótica colombiana de altísima calidad, cultivada bajo estrictos controles de calidad y sostenibilidad.' }}">
                             <div class="product-img-container">
                                 {% if fruta.imagen %}
                                 <img src="{{ fruta.imagen.url }}" alt="{{ fruta.nombre }}">
                                 {% else %}
-                                <img src="{% static 'img/heavens3.jpg' %}" alt="Imagen no disponible">
+                                <img src="{% static 'img/placeholder_fruit.webp' %}" alt="Imagen no disponible">
                                 {% endif %}
                             </div>
                             <div class="card-body">
                                 <h5 class="card-title">{{ fruta.nombre }}</h5>
-                                <button class="btn btn-outline-accent" data-bs-toggle="modal" data-bs-target="#productModal" data-fruta-id="{{ fruta.id }}">
-                                    Ver Detalles
+                                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#productModal">
+                                    Ver Detalles <i class="fas fa-arrow-right ms-1"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
                     {% empty %}
-                    <div class="col-12 text-center">
-                        <div class="section-card">
-                            <p class="lead mb-0">Actualmente estamos actualizando nuestro catálogo. ¡Vuelve pronto!</p>
-                        </div>
+                    <div class="col-12 text-center initial-no-results-placeholder">
+                         <p class="lead my-5">Nuestro catálogo de frutas se está actualizando. ¡Vuelve pronto para descubrir nuevas delicias!</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -211,36 +201,32 @@
         </div>
     </section>
 
-    <!-- Modal de Producto -->
-    <div class="modal fade" id="productModal" tabindex="-1">
+    <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="modalTitle">Nombre del Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-3 mb-md-0">
                             <div class="modal-img-container">
                                 <img src="" alt="" id="modalImage" class="img-fluid">
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="product-details">
-                                <h5 class="mb-3">Descripción</h5>
-                                <p id="modalDescription"></p>
+                            <h5 class="text-primary">Descripción</h5>
+                            <p id="modalDescription" class="mb-4"></p>
+
+                            <h5 class="text-primary">Características Destacadas</h5>
+                            <div class="d-flex flex-wrap gap-2 mb-4">
+                                <span class="feature-pill modal-feature"><i class="fas fa-check"></i>Alta Calidad</span>
+                                <span class="feature-pill modal-feature"><i class="fas fa-leaf"></i>Cultivo Sostenible</span>
+                                <span class="feature-pill modal-feature"><i class="fas fa-globe-americas"></i>Estándar de Exportación</span>
                             </div>
-                            <div class="product-features">
-                                <h5 class="mb-3">Características</h5>
-                                <div class="d-flex flex-wrap gap-2 mb-3">
-                                    <span class="feature-pill"><i class="fas fa-check"></i>Alta Calidad</span>
-                                    <span class="feature-pill"><i class="fas fa-leaf"></i>Orgánico</span>
-                                    <span class="feature-pill"><i class="fas fa-globe-americas"></i>Exportable</span>
-                                </div>
-                            </div>
-                            <div class="text-end mt-4">
-                                <a href="#contacto" class="btn btn-accent" data-bs-dismiss="modal">Solicitar Información</a>
+                            <div class="text-end">
+                                <a href="#contacto" class="btn btn-secondary" data-bs-dismiss="modal">Solicitar Cotización <i class="fab fa-whatsapp ms-2"></i></a>
                             </div>
                         </div>
                     </div>
@@ -249,97 +235,97 @@
         </div>
     </div>
 
-    <!-- Nosotros -->
-    <section id="nosotros" class="py-5 bg-light">
+    <section id="nosotros" class="py-5">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6" data-aos="fade-right">
-                    <h2 class="display-4 fw-bold mb-4">Conoce la Pasión que Impulsa Nuestra Fruta Colombiana</h2>
-                    <p class="lead mb-4">En Heavens Fruits, nos dedicamos a llevar la esencia de Colombia al mundo a través de sus frutas exóticas. Nuestro compromiso se basa en la agricultura sostenible, la calidad excepcional y relaciones justas con nuestros agricultores.</p>
+                    <h2 class="section-title mb-3">Pasión por la Fruta Colombiana</h2>
+                    <p class="lead text-dark mb-4">En Heavens Fruits, somos más que exportadores; somos embajadores del sabor y la riqueza de Colombia. Nuestro compromiso es conectar al mundo con frutas exóticas de calidad insuperable, cultivadas con respeto por la tierra y nuestros agricultores.</p>
                     <div class="row g-4">
                         <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                            <div class="text-center">
-                                <div class="contact-icon mx-auto mb-3">
-                                    <i class="fas fa-leaf"></i>
+                            <div class="text-center p-3">
+                                <div class="feature-icon mx-auto">
+                                    <i class="fas fa-seedling"></i>
                                 </div>
-                                <h5>Compromiso Sostenible</h5>
+                                <h5 class="mt-3">Sostenibilidad</h5>
                             </div>
                         </div>
                         <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                            <div class="text-center">
-                                <div class="contact-icon mx-auto mb-3">
-                                    <i class="fas fa-globe"></i>
+                            <div class="text-center p-3">
+                                <div class="feature-icon mx-auto">
+                                    <i class="fas fa-handshake-angle"></i>
                                 </div>
-                                <h5>Conexión Global</h5>
+                                <h5 class="mt-3">Comercio Justo</h5>
                             </div>
                         </div>
                         <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
-                            <div class="text-center">
-                                <div class="contact-icon mx-auto mb-3">
-                                    <i class="fas fa-star"></i>
+                            <div class="text-center p-3">
+                                <div class="feature-icon mx-auto">
+                                    <i class="fas fa-medal"></i>
                                 </div>
-                                <h5>Excelencia Garantizada</h5>
+                                <h5 class="mt-3">Calidad Premium</h5>
                             </div>
                         </div>
                     </div>
+                     <a href="#contacto" class="btn btn-primary mt-4">Conoce Más Sobre Nosotros</a>
                 </div>
-                <div class="col-lg-6 mt-5 mt-lg-0" data-aos="fade-left">
+                <div class="col-lg-6 mt-5 mt-lg-0" data-aos="fade-left" data-aos-delay="200">
                     <div class="hero-image">
-                        <img src="{% static 'pagina/canasta_fruta.jpg' %}" alt="Equipo de Heavens Fruits trabajando en campo" class="img-fluid">
+                        <img src="{% static 'pagina/canasta_fruta.jpg' %}" alt="Equipo de Heavens Fruits trabajando en campo con frutas exóticas" class="img-fluid">
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Servicios -->
     <section id="servicios" class="py-5">
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
-                <h2 class="display-4 fw-bold">Nuestros Servicios de Exportación</h2>
+                <h2 class="section-title">Servicios Integrales de Exportación</h2>
+                <p class="section-subtitle">Desde el cultivo hasta tu destino, garantizamos un proceso eficiente y confiable.</p>
             </div>
-            <div class="row g-4">
+            <div class="row g-4 justify-content-center">
                 <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
-                    <div class="card h-100">
+                    <div class="card service-card h-100">
                         <div class="card-body text-center">
-                            <div class="contact-icon mx-auto mb-3">
+                            <div class="feature-icon service-icon mx-auto">
                                 <i class="fas fa-plane-departure"></i>
                             </div>
-                            <h5 class="card-title">Logística Global Eficiente</h5>
-                            <p class="card-text">Gestionamos soluciones aéreas eficientes para tus necesidades de transporte.</p>
+                            <h5 class="card-title mt-3">Logística Aérea Global</h5>
+                            <p class="card-text">Transporte rápido y seguro para preservar la frescura de nuestras frutas.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
-                    <div class="card h-100">
+                    <div class="card service-card h-100">
                         <div class="card-body text-center">
-                            <div class="contact-icon mx-auto mb-3">
-                                <i class="fas fa-box-open"></i>
+                            <div class="feature-icon service-icon mx-auto">
+                                <i class="fas fa-box-archive"></i>
                             </div>
-                            <h5 class="card-title">Empaque Especializado</h5>
-                            <p class="card-text">Soluciones de empaque que preservan la frescura y cumplen normativas internacionales.</p>
+                            <h5 class="card-title mt-3">Empaque Especializado</h5>
+                            <p class="card-text">Soluciones de empaque que cumplen normativas y protegen la calidad del producto.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
-                    <div class="card h-100">
+                    <div class="card service-card h-100">
                         <div class="card-body text-center">
-                            <div class="contact-icon mx-auto mb-3">
+                            <div class="feature-icon service-icon mx-auto">
                                 <i class="fas fa-clipboard-check"></i>
                             </div>
-                            <h5 class="card-title">Control de Calidad Riguroso</h5>
-                            <p class="card-text">Inspección detallada desde la cosecha hasta el embarque para garantizar la máxima calidad.</p>
+                            <h5 class="card-title mt-3">Control de Calidad Riguroso</h5>
+                            <p class="card-text">Inspección en cada etapa, desde la cosecha hasta el embarque final.</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
-                    <div class="card h-100">
+                    <div class="card service-card h-100">
                         <div class="card-body text-center">
-                            <div class="contact-icon mx-auto mb-3">
-                                <i class="fas fa-hands-helping"></i>
+                            <div class="feature-icon service-icon mx-auto">
+                                <i class="fas fa-headset"></i>
                             </div>
-                            <h5 class="card-title">Asesoría Personalizada</h5>
-                            <p class="card-text">Te acompañamos en cada paso del proceso de importación, adaptándonos a tus necesidades.</p>
+                            <h5 class="card-title mt-3">Asesoría Personalizada</h5>
+                            <p class="card-text">Acompañamiento experto para facilitar tu proceso de importación.</p>
                         </div>
                     </div>
                 </div>
@@ -347,120 +333,128 @@
         </div>
     </section>
 
-    <!-- Contacto -->
-    <section id="contacto" class="py-5 bg-light">
+    <section id="contacto" class="py-5">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-8 text-center mb-5" data-aos="fade-up">
-                    <h2 class="display-4 fw-bold">¿Listo para Importar? Hablemos</h2>
+                    <h2 class="section-title">¿Listo para Importar los Sabores de Colombia?</h2>
+                    <p class="section-subtitle">Contáctanos hoy mismo. Nuestro equipo está listo para asesorarte y gestionar tu pedido.</p>
                 </div>
             </div>
-            <div class="row justify-content-center">
-                <div class="col-lg-6" data-aos="fade-right">
-                    <div class="contact-section">
-                        <div class="card-body p-4">
-                            <form action="{% url 'landing_page' %}" method="post">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <input type="text" class="form-control" name="name" placeholder="Tu Nombre" required>
+            <div class="row gx-lg-5">
+                <div class="col-lg-7 mb-5 mb-lg-0" data-aos="fade-right">
+                    <div class="contact-form-wrapper p-4 p-md-5">
+                        <h3 class="mb-4 text-primary">Envíanos tu Consulta</h3>
+                        <form action="{% url 'landing_page' %}" method="post" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="contactName" class="form-label">Nombre Completo</label>
+                                    <input type="text" class="form-control" id="contactName" name="name" placeholder="Ej: Ana Pérez" required>
+                                    <div class="invalid-feedback">Por favor, ingresa tu nombre.</div>
                                 </div>
-                                <div class="mb-3">
-                                    <input type="email" class="form-control" name="email" placeholder="Tu Email Corporativo" required>
+                                <div class="col-md-6 mb-3">
+                                    <label for="contactEmail" class="form-label">Email Corporativo</label>
+                                    <input type="email" class="form-control" id="contactEmail" name="email" placeholder="Ej: ana.perez@empresa.com" required>
+                                    <div class="invalid-feedback">Por favor, ingresa un email válido.</div>
                                 </div>
-                                <div class="mb-3">
-                                    <input type="text" class="form-control" name="country" placeholder="País de Destino" required>
-                                </div>
-                                <div class="mb-3">
-                                    <textarea class="form-control" name="message" rows="4" placeholder="Tu Consulta (Volumen, frutas de interés, etc.)" required></textarea>
-                                </div>
-                                <div class="mb-3 captcha-container">
-                                    <label for="id_captcha_1" class="form-label">Verificación de seguridad:</label>
-                                    {{ form.captcha }}
-                                    {% if form.captcha.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.captcha.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100">Solicitar Información</button>
-                            </form>
-                        </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="contactCountry" class="form-label">País de Destino</label>
+                                <input type="text" class="form-control" id="contactCountry" name="country" placeholder="Ej: Estados Unidos" required>
+                                <div class="invalid-feedback">Por favor, ingresa el país de destino.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="contactMessage" class="form-label">Tu Mensaje</label>
+                                <textarea class="form-control" id="contactMessage" name="message" rows="4" placeholder="Detalla tu consulta: frutas de interés, volumen estimado, etc." required></textarea>
+                                <div class="invalid-feedback">Por favor, escribe tu mensaje.</div>
+                            </div>
+                            <div class="mb-4 captcha-container">
+                                <label for="id_captcha_1" class="form-label">Verificación de Seguridad:</label>
+                                {{ form.captcha }}
+                                {% if form.captcha.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.captcha.errors|join:", " }}</div>
+                                {% endif %}
+                            </div>
+                            <button type="submit" class="btn btn-secondary btn-lg w-100">Enviar Solicitud <i class="fas fa-paper-plane ms-2"></i></button>
+                        </form>
                     </div>
                 </div>
-                <div class="col-lg-4" data-aos="fade-left">
-                    <div class="contact-card-container">
-                        <div class="contact-card" data-aos="fade-up" data-aos-delay="100">
-                            <div class="contact-card-icon email-icon">
-                                <i class="fas fa-envelope"></i>
-                            </div>
+                <div class="col-lg-5" data-aos="fade-left" data-aos-delay="200">
+                    <h3 class="mb-4 text-primary">Información de Contacto Directo</h3>
+                    <div class="contact-card-item mb-4">
+                        <div class="contact-card-icon email-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="contact-card-content">
                             <h4>Email</h4>
                             <p><a href="mailto:exportaciones@heavensfruits.com">exportaciones@heavensfruits.com</a></p>
                         </div>
-                        
-                        <div class="contact-card" data-aos="fade-up" data-aos-delay="200">
-                            <div class="contact-card-icon whatsapp-icon">
-                                <i class="fab fa-whatsapp"></i>
-                            </div>
-                            <h4>WhatsApp</h4>
-                            <p><a href="https://wa.me/573202744313" target="_blank">+57 3202744313</a></p>
+                    </div>
+                    <div class="contact-card-item mb-4">
+                        <div class="contact-card-icon whatsapp-icon">
+                            <i class="fab fa-whatsapp"></i>
                         </div>
-                        
-                        <div class="contact-card" data-aos="fade-up" data-aos-delay="300">
-                            <div class="contact-card-icon location-icon">
-                                <i class="fas fa-map-marker-alt"></i>
-                            </div>
-                            <h4>Ubicación</h4>
-                            <p>Bogotá, Colombia</p>
+                        <div class="contact-card-content">
+                            <h4>WhatsApp</h4>
+                            <p><a href="https://wa.me/573202744313?text=Hola%2C%20estoy%20interesado%20en%20importar%20frutas%20colombianas." target="_blank">+57 320 274 4313</a></p>
                         </div>
                     </div>
+                    <div class="contact-card-item">
+                        <div class="contact-card-icon location-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="contact-card-content">
+                            <h4>Oficina Principal</h4>
+                            <p>Bogotá, Colombia (Exportamos a Nivel Mundial)</p>
+                        </div>
+                    </div>
+                     <div class="mt-4 pt-3 border-top">
+                        <h4 class="text-primary mb-3">Síguenos en Redes</h4>
+                         <a href="https://www.facebook.com/HeavensFruits/" class="footer-social-link fs-4 me-3" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                         <a href="https://www.instagram.com/heavensfruitscol/" class="footer-social-link fs-4 me-3" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                         <a href="https://www.linkedin.com/company/heavens-fruits/" class="footer-social-link fs-4" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="py-4">
+    <footer class="main-footer py-5">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-4 mb-3 mb-lg-0">
-                    <img src="{% static 'img/heavens.webp' %}" alt="Heavens Fruits SAS Logo Footer" height="40">
+            <div class="row gy-4 align-items-center">
+                <div class="col-lg-3 text-center text-lg-start">
+                    <a href="#inicio"><img src="{% static 'img/heavens.webp' %}" alt="Heavens Fruits SAS Logo Footer" height="50"></a>
                 </div>
-                <div class="col-lg-4 mb-3 mb-lg-0">
-                    <div class="d-flex justify-content-center gap-4">
-                        <a href="#inicio">Inicio</a>
-                        <a href="#productos">Productos</a>
-                        <a href="#nosotros">Nosotros</a>
-                        <a href="#servicios">Servicios</a>
-                        <a href="#contacto">Contacto</a>
-                    </div>
+                <div class="col-lg-6">
+                    <ul class="nav justify-content-center footer-nav">
+                        <li class="nav-item"><a class="nav-link" href="#inicio">Inicio</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#productos">Productos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#nosotros">Nosotros</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#servicios">Servicios</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#contacto">Contacto</a></li>
+                    </ul>
                 </div>
-                <div class="col-lg-4">
-                    <div class="d-flex justify-content-center gap-3">
-                        <a href="https://www.facebook.com/HeavensFruits/" class="footer-social-link" target="_blank">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="footer-social-link" target="_blank">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="https://www.linkedin.com/company/heavens-fruits/" class="footer-social-link" target="_blank">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
-                    </div>
+                <div class="col-lg-3 text-center text-lg-end">
+                    <a href="https://www.facebook.com/HeavensFruits/" class="footer-social-link" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://www.instagram.com/heavensfruitscol/" class="footer-social-link" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.linkedin.com/company/heavens-fruits/" class="footer-social-link" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
                 </div>
             </div>
-            <div class="text-center mt-4">
-                <p class="mb-0">&copy; {% now "Y" %} Heavens Fruits SAS. Exportadores de Frutas Colombianas. Todos los derechos reservados.</p>
+            <div class="text-center mt-4 pt-4 border-top footer-copy">
+                <p class="mb-0">© {% now "Y" %} Heavens Fruits SAS. Exportadores de Frutas Exóticas Colombianas. Todos los derechos reservados.</p>
+                <p class="mb-0 small">Diseñado con <i class="fas fa-heart text-danger"></i> y pasión por la fruta.</p>
             </div>
         </div>
     </footer>
 
-    <!-- WhatsApp Button with Animation -->
-    <a href="https://wa.me/573202744313?text=Hola%2C%20estoy%20interesado%20en%20importar%20frutas%20colombianas." class="whatsapp-button" target="_blank">
+    <a href="https://wa.me/573202744313?text=Hola%2C%20estoy%20interesado%20en%20importar%20frutas%20colombianas." class="whatsapp-button" target="_blank" aria-label="Chatea con nosotros en WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <!-- JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script> {/* TU NUEVO JS IRÁ AQUÍ */}
 </body>
 </html>

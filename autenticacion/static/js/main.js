@@ -1,261 +1,289 @@
-// Initialize AOS
-AOS.init({
-    duration: 800,
-    easing: 'ease-in-out',
-    once: true,
-    mirror: false
-});
+// main.js
+document.addEventListener('DOMContentLoaded', function () {
 
-// Initialize Swiper carousel
-const productSwiper = new Swiper('.product-swiper', {
-    slidesPerView: 1,
-    spaceBetween: 30,
-    pagination: {
-        el: '.swiper-pagination',
-        clickable: true,
-    },
-    navigation: {
-        nextEl: '.swiper-button-next',
-        prevEl: '.swiper-button-prev',
-    },
-    breakpoints: {
-        640: {
-            slidesPerView: 2,
-        },
-        992: {
-            slidesPerView: 3,
-        },
-        1200: {
-            slidesPerView: 4,
-        },
-    },
-    autoplay: {
-        delay: 5000,
-        disableOnInteraction: false,
-    },
-});
+    // Initialize AOS
+    AOS.init({
+        duration: 800,
+        easing: 'ease-in-out-cubic',
+        once: true,
+        mirror: false,
+        offset: 80 // Start animation a bit sooner
+    });
 
-// Smooth scroll for navigation links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const targetId = this.getAttribute('href');
-        const targetElement = document.querySelector(targetId);
-        
-        if (targetElement) {
-            const headerOffset = document.querySelector('.header').offsetHeight;
-            const elementPosition = targetElement.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-            
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: 'smooth'
+    // Initialize Swiper carousel
+    const productSwiper = new Swiper('.product-swiper', {
+        slidesPerView: 1,
+        spaceBetween: 30,
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+        },
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        },
+        breakpoints: {
+            576: { slidesPerView: 2, },
+            768: { slidesPerView: 2, },
+            992: { slidesPerView: 3, },
+            1200: { slidesPerView: 4, },
+        },
+        autoplay: {
+            delay: 4500,
+            disableOnInteraction: true, // Pauses on user interaction
+        },
+        grabCursor: true,
+        loop: document.querySelectorAll('.product-swiper .swiper-slide').length > 4, // Loop if enough slides
+    });
+
+    // Header scroll effect & active nav link
+    const header = document.querySelector('.header');
+    const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+    const sections = document.querySelectorAll('section[id]');
+    const headerHeight = header ? header.offsetHeight : 70;
+    document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+
+
+    function updateHeaderStyle() {
+        if (header) {
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        }
+    }
+
+    function updateActiveNavLink() {
+        let currentSectionId = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop - (headerHeight + 40); // Adjusted offset
+            if (window.scrollY >= sectionTop) {
+                currentSectionId = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            // Check href against currentSectionId, removing '#' from href for comparison
+            if (link.getAttribute('href').substring(1) === currentSectionId) {
+                link.classList.add('active');
+            }
+        });
+         // If no section is active (e.g., at the very top or bottom beyond sections), activate 'Inicio'
+        if (!currentSectionId && window.scrollY < sections[0].offsetTop / 2) {
+            const homeLink = document.querySelector('.navbar-nav .nav-link[href="#inicio"]');
+            if (homeLink) homeLink.classList.add('active');
+        }
+    }
+
+    window.addEventListener('scroll', () => {
+        updateHeaderStyle();
+        updateActiveNavLink();
+    });
+    updateHeaderStyle(); // Initial check
+    updateActiveNavLink(); // Initial check
+
+
+    // Smooth scroll for navigation links
+    navLinks.forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+
+            if (targetElement) {
+                const currentHeaderHeight = header ? header.offsetHeight : 70;
+                const elementPosition = targetElement.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - currentHeaderHeight;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+
+                // Close mobile menu after click
+                const navbarCollapseEl = document.getElementById('navbarNav');
+                if (navbarCollapseEl && navbarCollapseEl.classList.contains('show')) {
+                    const bsCollapse = new bootstrap.Collapse(navbarCollapseEl, { toggle: false });
+                    bsCollapse.hide();
+                }
+
+                // Manually set active class on click for immediate feedback
+                navLinks.forEach(link => link.classList.remove('active'));
+                this.classList.add('active');
+            }
+        });
+    });
+
+
+    // Product Modal Logic
+    const productModalEl = document.getElementById('productModal');
+    if (productModalEl) {
+        productModalEl.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const cardElement = button.closest('.product-card');
+
+            const modalTitle = productModalEl.querySelector('#modalTitle');
+            const modalImage = productModalEl.querySelector('#modalImage');
+            const modalDescription = productModalEl.querySelector('#modalDescription');
+
+            const defaultDescription = "Fruta exótica colombiana de altísima calidad, cosechada en su punto óptimo y manejada con los más altos estándares para asegurar su frescura y sabor incomparable.";
+            const defaultImageUrl = modalImage.dataset.defaultImage || "{% static 'img/placeholder_fruit.webp' %}"; // Get from data- attribute or fallback
+
+            if (cardElement) {
+                const title = cardElement.querySelector('.card-title').textContent;
+                let imageSrc = cardElement.querySelector('img') ? cardElement.querySelector('img').src : defaultImageUrl;
+                const description = cardElement.getAttribute('data-descripcion') || defaultDescription;
+
+                modalTitle.textContent = title;
+                modalImage.src = (imageSrc && !imageSrc.endsWith('/None') && !imageSrc.includes('undefined')) ? imageSrc : defaultImageUrl;
+                modalImage.alt = title;
+                modalDescription.textContent = description;
+            } else { // Fallback if triggered not from a card
+                modalTitle.textContent = "Detalles del Producto";
+                modalImage.src = defaultImageUrl;
+                modalImage.alt = "Fruta exótica";
+                modalDescription.textContent = defaultDescription;
+            }
+        });
+
+        // Handle "Solicitar Cotización" button in modal
+        const quoteButton = productModalEl.querySelector('a[href="#contacto"]');
+        if (quoteButton) {
+            quoteButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Get modal instance and hide it
+                const modalInstance = bootstrap.Modal.getInstance(productModalEl);
+                modalInstance.hide();
+                
+                // After modal is hidden, scroll to contact section
+                productModalEl.addEventListener('hidden.bs.modal', function scrollToContact() {
+                    const contactSection = document.querySelector('#contacto');
+                    if (contactSection) {
+                        const headerHeight = document.querySelector('.header')?.offsetHeight || 70;
+                        const offsetPosition = contactSection.offsetTop - headerHeight;
+                        
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                    // Remove this one-time event listener
+                    productModalEl.removeEventListener('hidden.bs.modal', scrollToContact);
+                }, { once: true });
+            });
+        }
+    }
+    // Store default image path in modal image element if needed (optional)
+    const modalImageElement = document.getElementById('modalImage');
+    if (modalImageElement) {
+        // You can set this dynamically if your static path generation in JS is complex
+        // modalImageElement.dataset.defaultImage = "{% static 'img/placeholder_fruit.webp' %}";
+    }
+
+
+    // Fruit Search Functionality
+    const fruitSearchInput = document.getElementById('fruitSearch');
+    const productSlides = document.querySelectorAll('.product-swiper .swiper-slide');
+    const swiperWrapper = document.querySelector('.product-swiper .swiper-wrapper');
+    const initialNoResultsPlaceholder = document.querySelector('.initial-no-results-placeholder');
+    let noResultsMessageDiv = null;
+
+    if (fruitSearchInput && productSwiper && swiperWrapper) {
+        fruitSearchInput.addEventListener('input', () => {
+            const searchTerm = fruitSearchInput.value.toLowerCase().trim();
+            let visibleSlidesCount = 0;
+
+            productSlides.forEach(slide => {
+                const card = slide.querySelector('.product-card');
+                if (card) { // Process only product slides
+                    const title = card.querySelector('.card-title').textContent.toLowerCase();
+                    const matchesSearch = title.includes(searchTerm);
+
+                    if (matchesSearch) {
+                        slide.style.display = '';
+                        visibleSlidesCount++;
+                    } else {
+                        slide.style.display = 'none';
+                    }
+                }
             });
 
-            // Close mobile menu after click
-            const navbarCollapse = document.querySelector('.navbar-collapse');
-            if (navbarCollapse.classList.contains('show')) {
-                navbarCollapse.classList.remove('show');
+            productSwiper.update(); // Update Swiper layout
+            if (visibleSlidesCount > 0) productSwiper.slideTo(0,0);
+
+
+            // Handle "no results" message
+            if (noResultsMessageDiv && swiperWrapper.contains(noResultsMessageDiv)) {
+                swiperWrapper.removeChild(noResultsMessageDiv);
+                noResultsMessageDiv = null;
             }
-        }
-    });
-});
+            if (initialNoResultsPlaceholder) {
+                initialNoResultsPlaceholder.style.display = 'none';
+            }
 
-// Header scroll effect
-const header = document.querySelector('.header');
-let lastScroll = 0;
-
-window.addEventListener('scroll', () => {
-    const currentScroll = window.pageYOffset;
-    
-    if (currentScroll <= 0) {
-        header.classList.remove('scroll-down');
-        header.classList.add('scroll-up');
-        return;
-    }
-    
-    if (currentScroll > lastScroll && !header.classList.contains('scroll-down')) {
-        // Scroll Down
-        header.classList.remove('scroll-up');
-        header.classList.add('scroll-down');
-    } else if (currentScroll < lastScroll && header.classList.contains('scroll-down')) {
-        // Scroll Up
-        header.classList.remove('scroll-down');
-        header.classList.add('scroll-up');
-    }
-    lastScroll = currentScroll;
-});
-
-// Product Modal
-const productModal = document.getElementById('productModal');
-if (productModal) {
-    productModal.addEventListener('show.bs.modal', event => {
-        const button = event.relatedTarget;
-        const frutaId = button.getAttribute('data-fruta-id');
-        const cardElement = button.closest('.product-card');
-        
-        const modalTitle = document.getElementById('modalTitle');
-        const modalImage = document.getElementById('modalImage');
-        const modalDescription = document.getElementById('modalDescription');
-        
-        if (cardElement) {
-            const title = cardElement.querySelector('.card-title').textContent;
-            const image = cardElement.querySelector('img') ? cardElement.querySelector('img').src : '';
-            const description = cardElement.getAttribute('data-descripcion') || 
-                               "Fruta exótica colombiana de altísima calidad, cosechada en el momento perfecto y manejada con los más altos estándares para asegurar su frescura y sabor incomparable.";
-            
-            modalTitle.textContent = title;
-            modalImage.src = image;
-            modalImage.alt = title;
-            modalDescription.textContent = description;
-        }
-    });
-}
-
-// Fruit Search
-const fruitSearch = document.getElementById('fruitSearch');
-if (fruitSearch) {
-    fruitSearch.addEventListener('input', () => {
-        const searchTerm = fruitSearch.value.toLowerCase();
-        const productCards = document.querySelectorAll('.product-card');
-        
-        productCards.forEach(card => {
-            const title = card.querySelector('.card-title').textContent.toLowerCase();
-            const matchesSearch = title.includes(searchTerm);
-            const cardContainer = card.closest('.swiper-slide');
-            
-            if (matchesSearch) {
-                cardContainer.style.display = '';
-                card.style.animation = 'fadeInUp 0.6s ease forwards';
-            } else {
-                cardContainer.style.display = 'none';
+            if (visibleSlidesCount === 0 && searchTerm !== "") {
+                noResultsMessageDiv = document.createElement('div');
+                noResultsMessageDiv.className = 'col-12 text-center py-5';
+                noResultsMessageDiv.innerHTML = '<p class="lead">No se encontraron frutas con ese nombre. Intenta otra búsqueda.</p>';
+                swiperWrapper.appendChild(noResultsMessageDiv);
+            } else if (visibleSlidesCount === 0 && searchTerm === "" && initialNoResultsPlaceholder) {
+                // Show initial placeholder if search is cleared and it exists
+                 initialNoResultsPlaceholder.style.display = 'block';
             }
         });
-        
-        // Update Swiper to account for filtered slides
-        if (productSwiper) {
-            productSwiper.update();
-        }
-    });
-}
+    }
 
-// Message auto-dismiss
-const messages = document.querySelectorAll('.message');
-if (messages.length > 0) {
+
+    // Message auto-dismiss & manual close
+    const messages = document.querySelectorAll('.messages-container .message');
     messages.forEach(message => {
-        setTimeout(() => {
-            message.style.animation = 'slideOutRight 0.3s ease forwards';
+        const closeButton = message.querySelector('.btn-close');
+
+        const dismissTimeout = setTimeout(() => {
+            message.classList.add('fade-out');
+            setTimeout(() => message.remove(), 500);
+        }, 7000); // Auto-dismiss after 7 seconds
+
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                clearTimeout(dismissTimeout); // Clear auto-dismiss if manually closed
+                message.classList.add('fade-out');
+                setTimeout(() => message.remove(), 500);
+            });
+        }
+    });
+
+    // Bootstrap Form Validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+
+    // Captcha input styling - ensure it gets form-control class if not already applied by Django widget
+    const captchaInput = document.querySelector('.captcha-container input[type="text"]#id_captcha_1');
+    if (captchaInput && !captchaInput.classList.contains('form-control')) {
+        captchaInput.classList.add('form-control');
+    }
+
+    // Preloader (Descomentar si se usa)
+    /*
+    window.addEventListener('load', () => {
+        const preloader = document.getElementById('preloader');
+        if (preloader) {
+            preloader.style.opacity = '0';
             setTimeout(() => {
-                message.remove();
-            }, 300);
-        }, 5000);
-    });
-}
-
-// Form validation with improved feedback
-const contactForm = document.querySelector('form');
-if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
-        const inputs = contactForm.querySelectorAll('input[required], textarea[required]');
-        let isValid = true;
-        
-        inputs.forEach(input => {
-            if (!input.value.trim()) {
-                isValid = false;
-                input.classList.add('is-invalid');
-                
-                // Create or update feedback message
-                let feedback = input.nextElementSibling;
-                if (!feedback || !feedback.classList.contains('invalid-feedback')) {
-                    feedback = document.createElement('div');
-                    feedback.classList.add('invalid-feedback');
-                    input.parentNode.insertBefore(feedback, input.nextSibling);
-                }
-                feedback.textContent = 'Este campo es requerido';
-            } else {
-                input.classList.remove('is-invalid');
-                // Remove any existing feedback
-                const feedback = input.nextElementSibling;
-                if (feedback && feedback.classList.contains('invalid-feedback')) {
-                    feedback.remove();
-                }
-            }
-        });
-        
-        if (!isValid) {
-            e.preventDefault();
+                preloader.style.display = 'none';
+            }, 500);
         }
     });
-
-    // Clear validation errors when user begins typing
-    contactForm.querySelectorAll('input, textarea').forEach(field => {
-        field.addEventListener('input', () => {
-            field.classList.remove('is-invalid');
-            const feedback = field.nextElementSibling;
-            if (feedback && feedback.classList.contains('invalid-feedback')) {
-                feedback.remove();
-            }
-        });
-    });
-}
-
-// Mobile menu toggle
-const navbarToggler = document.querySelector('.navbar-toggler');
-const navbarCollapse = document.querySelector('.navbar-collapse');
-
-if (navbarToggler && navbarCollapse) {
-    navbarToggler.addEventListener('click', () => {
-        navbarCollapse.classList.toggle('show');
-    });
-    
-    // Close menu when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!navbarToggler.contains(e.target) && !navbarCollapse.contains(e.target)) {
-            navbarCollapse.classList.remove('show');
-        }
-    });
-}
-
-// WhatsApp button effects
-const whatsappButton = document.querySelector('.whatsapp-button');
-if (whatsappButton) {
-    whatsappButton.addEventListener('mouseenter', () => {
-        whatsappButton.style.transform = 'scale(1.1) rotate(10deg)';
-    });
-    
-    whatsappButton.addEventListener('mouseleave', () => {
-        whatsappButton.style.transform = 'scale(1) rotate(0deg)';
-    });
-}
-
-// Add custom slideOut animation
-document.head.insertAdjacentHTML('beforeend', `
-<style>
-@keyframes slideOutRight {
-    from {
-        opacity: 1;
-        transform: translateX(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateX(50px);
-    }
-}
-</style>
-`);
-
-// Ensure captcha has correct styling and behavior
-document.addEventListener('DOMContentLoaded', function() {
-    // Find captcha elements and improve them
-    const captchaImg = document.querySelector('.captcha img');
-    const captchaInput = document.querySelector('.captcha input[type="text"]');
-    
-    if (captchaImg && captchaInput) {
-        // Add specific ID to ensure label works correctly
-        captchaInput.id = 'id_captcha_1';
-        
-        // Add appropriate classes for styling
-        captchaImg.classList.add('img-fluid');
-        captchaInput.classList.add('form-control', 'mt-2');
-    }
+    */
 });
