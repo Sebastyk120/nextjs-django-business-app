@@ -1,101 +1,81 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Toggle password visibility
-    const togglePassword = document.querySelector('.toggle-password');
-    const passwordField = document.getElementById('password');
-    
-    if (togglePassword && passwordField) {
-        togglePassword.addEventListener('click', function() {
-            const type = passwordField.getAttribute('type') === 'password' ? 'email' : 'password';
-            passwordField.setAttribute('type', type);
-            
-            // Change eye icon
-            const eyeIcon = this.querySelector('i');
-            eyeIcon.classList.toggle('fa-eye');
-            eyeIcon.classList.toggle('fa-eye-slash');
-        });
-    }
-    
-    // Form validation
     const loginForm = document.getElementById('login-form');
-    
+    const passwordField = document.getElementById('password');
+    const togglePassword = document.getElementById('togglePassword');
+    const inputs = loginForm.querySelectorAll('.form-control-custom');
+
+    // Bootstrap-like form validation handling
     if (loginForm) {
         loginForm.addEventListener('submit', function(event) {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            let isValid = true;
-            
-            // Simple validation
-            if (username.trim() === '') {
-                showError('username', 'Por favor, ingrese su nombre de usuario');
-                isValid = false;
-            } else {
-                removeError('username');
-            }
-            
-            if (password.trim() === '') {
-                showError('password', 'Por favor, ingrese su contraseña');
-                isValid = false;
-            } else {
-                removeError('password');
-            }
-            
-            if (!isValid) {
-                event.preventDefault();
-            }
-        });
-    }
-    
-    // Animation for fruit elements
-    const fruits = document.querySelectorAll('.fruit');
-    
-    if (fruits.length) {
-        fruits.forEach(fruit => {
-            // Add random rotation to fruit animations
-            const randomRotation = Math.floor(Math.random() * 10) - 5;
-            fruit.style.transform = `rotate(${randomRotation}deg)`;
-        });
-    }
-    
-    // Helper functions for form validation
-    function showError(fieldId, message) {
-        const field = document.getElementById(fieldId);
-        const errorMessage = document.createElement('div');
+            // Custom validation logic before submitting if needed
+            // For now, we rely on HTML5 'required' and apply classes
 
-        removeError(fieldId);
-        
-        errorMessage.className = 'error-message';
-        errorMessage.innerHTML = message;
-        errorMessage.style.color = '#FF5252';
-        errorMessage.style.fontSize = '12px';
-        errorMessage.style.marginTop = '5px';
-        
-        field.parentNode.appendChild(errorMessage);
-        field.style.boxShadow = '0 0 0 2px #FF5252';
-    }
-    
-    function removeError(fieldId) {
-        const field = document.getElementById(fieldId);
-        const errorMessage = field.parentNode.querySelector('.error-message');
-        
-        if (errorMessage) {
-            field.parentNode.removeChild(errorMessage);
-        }
-        
-        field.style.boxShadow = '';
-    }
-    
-    // Add focus and blur effects
-    const inputs = document.querySelectorAll('input[type="email"], input[type="password"]');
-    
-    if (inputs.length) {
-        inputs.forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentNode.style.transform = 'translateY(-3px)';
+            let formIsValid = true;
+            inputs.forEach(input => {
+                if (!input.checkValidity()) {
+                    input.classList.add('is-invalid');
+                    // Show custom feedback message (if not handled by CSS :invalid ~ .invalid-feedback)
+                    const feedback = input.parentElement.querySelector('.invalid-feedback') || input.parentElement.parentElement.querySelector('.invalid-feedback');
+                    if (feedback) feedback.style.display = 'block';
+                    formIsValid = false;
+                } else {
+                    input.classList.remove('is-invalid');
+                    const feedback = input.parentElement.querySelector('.invalid-feedback') || input.parentElement.parentElement.querySelector('.invalid-feedback');
+                     if (feedback) feedback.style.display = 'none';
+                }
             });
-            
-            input.addEventListener('blur', function() {
-                this.parentNode.style.transform = 'translateY(0)';
+
+            if (!formIsValid) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            // No need for loginForm.classList.add('was-validated'); unless Bootstrap JS is fully used
+        }, false);
+
+        // Clear validation on input
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                    const feedback = this.parentElement.querySelector('.invalid-feedback') || this.parentElement.parentElement.querySelector('.invalid-feedback');
+                    if (feedback) feedback.style.display = 'none';
+                }
             });
         });
     }
+
+    // Toggle password visibility
+    if (togglePassword && passwordField) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+    }
+
+    // Add focus class to parent for label styling
+    inputs.forEach(input => {
+        const parentGroup = input.closest('.form-group');
+        if (parentGroup) {
+            input.addEventListener('focus', function() {
+                parentGroup.classList.add('is-focused');
+            });
+            input.addEventListener('blur', function() {
+                parentGroup.classList.remove('is-focused');
+                 // If you want to re-check validity on blur
+                if (!this.checkValidity() && loginForm.classList.contains('submitted')) { // 'submitted' class to be added on submit attempt
+                    this.classList.add('is-invalid');
+                    const feedback = this.parentElement.querySelector('.invalid-feedback') || this.parentElement.parentElement.querySelector('.invalid-feedback');
+                    if (feedback) feedback.style.display = 'block';
+                }
+            });
+        }
+    });
+    
+    // Trigger animations after a slight delay to ensure DOM is fully ready if needed
+    // Or simply rely on CSS animation delays
+    // Example: Animate elements on scroll or after load if they are off-screen initially
 });
