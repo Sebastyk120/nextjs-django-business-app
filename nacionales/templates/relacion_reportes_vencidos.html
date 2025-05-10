@@ -13,7 +13,7 @@
             <!-- Header Section -->
             <div class="header-section mb-4 no-imprimir">
                 <h2 class="section-title text-center">
-                    <i class="bi bi-clipboard-x"></i> Relación de Reportes Nacionales Vencidos
+                    <i class="bi bi-clipboard-x"></i> Ingresos Vencidos Pendientes Por Reporte
                 </h2>
                 <div class="subtitle text-center">Consulta de reportes pendientes por procesar</div>
             </div>
@@ -65,7 +65,7 @@
                             </h1>
                         {% endif %}
                         <h2 class="section-title text-center">
-                            <i class="bi bi-clipboard-x"></i> Relación de Reportes Nacionales Vencidos
+                            <i class="bi bi-clipboard-x"></i> Ingresos Vencidos Pendientes Por Reporte
                         </h2>
                         <div class="subtitle text-center">Consulta de reportes pendientes por procesar</div>
                     </div>
@@ -73,7 +73,7 @@
                     <!-- Results Card -->
                     <div class="card mb-4 results-card">
                         <div class="card-header">
-                            <h4><i class="bi bi-clipboard-data"></i> Reportes Vencidos 
+                            <h4><i class="bi bi-clipboard-data"></i> Ingresos Vencidos
                             {% if f_inicial and f_final %}
                                 Del {{ f_inicial|date:"d/m/Y" }} al {{ f_final|date:"d/m/Y" }}
                             {% endif %}
@@ -142,7 +142,7 @@
                 <div class="card mb-4 no-results-card">
                     <div class="card-body text-center py-5">
                         <i class="bi bi-search no-results-icon"></i>
-                        <h3 class="no-results-text">No se encontraron reportes vencidos para el exportador seleccionado en el rango de fechas</h3>
+                        <h3 class="no-results-text">No se encontraron ingresos vencidos para el exportador seleccionado en el rango de fechas</h3>
                         <p class="text-muted">Intente con otros criterios de búsqueda</p>
                     </div>
                 </div>

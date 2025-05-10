@@ -139,11 +139,12 @@ class VentaNacional(models.Model):
         if not self.cantidad_empaque_recibida:  # Si no se ha modificado, ingreso la cantidad de empaque de compra.
             self.cantidad_empaque_recibida = self.compra_nacional.cantidad_empaque
         current_date = self.fecha_llegada
-        business_days_added = 0
-        while business_days_added < 3:
+        days_added = 0
+        while days_added < 3:
             current_date += timedelta(days=1)
-            if current_date.weekday() < 5:  # 0-4 son los días de semana
-                business_days_added += 1
+            # Saltar solo domingos (weekday 6); contar sábados
+            if current_date.weekday() != 6:
+                days_added += 1
 
         self.fecha_vencimiento = current_date
         self.peso_neto_recibido = self.peso_bruto_recibido - (self.cantidad_empaque_recibida * self.compra_nacional.tipo_empaque.peso)

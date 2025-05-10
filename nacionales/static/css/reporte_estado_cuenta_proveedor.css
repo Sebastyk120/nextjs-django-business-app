@@ -95,6 +95,12 @@ body {
     gap: 10px;
 }
 
+.logo-title img {
+    max-height: 50px; /* Adjusted max-height for better scaling */
+    max-width: 100%;
+    vertical-align: middle;
+}
+
 .company-info {
     text-align: right;
 }
