@@ -292,25 +292,44 @@ class LandingPageView(TemplateView):
                 result = send_mail(
                     f"Contacto sitio web: Consulta de {name} - {country}",
                     email_message,
-                    settings.DEFAULT_FROM_EMAIL,  # Remitente
-                    ['subgerencia@heavensfruit.com'],  # Destinatario único para probar
+                    settings.DEFAULT_FROM_EMAIL,
+                    ['subgerencia@heavensfruit.com', 'mabdime@heavensfruit.com', 'valentinagaray@heavensfruit.com'],
                     fail_silently=False,
                 )
                 
                 print(f"Resultado del envío: {result}")  # 1 significa éxito
                 
+                # Determinar el idioma para mensaje adecuado
+                is_english = 'en/' in request.path or request.resolver_match.url_name == 'landing_page_en'
+                
                 # Si llegamos aquí, el correo se envió correctamente
-                messages.success(request, 'Tu mensaje ha sido enviado con éxito. Nos pondremos en contacto contigo pronto.')
+                if is_english:
+                    messages.success(request, 'Your message has been sent successfully. We will contact you soon.')
+                else:
+                    messages.success(request, 'Tu mensaje ha sido enviado con éxito. Nos pondremos en contacto contigo pronto.')
             except Exception as e:
                 print(f"Error detallado al enviar correo: {e}")
                 print(traceback.format_exc())  # Imprime el stack trace completo
-                messages.error(request, f'Ha ocurrido un error al enviar el mensaje: {str(e)}')
+                
+                # Mensaje de error según idioma
+                is_english = 'en/' in request.path or request.resolver_match.url_name == 'landing_page_en'
+                if is_english:
+                    messages.error(request, 'An error occurred while sending your message. Please try again later or contact us directly.')
+                else:
+                    messages.error(request, 'Ha ocurrido un error al enviar el mensaje. Por favor, inténtalo de nuevo más tarde o contáctanos directamente.')
 
             # Redireccionar independientemente del resultado para evitar reenvíos
-            return redirect('landing_page')
+            return redirect('landing_page_en' if is_english else 'landing_page')
         else:
             # Si el formulario no es válido, imprimir los errores para depuración
             print(f"Errores del formulario: {form.errors}")
+            
+            # Mensaje de error según idioma
+            is_english = 'en/' in request.path or request.resolver_match.url_name == 'landing_page_en'
+            if is_english:
+                messages.error(request, 'Please check the form for errors and try again.')
+            else:
+                messages.error(request, 'Por favor, revisa el formulario para corregir los errores e inténtalo de nuevo.')
         
         context = self.get_context_data()
         context['form'] = form

@@ -63,12 +63,128 @@
       ]
     }
     </script>
+    
+    <style>
+        /* Form Notification Modal */
+        #notificationModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        #notificationModal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .notification-content {
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        #notificationModal.show .notification-content {
+            transform: translateY(0);
+        }
+        
+        .notification-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .notification-icon.success {
+            color: #28a745;
+        }
+        
+        .notification-icon.error {
+            color: #dc3545;
+        }
+        
+        .notification-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+        
+        .notification-message {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: var(--color-text);
+        }
+        
+        .notification-btn {
+            padding: 0.6rem 2rem;
+            background-color: var(--color-secondary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-pill);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .notification-btn:hover {
+            background-color: var(--color-secondary-light);
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 <body>
+    <!-- Notification Modal -->
+    <div id="notificationModal">
+        <div class="notification-content">
+            <div class="notification-icon success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 class="notification-title">Message Sent!</h3>
+            <p class="notification-message">Your message has been sent successfully. We will contact you soon.</p>
+            <button class="notification-btn" onclick="closeNotificationModal()">OK</button>
+        </div>
+    </div>
+
+    <!-- Language Selector Overlay -->
+    <div id="languageOverlay">
+        <div class="close-overlay"><i class="fas fa-times"></i></div>
+        <div class="language-selector">
+            <img src="{% static 'img/heavens.webp' %}" alt="Heavens Fruits SAS Logo" height="70" class="mb-4">
+            <h2>Selecciona tu idioma / Select your language</h2>
+            <p>Elige el idioma en el que prefieres navegar nuestro sitio</p>
+            <p>Choose the language in which you prefer to browse our site</p>
+            <div class="language-options">
+                <a href="/" class="language-option" data-lang="es">
+                    <div class="flag">🇪🇸</div>
+                    <span>Español</span>
+                </a>
+                <a href="/en/" class="language-option" data-lang="en">
+                    <div class="flag">🇺🇸</div>
+                    <span>English</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
     {% if messages %}
-    <div class="messages-container">
+    <div class="messages-container" style="display: none;">
         {% for message in messages %}
-        <div class="message {{ message.tags }}">
+        <div class="message {{ message.tags }}" data-message="{{ message }}" data-type="{{ message.tags }}">
             {{ message }}
             <button type="button" class="btn-close btn-sm" aria-label="Close"></button>
         </div>
@@ -96,7 +212,7 @@
                     <div class="d-flex align-items-center">
                         <a href="{% url 'login' %}" class="btn btn-outline-primary me-2">Login</a>
                         <a href="#contacto" class="btn btn-secondary">Get a Quote</a>
-                        <a href="/" class="ms-3 language-toggle">ES</a>
+                        <a href="#" id="openLanguageSelector" class="ms-3 language-toggle"><i class="fas fa-globe me-1"></i> ES</a>
                     </div>
                 </div>
             </div>
@@ -339,7 +455,7 @@
                 <div class="col-lg-7 mb-5 mb-lg-0" data-aos="fade-right">
                     <div class="contact-form-wrapper p-4 p-md-5">
                         <h3 class="mb-4 text-primary">Send Us Your Inquiry</h3>
-                        <form action="{% url 'landing_page' %}" method="post" class="needs-validation" novalidate>
+                        <form action="{% url 'landing_page_en' %}" method="post" class="needs-validation" novalidate>
                             {% csrf_token %}
                             <div class="row">
                                 <div class="col-md-6 mb-3">
@@ -381,8 +497,15 @@
                             <i class="fas fa-envelope"></i>
                         </div>
                         <div class="contact-card-content">
-                            <h4>Email</h4>
-                            <p><a href="mailto:exportaciones@heavensfruits.com">exportaciones@heavensfruits.com</a></p>
+                            <h4>Emails</h4>
+                            <p>
+                                <a href="mailto:mabdime@heavensfruit.com">mabdime@heavensfruit.com</a> 
+                                <small class="d-block text-muted">General Manager</small>
+                            </p>
+                            <p class="mt-2 mb-0">
+                                <a href="mailto:valentinagaray@heavensfruit.com">valentinagaray@heavensfruit.com</a>
+                                <small class="d-block text-muted">Commercial Manager</small>
+                            </p>
                         </div>
                     </div>
                     <div class="contact-card-item mb-4">
@@ -450,5 +573,96 @@
     <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="{% static 'js/main.js' %}"></script>
+    
+    <script>
+        // Language selector functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const overlay = document.getElementById('languageOverlay');
+            const openBtn = document.getElementById('openLanguageSelector');
+            const closeBtn = overlay.querySelector('.close-overlay'); // Ensure overlay is defined before this
+            const spanishOption = overlay.querySelector('.language-option[data-lang="es"]');
+            const englishOption = overlay.querySelector('.language-option[data-lang="en"]');
+
+            if (openBtn) {
+                openBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); // Prevent default link behavior
+                    overlay.classList.add('show');
+                });
+            }
+            
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    overlay.classList.remove('show');
+                });
+            }
+            
+            if (spanishOption) {
+                spanishOption.addEventListener('click', function() {
+                    localStorage.setItem('language_selected', 'es');
+                    // Allow link to navigate
+                });
+            }
+
+            if (englishOption) {
+                englishOption.addEventListener('click', function() {
+                    localStorage.setItem('language_selected', 'en');
+                    // Allow link to navigate
+                });
+            }
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && overlay.classList.contains('show')) {
+                    overlay.classList.remove('show');
+                }
+            });
+        });
+
+        // Notification Modal functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if there are any messages
+            const messagesContainer = document.querySelector('.messages-container');
+            if (messagesContainer) {
+                const messages = messagesContainer.querySelectorAll('.message');
+                
+                if (messages.length > 0) {
+                    const firstMessage = messages[0];
+                    const messageType = firstMessage.dataset.type;
+                    const messageText = firstMessage.dataset.message || firstMessage.textContent.trim();
+                    
+                    // Set modal content based on message type
+                    const modal = document.getElementById('notificationModal');
+                    const iconContainer = modal.querySelector('.notification-icon');
+                    const title = modal.querySelector('.notification-title');
+                    const message = modal.querySelector('.notification-message');
+                    
+                    if (messageType === 'success') {
+                        iconContainer.className = 'notification-icon success';
+                        iconContainer.innerHTML = '<i class="fas fa-check-circle"></i>';
+                        title.textContent = 'Message Sent!';
+                    } else if (messageType === 'error') {
+                        iconContainer.className = 'notification-icon error';
+                        iconContainer.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+                        title.textContent = 'Error Sending Message';
+                    } else {
+                        iconContainer.className = 'notification-icon info';
+                        iconContainer.innerHTML = '<i class="fas fa-info-circle"></i>';
+                        title.textContent = 'Information';
+                    }
+                    
+                    message.textContent = messageText;
+                    
+                    // Show the modal
+                    setTimeout(function() {
+                        modal.classList.add('show');
+                    }, 500);
+                }
+            }
+        });
+        
+        function closeNotificationModal() {
+            const modal = document.getElementById('notificationModal');
+            modal.classList.remove('show');
+        }
+    </script>
 </body>
 </html>

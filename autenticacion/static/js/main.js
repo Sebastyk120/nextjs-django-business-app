@@ -307,7 +307,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const languageOptions = document.querySelectorAll('.language-option');
     
     if (languageToggle) {
-        languageToggle.addEventListener('click', function() {
+        languageToggle.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent default navigation
             if (languageOverlay) {
                 languageOverlay.classList.add('show');
             }
@@ -322,16 +323,17 @@ document.addEventListener('DOMContentLoaded', function () {
     
     if (languageOptions.length > 0) {
         languageOptions.forEach(option => {
-            option.addEventListener('click', function() {
+            option.addEventListener('click', function(e) {
                 const lang = this.getAttribute('data-lang');
                 localStorage.setItem('language_selected', lang);
                 
-                // If it's the same language, just close the overlay
+                // If it's the same language, prevent navigation and just close the overlay
                 if ((lang === 'es' && document.documentElement.lang === 'es') ||
                     (lang === 'en' && document.documentElement.lang === 'en')) {
+                    e.preventDefault();
                     languageOverlay.classList.remove('show');
                 }
-                // Navigation happens via the href attribute for other cases
+                // Otherwise, the default navigation to the href URL will happen
             });
         });
     }

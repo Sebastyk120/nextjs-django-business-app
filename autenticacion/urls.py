@@ -4,7 +4,7 @@ from django.conf.urls import handler404
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
-from .views import LandingPageView
+from .views import LandingPageView, EnglishLandingPageView
 from django.contrib.auth.decorators import login_required
 
 # Crear clases personalizadas para las vistas de restablecimiento de contraseña
@@ -30,6 +30,7 @@ class CustomPasswordResetCompleteView(auth_views.PasswordResetCompleteView):
 urlpatterns = [
     # Landing page (pública)
     path('', LandingPageView.as_view(), name='landing_page'),
+    path('en/', EnglishLandingPageView.as_view(), name='landing_page_en'),
     
     # Rutas de autenticación
     path('login/', views.login1, name='login'),

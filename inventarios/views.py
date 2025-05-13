@@ -724,7 +724,6 @@ class ItemListViewFieldex(SingleTableView):
         context = super().get_context_data(**kwargs)
         context['item_busqueda'] = self.form_class(self.request.GET)
         # Debug information
-        print('Context Data:', context)
         return context
 
 
