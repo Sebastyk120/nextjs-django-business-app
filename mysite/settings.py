@@ -17,6 +17,7 @@ from pathlib import Path
 from django.templatetags.static import static
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ImproperlyConfigured
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -201,7 +202,11 @@ EMAIL_HOST = 'smtp.office365.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = DEFAULT_FROM_EMAIL
-EMAIL_HOST_PASSWORD = 'Isabella2025+'
+EMAIL_HOST_USER = DEFAULT_FROM_EMAIL
+try:
+    EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
+except KeyError:
+    raise ImproperlyConfigured('La variable de entorno EMAIL_HOST_PASSWORD no está definida')
 ADMIN_SITE_NAME = 'Administración Heavens Fruits'
 
 # Unfold Configuration
