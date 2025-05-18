@@ -7,60 +7,56 @@
     <link rel="stylesheet" href="{% static 'css/resumen_pedido.css' %}"/>
     <link rel="stylesheet" href="{% static 'css/relacion_facturas_vencidas.css' %}"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- jQuery UI CSS para autocompletado -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <!-- Add html2pdf.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <div class="container my-3">
-        <div class="facturas-vencidas-wrapper">
-            <!-- Header Section -->
+        <div class="facturas-vencidas-wrapper">            <!-- Header Section -->
             <div class="header-section mb-4">
-                {% if exportador_seleccionado %}
-                    <h1 class="exportador-title text-center mb-2">
-                        <i class="bi bi-building"></i>
-                        {{ exportador_seleccionado }}
-                    </h1>
-                {% endif %}
                 <h2 class="section-title text-center">
-                    <i class="bi bi-calendar-x"></i> Relación de Facturas Vencidas - Ventas Nacionales
+                    <i class="bi bi-receipt"></i> Reportes Asociados Factura - Remisión - Guía
                 </h2>
                 <div class="subtitle text-center">
-                    {% if exportador_seleccionado %}
-                        Facturas pendientes de pago del exportador
-                    {% else %}
-                        Consulta de facturas pendientes de pago
-                    {% endif %}
+                    Consulta de reportes por factura, número de guía o remisión
                 </div>
+                {% if criterio_busqueda %}
+                <div class="criterio-busqueda text-center mt-2">
+                    <span class="badge bg-info">{{ criterio_busqueda }}</span>
+                </div>
+                {% endif %}
             </div>
 
             <!-- Search Form Card -->
             <div class="card mb-4 search-card no-imprimir">
                 <div class="card-header">
-                    <h4><i class="bi bi-search"></i> Filtrar por Exportador y Fechas de Vencimiento</h4>
+                    <h4><i class="bi bi-search"></i> Buscar Reportes</h4>
                 </div>
                 <div class="card-body">
                     <form method="get" class="date-form">
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="{{ form.exportador.id_for_label }}">{{ form.exportador.label }}</label>
-                                    {{ form.exportador }}
+                                    <label for="{{ form.factura.id_for_label }}">{{ form.factura.label }}</label>
+                                    {{ form.factura }}
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="{{ form.fecha_inicio.id_for_label }}">{{ form.fecha_inicio.label }}</label>
-                                    {{ form.fecha_inicio }}
+                                    <label for="{{ form.numero_guia.id_for_label }}">{{ form.numero_guia.label }}</label>
+                                    {{ form.numero_guia }}
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="{{ form.fecha_final.id_for_label }}">{{ form.fecha_final.label }}</label>
-                                    {{ form.fecha_final }}
+                                    <label for="{{ form.remision.id_for_label }}">{{ form.remision.label }}</label>
+                                    {{ form.remision }}
                                 </div>
                             </div>
                             <div class="col-md-3 d-flex align-items-end">
                                 <button type="submit" class="btn btn-search w-100">
-                                    <i class="bi bi-filter"></i> Filtrar
+                                    <i class="bi bi-filter"></i> Buscar
                                 </button>
                             </div>
                         </div>
@@ -70,13 +66,8 @@
 
             {% if facturas_vencidas %}
                 <!-- Results Card -->
-                <div class="card mb-4 results-card">
-                    <div class="card-header">
-                        <h4><i class="bi bi-receipt"></i> Facturas Vencidas 
-                        {% if f_inicial and f_final %}
-                            Del {{ f_inicial|date:"d/m/Y" }} al {{ f_final|date:"d/m/Y" }}
-                        {% endif %}
-                        {% if exportador_seleccionado %} - {{ exportador_seleccionado }}{% endif %}</h4>
+                <div class="card mb-4 results-card">                <div class="card-header">
+                        <h4><i class="bi bi-receipt"></i> Reportes Encontrados</h4>
                         <span class="fecha-consulta">Consulta: {{ fecha_actual|date:"d/m/Y" }}</span>
                     </div>
                     <div class="card-body">
@@ -86,14 +77,17 @@
                                     <div class="factura-info">
                                         <h5><i class="bi bi-file-earmark-text"></i> Factura: {{ factura.factura }}</h5>
                                         <div class="factura-meta">
+                                            {% if factura.fecha_factura %}
                                             <span class="fecha-factura">
                                                 <i class="bi bi-calendar-check"></i> Fecha Factura: {{ factura.fecha_factura|date:"d/m/Y" }}
                                             </span>
+                                            {% endif %}                                            {% if factura.vencimiento_factura %}
                                             <span class="vencimiento">
                                                 <i class="bi bi-calendar-event"></i> Vencimiento: {{ factura.vencimiento_factura|date:"d/m/Y" }}
                                             </span>
-                                            <span class="dias-vencidos">
-                                                <i class="bi bi-alarm"></i> Días vencidos: {{ factura.dias_vencidos }}
+                                            {% endif %}
+                                            <span class="exportador">
+                                                <i class="bi bi-building"></i> Exportador: {{ factura.exportador }}
                                             </span>
                                             <span class="subtotal">
                                                 <i class="bi bi-cash-stack"></i> Subtotal: {{ factura.subtotal|format_currency }}
@@ -131,11 +125,9 @@
                                     </table>
                                 </div>
                             </div>
-                        {% endfor %}
-
-                        <!-- Total Amount Section -->
+                        {% endfor %}                        <!-- Total Amount Section -->
                         <div class="total-section">
-                            <div class="total-label">Total a Pagar:</div>
+                            <div class="total-label">Total:</div>
                             <div class="total-amount-container">
                                 <div class="total-amount">{{ total_a_pagar|format_currency }}</div>
                                 <div class="total-in-words">{{ total_a_pagar|numero_a_letras|capfirst }}</div>
@@ -153,19 +145,20 @@
                         <i class="bi bi-file-pdf"></i> Exportar PDF
                     </button>
                 </div>
-            {% elif form.is_valid %}
-                <!-- No Results Card -->
+            {% elif form.is_valid %}                <!-- No Results Card -->
                 <div class="card mb-4 no-results-card">
                     <div class="card-body text-center py-5">
                         <i class="bi bi-search no-results-icon"></i>
-                        <h3 class="no-results-text">No se encontraron facturas vencidas para el exportador seleccionado en el rango de fechas</h3>
+                        <h3 class="no-results-text">No se encontraron reportes con los criterios de búsqueda proporcionados</h3>
                         <p class="text-muted">Intente con otros criterios de búsqueda</p>
                     </div>
                 </div>
             {% endif %}
         </div>
-    </div>
-
+    </div>    <!-- jQuery y jQuery UI para autocompletado - cargados al final para asegurar compatibilidad -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+    
     <script>
         function generarPDF() {
             // Definir elemento a convertir
@@ -174,7 +167,7 @@
             // Configuración para html2pdf
             const opt = {
                 margin: [5, 10], // Reducir margen superior a 5mm
-                filename: 'facturas_vencidas.pdf',
+                filename: 'reportes_asociados.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { 
                     scale: 2, 
@@ -203,5 +196,36 @@
                 });
             });
         }
+
+        // Configuración de autocompletado para campos
+        jQuery(document).ready(function($) {
+            // Verificar si jQuery UI se ha cargado correctamente
+            if (typeof $.ui !== 'undefined') {
+                console.log("jQuery UI cargado correctamente");
+                
+                // Autocompletado para Número de Factura
+                $("#{{ form.factura.id_for_label }}").autocomplete({
+                    source: "{% url 'autocomplete_factura' %}",
+                    minLength: 1,
+                    delay: 300
+                });
+
+                // Autocompletado para Número de Guía
+                $("#{{ form.numero_guia.id_for_label }}").autocomplete({
+                    source: "{% url 'autocomplete_guia' %}",
+                    minLength: 1,
+                    delay: 300
+                });
+
+                // Autocompletado para Número de Remisión/Reporte
+                $("#{{ form.remision.id_for_label }}").autocomplete({
+                    source: "{% url 'autocomplete_remision' %}",
+                    minLength: 1,
+                    delay: 300
+                });
+            } else {
+                console.error("jQuery UI no está cargado correctamente");
+            }
+        });
     </script>
 {% endblock %}

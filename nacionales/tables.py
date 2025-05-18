@@ -101,7 +101,7 @@ class TransferenciasProveedorTable(tables.Table):
             'class': 'table'
         }
         template_name = "django_tables2/bootstrap5-responsive.html"
-        fields = ("id", "proveedor", "origen_transferencia", "fecha_transferencia", "valor_transferencia", "referencia",
+        fields = ("id", "proveedor", "origen_transferencia", "fecha_transferencia", "valor_transferencia",
                   "observaciones", "editar")
 
     def render_valor_transferencia(self, value):

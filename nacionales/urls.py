@@ -1,11 +1,13 @@
 from django.contrib import admin
 from django.urls import path
-from . import views, views2, views_report_prov, views_api
+from . import views, views2, views_report_prov, views_api, views_estado_cuenta_proveedor, views_analisis_calidad
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path('nacionales_list_general', views.nacionales_list_general, name='nacionales_list_general'),
     path('autocomplete_guia/', views2.autocomplete_guia, name='autocomplete_guia'),
+    path('autocomplete_factura/', views2.autocomplete_factura, name='autocomplete_factura'),
+    path('autocomplete_remision/', views2.autocomplete_remision, name='autocomplete_remision'),
     path('nacionales_list_detallada', views.nacionales_list_detallada, name='nacionales_list_detallada'),
     path('compra/create/', views.compra_nacional_create, name='compra_nacional_create'),
     path('venta/create/<int:compra_id>/', views.venta_nacional_create, name='venta_nacional_create'),
@@ -22,7 +24,7 @@ urlpatterns = [
     path('transferencia/edit/<int:pk>/', views.transferencia_nacional_edit, name='transferencia_nacional_edit'),
     path('dashboard_nacionales/', views2.dashboard_nacionales, name='dashboard_nacionales'),
     path('export_data/', views.export_data, name='export_data'),
-    path('estado-cuenta/<int:proveedor_id>/', views.estado_cuenta_proveedor, name='estado_cuenta_proveedor'),
+    path('estado-cuenta/<int:proveedor_id>/', views_estado_cuenta_proveedor.estado_cuenta_proveedor, name='estado_cuenta_proveedor'),
     path('relacion_facturas_vencidas/', views2.relacion_facturas_vencidas, name='relacion_facturas_vencidas'),
     path('relacion_reportes_vencidos/', views2.relacion_reportes_vencidos, name='relacion_reportes_vencidos'),
     path('reporte_estado_cuenta_proveedor/<int:proveedor_id>/', views_report_prov.reporte_cuenta_proveedor, name='reporte_estado_cuenta_proveedor'),
@@ -30,6 +32,11 @@ urlpatterns = [
     # Mantener la antigua URL por compatibilidad
     path('reporte-individual/<int:reporte_id>/', views2.reporte_individual_proveedor, name='reporte_individual_proveedor_legacy'),
 
+    # Nueva URL para Análisis de Calidad
+    path('analisis-calidad/', views_analisis_calidad.analisis_calidad_view, name='analisis_calidad'),
+    path('exportar-excel-analisis-calidad/', views_analisis_calidad.exportar_excel_analisis_calidad, name='exportar_excel_analisis_calidad'),
+
     # API endpoints
     path('api/balance-proveedores/', views_api.api_balance_proveedores, name='api_balance_proveedores'),
+    path('api/get-reporte-detalle/', views_analisis_calidad.get_reporte_detalle, name='get_reporte_detalle'),
 ]

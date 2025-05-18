@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/estado_cuenta_proveedor.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -18,10 +20,15 @@
         <div class="account-summary-wrapper">
             <!-- Header Section -->
             <div class="header-section">
+                <div class="subtitle">{{ proveedor.nombre }}</div>
                 <h2 class="section-title">
-                    <i class="bi bi-wallet2"></i> Estado de Cuenta Proveedor Nacional
+                    <i class="bi bi-wallet2"></i> Estado de Cuenta Proveedor Nacional 
+                    {% if es_primera_carga %}
+                        | Total General
+                    {% else %}
+                        | {{ fecha_inicio|date:'d/m/Y' }} - {{ fecha_fin|date:'d/m/Y' }}
+                    {% endif %}
                 </h2>
-                <div class="subtitle">{{ proveedor.nombre }} | {{ fecha_inicio|date:'d/m/Y' }} - {{ fecha_fin|date:'d/m/Y' }}</div>
             </div>
 
             <!-- Filtros -->
@@ -123,6 +130,10 @@
                                             <th><i class="bi bi-truck"></i> Peso (kg)</th>
                                             <th><i class="bi bi-tag"></i> Precio Exp</th>
                                             <th><i class="bi bi-tag"></i> Precio Nal</th>
+                                            <th><i class="bi bi-cash"></i> Total a Pagar</th>
+                                            <th><i class="bi bi-graph-up"></i> Utilidad</th>
+                                            <th><i class="bi bi-graph-up"></i> Utilidad Sin Ajuste</th>
+                                            <th><i class="bi bi-arrow-left-right"></i> Diferencia</th>
                                             <th><i class="bi bi-percent"></i> Progreso</th>
                                         </tr>
                                     </thead>
@@ -135,6 +146,44 @@
                                                 <td>{{ compra.peso_compra|format_number }}</td>
                                                 <td>{{ compra.precio_compra_exp|format_currency }}</td>
                                                 <td>{{ compra.precio_compra_nal|format_currency }}</td>
+                                                <!-- Total a Pagar -->
+                                                <td>
+                                                    {% if compra.ventanacional.reportecalidadexportador.reportecalidadproveedor %}
+                                                        {{ compra.ventanacional.reportecalidadexportador.reportecalidadproveedor.p_total_pagar|format_currency }}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <!-- Utilidad -->
+                                                <td>
+                                                    {% if compra.ventanacional.reportecalidadexportador.reportecalidadproveedor %}
+                                                        {% with val=compra.ventanacional.reportecalidadexportador.reportecalidadproveedor.p_utilidad %}
+                                                            <span class="{% if val < 0 %}text-danger{% elif val > 0 %}text-success{% endif %}">{{ val|format_currency }}</span>
+                                                        {% endwith %}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <!-- Utilidad Sin Ajuste -->
+                                                <td>
+                                                    {% if compra.ventanacional.reportecalidadexportador.reportecalidadproveedor %}
+                                                        {% with val=compra.ventanacional.reportecalidadexportador.reportecalidadproveedor.p_utilidad_sin_ajuste %}
+                                                            <span class="{% if val < 0 %}text-danger{% elif val > 0 %}text-success{% endif %}">{{ val|format_currency }}</span>
+                                                        {% endwith %}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <!-- Diferencia Utilidad -->
+                                                <td>
+                                                    {% if compra.ventanacional.reportecalidadexportador.reportecalidadproveedor %}
+                                                        {% with val=compra.ventanacional.reportecalidadexportador.reportecalidadproveedor.diferencia_utilidad %}
+                                                            <span class="{% if val < 0 %}text-danger{% elif val > 0 %}text-success{% endif %}">{{ val|format_currency }}</span>
+                                                        {% endwith %}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
                                                 <td class="{% if compra.porcentaje_completitud == 100 %}completed{% else %}pending{% endif %}">
                                                     <div class="d-flex align-items-center">
                                                         <div class="progress me-2" style="height: 8px; width: 100px;">
@@ -149,7 +198,7 @@
                                             </tr>
                                         {% empty %}
                                             <tr>
-                                                <td colspan="5" class="text-center py-3">
+                                                <td colspan="11" class="text-center py-3">
                                                     <i class="bi bi-info-circle me-2"></i> No hay compras en este período.
                                                 </td>
                                             </tr>
@@ -202,11 +251,8 @@
             </div>
 
             <!-- Gráficos -->
-            <div class="chart-container">
-                <h4 class="chart-title"><i class="bi bi-bar-chart-line"></i> Comportamiento Promedio Precio Exportacion En Compras</h4>
-                <canvas id="comprasChart"></canvas>
-            </div>
-            
+            <!-- Eliminado: Contenedor del gráfico, canvas y scripts relacionados con Chart.js -->
+
             <!-- Botón de volver eliminado -->
 
         </div>
@@ -214,66 +260,5 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const ctx = document.getElementById('comprasChart').getContext('2d');
-            const comprasChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [{% for compra in compras_por_fecha %}'{{ compra.fecha_compra|date:"d/m/Y" }}',{% endfor %}],
-                    datasets: [{
-                        label: 'Valor de Compras',
-                        data: [{% for compra in compras_por_fecha %}{{ compra.total_valor }},{% endfor %}],
-                        borderColor: '#4f46e5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#4f46e5',
-                        pointBorderColor: '#fff',
-                        pointRadius: 4,
-                        tension: 0.3,
-                        fill: true
-                    }]
-                },
-                options: {
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                label: function(context) {
-                                    let value = context.raw;
-                                    return 'Valor: $' + value.toLocaleString('es-ES', {
-                                        minimumFractionDigits: 0,
-                                        maximumFractionDigits: 0
-                                    });
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { 
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '$' + value.toLocaleString('es-ES');
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    responsive: true,
-                    maintainAspectRatio: true,  // Cambiado a true para mantener proporciones
-                    aspectRatio: 2  // Relación de aspecto ancho:alto = 2:1
-                }
-            });
-        });
-    </script>
 </body>
 </html>

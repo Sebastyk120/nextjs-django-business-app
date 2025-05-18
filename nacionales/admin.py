@@ -4,12 +4,12 @@ from import_export.admin import ImportExportModelAdmin
 from .models import (
     ProveedorNacional, Empaque, CompraNacional, VentaNacional,
     ReporteCalidadExportador, ReporteCalidadProveedor,
-    TransferenciasProveedor, FacturacionExportadores, BalanceProveedor
+    TransferenciasProveedor, BalanceProveedor
 )
 from .resources import (
     ProveedorNacionalResource, EmpaqueResource, CompraNacionalResource,
     VentaNacionalResource, ReporteCalidadExportadorResource, ReporteCalidadProveedorResource,
-    TransferenciasProveedorResource, FacturacionExportadoresResource, BalanceProveedorResource
+    TransferenciasProveedorResource, BalanceProveedorResource
 )
 from comercial.templatetags.custom_filters import format_currency
 from unfold.admin import ModelAdmin
@@ -70,7 +70,7 @@ class VentaNacionalAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin)
 class ReporteCalidadExportadorAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin):
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
-    list_display = ('pk', 'venta_nacional', 'remision_exp', 'fecha_reporte', 'kg_totales', 'kg_exportacion', 'porcentaje_exportacion', 'kg_nacional', 'porcentaje_nacional',  'kg_merma', 'porcentaje_merma', 'precio_venta_kg_exp', 'precio_venta_kg_nal', 'precio_total', 'factura', 'fecha_factura', 'vencimiento_factura', 'pagado', 'estado_reporte_exp')
+    list_display = ('pk', 'venta_nacional', 'remision_exp', 'fecha_reporte', 'kg_totales', 'kg_exportacion', 'porcentaje_exportacion', 'kg_nacional', 'porcentaje_nacional',  'kg_merma', 'porcentaje_merma', 'precio_venta_kg_exp', 'precio_venta_kg_nal', 'precio_total', 'factura', 'fecha_factura', 'vencimiento_factura', 'estado_reporte_exp')
     search_fields = ('venta_nacional__compra_nacional__numero_guia',)
     search_help_text = "Buscar por: número de guía de la compra nacional relacionada con la venta."
     list_filter = ('fecha_reporte',)
@@ -80,7 +80,7 @@ class ReporteCalidadExportadorAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHi
 class ReporteCalidadProveedorAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin):
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
-    list_display = ('pk', 'rep_cal_exp', 'p_fecha_reporte', 'p_kg_totales', 'p_kg_exportacion', 'p_porcentaje_exportacion', 'p_kg_nacional', 'p_porcentaje_nacional', 'p_kg_merma', 'p_porcentaje_merma', 'p_total_facturar', 'asohofrucol', 'rte_fte', 'rte_ica', 'p_total_pagar', 'p_utilidad', 'p_porcentaje_utilidad', 'reporte_pago', 'estado_reporte_prov', 'completado')
+    list_display = ('pk', 'rep_cal_exp', 'p_fecha_reporte', 'p_kg_totales', 'p_kg_exportacion', 'p_porcentaje_exportacion', 'p_kg_nacional', 'p_porcentaje_nacional', 'p_kg_merma', 'p_porcentaje_merma', 'p_total_facturar', 'asohofrucol', 'rte_fte', 'rte_ica', 'p_total_pagar', 'p_utilidad', 'p_utilidad_sin_ajuste', 'diferencia_utilidad','p_porcentaje_utilidad', 'monto_pendiente', 'reporte_pago', 'estado_reporte_prov', 'completado')
     search_fields = ('rep_cal_exp__venta_nacional__compra_nacional__numero_guia',)
     search_help_text = "Buscar por: número de guía de la compra nacional (a través de rep_cal_exp)."
     list_filter = ('p_fecha_reporte',)
@@ -100,26 +100,6 @@ class TransferenciasProveedorAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHis
         return format_currency(obj.valor_transferencia)
 
     valor_transferencia_moneda.short_description = 'Valor Transferencia'
-
-@admin.register(FacturacionExportadores)
-class FacturacionExportadoresAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin):
-    import_form_class = ImportForm
-    export_form_class = SelectableFieldsExportForm
-    list_display = ('id', 'no_factura', 'fecha_factura', 'fruta', 'exportador', 'peso_kg', 'precio_kg_moneda', 'precio_total_moneda')
-    search_fields = ('no_factura', 'fruta__nombre', 'exportador__nombre')
-    search_help_text = "Buscar por: número de factura, nombre de la fruta y nombre del exportador."
-    list_filter = ('fecha_factura',)
-    resource_class = FacturacionExportadoresResource
-
-    def precio_total_moneda(self, obj):
-        return format_currency(obj.precio_total)
-
-    precio_total_moneda.short_description = 'Total Factura'
-
-    def precio_kg_moneda(self, obj):
-        return format_currency(obj.precio_kg)
-
-    precio_kg_moneda.short_description = 'Precio Kg'
 
 @admin.register(BalanceProveedor)
 class BalanceProveedorAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin):

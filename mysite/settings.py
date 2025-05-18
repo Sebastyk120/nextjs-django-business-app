@@ -118,11 +118,11 @@ DATABASES = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'heavens_nacionales',  # Nombre de tu base de datos
+        'NAME': 'heavens_local',  # Nombre de tu base de datos
         'USER': 'postgres',  # Nombre de usuario de tu base de datos
         'PASSWORD': 'Sebastyk120',  # Contraseña del usuario de la base de datos
         'HOST': 'localhost',  # Deja esto como 'localhost' si estás ejecutando PostgreSQL localmente
-        'PORT': '5433',  # Puerto de PostgreSQL (por defecto es 5432)
+        'PORT': '5432',  # Puerto de PostgreSQL (por defecto es 5432)
     }
 }"""
 
@@ -479,11 +479,6 @@ UNFOLD = {
                         "title": _("Transferencias"),
                         "icon": "swap_horiz",
                         "link": reverse_lazy("admin:nacionales_transferenciasproveedor_changelist"),
-                    },
-                    {
-                        "title": _("Facturación Exportadores"),
-                        "icon": "receipt_long",
-                        "link": reverse_lazy("admin:nacionales_facturacionexportadores_changelist"),
                     },
                     {
                         "title": _("Balance Proveedor"),

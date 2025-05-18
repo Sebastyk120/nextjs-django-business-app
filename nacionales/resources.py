@@ -2,7 +2,7 @@ from import_export import resources, fields, widgets
 from .models import (
     ProveedorNacional, Empaque, CompraNacional, VentaNacional,
     ReporteCalidadExportador, ReporteCalidadProveedor,
-    TransferenciasProveedor, FacturacionExportadores, BalanceProveedor
+    TransferenciasProveedor, BalanceProveedor
 )
 
 
@@ -46,11 +46,6 @@ class ReporteCalidadProveedorResource(resources.ModelResource):
 class TransferenciasProveedorResource(resources.ModelResource):
     class Meta:
         model = TransferenciasProveedor
-
-
-class FacturacionExportadoresResource(resources.ModelResource):
-    class Meta:
-        model = FacturacionExportadores
 
 
 class BalanceProveedorResource(resources.ModelResource):

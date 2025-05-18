@@ -26,7 +26,7 @@
                 <i class="fas fa-file-invoice"></i> Estado de Cuenta Proveedor
             </button>
             <button class="btn btn-secondary" id="openEnvioReportesModalLink">
-                <i class="fas fa-paper-plane"></i> Enviar Reportes
+                <i class="fas fa-paper-plane"></i> Resumen Reportes Proveedor
             </button>
             <button class="btn btn-secondary" id="openBalanceProveedorModal">
                 <i class="fas fa-balance-scale"></i> Balance Proveedores
@@ -98,32 +98,64 @@
         </div>
         <div class="card">
             <div class="card-header">
-                <span class="card-title">KILOS COMPRADOS</span>
+                <span class="card-title">KILOS BRUTOS</span>
                 <div class="card-icon bg-success">
                     <i class="fas fa-weight-hanging"></i>
                 </div>
             </div>
-            <div class="card-value">{{ global_total_kilos|floatformat:0|format_number }}</div>
+            <div class="card-value">{{ global_total_kilos_brutos|floatformat:0|format_number }}</div>
             <div class="card-description">
-                {% if kilos_prev %}
-                    <span class="{% if kilos_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
-                        {{ kilos_percent }}% respecto al periodo anterior
+                {% if kilos_brutos_prev %}
+                    <span class="{% if kilos_brutos_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ kilos_brutos_percent }}% respecto al periodo anterior
                     </span>
                 {% endif %}
             </div>
         </div>
         <div class="card">
             <div class="card-header">
-                <span class="card-title">UTILIDADES TOTALES</span>
+                <span class="card-title">KILOS NETOS</span>
                 <div class="card-icon bg-info">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+            </div>
+            <div class="card-value">{{ global_total_kilos_netos|floatformat:0|format_number }}</div>
+            <div class="card-description">
+                {% if kilos_netos_prev %}
+                    <span class="{% if kilos_netos_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ kilos_netos_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">UTILIDAD REAL</span>
+                <div class="card-icon bg-warning">
                     <i class="fas fa-dollar-sign"></i>
                 </div>
             </div>
-            <div class="card-value">{{ global_total_utilidades|floatformat:0|format_currency }}</div>
+            <div class="card-value {% if global_total_utilidades < 0 %}negative-value{% elif global_total_utilidades > 0 %}positive-value{% endif %}">{{ global_total_utilidades|floatformat:0|format_currency }}</div>
             <div class="card-description">
                 {% if utilidades_prev %}
                     <span class="{% if utilidades_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
                         {{ utilidades_percent }}% respecto al periodo anterior
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">UTILIDAD ANTES DE AJUSTE</span>
+                <div class="card-icon bg-info">
+                    <i class="fas fa-calculator"></i>
+                </div>
+            </div>
+            <div class="card-value {% if global_total_utilidades_sin_ajuste < 0 %}negative-value{% elif global_total_utilidades_sin_ajuste > 0 %}positive-value{% endif %}">{{ global_total_utilidades_sin_ajuste|floatformat:0|format_currency }}</div>
+            <div class="card-description">
+                {% if utilidades_sin_ajuste_prev %}
+                    <span class="{% if utilidades_sin_ajuste_percent >= 0 %}percent-positive{% else %}percent-negative{% endif %}">
+                        {{ utilidades_sin_ajuste_percent }}% respecto al periodo anterior
                     </span>
                 {% endif %}
             </div>
@@ -190,7 +222,7 @@
                 <th>Valor Compras</th>
                 <th>Total Pagado</th>
                 <th>Facturado Exp.</th>
-                <th>Kilos Comprados</th>
+                <th>Kilos Netos</th>
                 <th>Utilidades</th>
                 <th>% Kilos</th>
                 <th>% Utilidad</th>
@@ -206,7 +238,7 @@
                     <td class="numeric">{{ item.valor_total_compras|floatformat:0|format_currency }}</td>
                     <td class="numeric">{{ item.total_pagado_proveedor|floatformat:0|format_currency }}</td>
                     <td class="numeric">{{ item.total_facturado_exportadores|floatformat:0|format_currency }}</td>
-                    <td class="numeric">{{ item.total_kilos_comprados|floatformat:0|format_number }}</td>
+                    <td class="numeric">{{ item.total_kilos_netos|floatformat:0|format_number }}</td>
                     <td class="numeric">{{ item.total_utilidades|floatformat:0|format_currency }}</td>
                     <td class="numeric">{{ item.percent_kilos|floatformat:2 }}%</td>
                     <td class="numeric">{{ item.percent_utilidad|floatformat:2 }}%</td>
@@ -256,6 +288,11 @@
                         <i class="fas fa-table"></i> Listado Detallado (Reportes Pendientes)
                     </a>
                 </li>
+                <li class="nav-menu-item">
+                    <a href="{% url 'analisis_calidad' %}" class="nav-menu-link">
+                        <i class="fas fa-table"></i> Analisis De Calidad Proveedor - Exportador
+                    </a>
+                </li>
             </ul>
         </div>
 
@@ -277,11 +314,6 @@
                         <i class="fas fa-exchange-alt"></i> Transferencias Proveedores.
                     </a>
                 </li>
-                <li class="nav-menu-item">
-                    <a href="{% url 'admin:nacionales_facturacionexportadores_changelist' %}" class="nav-menu-link">
-                        <i class="fas fa-shopping-cart"></i> Facturas Exportadoras.
-                    </a>
-                </li>
             </ul>
         </div>
 
@@ -295,7 +327,7 @@
                 </li>
                 <li class="nav-menu-item">
                     <a href="#" id="openEnvioReportesModalLink" class="nav-menu-link">
-                        <i class="fas fa-shopping-cart"></i> Envio Reportes General. (Dashboard)
+                        <i class="fas fa-shopping-cart"></i> Resumen Reporte Proveedor (Dashboard).
                     </a>
                 </li>
             </ul>
@@ -379,7 +411,7 @@
     <div class="modal-content" style="max-width: 500px;">
         <span class="close" id="closeEnvioReportesModal">&times;</span>
         <h3 style="margin-bottom: 20px; color: var(--dark); font-size: 22px; text-align: center;">
-            <i class="fas fa-paper-plane"></i> Envío de Reportes General
+            <i class="fas fa-paper-plane"></i> Envio De Resumen Reportes Proveedor
         </h3>
         <div style="margin-bottom: 20px;">
             <label for="proveedorReportesSelect" style="display: block; margin-bottom: 8px; font-weight: 500; color: #555;">Seleccione Proveedor:</label>
@@ -402,15 +434,17 @@
 
 <!-- Modal para Balance de Proveedores -->
 <div id="balanceProveedorModal" class="modal">
-    <div class="modal-content" style="max-width: 750px;">
+    <div class="modal-content" style="max-width: 1000px;">
         <span class="close" id="closeBalanceProveedorModal">&times;</span>
-        <h3 style="margin-bottom: 20px; color: var(--dark); font-size: 22px; text-align: center;">
+        <h3 style="margin-bottom: 20px; color: var(--dark); font-size: 24px; text-align: center;">
             <i class="fas fa-balance-scale"></i> Balance de Proveedores
         </h3>
         <div style="margin-bottom: 20px;">
             <div class="balance-search">
-                <label for="balanceProveedorSelect" style="display: block; margin-bottom: 8px; font-weight: 500; color: #555;">Filtrar por Proveedor:</label>
-                <select id="balanceProveedorSelect" class="form-control" style="width: 100%; padding: 12px; border-radius: var(--radius); border: 1px solid #ddd;">
+                <label for="balanceProveedorSelect">
+                    <i class="fas fa-filter"></i> Filtrar por Proveedor
+                </label>
+                <select id="balanceProveedorSelect" class="form-control">
                     <option value="todos">Todos los proveedores</option>
                     {% for p in proveedores %}
                         <option value="{{ p.id }}">{{ p.nombre }}</option>
@@ -419,16 +453,19 @@
             </div>
         </div>
 
-        <div id="balanceProveedorData" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
-            <div class="loading-spinner" style="display: none; text-align: center; padding: 20px;">
-                <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--primary);"></i>
+        <div id="balanceProveedorData">
+            <div class="loading-spinner" style="display: none;">
+                <i class="fas fa-circle-notch fa-spin"></i>
                 <p>Cargando datos...</p>
             </div>
-            <table class="data-table" style="width: 100%;">
+            <table class="data-table">
                 <thead>
                     <tr>
                         <th>Proveedor</th>
-                        <th>Saldo Disponible</th>
+                        <th>Total Compras</th>
+                        <th>Total Transferido</th>
+                        <th>Saldo Pendiente</th>
+                        <th>Utilidad</th>
                         <th>Última Actualización</th>
                         <th>Acciones</th>
                     </tr>
@@ -440,10 +477,28 @@
         </div>
 
         <div style="display: flex; justify-content: space-between; margin-top: 25px;">
-            <div class="balance-stats" style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; width: 48%;">
-                <h4 style="margin-bottom: 10px; font-size: 16px; color: #495057;">Resumen</h4>
-                <p><strong>Total Proveedores:</strong> <span id="totalProveedores">-</span></p>
-                <p><strong>Saldo Total:</strong> <span id="saldoPromedio">-</span></p>
+            <div class="balance-stats">
+                <h4><i class="fas fa-chart-pie"></i> Resumen General</h4>
+                <p>
+                    <strong>Total Proveedores:</strong>
+                    <span id="totalProveedores">-</span>
+                </p>
+                <p>
+                    <strong>Total Compras:</strong>
+                    <span id="totalCompras">-</span>
+                </p>
+                <p>
+                    <strong>Total Transferido:</strong>
+                    <span id="totalTransferido">-</span>
+                </p>
+                <p>
+                    <strong>Total Saldo Pendiente:</strong>
+                    <span id="totalSaldoPendiente">-</span>
+                </p>
+                <p>
+                    <strong>Total Utilidad:</strong>
+                    <span id="totalUtilidad">-</span>
+                </p>
             </div>
             <div style="display: flex; justify-content: flex-end; align-items: flex-end; width: 48%;">
                 <button class="btn btn-secondary" id="closeBalanceProveedorBtn" style="margin-right: 10px;">
@@ -747,7 +802,7 @@
         const pctMerma = {{ porcentaje_merma|stringformat:"0.2f" }};
 
         // Crear el array de datos para el gráfico de kilos
-        const kilosPercentData = [{% for item in proveedores_data %}{{ item.total_kilos_comprados|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const kilosPercentData = [{% for item in proveedores_data %}{{ item.total_kilos_netos|stringformat:"0.0f" }}{% if not forloop.last %}, {% endif %}{% endfor %}];
 
         // Variables para gráficos
         window.charts = {};
@@ -888,7 +943,8 @@
                         'rgba(243, 156, 18, 1)',
                         'rgba(192, 57, 43, 1)',
                     ],
-                    borderWidth: 1
+                    borderWidth: 1,
+                    yAxisID: 'y'
                 }, {
                     label: 'Porcentaje',
                     data: [pctExportacion, pctNacional, pctMerma],
@@ -1169,22 +1225,23 @@
                 if (data.balances.length === 0) {
                     tableBody.innerHTML = `
                         <tr>
-                            <td colspan="4" style="text-align: center;">No se encontraron registros de balance</td>
+                            <td colspan="7" style="text-align: center;">No se encontraron registros de balance</td>
                         </tr>
                     `;
                     document.getElementById('totalProveedores').textContent = '0';
-                    document.getElementById('saldoPromedio').textContent = '$0';
+                    document.getElementById('totalCompras').textContent = '$0';
+                    document.getElementById('totalTransferido').textContent = '$0';
+                    document.getElementById('totalSaldoPendiente').textContent = '$0';
+                    document.getElementById('totalUtilidad').textContent = '$0';
                     return;
                 }
                 
                 // Actualizar estadísticas
                 document.getElementById('totalProveedores').textContent = data.balances.length;
-                document.getElementById('saldoPromedio').textContent = 
-                    '$' + parseFloat(data.total_saldo).toLocaleString('es-CO');
-                
-                // Obtener la base URL para reportes
-                const urlBase = "{% url 'reporte_estado_cuenta_proveedor' 0 %}".replace('/0/', '/');
-                console.log(urlBase);
+                document.getElementById('totalCompras').textContent = '$' + parseFloat(data.totales.total_compras).toLocaleString('es-CO');
+                document.getElementById('totalTransferido').textContent = '$' + parseFloat(data.totales.total_transferido).toLocaleString('es-CO');
+                document.getElementById('totalSaldoPendiente').textContent = '$' + parseFloat(data.totales.total_saldo_pendiente).toLocaleString('es-CO');
+                document.getElementById('totalUtilidad').textContent = '$' + parseFloat(data.totales.total_utilidad).toLocaleString('es-CO');
                 
                 // Llenar tabla con datos
                 data.balances.forEach(balance => {
@@ -1194,19 +1251,21 @@
                     const fecha = new Date(balance.ultima_actualizacion);
                     const fechaFormateada = fecha.toLocaleString('es-CO');
                     
-                    // Formatear saldo con separadores de miles
-                    const saldoFormateado = parseFloat(balance.saldo_disponible).toLocaleString('es-CO');
-                    
-                    // Construir URL correctamente
-                    const reporteUrl = urlBase + balance.proveedor_id + '/';
+                    // Determinar clases para valores positivos/negativos
+                    const saldoClass = balance.saldo_pendiente >= 0 ? 'positive-value' : 'negative-value';
+                    const utilidadClass = balance.total_utilidad >= 0 ? 'positive-value' : 'negative-value';
                     
                     row.innerHTML = `
                         <td>${balance.proveedor_nombre}</td>
-                        <td class="numeric">$${saldoFormateado}</td>
+                        <td class="numeric">$${parseFloat(balance.total_compras).toLocaleString('es-CO')}</td>
+                        <td class="numeric">$${parseFloat(balance.total_transferido).toLocaleString('es-CO')}</td>
+                        <td class="numeric ${saldoClass}">$${parseFloat(balance.saldo_pendiente).toLocaleString('es-CO')}</td>
+                        <td class="numeric ${utilidadClass}">$${parseFloat(balance.total_utilidad).toLocaleString('es-CO')}</td>
                         <td>${fechaFormateada}</td>
                         <td>
-                            <a href="${reporteUrl}" class="btn-small" title="Enviar reporte">
-                                <i class="fas fa-paper-plane"></i>
+                            <a href="/nacionales/estado-cuenta/${balance.proveedor_id}/" class="btn-small" title="Ver estado de cuenta">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                Ver Estado
                             </a>
                         </td>
                     `;
@@ -1217,7 +1276,7 @@
                 loadingSpinner.style.display = 'none';
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="4" style="text-align: center;">
+                        <td colspan="7" style="text-align: center;">
                             Error al cargar los datos: ${error.message}
                         </td>
                     </tr>

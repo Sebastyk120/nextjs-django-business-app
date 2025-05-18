@@ -131,13 +131,6 @@ class ReporteCalidadExportadorForm(forms.ModelForm):
                                                           attrs={'type': 'date', 'class': 'form-control'}), )
     fecha_factura = forms.DateField(widget=forms.DateInput(format='%Y-%m-%d',
                                                           attrs={'type': 'date', 'class': 'form-control'}), required=False)
-    pagado = forms.BooleanField(
-        required=False,
-        widget=forms.CheckboxInput(attrs={
-            'class': 'form-check-input',
-            'role': 'switch',
-        })
-    )
 
     class Meta:
         model = ReporteCalidadExportador
@@ -175,16 +168,6 @@ class ReporteCalidadExportadorForm(forms.ModelForm):
                 Row(
                     Column('factura', css_class='col-md-4'),
                     Column('fecha_factura', css_class='col-md-4'),
-                    Column(
-                        Div(
-                            Div(
-                                'pagado', 
-                                css_class='form-check form-switch d-flex justify-content-center align-items-center h-100'
-                            ),
-                            css_class='d-flex justify-content-center align-items-center h-100'
-                        ),
-                        css_class='col-md-4'
-                    ),
                     css_class='g-3'
                 ),
                 css_class='p-4 bg-white rounded shadow-sm'
@@ -233,17 +216,9 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
         })
     )
     
-    completado = forms.BooleanField(
-        required=False,
-        widget=forms.CheckboxInput(attrs={
-            'class': 'form-check-input',
-            'role': 'switch',
-        })
-    )
-    
     class Meta:
         model = ReporteCalidadProveedor
-        exclude = ['rep_cal_exp',]
+        exclude = ['rep_cal_exp', 'completado']
 
     def __init__(self, *args, **kwargs):
         self.rep_cal_exp = kwargs.pop('rep_cal_exp', None)
@@ -276,17 +251,7 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
                             ),
                             css_class='d-flex justify-content-center.align-items-center h-100'
                         ),
-                        css_class='col-md-6'
-                    ),
-                    Column(
-                        Div(
-                            Div(
-                                'completado', 
-                                css_class='form-check form-switch d-flex justify-content-center.align-items-center h-100'
-                            ),
-                            css_class='d-flex justify-content-center.align-items-center h-100'
-                        ),
-                        css_class='col-md-6'
+                        css_class='col-md-12'
                     ),
                     css_class='g-3'
                 ),
@@ -318,10 +283,8 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
                 p_kg_totales = peso_neto_recibido
                 cleaned_data['p_kg_totales'] = p_kg_totales
 
-            pago_exportador = self.rep_cal_exp.pagado
             p_kg_exportacion = cleaned_data.get('p_kg_exportacion')
             p_kg_nacional = cleaned_data.get('p_kg_nacional')
-            completado = cleaned_data.get('completado')
             reporte_enviado = cleaned_data.get('reporte_enviado')
             factura_prov = cleaned_data.get('factura_prov')
             
@@ -330,18 +293,15 @@ class ReporteCalidadProveedorForm(forms.ModelForm):
             if self.instance and hasattr(self.instance, 'reporte_pago'):
                 reporte_pago = self.instance.reporte_pago
 
-            if completado and (factura_prov is None or not reporte_enviado or not reporte_pago or not pago_exportador):
-                if factura_prov is None:
-                    self.add_error('factura_prov', 'Este campo es obligatorio si el reporte está completado.')
-                elif not reporte_enviado:
+            # Solo validar reporte_enviado si el reporte está completado
+            if self.instance and self.instance.completado:
+                if not reporte_enviado:
                     self.add_error('reporte_enviado', 'Este campo es obligatorio si el reporte está completado.')
-                elif not pago_exportador:
-                    raise forms.ValidationError(
-                        'El reporte no puede ser completado si el exportador(Reporte Calidad Exportador) no ha registrado')
                 elif not reporte_pago:
                     raise forms.ValidationError(
                         'El reporte no puede ser completado si no se ha registrado el pago por el sistema.')
 
+            # Validar que ambos campos de kg estén completos o vacíos
             if (p_kg_exportacion is None and p_kg_nacional is not None) or (
                     p_kg_exportacion is not None and p_kg_nacional is None):
                 self.add_error('p_kg_nacional',
@@ -388,9 +348,8 @@ class TransferenciasProveedorForm(forms.ModelForm):
             Div(
                 HTML('<h5 class="text-primary mb-4">Información de Transferencia</h5>'),
                 Row(
-                    Column('proveedor', css_class='col-md-4'),
-                    Column('referencia', css_class='col-md-4'),
-                    Column('origen_transferencia', css_class='col-md-4'),
+                    Column('proveedor', css_class='col-md-6'),
+                    Column('origen_transferencia', css_class='col-md-6'),
                     css_class='g-3'
                 ),
                 Row(

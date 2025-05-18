@@ -33,7 +33,6 @@ def actualizar_precio_compra_nal(sender, instance, **kwargs):
     compra_nacional = instance.venta_nacional.compra_nacional
     venta_nacional = instance.venta_nacional
     CompraNacional.objects.filter(pk=compra_nacional.pk).update(precio_compra_nal=instance.precio_venta_kg_nal)
-    VentaNacional.objects.filter(pk=venta_nacional.pk).update(estado_venta="Rte-recibido")
 
 @receiver(post_save, sender=ReporteCalidadExportador)
 def actualizar_reporte_calidad_proveedor(sender, instance, **kwargs):

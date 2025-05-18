@@ -111,7 +111,7 @@ class VentaNacional(models.Model):
     peso_neto_recibido = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Peso Neto Recibido", validators=[MinValueValidator(0.0)], editable=False)
     diferencia_peso = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Diferencia Peso", validators=[MinValueValidator(0.0)], blank=True, null=True, editable=False)
     diferencia_empaque = models.IntegerField(verbose_name="Diferencia Empaque", blank=True, null=True, editable=False)
-    estado_venta = models.CharField(max_length=20, verbose_name="Estado Venta", default='En Proceso', editable=False)
+    estado_venta = models.CharField(max_length=20, verbose_name="Estado Reporte (Exportador)", default='Pendiente', editable=False)
     observaciones = models.TextField(verbose_name="Observaciones", blank=True, null=True)
 
 
@@ -175,8 +175,7 @@ class ReporteCalidadExportador(models.Model):
     factura = models.CharField(max_length=20, verbose_name="Factura Heavens", blank=True, null=True)
     fecha_factura = models.DateField(verbose_name="Fecha Factura", blank=True, null=True)
     vencimiento_factura = models.DateField(verbose_name="Vencimiento Factura", blank=True, null=True, editable=False)
-    pagado = models.BooleanField(default=False, verbose_name="Pagado", blank=True, null=True)
-    estado_reporte_exp = models.CharField(max_length=20, verbose_name="Estado Reporte Exp", default='En Proceso', editable=False)
+    estado_reporte_exp = models.CharField(max_length=20, verbose_name="Estado Reporte Exp", default='Pendiente', editable=False)
 
     class Meta:
         ordering = ['-pk']
@@ -213,12 +212,7 @@ class ReporteCalidadExportador(models.Model):
                 computed_kg_merma = total - self.kg_exportacion - self.kg_nacional
                 if computed_kg_merma < Decimal('0.00'):
                     raise ValidationError(f"La suma de Kg exportación y Kg nacional no puede superar el peso neto recibido. ({total})")
-            
-        # Validación de facturación
-        if self.pagado and (self.factura is None or self.fecha_factura is None):
-            raise ValidationError({
-                'pagado': 'No se puede marcar como pagado si no se ha registrado una factura válida y su fecha correspondiente.'
-            })
+
         
         super().clean()
 
@@ -236,8 +230,6 @@ class ReporteCalidadExportador(models.Model):
         self.precio_total = (self.kg_exportacion * self.precio_venta_kg_exp) + (self.kg_nacional * self.precio_venta_kg_nal)
         if self.factura:
             self.estado_reporte_exp = "Facturado"
-        if self.pagado:
-            self.estado_reporte_exp = "Pagado"
         
         super().save(*args, **kwargs)
         
@@ -258,13 +250,16 @@ class ReporteCalidadProveedor(models.Model):
     rte_fte = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Rte Fte 1.5%", validators=[MinValueValidator(0.0)], editable=False, default=0)
     rte_ica = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Rte Ica 4.14/1000", validators=[MinValueValidator(0.0)], editable=False, default=0)
     p_total_pagar = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Total A Pagar", validators=[MinValueValidator(0.0)], editable=False, default=0)
-    p_utilidad = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Utilidad", validators=[MinValueValidator(0.0)], editable=False, default=0)
+    monto_pendiente = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto Pendiente", validators=[MinValueValidator(0.0)], editable=False, default=0)
+    p_utilidad = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Utilidad", editable=False, default=0)
+    p_utilidad_sin_ajuste = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Utilidad Sin Ajuste", editable=False, default=0, null=True, blank=True)
+    diferencia_utilidad = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Diferencia Utilidad", editable=False, default=0, null=True, blank=True)
     p_porcentaje_utilidad = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="% Utilidad", validators=[MinValueValidator(0.0), MaxValueValidator(100.00)], editable=False)
     reporte_enviado = models.BooleanField(default=False, verbose_name="Reporte Enviado")
     factura_prov = models.CharField(max_length=20, verbose_name="No Factura Proveedor", blank=True, null=True)
     reporte_pago = models.BooleanField(default=False, verbose_name="Reporte Pago", editable=False)
     estado_reporte_prov = models.CharField(max_length=50, verbose_name="Estado Reporte Prov", default='En Proceso', editable=False)
-    completado = models.BooleanField(default=False, verbose_name="Completado")
+    completado = models.BooleanField(default=False, verbose_name="Completado", editable=False)
 
     class Meta:
         ordering = ['-pk']
@@ -277,9 +272,6 @@ class ReporteCalidadProveedor(models.Model):
         # RreporteCalidadExportador no ha sido asignado.
         if not self.rep_cal_exp_id:
             return
-            
-        # Validación de completado
-        pago_exportador = self.rep_cal_exp.pagado
         
         if self.completado:
             if self.factura_prov is None:
@@ -290,10 +282,6 @@ class ReporteCalidadProveedor(models.Model):
                 raise ValidationError({
                     'reporte_enviado': 'Este campo es obligatorio si el reporte está completado.'
                 })
-            elif not pago_exportador:
-                raise ValidationError(
-                    'El reporte no puede ser completado si el exportador(Reporte Calidad Exportador) no ha registrado el pago.'
-                )
             elif not self.reporte_pago:
                 raise ValidationError(
                     'El reporte no puede ser completado si no se ha registrado el pago por el sistema.'
@@ -354,7 +342,8 @@ class ReporteCalidadProveedor(models.Model):
         self.p_precio_kg_exp = self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_exp
         self.p_precio_kg_nal = self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_nal
         self.p_total_facturar = (self.p_kg_exportacion * self.p_precio_kg_exp) + (self.p_kg_nacional * self.p_precio_kg_nal)
-
+        self.p_utilidad_sin_ajuste = self.rep_cal_exp.precio_total - ((self.rep_cal_exp.kg_exportacion * self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_exp) + (self.rep_cal_exp.kg_nacional * self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_nal))
+        self.diferencia_utilidad = self.p_utilidad - self.p_utilidad_sin_ajuste
         # Cálculos de retenciones
         proveedor = self.rep_cal_exp.venta_nacional.compra_nacional.proveedor
         if proveedor.asohofrucol:
@@ -383,9 +372,18 @@ class ReporteCalidadProveedor(models.Model):
         if self.reporte_pago:
             self.estado_reporte_prov = "Pagado"
         if self.factura_prov:
-            self.estado_reporte_prov = "Facturado Por Proveedor"
-        if self.completado:
+            self.estado_reporte_prov = "Facturado"
+            
+        # Automatizar el campo completado
+        if self.factura_prov and self.reporte_enviado and self.reporte_pago:
+            self.completado = True
             self.estado_reporte_prov = "Completado"
+        else:
+            self.completado = False
+
+        # Inicializar monto_pendiente con el total a pagar si es un nuevo registro
+        if not self.pk:
+            self.monto_pendiente = self.p_total_pagar
 
         super().save(*args, **kwargs)
 
@@ -415,20 +413,6 @@ class BalanceProveedor(models.Model):
         verbose_name_plural = "Balances de Proveedores"
 
 
-class FacturacionExportadores(models.Model):
-    no_factura = models.CharField(max_length=20, verbose_name="No Factura", unique=True)
-    fecha_factura = models.DateField(verbose_name="Fecha Factura")
-    fruta = models.ForeignKey(Fruta, on_delete=models.PROTECT, verbose_name="Fruta")
-    exportador = models.ForeignKey(Exportador, on_delete=models.PROTECT, verbose_name="Exportador")
-    peso_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Peso Kg", validators=[MinValueValidator(0.0)])
-    precio_kg = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$ Kg", validators=[MinValueValidator(0.0)])
-    precio_total = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Total Factura", validators=[MinValueValidator(0.0)], editable=False)
-
-    def save(self, *args, **kwargs):
-        self.precio_total = self.peso_kg * self.precio_kg
-        super().save(*args, **kwargs)
-
-
 # Variable global para evitar recursión
 _processing_payment = False
 
@@ -443,108 +427,90 @@ def reevaluar_pagos_proveedor(proveedor):
     _processing_payment = True
     try:
         from django.db import connection
-        #print(f"Reevaluando pagos para {proveedor}...")
         
         # Primero calculamos el saldo total de transferencias
         total_transferencias = TransferenciasProveedor.objects.filter(
             proveedor=proveedor
         ).aggregate(total=models.Sum('valor_transferencia'))['total'] or 0
         
-        #print(f"Total transferencias: {total_transferencias}")
-        
         # Obtenemos todos los reportes antes de modificarlos
         reportes_query = ReporteCalidadProveedor.objects.filter(
             rep_cal_exp__venta_nacional__compra_nacional__proveedor=proveedor
-        ).select_related('rep_cal_exp__venta_nacional')
+        ).select_related('rep_cal_exp__venta_nacional__compra_nacional')
         
-        # Agrupamos reportes por fecha de llegada
+        # Agrupamos reportes por fecha de compra
         reportes_por_fecha = {}
         for reporte in reportes_query:
-            fecha_llegada = reporte.rep_cal_exp.venta_nacional.fecha_llegada
-            if fecha_llegada not in reportes_por_fecha:
-                reportes_por_fecha[fecha_llegada] = []
-            reportes_por_fecha[fecha_llegada].append(reporte)
+            fecha_compra = reporte.rep_cal_exp.venta_nacional.compra_nacional.fecha_compra
+            if fecha_compra not in reportes_por_fecha:
+                reportes_por_fecha[fecha_compra] = []
+            reportes_por_fecha[fecha_compra].append(reporte)
         
-        # Para cada fecha, ordenamos los reportes por monto (menor a mayor)
+        # Para cada fecha, ordenamos los reportes por pk de CompraNacional
         for fecha in reportes_por_fecha:
-            reportes_por_fecha[fecha].sort(key=lambda r: r.p_total_pagar)
+            reportes_por_fecha[fecha].sort(key=lambda r: r.rep_cal_exp.venta_nacional.compra_nacional.pk)
         
-        #print(f"Reportes encontrados: {reportes_query.count()}")
-        
-        # Marcamos todos los reportes como no pagados directamente en BD
-        ReporteCalidadProveedor.objects.filter(
-            rep_cal_exp__venta_nacional__compra_nacional__proveedor=proveedor
-        ).update(reporte_pago=False)
+        # Inicializar todos los reportes: reiniciar estado de pago y monto pendiente
+        for reporte in reportes_query:
+            reporte.reporte_pago = False
+            reporte.monto_pendiente = reporte.p_total_pagar
+            reporte.save(update_fields=['reporte_pago', 'monto_pendiente'])
         
         # Procesamos pagos con el saldo total disponible
         saldo_disponible = total_transferencias
-        reportes_pagados_ids = []
         
         # Ordenamos las fechas cronológicamente
         fechas_ordenadas = sorted(reportes_por_fecha.keys())
         
-        # Para cada fecha, procesamos los reportes ordenados por valor
-        continuar_procesando = True
+        # Para cada fecha, procesamos los reportes ordenados por pk de CompraNacional
         for fecha in fechas_ordenadas:
-            if not continuar_procesando:
-                break
-                
             reportes = reportes_por_fecha[fecha]
             for reporte in reportes:
-                monto_pagar = reporte.p_total_pagar
-                #print(f"Reporte #{reporte.pk}: monto={monto_pagar}, saldo={saldo_disponible}")
-                
-                if saldo_disponible >= monto_pagar:
-                    saldo_disponible -= monto_pagar
-                    reportes_pagados_ids.append(reporte.pk)
-                    #print(f"  ✓ Marcado como pagado. Saldo restante: {saldo_disponible}")
+                # Si hay saldo disponible, procesamos el pago
+                if saldo_disponible > 0:
+                    # Calculamos cuánto podemos pagar de este reporte
+                    monto_a_pagar = min(reporte.monto_pendiente, saldo_disponible)
+                    
+                    # Reducimos el monto pendiente y el saldo disponible
+                    reporte.monto_pendiente -= monto_a_pagar
+                    saldo_disponible -= monto_a_pagar
+                    
+                    # Si el monto pendiente llega a cero, marcamos el reporte como pagado
+                    if reporte.monto_pendiente <= Decimal('0.00'):
+                        reporte.reporte_pago = True
+                        reporte.monto_pendiente = Decimal('0.00')  # Aseguramos que sea exactamente cero
+                    else:
+                        reporte.reporte_pago = False  # Aseguramos que se marque como no pagado si queda saldo pendiente
+                    
+                    # Guardamos los cambios en el reporte
+                    reporte.save(update_fields=['monto_pendiente', 'reporte_pago'])
                 else:
-                    # Si no hay saldo suficiente para este reporte, no procesamos más fechas
-                    continuar_procesando = False
-                    #print(f"  ✗ Saldo insuficiente para pagar. No se procesarán más reportes.")
-                    break
+                    # Si no hay saldo disponible, aseguramos que el reporte esté marcado como no pagado
+                    reporte.reporte_pago = False
+                    reporte.save(update_fields=['reporte_pago'])
+                
+                # Actualizamos el estado del reporte basado en todos los campos relevantes
+                if reporte.completado:
+                    nuevo_estado = "Completado"
+                elif reporte.reporte_pago:
+                    nuevo_estado = "Pagado"
+                elif reporte.factura_prov:
+                    nuevo_estado = "Facturado"
+                elif reporte.reporte_enviado:
+                    nuevo_estado = "Reporte Enviado"
+                else:
+                    nuevo_estado = "En Proceso"
+                
+                # Solo actualizamos si el estado ha cambiado
+                if reporte.estado_reporte_prov != nuevo_estado:
+                    reporte.estado_reporte_prov = nuevo_estado
+                    reporte.save(update_fields=['estado_reporte_prov'])
         
-        # Actualizamos los reportes pagados en una sola operación
-        if reportes_pagados_ids:
-            ReporteCalidadProveedor.objects.filter(pk__in=reportes_pagados_ids).update(reporte_pago=True)
-        
-        # Actualizamos el balance del proveedor con el saldo final
+        # Actualizamos el balance del proveedor con el saldo final (anticipo)
         balance, created = BalanceProveedor.objects.get_or_create(proveedor=proveedor)
         balance.saldo_disponible = saldo_disponible
         balance.save()
-        #print(f"Balance final actualizado: {saldo_disponible}")
         
-        # Inicializamos la variable reportes
-        reportes = []
-
-        # Actualizamos TODOS los reportes para reflejar el estado correcto 
-        for reporte in reportes:
-            # Recargamos el reporte para obtener el valor actualizado de reporte_pago
-            reporte.refresh_from_db()
-            
-            # Determinamos el estado correcto basado en todos los campos relevantes
-            if reporte.completado:
-                nuevo_estado = "Completado"
-            elif reporte.reporte_pago:
-                nuevo_estado = "Pagado"
-            elif reporte.factura_prov:
-                nuevo_estado = "Facturado Por Proveedor"
-            elif reporte.reporte_enviado:
-                nuevo_estado = "Reporte Enviado"
-            else:
-                nuevo_estado = "En Proceso"
-            
-            # Solo actualizamos si el estado ha cambiado
-            if reporte.estado_reporte_prov != nuevo_estado:
-                #print(f"Actualizando estado de reporte #{reporte.pk} de '{reporte.estado_reporte_prov}' a '{nuevo_estado}'")
-                reporte.estado_reporte_prov = nuevo_estado
-                # Usamos update_fields para evitar bucles y actualizar solo lo necesario
-                reporte.save(update_fields=['estado_reporte_prov'])
-        
-        # Debug info
-        #print("Consultas SQL ejecutadas:")
-        #for query in connection.queries[-5:]:
-            #print(query['sql'])
     finally:
         _processing_payment = False
 
@@ -552,41 +518,30 @@ def reevaluar_pagos_proveedor(proveedor):
 @receiver(post_save, sender=TransferenciasProveedor)
 def actualizar_balance_tras_transferencia(sender, instance, **kwargs):
     """Actualiza el balance del proveedor después de crear o modificar una transferencia"""
-    #print(f"Señal recibida: transferencia guardada para {instance.proveedor}")
     reevaluar_pagos_proveedor(instance.proveedor)
 
 
 @receiver(post_delete, sender=TransferenciasProveedor)
 def actualizar_balance_tras_eliminar_transferencia(sender, instance, **kwargs):
     """Actualiza el balance del proveedor después de eliminar una transferencia"""
-    #print(f"Señal recibida: transferencia eliminada para {instance.proveedor}")
     reevaluar_pagos_proveedor(instance.proveedor)
 
 
 @receiver(post_save, sender=ReporteCalidadProveedor)
 def verificar_pago_tras_crear_o_editar_reporte(sender, instance, created, **kwargs):
     """Verifica si un reporte nuevo o editado puede pagarse con el saldo disponible"""
-    # Evitar recursión - no hacemos nada si estamos en proceso de actualizar pagos
     global _processing_payment
     if (_processing_payment):
         return
         
     proveedor = instance.rep_cal_exp.venta_nacional.compra_nacional.proveedor
-    #print(f"Señal recibida: reporte {'creado' if created else 'editado'} para {proveedor}")
     reevaluar_pagos_proveedor(proveedor)
 
 
 @receiver(post_delete, sender=ReporteCalidadProveedor)
 def actualizar_balance_tras_eliminar_reporte(sender, instance, **kwargs):
     """Actualiza el balance cuando se elimina un reporte de calidad proveedor"""
-    # Si el reporte estaba pagado, necesitamos recuperar esos fondos
-    # y reevaluar los pagos para los reportes restantes
     proveedor = instance.rep_cal_exp.venta_nacional.compra_nacional.proveedor
-    #print(f"Señal recibida: reporte eliminado para {proveedor}")
-    #if instance.reporte_pago:
-        #print(f"El reporte eliminado estaba pagado ({instance.p_total_pagar}), reevaluando pagos...")
-    
-    # Siempre reevaluamos todos los pagos después de eliminar un reporte
     reevaluar_pagos_proveedor(proveedor)
 
 

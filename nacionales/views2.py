@@ -36,6 +36,46 @@ class DateRangeForm(forms.Form):
         required=True
     )
 
+class ReportesAsociadosForm(forms.Form):
+    factura = forms.CharField(
+        label="Número de Factura", 
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Buscar por número de factura...',
+        })
+    )
+    numero_guia = forms.CharField(
+        label="Número de Guía", 
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Buscar por número de guía...',
+        })
+    )
+    remision = forms.CharField(
+        label="Número de Remisión/Reporte", 
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Buscar por número de remisión o reporte...',
+        })
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        factura = cleaned_data.get('factura')
+        numero_guia = cleaned_data.get('numero_guia')
+        remision = cleaned_data.get('remision')
+        
+        # Al menos uno de los campos debe tener un valor
+        if not factura and not numero_guia and not remision:
+            raise forms.ValidationError(
+                "Debe ingresar al menos un criterio de búsqueda (Factura, Guía o Remisión)."
+            )
+        
+        return cleaned_data
+
 class GuiaSearchForm(forms.Form):
     numero_guia = forms.CharField(
         label="Número de Guía", 
@@ -51,34 +91,65 @@ class GuiaSearchForm(forms.Form):
 @user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def relacion_facturas_vencidas(request):
     today = timezone.now().date()
-    form = DateRangeForm(request.GET or None)
+    form = ReportesAsociadosForm(request.GET or None)
     facturas_vencidas = []
     total_a_pagar = Decimal('0.00')
     
     # Inicializa las variables de contexto con valores predeterminados
-    fecha_inicio = None
-    fecha_final = None
-    exportador_seleccionado = None
+    criterio_busqueda = None
     
     if form.is_valid():
-        fecha_inicio = form.cleaned_data['fecha_inicio']
-        fecha_final = form.cleaned_data['fecha_final']
-        exportador = form.cleaned_data['exportador']
-        exportador_seleccionado = exportador
+        factura = form.cleaned_data.get('factura')
+        numero_guia = form.cleaned_data.get('numero_guia')
+        remision = form.cleaned_data.get('remision')
         
-        # Obtener reportes vencidos no pagados y en estado "Facturado"
-        # Usar fecha_final en lugar de today para determinar facturas vencidas
-        reportes = ReporteCalidadExportador.objects.filter(
-            vencimiento_factura__range=(fecha_inicio, fecha_final),
-            vencimiento_factura__lt=fecha_final,  # Usar fecha_final en vez de today
-            pagado=False,
-            estado_reporte_exp="Facturado",
-            venta_nacional__exportador=exportador  # Filtrar por exportador seleccionado
-        ).select_related(
+        # Base query
+        reportes = ReporteCalidadExportador.objects.all().select_related(
             'venta_nacional__compra_nacional__fruta',
             'venta_nacional__compra_nacional__proveedor',
             'venta_nacional__exportador'
         )
+        
+        # Lista para almacenar facturas encontradas
+        facturas_encontradas = set()
+        
+        # Aplicar filtros según los criterios proporcionados
+        if factura:
+            reportes = reportes.filter(factura=factura)
+            criterio_busqueda = f"Factura: {factura}"
+            facturas_encontradas.add(factura)
+            
+        if numero_guia:
+            # Primero buscamos los reportes que cumplen este criterio
+            reportes_guia = reportes.filter(venta_nacional__compra_nacional__numero_guia=numero_guia)
+            criterio_busqueda = f"Guía: {numero_guia}"
+            
+            # Si alguno de estos reportes tiene factura, incluimos todas las entradas con esa factura
+            for reporte in reportes_guia:
+                if reporte.factura:
+                    facturas_encontradas.add(reporte.factura)
+            
+            # Si encontramos facturas asociadas, actualizamos la búsqueda
+            if facturas_encontradas:
+                reportes = reportes.filter(factura__in=facturas_encontradas)
+            else:
+                reportes = reportes_guia
+            
+        if remision:
+            # Similar al número de guía
+            reportes_remision = reportes.filter(remision_exp=remision)
+            criterio_busqueda = f"Remisión/Reporte: {remision}"
+            
+            # Si alguno de estos reportes tiene factura, incluimos todas las entradas con esa factura
+            for reporte in reportes_remision:
+                if reporte.factura:
+                    facturas_encontradas.add(reporte.factura)
+            
+            # Si encontramos facturas asociadas, actualizamos la búsqueda
+            if facturas_encontradas and not numero_guia:  # Solo si no ya buscamos por guía
+                reportes = reportes.filter(factura__in=facturas_encontradas)
+            elif not facturas_encontradas and not numero_guia:  # Si no hay facturas asociadas y no buscamos por guía
+                reportes = reportes_remision
         
         # Agrupar por factura
         facturas_agrupadas = {}
@@ -87,21 +158,19 @@ def relacion_facturas_vencidas(request):
             valor_exp = reporte.precio_venta_kg_exp * reporte.kg_exportacion
             valor_nal = reporte.precio_venta_kg_nal * reporte.kg_nacional
             
-            # Calcular días de vencimiento usando today
-            dias_vencidos = (today - reporte.vencimiento_factura).days
+            # Ya no necesitamos calcular días vencidos
             
             if reporte.factura not in facturas_agrupadas:
-                facturas_agrupadas[reporte.factura] = {
-                    'factura': reporte.factura,
+                facturas_agrupadas[reporte.factura or 'Sin Factura'] = {
+                    'factura': reporte.factura or 'Sin Factura',
                     'fecha_factura': reporte.fecha_factura,
                     'vencimiento_factura': reporte.vencimiento_factura,
-                    'exportador': reporte.venta_nacional.compra_nacional.proveedor,
-                    'dias_vencidos': dias_vencidos,  # Añadir días vencidos
+                    'exportador': reporte.venta_nacional.exportador,
                     'items': [],
                     'subtotal': Decimal('0.00')
                 }
                 
-            facturas_agrupadas[reporte.factura]['items'].append({
+            facturas_agrupadas[reporte.factura or 'Sin Factura']['items'].append({
                 'remision_exp': reporte.remision_exp,
                 'numero_guia': reporte.venta_nacional.compra_nacional.numero_guia,
                 'fecha_reporte': reporte.fecha_reporte,
@@ -112,7 +181,7 @@ def relacion_facturas_vencidas(request):
                 'id': reporte.pk
             })
             
-            facturas_agrupadas[reporte.factura]['subtotal'] += reporte.precio_total
+            facturas_agrupadas[reporte.factura or 'Sin Factura']['subtotal'] += reporte.precio_total
             total_a_pagar += reporte.precio_total
             
         facturas_vencidas = list(facturas_agrupadas.values())
@@ -122,9 +191,7 @@ def relacion_facturas_vencidas(request):
         'facturas_vencidas': facturas_vencidas,
         'total_a_pagar': total_a_pagar,
         'fecha_actual': today,
-        'f_inicial': fecha_inicio,
-        'f_final': fecha_final,
-        'exportador_seleccionado': exportador_seleccionado,
+        'criterio_busqueda': criterio_busqueda
     }
     
     return render(request, 'relacion_facturas_vencidas.html', context)
@@ -300,28 +367,40 @@ def dashboard_nacionales(request):
 
     # Variables para totales
     total_compras_valor = Decimal('0')
-    total_kilos = Decimal('0')
+    total_kilos_brutos = Decimal('0')
+    total_kilos_netos = Decimal('0')
     total_utilidades = Decimal('0')
+    total_utilidades_sin_ajuste = Decimal('0')
     total_reportes_pendientes = 0
 
     # Valores del período anterior
     if not compras_periodo_anterior.exists():
         compras_prev = Decimal('0')
-        kilos_prev = Decimal('0')
+        kilos_brutos_prev = Decimal('0')
+        kilos_netos_prev = Decimal('0')
         utilidades_prev = Decimal('0')
+        utilidades_sin_ajuste_prev = Decimal('0')
         reportes_pendientes_prev = 0
     else:
         compras_prev = ReporteCalidadProveedor.objects.filter(
             rep_cal_exp__venta_nacional__compra_nacional__in=compras_periodo_anterior
-        ).aggregate(total=Sum('p_total_facturar'))['total'] or Decimal('0')
+        ).aggregate(total=Sum('p_total_pagar'))['total'] or Decimal('0')
 
-        kilos_prev = compras_periodo_anterior.aggregate(
-            total=Sum('peso_compra')
-        )['total'] or Decimal('0')
+        kilos_brutos_prev = VentaNacional.objects.filter(
+            compra_nacional__in=compras_periodo_anterior
+        ).aggregate(total=Sum('peso_bruto_recibido'))['total'] or Decimal('0')
+
+        kilos_netos_prev = VentaNacional.objects.filter(
+            compra_nacional__in=compras_periodo_anterior
+        ).aggregate(total=Sum('peso_neto_recibido'))['total'] or Decimal('0')
 
         utilidades_prev = ReporteCalidadProveedor.objects.filter(
             rep_cal_exp__venta_nacional__compra_nacional__in=compras_periodo_anterior
         ).aggregate(total=Sum('p_utilidad'))['total'] or Decimal('0')
+
+        utilidades_sin_ajuste_prev = ReporteCalidadProveedor.objects.filter(
+            rep_cal_exp__venta_nacional__compra_nacional__in=compras_periodo_anterior
+        ).aggregate(total=Sum('p_utilidad_sin_ajuste'))['total'] or Decimal('0')
 
         reportes_pendientes_prev = 0
         for compra in compras_periodo_anterior:
@@ -375,7 +454,7 @@ def dashboard_nacionales(request):
 
         valor_total_compras = ReporteCalidadProveedor.objects.filter(
             rep_cal_exp__venta_nacional__compra_nacional__in=compras
-        ).aggregate(total=Sum('p_total_facturar'))['total'] or Decimal('0')
+        ).aggregate(total=Sum('p_total_pagar'))['total'] or Decimal('0')
         total_compras_valor += valor_total_compras
 
         total_pagado_proveedor = TransferenciasProveedor.objects.filter(
@@ -388,13 +467,25 @@ def dashboard_nacionales(request):
             venta_nacional__compra_nacional__in=compras
         ).aggregate(total=Sum('precio_total'))['total'] or Decimal('0')
 
-        total_kilos_comprados = compras.aggregate(total=Sum('peso_compra'))['total'] or Decimal('0')
-        total_kilos += total_kilos_comprados
+        total_kilos_brutos_proveedor = VentaNacional.objects.filter(
+            compra_nacional__in=compras
+        ).aggregate(total=Sum('peso_bruto_recibido'))['total'] or Decimal('0')
+        total_kilos_brutos += total_kilos_brutos_proveedor
+
+        total_kilos_netos_proveedor = VentaNacional.objects.filter(
+            compra_nacional__in=compras
+        ).aggregate(total=Sum('peso_neto_recibido'))['total'] or Decimal('0')
+        total_kilos_netos += total_kilos_netos_proveedor
 
         total_utilidad = ReporteCalidadProveedor.objects.filter(
             rep_cal_exp__venta_nacional__compra_nacional__in=compras
         ).aggregate(total=Sum('p_utilidad'))['total'] or Decimal('0')
         total_utilidades += total_utilidad
+
+        total_utilidad_sin_ajuste = ReporteCalidadProveedor.objects.filter(
+            rep_cal_exp__venta_nacional__compra_nacional__in=compras
+        ).aggregate(total=Sum('p_utilidad_sin_ajuste'))['total'] or Decimal('0')
+        total_utilidades_sin_ajuste += total_utilidad_sin_ajuste
 
         # Obtener peso neto recibido total por proveedor para gráfico de evolución
         total_peso_recibido = VentaNacional.objects.filter(
@@ -419,8 +510,10 @@ def dashboard_nacionales(request):
             'valor_total_compras': valor_total_compras,
             'total_pagado_proveedor': total_pagado_proveedor,
             'total_facturado_exportadores': total_facturado_exportadores,
-            'total_kilos_comprados': total_kilos_comprados,
+            'total_kilos_brutos': total_kilos_brutos_proveedor,
+            'total_kilos_netos': total_kilos_netos_proveedor,
             'total_utilidades': total_utilidad,
+            'total_utilidades_sin_ajuste': total_utilidad_sin_ajuste,
             'total_peso_recibido': total_peso_recibido,
         })
 
@@ -440,30 +533,36 @@ def dashboard_nacionales(request):
         venta_nacional__compra_nacional__in=compras_base
     )
     
-    calidad_data = reportes_calidad.aggregate(
+    # Calcular totales primero
+    totales = reportes_calidad.aggregate(
         kg_exportacion=Sum('kg_exportacion'),
         kg_nacional=Sum('kg_nacional'),
         kg_merma=Sum('kg_merma'),
-        porcentaje_exportacion=Avg('porcentaje_exportacion'),
-        porcentaje_nacional=Avg('porcentaje_nacional'),
-        porcentaje_merma=Avg('porcentaje_merma')
+        kg_totales=Sum('kg_totales')
     )
     
-    kg_exportacion = calidad_data['kg_exportacion'] or 0
-    kg_nacional = calidad_data['kg_nacional'] or 0
-    kg_merma = calidad_data['kg_merma'] or 0
-    porcentaje_exportacion = calidad_data['porcentaje_exportacion'] or 0
-    porcentaje_nacional = calidad_data['porcentaje_nacional'] or 0
-    porcentaje_merma = calidad_data['porcentaje_merma'] or 0
+    # Calcular promedios ponderados
+    if totales['kg_totales'] and totales['kg_totales'] > 0:
+        porcentaje_exportacion = (totales['kg_exportacion'] / totales['kg_totales'] * 100).quantize(Decimal('0.01'))
+        porcentaje_nacional = (totales['kg_nacional'] / totales['kg_totales'] * 100).quantize(Decimal('0.01'))
+        porcentaje_merma = (totales['kg_merma'] / totales['kg_totales'] * 100).quantize(Decimal('0.01'))
+    else:
+        porcentaje_exportacion = Decimal('0')
+        porcentaje_nacional = Decimal('0')
+        porcentaje_merma = Decimal('0')
+    
+    kg_exportacion = totales['kg_exportacion'] or 0
+    kg_nacional = totales['kg_nacional'] or 0
+    kg_merma = totales['kg_merma'] or 0
 
 
     for item in proveedores_data:
         if total_utilidades < 0:
-            item['percent_kilos'] = (item['total_kilos_comprados'] / total_kilos * 100) if total_kilos else 0
+            item['percent_kilos'] = (item['total_kilos_brutos'] / total_kilos_brutos * 100) if total_kilos_brutos else 0
             item['percent_utilidad'] = ((item['total_utilidades'] / total_utilidades * 100) * - 1) if total_utilidades else 0
             item['percent_utilidad_facturado'] = (item['total_utilidades'] / item['valor_total_compras'] * 100) if item['valor_total_compras'] else 0
         else:
-            item['percent_kilos'] = (item['total_kilos_comprados'] / total_kilos * 100) if total_kilos else 0
+            item['percent_kilos'] = (item['total_kilos_brutos'] / total_kilos_brutos * 100) if total_kilos_brutos else 0
             item['percent_utilidad'] = (item['total_utilidades'] / total_utilidades * 100) if total_utilidades else 0
             item['percent_utilidad_facturado'] = (item['total_utilidades'] / item['valor_total_compras'] * 100) if item['valor_total_compras'] else 0
 
@@ -473,15 +572,25 @@ def dashboard_nacionales(request):
     else:
         compras_percent = 0
 
-    if kilos_prev:
-        kilos_percent = ((total_kilos - kilos_prev) / kilos_prev * 100)
+    if kilos_brutos_prev:
+        kilos_brutos_percent = ((total_kilos_brutos - kilos_brutos_prev) / kilos_brutos_prev * 100)
     else:
-        kilos_percent = 0
+        kilos_brutos_percent = 0
+
+    if kilos_netos_prev:
+        kilos_netos_percent = ((total_kilos_netos - kilos_netos_prev) / kilos_netos_prev * 100)
+    else:
+        kilos_netos_percent = 0
 
     if utilidades_prev:
         utilidades_percent = ((total_utilidades - utilidades_prev) / utilidades_prev * 100)
     else:
         utilidades_percent = 0
+
+    if utilidades_sin_ajuste_prev:
+        utilidades_sin_ajuste_percent = ((total_utilidades_sin_ajuste - utilidades_sin_ajuste_prev) / utilidades_sin_ajuste_prev * 100)
+    else:
+        utilidades_sin_ajuste_percent = 0
 
     if reportes_pendientes_prev:
         reportes_percent = ((total_reportes_pendientes - reportes_pendientes_prev) / reportes_pendientes_prev * 100)
@@ -545,8 +654,10 @@ def dashboard_nacionales(request):
     context = {
         'proveedores_data': proveedores_data,
         'global_total_compras': total_compras_valor,
-        'global_total_kilos': total_kilos,
+        'global_total_kilos_brutos': total_kilos_brutos,
+        'global_total_kilos_netos': total_kilos_netos,
         'global_total_utilidades': total_utilidades,
+        'global_total_utilidades_sin_ajuste': total_utilidades_sin_ajuste,
         'global_total_reportes': total_reportes_pendientes,
         'proveedores': ProveedorNacional.objects.all(),
         'frutas': Fruta.objects.all(),
@@ -555,12 +666,16 @@ def dashboard_nacionales(request):
         'proveedor_id': proveedor_id,
         'fruta_id': fruta_id,
         'compras_prev': compras_prev,
-        'kilos_prev': kilos_prev,
+        'kilos_brutos_prev': kilos_brutos_prev,
+        'kilos_netos_prev': kilos_netos_prev,
         'utilidades_prev': utilidades_prev,
+        'utilidades_sin_ajuste_prev': utilidades_sin_ajuste_prev,
         'reportes_prev': reportes_pendientes_prev,
         'compras_percent': round(compras_percent, 2),
-        'kilos_percent': round(kilos_percent, 2),
+        'kilos_brutos_percent': round(kilos_brutos_percent, 2),
+        'kilos_netos_percent': round(kilos_netos_percent, 2),
         'utilidades_percent': round(utilidades_percent, 2),
+        'utilidades_sin_ajuste_percent': round(utilidades_sin_ajuste_percent, 2),
         'reportes_percent': round(reportes_percent, 2),
         # Datos adicionales para nuevos gráficos
         'utilidades_frutas': utilidades_frutas,
@@ -583,4 +698,20 @@ def autocomplete_guia(request):
     term = request.GET.get('term', '')
     guias = CompraNacional.objects.filter(numero_guia__icontains=term).values_list('numero_guia', flat=True).distinct()[:10]
     results = list(guias)
+    return JsonResponse(results, safe=False)
+
+@require_GET
+@login_required
+def autocomplete_factura(request):
+    term = request.GET.get('term', '')
+    facturas = ReporteCalidadExportador.objects.filter(factura__icontains=term).exclude(factura__isnull=True).values_list('factura', flat=True).distinct()[:10]
+    results = list(facturas)
+    return JsonResponse(results, safe=False)
+
+@require_GET
+@login_required
+def autocomplete_remision(request):
+    term = request.GET.get('term', '')
+    remisiones = ReporteCalidadExportador.objects.filter(remision_exp__icontains=term).exclude(remision_exp__isnull=True).values_list('remision_exp', flat=True).distinct()[:10]
+    results = list(remisiones)
     return JsonResponse(results, safe=False)

@@ -3,9 +3,8 @@ import io
 import xlsxwriter
 from decimal import Decimal
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Sum, Prefetch, Avg
-from django.http import HttpResponse
-from django.http import JsonResponse
+from django.db.models import Sum, Prefetch, Avg, F, ExpressionWrapper, DecimalField
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
@@ -113,7 +112,7 @@ def nacionales_list_detallada(request):
             pass
 
     # Lógica para obtener compras incompletas
-    compras_nacionales = CompraNacional.objects.all()
+    compras_nacionales = CompraNacional.objects.all().order_by('-fecha_compra', '-id')
     for compra in compras_nacionales:
         tiene_venta = hasattr(compra, 'ventanacional')
         tiene_reporte_exp = False
@@ -473,8 +472,6 @@ def transferencia_nacional_edit(request, pk):
     return JsonResponse({'html': html})
 
 
-
-
 @login_required
 @user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def export_data(request):
@@ -566,7 +563,7 @@ def export_data(request):
         compra_nacional_cols = 12  # 12 columnas para compra nacional
         venta_nacional_cols = 8    # 8 columnas para venta nacional
         reporte_exp_cols = 16      # 16 columnas para reporte exportador
-        reporte_prov_cols = 17     # 17 columnas para reporte proveedor
+        reporte_prov_cols = 25     # 25 columnas para reporte proveedor
         
         # Calcular el rango total de columnas basado en los data_types seleccionados
         total_columns = 0
@@ -638,7 +635,7 @@ def export_data(request):
             'Remisión Exp', 'Fecha Reporte Exp', 'Kg Totales', 'Kg Exportación', 
             '% Exportación', 'Precio Venta Kg Exp', 'Kg Nacional', '% Nacional', 
             'Precio Venta Kg Nal', 'Kg Merma', '% Merma', 'Precio Total', 
-            'Factura', 'Fecha Factura', 'Vencimiento Factura', 'Finalizado'
+            'Factura', 'Fecha Factura', 'Vencimiento Factura', 'Estado Reporte Exp'
         ]
         
         reporte_prov_headers = [
@@ -646,8 +643,10 @@ def export_data(request):
             'P % Exportación', 'P Precio Kg Exp', 'P Kg Nacional', 
             'P % Nacional', 'P Precio Kg Nal', 'P Kg Merma', 
             'P % Merma', 'P Total Facturar', 'Asohofrucol', 
-            'Rte Fte', 'Rte Ica', 'P Total Pagar', 
-            'P Utilidad', 'P % Utilidad'
+            'Rte Fte', 'Rte Ica', 'P Total Pagar', 'Monto Pendiente',
+            'P Utilidad', 'P Utilidad Sin Ajuste', 'Diferencia Utilidad',
+            'P % Utilidad', 'Reporte Enviado', 'Factura Prov', 
+            'Reporte Pago', 'Estado Reporte Prov', 'Completado'
         ]
         
         # Escribir encabezados de sección
@@ -766,7 +765,7 @@ def export_data(request):
                     col += 1
                     sheet_relacionados.write(row, col, reporte_exp.vencimiento_factura or '', date_format)
                     col += 1
-                    sheet_relacionados.write(row, col, "Sí" if reporte_exp.finalizado else "No", cell_format)
+                    sheet_relacionados.write(row, col, reporte_exp.estado_reporte_exp, cell_format)
                 except:
                     for i in range(reporte_exp_cols):
                         sheet_relacionados.write(row, col + i, 'N/A', cell_format)
@@ -806,9 +805,25 @@ def export_data(request):
                     col += 1
                     sheet_relacionados.write(row, col, float(reporte_prov.p_total_pagar), currency_format)
                     col += 1
+                    sheet_relacionados.write(row, col, float(reporte_prov.monto_pendiente), currency_format)
+                    col += 1
                     sheet_relacionados.write(row, col, float(reporte_prov.p_utilidad), currency_format)
                     col += 1
+                    sheet_relacionados.write(row, col, float(reporte_prov.p_utilidad_sin_ajuste) if reporte_prov.p_utilidad_sin_ajuste else 0, currency_format)
+                    col += 1
+                    sheet_relacionados.write(row, col, float(reporte_prov.diferencia_utilidad) if reporte_prov.diferencia_utilidad else 0, currency_format)
+                    col += 1
                     sheet_relacionados.write(row, col, float(reporte_prov.p_porcentaje_utilidad) / 100, percent_format)
+                    col += 1
+                    sheet_relacionados.write(row, col, "Sí" if reporte_prov.reporte_enviado else "No", cell_format)
+                    col += 1
+                    sheet_relacionados.write(row, col, reporte_prov.factura_prov or "N/A", cell_format)
+                    col += 1
+                    sheet_relacionados.write(row, col, "Sí" if reporte_prov.reporte_pago else "No", cell_format)
+                    col += 1
+                    sheet_relacionados.write(row, col, reporte_prov.estado_reporte_prov, cell_format)
+                    col += 1
+                    sheet_relacionados.write(row, col, "Sí" if reporte_prov.completado else "No", cell_format)
                 except:
                     for i in range(reporte_prov_cols):
                         sheet_relacionados.write(row, col + i, 'N/A', cell_format)
@@ -824,7 +839,7 @@ def export_data(request):
             # Reporte Exportador
             'reporte_exportador': [15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15],
             # Reporte Proveedor
-            'reporte_proveedor': [15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15]
+            'reporte_proveedor': [15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15]
         }
         
         # Aplicar anchos de columna por sección
@@ -1138,79 +1153,3 @@ def export_data(request):
     
     return response
 
-@login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
-def estado_cuenta_proveedor(request, proveedor_id):
-    # Obtener proveedor
-    proveedor = get_object_or_404(ProveedorNacional, id=proveedor_id)
-
-    # Filtros desde request
-    fecha_inicio = request.GET.get('fecha_inicio')
-    fecha_fin = request.GET.get('fecha_fin')
-    fruta_id = request.GET.get('fruta')
-
-    # Establecer fechas por defecto
-    fecha_fin = fecha_fin or datetime.date.today()
-    if isinstance(fecha_fin, str):
-        fecha_fin = datetime.datetime.strptime(fecha_fin, '%Y-%m-%d').date()
-    fecha_inicio = fecha_inicio or (fecha_fin - datetime.timedelta(days=30))
-    if isinstance(fecha_inicio, str):
-        fecha_inicio = datetime.datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
-
-    # Filtrar compras del proveedor
-    compras = CompraNacional.objects.filter(proveedor=proveedor)
-    if fecha_inicio:
-        compras = compras.filter(fecha_compra__gte=fecha_inicio)
-    if fecha_fin:
-        compras = compras.filter(fecha_compra__lte=fecha_fin)
-    if fruta_id:
-        compras = compras.filter(fruta_id=fruta_id)
-
-    # Calcular totales
-    total_compras_valor = ReporteCalidadProveedor.objects.filter(
-        rep_cal_exp__venta_nacional__compra_nacional__in=compras
-    ).aggregate(total=Sum('p_total_facturar'))['total'] or Decimal('0')
-
-    total_kilos = VentaNacional.objects.filter(
-        compra_nacional__in=compras
-    ).aggregate(
-        total=Sum('peso_neto_recibido')
-    )['total'] or Decimal('0')
-
-    total_transferido = TransferenciasProveedor.objects.filter(
-        proveedor=proveedor,
-        fecha_transferencia__gte=fecha_inicio,
-        fecha_transferencia__lte=fecha_fin
-    ).aggregate(total=Sum('valor_transferencia'))['total'] or Decimal('0')
-
-    saldo_pendiente = total_compras_valor - total_transferido
-
-    total_utilidad = ReporteCalidadProveedor.objects.filter(
-        rep_cal_exp__venta_nacional__compra_nacional__in=compras
-    ).aggregate(total=Sum('p_utilidad'))['total'] or Decimal('0')
-
-    # Datos para gráficos
-    compras_por_fecha = compras.values('fecha_compra').annotate(
-    total_valor=Avg('precio_compra_exp')  
-    ).order_by('fecha_compra')
-
-    # Contexto para el template
-    context = {
-        'proveedor': proveedor,
-        'compras': compras,
-        'transferencias': TransferenciasProveedor.objects.filter(
-            proveedor=proveedor, fecha_transferencia__gte=fecha_inicio, fecha_transferencia__lte=fecha_fin
-        ),
-        'total_compras_valor': total_compras_valor,
-        'total_kilos': total_kilos,
-        'total_transferido': total_transferido,
-        'saldo_pendiente': saldo_pendiente,
-        'total_utilidad': total_utilidad,
-        'fecha_inicio': fecha_inicio,
-        'fecha_fin': fecha_fin,
-        'fruta_id': fruta_id,
-        'compras_por_fecha': list(compras_por_fecha),  # Para gráficos
-        'proveedores': ProveedorNacional.objects.all(),  # Para dropdown
-    }
-
-    return render(request, 'estado_cuenta_proveedor.html', context)

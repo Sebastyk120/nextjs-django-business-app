@@ -123,19 +123,20 @@ body {
 
 .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 15px;
     margin-bottom: 25px;
 }
 
 .card {
     background-color: white;
     border-radius: var(--radius);
-    padding: 25px;
+    padding: 15px;
     box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease;
+    min-width: 0;
 }
 
 .card:hover {
@@ -158,22 +159,27 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 8px;
 }
 
 .card-title {
     color: #555;
-    font-size: 14px;
+    font-size: 0.9rem;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .card-icon {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
+    font-size: 0.9rem;
 }
 
 .bg-primary {
@@ -197,13 +203,13 @@ body {
 }
 
 .card-value {
-    font-size: 24px;
+    font-size: 1.2rem;
     font-weight: 700;
-
+    margin: 8px 0;
 }
 
 .card-description {
-    font-size: 12px;
+    font-size: 0.8rem;
     color: #999;
 }
 
@@ -572,4 +578,12 @@ body {
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 20px;
+}
+
+.positive-value {
+    color: var(--success) !important;
+}
+
+.negative-value {
+    color: var(--danger) !important;
 }

@@ -229,6 +229,7 @@
                     <ul class="dropdown-menu dropdown-menu-dark">
                         <li><a class="dropdown-item" href="{% url 'nacionales_list_general' %}">Listado General</a></li>
                         <li><a class="dropdown-item" href="{% url 'nacionales_list_detallada' %}">Listado Detallado</a></li>
+                        <li><a class="dropdown-item" href="{% url 'analisis_calidad' %}">Analisis De Calidad Proveedor - Exportador</a></li>
                     </ul>
                 </li>
                 
@@ -239,9 +240,8 @@
                         <i class="bi bi-briefcase-fill"></i> Operaciones Exportador
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark">
-                        <li><a class="dropdown-item" href="{% url 'relacion_reportes_vencidos' %}">Relación Reportes Vencidos</a></li>
-                        <li><a class="dropdown-item" href="{% url 'relacion_facturas_vencidas' %}">Relación Facturas Vencidas</a></li>
-                        <li><a class="dropdown-item" href="{% url 'admin:nacionales_facturacionexportadores_changelist' %}">Facturas Exportadoras</a></li>
+                        <li><a class="dropdown-item" href="{% url 'relacion_reportes_vencidos' %}">Ingresos Vencidos Pendientes Por Reporte</a></li>
+                        <li><a class="dropdown-item" href="{% url 'relacion_facturas_vencidas' %}">Reportes Asociados Factura - Remision -Guia</a></li>
                     </ul>
                 </li>
                 
@@ -254,7 +254,7 @@
                     <ul class="dropdown-menu dropdown-menu-dark">
                         <li><a class="dropdown-item" href="{% url 'transferencias_list' %}">Transferencia Proveedores</a></li>
                         <li><a class="dropdown-item" href="{% url 'reporte_individual_proveedor' %}">Envío De Reporte Individual</a></li>
-                        <li><a class="dropdown-item" href="{% url 'dashboard_nacionales' %}">Envío De Reporte General (Dashboard)</a></li>
+                        <li><a class="dropdown-item" href="{% url 'dashboard_nacionales' %}">Resumen Reportes Proveedor (Dashboard)</a></li>
                         <li><a class="dropdown-item" href="{% url 'dashboard_nacionales' %}">Estado De Cuenta Proveedor (Dashboard)</a></li>
                     </ul>
                 </li>

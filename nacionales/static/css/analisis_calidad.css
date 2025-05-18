@@ -1,0 +1,546 @@
+/* Estilos para análisis de calidad con Bootstrap 5 */
+
+/* Estilos generales */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa;
+    letter-spacing: -0.01em;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.slide-in {
+    animation: slideIn 0.4s ease-out;
+}
+
+.scale-in {
+    animation: scaleIn 0.3s ease-out;
+}
+
+/* Encabezado con degradado */
+.header-gradient {
+    background: linear-gradient(135deg, #3A36B1 0%, #7146E0 100%);
+    color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.header-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.header-subtitle {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 0;
+    font-weight: 400;
+}
+
+/* Tarjetas personalizadas */
+.card {
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    background-color: transparent;
+    padding: 1rem 1.5rem;
+}
+
+/* Botones personalizados */
+.btn-primary-custom {
+    background: linear-gradient(135deg, #4F46E5 0%, #818CF8 100%);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+    background: linear-gradient(135deg, #4338CA 0%, #6366F1 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+    color: white;
+}
+
+.btn-outline-custom {
+    border: 1px solid #4F46E5;
+    color: #4F46E5;
+}
+
+.btn-outline-custom:hover {
+    background-color: #4F46E5;
+    color: white;
+}
+
+.btn-details {
+    color: white;
+    background-color: #06B6D4;
+    border: none;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+    padding: 0.35rem 0.75rem;
+}
+
+.btn-details:hover {
+    background-color: #0891B2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(6, 182, 212, 0.3);
+    color: white;
+}
+
+.btn-success-custom {
+    background-color: #198754;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.btn-success-custom:hover {
+    background-color: #157347;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-success-custom:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Tablas estilizadas */
+.table-custom {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.table-custom thead {
+    background: linear-gradient(135deg, #4F46E5 0%, #818CF8 100%);
+    color: white;
+}
+
+.table-custom th {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.7rem;
+    padding: 0.75rem 0.5rem; /* Ajustado para dar más espacio al contenido */
+    white-space: normal; /* Permite que el texto se divida en múltiples líneas */
+    line-height: 1.2; /* Espacio entre líneas más compacto */
+    min-height: 2.5rem; /* Altura mínima para acomodar dos líneas */
+    vertical-align: middle; /* Alineación vertical centrada */
+    hyphens: auto; /* Permite guiones automáticos en palabras largas */
+    text-align: center !important; /* Asegurar centrado con mayor especificidad */
+}
+
+/* Asegurar que cualquier clase adicional no anule el centrado de los encabezados */
+.table-custom thead th.text-end,
+.table-custom thead th.text-start,
+.table-custom thead th.text-left,
+.table-custom thead th.text-right {
+    text-align: center !important;
+}
+
+.table-custom tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table-custom tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table-custom td {
+    vertical-align: middle;
+    padding: 0.5rem 0.75rem; /* Padding reducido */
+    font-size: 0.85rem; /* Texto más pequeño */
+}
+
+/* Modal personalizado */
+.modal-custom .modal-content {
+    border-radius: 1rem;
+    border: none;
+    overflow: hidden;
+}
+
+.modal-custom .modal-header {
+    background: linear-gradient(135deg, #3A36B1 0%, #7146E0 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+}
+
+.modal-custom .modal-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+    letter-spacing: -0.01em;
+}
+
+.modal-custom .modal-body {
+    padding: 1.25rem;
+    background-color: #f5f7fa;
+}
+
+.modal-custom .btn-close {
+    color: white;
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.modal-custom .btn-close:hover {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
+/* Para el modal, reducir el espacio entre filas */
+.modal-custom .row.g-3 {
+    --bs-gutter-y: 0.5rem; /* Reduce el espacio vertical entre filas */
+}
+
+.modal-custom .col-sm-6 {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+/* Tarjetas para información dentro del modal */
+.info-card {
+    border-radius: 0.75rem; /* Reducido de 1rem */
+    padding: 1rem; /* Reducido de 1.5rem */
+    height: 100%;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+    border-top: 5px solid transparent;
+    background: white;
+}
+
+.info-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.info-card-title {
+    font-size: 1rem; /* Reducido de 1.1rem */
+    font-weight: 600;
+    margin-bottom: 0.75rem; /* Reducido de 1.25rem */
+    padding-bottom: 0.5rem; /* Reducido de 0.75rem */
+    border-bottom: 1px solid #e9ecef;
+    letter-spacing: -0.01em;
+}
+
+.info-card-body {
+    padding: 0.1rem; /* Reducido de 0.25rem */
+}
+
+.info-field {
+    margin-bottom: 0.5rem; /* Reducido de 1rem */
+    padding: 0.35rem; /* Reducido de 0.5rem */
+    background-color: #f8f9fa;
+    border-radius: 0.4rem;
+    transition: all 0.2s ease;
+}
+
+.info-field:hover {
+    background-color: #f0f4f8;
+    transform: translateY(-2px);
+}
+
+.info-field-label {
+    font-size: 0.7rem; /* Reducido de 0.75rem */
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.1rem; /* Reducido de 0.2rem */
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.info-field-value {
+    font-size: 0.85rem; /* Reducido de 0.95rem */
+    font-weight: 500;
+    color: #333;
+}
+
+/* Tarjetas específicas por tipo */
+.compra-card {
+    border-top-color: #4F46E5;
+    background: linear-gradient(to bottom, rgba(79, 70, 229, 0.03) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.compra-card .info-card-title {
+    color: #4338CA;
+}
+
+.venta-card {
+    border-top-color: #14B8A6;
+    background: linear-gradient(to bottom, rgba(20, 184, 166, 0.03) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.venta-card .info-card-title {
+    color: #0F766E;
+}
+
+.exportador-card {
+    border-top-color: #F97316;
+    background: linear-gradient(to bottom, rgba(249, 115, 22, 0.03) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.exportador-card .info-card-title {
+    color: #C2410C;
+}
+
+.proveedor-card {
+    border-top-color: #8B5CF6;
+    background: linear-gradient(to bottom, rgba(139, 92, 246, 0.03) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.proveedor-card .info-card-title {
+    color: #6D28D9;
+}
+
+/* Valores resaltados */
+.value-highlight {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.value-positive {
+    color: #10B981;
+    font-weight: 600;
+}
+
+.value-negative {
+    color: #EF4444;
+    font-weight: 600;
+}
+
+.value-neutral {
+    color: #3B82F6;
+    font-weight: 600;
+}
+
+/* Tipografía y elementos compactos */
+.text-gradient {
+    background: -webkit-linear-gradient(135deg, #ffffff, #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.form-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+}
+
+.form-control, .form-select {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.btn {
+    font-weight: 500;
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+}
+
+/* Filtros */
+.filter-section {
+    transition: all 0.3s ease;
+}
+
+.filter-section:hover {
+    transform: scale(1.01);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #4F46E5;
+    box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.25);
+}
+
+/* Gráficos */
+.chart-container {
+    position: relative;
+    height: 35vh;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* Para animar elementos secuencialmente */
+.sequenced-item {
+    opacity: 0;
+}
+
+.sequenced-item.animated {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Pie de página */
+footer {
+    margin-top: 3rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Para mostrar contenido formateado */
+.summary-box {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.summary-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.summary-box-header {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.summary-box-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+/* Colores temáticos */
+.primary-color {
+    color: #4F46E5;
+}
+
+.primary-bg {
+    background-color: #4F46E5;
+}
+
+.success-color {
+    color: #22C55E;
+}
+
+.info-color {
+    color: #06B6D4;
+}
+
+.warning-color {
+    color: #F59E0B;
+}
+
+.danger-color {
+    color: #EF4444;
+}
+
+/* Spinner personalizado */
+.spinner-custom {
+    border: 4px solid rgba(79, 70, 229, 0.1);
+    border-left: 4px solid #4F46E5;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Estilos para la paginación */
+.pagination-custom {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 0.25rem;
+}
+
+.pagination-custom .page-item {
+    margin: 0;
+}
+
+.pagination-custom .page-link {
+    border: none;
+    padding: 0.5rem 0.75rem;
+    color: #4F46E5;
+    background-color: white;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    min-width: 2.5rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-custom .page-link:hover {
+    background-color: #4F46E5;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.2);
+}
+
+.pagination-custom .page-item.active .page-link {
+    background: linear-gradient(135deg, #4F46E5 0%, #818CF8 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+}
+
+.pagination-custom .page-item.disabled .page-link {
+    color: #94A3B8;
+    background-color: #F1F5F9;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.pagination-custom .page-item.disabled .page-link:hover {
+    transform: none;
+    background-color: #F1F5F9;
+    color: #94A3B8;
+    box-shadow: none;
+}
+
+/* Ajustes para el contador de registros */
+.text-muted {
+    font-size: 0.875rem;
+    color: #64748B !important;
+}

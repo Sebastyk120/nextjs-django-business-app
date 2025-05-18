@@ -1,0 +1,667 @@
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Calidad Nacionales</title>
+    <link rel="icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{% static 'css/analisis_calidad.css' %}" rel="stylesheet">
+</head>
+<body>
+
+<div class="container-fluid py-4">
+    <header class="mb-4 fade-in">
+        <div class="header-gradient p-3 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="fw-bold header-title mb-0">
+                    Análisis de Calidad Nacionales
+                </h1>
+                <p class="header-subtitle">Visualiza y filtra los reportes de calidad por proveedor o exportador</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'exportar_excel_analisis_calidad' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-success-custom d-flex align-items-center gap-2">
+                    <i class="fas fa-file-excel"></i>
+                    <span>Exportar Excel</span>
+                </a>
+                <a href="{% url 'dashboard_nacionales' %}" class="btn btn-primary-custom d-flex align-items-center gap-2">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard Nacionales</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filtros -->
+    <div class="card mb-4 slide-in">
+        <div class="card-header d-flex align-items-center">
+            <i class="fas fa-filter primary-color me-2"></i>
+            <h5 class="mb-0">Filtros Avanzados</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'analisis_calidad' %}" id="filtrosForm">
+                <div class="row g-3">
+                    <div class="col-md filter-section">
+                        <label for="proveedor" class="form-label">Proveedor:</label>
+                        <select name="proveedor" id="proveedor" class="form-select">
+                            <option value="">Todos</option>
+                            {% for proveedor in proveedores %}
+                                <option value="{{ proveedor.id }}" {% if request.GET.proveedor == proveedor.id|stringformat:"s" %}selected{% endif %}>{{ proveedor.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md filter-section">
+                        <label for="exportador" class="form-label">Exportador:</label>
+                        <select name="exportador" id="exportador" class="form-select">
+                            <option value="">Todos</option>
+                            {% for exportador in exportadores %}
+                                <option value="{{ exportador.id }}" {% if request.GET.exportador == exportador.id|stringformat:"s" %}selected{% endif %}>{{ exportador.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md filter-section">
+                        <label for="fruta" class="form-label">Fruta:</label>
+                        <select name="fruta" id="fruta" class="form-select">
+                            <option value="">Todas</option>
+                            {% for fruta in frutas %}
+                                <option value="{{ fruta.id }}" {% if request.GET.fruta == fruta.id|stringformat:"s" %}selected{% endif %}>{{ fruta.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md filter-section">
+                        <label for="fecha_inicio" class="form-label">Fecha Llegada (Inicio):</label>
+                        <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="{{ request.GET.fecha_inicio }}">
+                    </div>
+                    <div class="col-md filter-section">
+                        <label for="fecha_fin" class="form-label">Fecha Llegada (Fin):</label>
+                        <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="{{ request.GET.fecha_fin }}">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a href="{% url 'analisis_calidad' %}" class="btn btn-outline-custom">
+                        <i class="fas fa-times me-2"></i>Limpiar Filtros
+                    </a>
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="fas fa-filter me-2"></i>Aplicar Filtros
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-3 mb-lg-0">
+            <div class="card h-100 scale-in">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-chart-line success-color me-2"></i>
+                    <h5 class="mb-0">Comportamiento de Calidad Semanal</h5>
+                    <span class="ms-auto badge bg-light text-dark">(% Exportación Promedio ponderado)</span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="calidadChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100 scale-in">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-dollar-sign warning-color me-2"></i>
+                    <h5 class="mb-0">Comportamiento de Precio Exportacion Semanal</h5>
+                    <span class="ms-auto badge bg-light text-dark">(Promedio Ponderado $/Kg)</span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="precioChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Datos -->
+    <div class="card mb-4 fade-in">
+        <div class="card-header d-flex align-items-center">
+            <i class="fas fa-table info-color me-2"></i>
+            <h5 class="mb-0">Datos de Calidad</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-custom">
+                    <thead>
+                        <tr>
+                            <th scope="col">Proveedor</th>
+                            <th scope="col">Fruta</th>
+                            <th scope="col">Guía / Remisión</th>
+                            <th scope="col">Exportador</th>
+                            <th scope="col">Fecha Llegada</th>
+                            <th scope="col" class="text-end">Peso Neto (Kg)</th>
+                            <th scope="col" class="text-end">Kg Exportacion.</th>
+                            <th scope="col" class="text-end">% Exportacion.</th>
+                            <th scope="col" class="text-end">Kg Nacional.</th>
+                            <th scope="col" class="text-end">% Nacional.</th>
+                            <th scope="col" class="text-end">Kg Merma</th>
+                            <th scope="col" class="text-end">% Merma</th>
+                            <th scope="col" class="text-end">Precio Kg Exportacion</th>
+                            <th scope="col" class="text-center">Detalles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in page_obj %}
+                        <tr class="sequenced-item">
+                            <td class="fw-medium">{{ item.compra_nacional__proveedor__nombre }}</td>
+                            <td>{{ item.compra_nacional__fruta__nombre }}</td>
+                            <td>{{ item.compra_nacional__numero_guia }}</td>
+                            <td>{{ item.exportador__nombre }}</td>
+                            <td>{{ item.fecha_llegada|date:"d/m/Y" }}</td>
+                            <td class="text-end fw-medium">{{ item.peso_neto_recibido|format_number }}</td>
+                            <td class="text-end fw-medium">{{ item.reportecalidadexportador__kg_exportacion|format_number }}</td>
+                            <td class="text-end fw-bold">
+                                {{ item.reportecalidadexportador__porcentaje_exportacion|format_percentage_color_exportacion }}
+                            </td>
+                            <td class="text-end fw-medium">{{ item.reportecalidadexportador__kg_nacional|format_number }}</td>
+                            <td class="text-end fw-bold">
+                                {{ item.reportecalidadexportador__porcentaje_nacional|format_percentage_color_nacional }}
+                            </td>
+                            <td class="text-end fw-medium">{{ item.reportecalidadexportador__kg_merma|format_number }}</td>
+                            <td class="text-end fw-bold">
+                                {{ item.reportecalidadexportador__porcentaje_merma|format_percentage_color_merma }}
+                            </td>
+                            <td class="text-end fw-medium">{{ item.compra_nacional__precio_compra_exp|format_currency }}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-details show-details" 
+                                        data-compra-id="{{ item.compra_nacional_id }}"
+                                        data-guia="{{ item.compra_nacional__numero_guia }}">
+                                    <i class="fas fa-search-plus me-1"></i>Detalles
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="14" class="text-center py-5">
+                                <div class="d-flex flex-column align-items-center">
+                                    <i class="fas fa-info-circle fa-3x mb-3 text-secondary"></i>
+                                    <p class="fs-5 text-secondary">No hay datos disponibles con los filtros seleccionados.</p>
+                                    <p class="text-muted">Intenta modificar los criterios de búsqueda.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginación -->
+            {% if page_obj.paginator.num_pages > 1 %}
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div class="text-muted">
+                    Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }} registros
+                </div>
+                <nav aria-label="Navegación de páginas">
+                    <ul class="pagination pagination-custom mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1" aria-label="Primera">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}" aria-label="Última">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer class="text-center py-4 border-top">
+        <div class="d-flex justify-content-center align-items-center">
+            <span>&copy; {% now "Y" %} Heaven's Fruit SAS</span>
+            <span class="mx-2 text-muted">|</span>
+            <span class="small text-muted">Todos los derechos reservados</span>
+        </div>
+    </footer>
+</div>
+
+<!-- Modal de Detalles -->
+<div class="modal fade modal-custom" id="detailsModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Detalles del Reporte de Calidad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light" id="modalContent">
+                <div class="container-fluid">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-custom"></div>
+                    </div>
+                    <p class="text-center text-muted mt-3">Cargando información...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 JS Bundle con Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Chart.js y plugins -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Inicializar tooltips de Bootstrap
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    
+    // Animar elementos secuenciales
+    const sequencedItems = document.querySelectorAll('.sequenced-item');
+    sequencedItems.forEach((item, index) => {
+        setTimeout(() => {
+            item.classList.add('animated');
+        }, index * 50);
+    });
+    const calidadLabels = {{ calidad_semanal_labels|safe }};
+    const calidadDataPoints = {{ calidad_semanal_data|safe }};
+    
+    const precioLabels = {{ precio_semanal_labels|safe }};
+    const precioDataPoints = {{ precio_semanal_data|safe }};
+
+    // Configurar Chart.js globalmente
+    Chart.defaults.font.family = "'Poppins', 'Helvetica', 'Arial', sans-serif";
+    Chart.defaults.font.size = 12;
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.cornerRadius = 6;
+    Chart.defaults.plugins.tooltip.titleFont = {
+        weight: 'bold',
+        size: 13
+    };
+    Chart.defaults.elements.point.radius = 4;
+    Chart.defaults.elements.point.hoverRadius = 6;
+    
+    // Definir gradientes
+    const calidadCtx = document.getElementById('calidadChart')?.getContext('2d');
+    const precioCtx = document.getElementById('precioChart')?.getContext('2d');
+    
+    let calidadGradient, precioGradient;
+    
+    if (calidadCtx) {
+        calidadGradient = calidadCtx.createLinearGradient(0, 0, 0, 300);
+        calidadGradient.addColorStop(0, 'rgba(20, 184, 166, 0.5)');  // vibrant-teal
+        calidadGradient.addColorStop(1, 'rgba(20, 184, 166, 0.0)');
+    }
+    
+    if (precioCtx) {
+        precioGradient = precioCtx.createLinearGradient(0, 0, 0, 300);
+        precioGradient.addColorStop(0, 'rgba(249, 115, 22, 0.5)');  // vibrant-orange
+        precioGradient.addColorStop(1, 'rgba(249, 115, 22, 0.0)');
+    }
+
+    const calidadData = {
+        labels: calidadLabels,
+        datasets: [{
+            label: '% Exportación Promedio',
+            data: calidadDataPoints,
+            borderColor: 'rgba(20, 184, 166, 1)', // vibrant-teal
+            backgroundColor: calidadGradient,
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: 'rgba(20, 184, 166, 1)',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(20, 184, 166, 1)',
+            pointHoverBorderWidth: 3,
+        }]
+    };
+
+    const precioData = {
+        labels: precioLabels,
+        datasets: [{
+            label: 'Precio Promedio ($/Kg)',
+            data: precioDataPoints,
+            borderColor: 'rgba(249, 115, 22, 1)', // vibrant-orange
+            backgroundColor: precioGradient,
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: 'rgba(249, 115, 22, 1)',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(249, 115, 22, 1)',
+            pointHoverBorderWidth: 3,
+        }]
+    };
+
+    const commonOptions = (yAxisLabel, yAxisTickFormat) => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        animations: {
+            tension: {
+                duration: 1000,
+                easing: 'linear',
+                from: 0.4,
+                to: 0.3,
+                loop: false
+            }
+        },
+        scales: {
+            x: {
+                type: 'time',
+                time: {
+                    unit: 'week',
+                    tooltipFormat: 'll', 
+                    displayFormats: {
+                        week: 'DD MMM, YYYY'
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Semana',
+                    color: '#475569', // slate-600
+                    font: { size: 13, weight: '600' }
+                },
+                grid: {
+                    display: true,
+                    color: 'rgba(226, 232, 240, 0.5)',
+                    drawBorder: false
+                },
+                ticks: { 
+                    color: '#64748b',
+                    padding: 8
+                }
+            },
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: yAxisLabel,
+                    color: '#475569',
+                    font: { size: 13, weight: '600' }
+                },
+                grid: {
+                    color: 'rgba(226, 232, 240, 0.8)',
+                    drawBorder: false
+                },
+                ticks: {
+                    color: '#64748b',
+                    padding: 8,
+                    callback: yAxisTickFormat
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+                align: 'end',
+                labels: {
+                    boxWidth: 12,
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    color: '#334155',
+                    font: { size: 12, weight: '500' }
+                }
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                titleFont: { size: 14, weight: 'bold' },
+                bodyFont: { size: 13 },
+                bodySpacing: 6,
+                padding: 12,
+                displayColors: false,
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed.y !== null) {
+                           if (context.chart.canvas.id === 'calidadChart') {
+                               label += context.parsed.y.toFixed(2) + '%';
+                           } else {
+                               label += '$' + context.parsed.y.toFixed(2);
+                           }
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+        hover: {
+            mode: 'nearest',
+            intersect: false
+        },
+        interaction: {
+            intersect: false,
+            mode: 'index',
+        }
+    });
+
+    if (calidadCtx) {
+        new Chart(calidadCtx, {
+            type: 'line',
+            data: calidadData,
+            options: commonOptions('% Exportación', function(value) { return value + '%'; })
+        });
+    }
+
+    if (precioCtx) {
+        new Chart(precioCtx, {
+            type: 'line',
+            data: precioData,
+            options: commonOptions('Precio ($/Kg)', function(value) { return '$' + value.toFixed(2); })
+        });
+    }
+    
+    // Animación para filas de tabla
+    const tableRows = document.querySelectorAll('.table-row-animate');
+    tableRows.forEach((row, index) => {
+        row.style.animationDelay = `${index * 0.05}s`;
+    });
+
+    // Crear el modal de Bootstrap
+    const detailsModalEl = document.getElementById('detailsModal');
+    const detailsModal = new bootstrap.Modal(detailsModalEl);
+    const modalContent = document.getElementById('modalContent');
+    const modalTitle = document.querySelector('#detailsModal .modal-title');
+    const detailButtons = document.querySelectorAll('.show-details');
+    
+    // Función para aplicar clases condicionales a los valores
+    function getValueClass(type, value) {
+        if (!value || value === 'N/A') return '';
+        
+        switch (type) {
+            case 'porcentaje_exp':
+                const expPct = parseFloat(value);
+                return expPct >= 85 ? 'value-positive' : 
+                       expPct >= 70 ? 'value-neutral' : 'value-negative';
+            case 'porcentaje_merma':
+                const mermaPct = parseFloat(value);
+                return mermaPct <= 5 ? 'value-positive' : 
+                       mermaPct <= 10 ? 'value-neutral' : 'value-negative';
+            case 'utilidad':
+                const utilPct = parseFloat(value);
+                return utilPct >= 15 ? 'value-positive' : 
+                       utilPct >= 10 ? 'value-neutral' : 'value-negative';
+            case 'precio':
+                return 'value-highlight';
+            case 'estado':
+                return value === 'Completado' ? 'value-positive' : 
+                       value === 'En Proceso' ? 'value-neutral' : 'value-negative';
+            default:
+                return '';
+        }
+    }
+
+    // Función para abrir el modal y cargar los datos
+    function openDetailsModal(compraId, guiaNumber) {
+        detailsModal.show();
+        modalTitle.textContent = `Detalles del Reporte - Guía: ${guiaNumber}`;
+        
+        modalContent.innerHTML = `
+            <div class="d-flex justify-content-center py-5">
+                <div class="spinner-custom"></div>
+                <span class="ms-3">Cargando detalles...</span>
+            </div>
+        `;
+        
+        fetch(`{% url 'get_reporte_detalle' %}?compra_id=${compraId}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    modalContent.innerHTML = `
+                        <div class="alert alert-danger m-4">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ${result.error}
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Generar el contenido HTML para la disposición 2x2
+                let html = '<div class="container-fluid py-3">';
+                html += '<div class="row g-3">';
+                
+                // Definir el orden y los íconos para cada sección
+                const sectionConfig = [
+                    { key: 'compra', title: 'Datos de Compra', icon: 'shopping-cart', class: 'compra-card' },
+                    { key: 'venta', title: 'Datos de Recepción', icon: 'truck', class: 'venta-card' },
+                    { key: 'reporte_exp', title: 'Reporte Exportador', icon: 'clipboard-check', class: 'exportador-card' },
+                    { key: 'reporte_prov', title: 'Reporte Proveedor Nacional', icon: 'file-invoice-dollar', class: 'proveedor-card' }
+                ];
+                
+                // Crear las tarjetas en orden específico
+                sectionConfig.forEach(config => {
+                    const section = result.data[config.key] || { fields: {}, class: config.class };
+                    
+                    html += `
+                        <div class="col-md-6">
+                            <div class="info-card ${config.class}">
+                                <h5 class="info-card-title">
+                                    <i class="fas fa-${config.icon} me-2"></i>
+                                    ${config.title}
+                                </h5>
+                                <div class="info-card-body">
+                                    <div class="row g-2">`;
+                    
+                    // Mostrar los campos o mensaje si no hay datos
+                    if (Object.keys(section.fields || {}).length === 0) {
+                        html += `
+                            <div class="col-12 text-center py-3">
+                                <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
+                                <p class="text-muted">No hay información disponible</p>
+                            </div>`;
+                    } else {
+                        Object.entries(section.fields).forEach(([fieldName, value]) => {
+                            const valueClass = getValueClass(
+                                fieldName.toLowerCase().includes('porcentaje') ? 'porcentaje_exp' :
+                                fieldName.toLowerCase().includes('merma') ? 'porcentaje_merma' :
+                                fieldName.toLowerCase().includes('utilidad') ? 'utilidad' :
+                                fieldName.toLowerCase().includes('precio') ? 'precio' :
+                                fieldName.toLowerCase().includes('estado') ? 'estado' : 'default',
+                                value
+                            );
+                            
+                            html += `
+                                <div class="col-sm-6">
+                                    <div class="info-field">
+                                        <div class="info-field-label">${fieldName}</div>
+                                        <div class="info-field-value ${valueClass}">${value}</div>
+                                    </div>
+                                </div>`;
+                        });
+                    }
+                    
+                    html += `
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div></div>';
+                modalContent.innerHTML = html;
+            })
+            .catch(error => {
+                modalContent.innerHTML = `
+                    <div class="alert alert-danger m-4">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Error al cargar los datos: ${error}
+                    </div>
+                `;
+            });
+    }
+    
+    // Event listeners para los botones de detalle
+    detailButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const compraId = this.getAttribute('data-compra-id');
+            const guiaNumber = this.getAttribute('data-guia');
+            openDetailsModal(compraId, guiaNumber);
+        });
+    });
+
+    // El cierre del modal se maneja automáticamente con Bootstrap 5
+    detailsModalEl.addEventListener('hidden.bs.modal', function () {
+        modalContent.innerHTML = `
+            <div class="container-fluid">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-custom"></div>
+                </div>
+                <p class="text-center text-muted mt-3">Cargando información...</p>
+            </div>
+        `;
+    });
+});
+</script>
+
+</body>
+</html>

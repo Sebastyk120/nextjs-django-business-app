@@ -32,7 +32,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Action Buttons -->
         <div class="action-buttons no-imprimir">
             <div class="display-options">
@@ -53,7 +53,7 @@
                 <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
             </button>
         </div>
-        
+
         <!-- Summary Cards -->
         <div class="summary-box">
             <div class="summary-item">
@@ -77,19 +77,18 @@
                     <i class="bi bi-currency-dollar"></i> SALDO REAL
                 </div>
                 {% if valor_consignar > 0 %}
-                    <p class="summary-value" style="color: green">{{ valor_consignar|format_currency|default:"0.00" }}</p>
-                    <p class="summary-words">{{ valor_consignar|numero_a_letras }}</p>
+                    <p class="summary-value" style="color: green">{{ monto_pendiente_total|format_currency|default:"0.00" }}</p>
+                    <p class="summary-words">{{ monto_pendiente_total|numero_a_letras }}</p>
                 {% else %}
-                    <p class="summary-value" style="color: red">{{ valor_consignar|format_currency|default:"0.00" }}</p>
-                    <p class="summary-words">{{ valor_consignar|numero_a_letras }}</p>
+                    <p class="summary-value" style="color: red">{{ monto_pendiente_total|format_currency|default:"0.00" }}</p>
+                    <p class="summary-words">{{ monto_pendiente_total|numero_a_letras }}</p>
                 {% endif %}
-                
             </div>
         </div>
-        
-        <!-- Two-column layout for tables -->
+
+        <!-- Layout for tables -->
         <div class="report-columns">
-            <!-- Left Column -->
+            <!-- First Column -->
             <div class="report-column">
                 <!-- Reportes Pendientes de Pago Table -->
                 <div class="card">
@@ -98,7 +97,6 @@
                             <i class="bi bi-clock-history"></i> Reportes Pendientes de Pago
                         </h3>
                     </div>
-                    
                     {% if reportes_pendientes %}
                     <div class="table-responsive">
                         <table>
@@ -111,11 +109,12 @@
                                     <th>Export.</th>
                                     <th>Nacional</th>
                                     <th>Total a Pagar</th>
+                                    <th>Monto Pendiente</th>
                                 </tr>
                             </thead>
                             <tbody class="data-container" data-type="pendientes">
                                 {% for reporte in reportes_pendientes %}
-                                <tr>
+                                <tr {% if reporte.p_total_pagar != reporte.monto_pendiente and reporte.monto_pendiente > 0 %}class="row-has-partial-payment"{% endif %}>
                                     <td>{{ reporte.rep_cal_exp.venta_nacional.compra_nacional.numero_guia }}</td>
                                     <td>{{ reporte.rep_cal_exp.venta_nacional.compra_nacional.fecha_compra|date:"d/m/Y" }}</td>
                                     <td>{{ reporte.p_fecha_reporte|date:"d/m/Y" }}</td>
@@ -127,19 +126,20 @@
                                         <span class="percentage percentage-medium">{{ reporte.p_porcentaje_nacional|floatformat:1 }}%</span>
                                     </td>
                                     <td class="amount">{{ reporte.p_total_pagar|format_currency }}</td>
+                                    <td class="amount {% if reporte.p_total_pagar != reporte.monto_pendiente %}partial-payment{% endif %}">{{ reporte.monto_pendiente|format_currency }}</td>
                                 </tr>
                                 {% endfor %}
                                 <tr class="total-row">
                                     <td colspan="6" class="text-right"><strong>Total pendiente:</strong></td>
                                     <td class="amount">{{ total_pendientes|format_currency }}</td>
+                                    <td class="amount">{{ monto_pendiente_total|format_currency }}</td>
                                 </tr>
                                 {% if saldo_disponible > 0 %}
                                 <tr class="total-row">
-                                    <td colspan="6" class="text-right"><strong>Anticipo Pendinte Por Aplicar: </strong></td>
-                                    <td class="amount positive">-{{ saldo_disponible|format_currency }}</td>
+                                    <td colspan="6" class="text-right"><strong>Anticipo Pendiente Por Aplicar: </strong></td>
+                                    <td colspan="2" class="amount positive">-{{ saldo_disponible|format_currency }}</td>
                                 </tr>
                                 {% endif %}
-                                
                             </tbody>
                         </table>
                     </div>
@@ -149,7 +149,7 @@
                     </div>
                     {% endif %}
                 </div>
-                
+
                 <!-- Compras Completadas Table -->
                 <div class="card">
                     <div class="card-header">
@@ -157,7 +157,6 @@
                             <i class="bi bi-box-seam"></i> Últimos Reportes Pagados
                         </h3>
                     </div>
-                    
                     {% if compras_completas %}
                     <div class="table-responsive">
                         <table>
@@ -198,10 +197,9 @@
                     {% endif %}
                 </div>
             </div>
-            
-            <!-- Right Column -->
+
+            <!-- Second Column -->
             <div class="report-column">
-                
                 <!-- Compras en Proceso Table -->
                 <div class="card">
                     <div class="card-header">
@@ -209,7 +207,6 @@
                             <i class="bi bi-hourglass-split"></i> Compras en Proceso
                         </h3>
                     </div>
-                    
                     {% if compras_proceso %}
                     <div class="table-responsive">
                         <table>
@@ -249,7 +246,6 @@
                             <i class="bi bi-file-earmark-x"></i> Reportes Sin Factura del Proveedor
                         </h3>
                     </div>
-                    
                     {% if reportes_sin_factura %}
                     <div class="table-responsive">
                         <table>
@@ -283,7 +279,7 @@
                     </div>
                     {% endif %}
                 </div>
-                
+
                 <!-- Transferencias Table -->
                 <div class="card">
                     <div class="card-header">
@@ -291,7 +287,6 @@
                             <i class="bi bi-cash-coin"></i> Últimas Transferencias Realizadas
                         </h3>
                     </div>
-                    
                     {% if transferencias %}
                     <div class="table-responsive">
                         <table>
@@ -321,7 +316,7 @@
                     </div>
                     {% endif %}
                 </div>
-                
+
                 <!-- Detalle del Saldo -->
                 <div class="card">
                     <div class="card-header">
@@ -329,7 +324,6 @@
                             <i class="bi bi-file-earmark-text"></i> Detalle del Saldo
                         </h3>
                     </div>
-                    
                     <div class="table-responsive">
                         <table>
                             <thead>
@@ -341,7 +335,7 @@
                             <tbody>
                                 <tr>
                                     <td>Total por Pagar (Reportes pendientes)</td>
-                                    <td class="amount">{{ total_pendientes|format_currency|default:"0.00" }}</td>
+                                    <td class="amount">{{ monto_pendiente_total|format_currency|default:"0.00" }}</td>
                                 </tr>
                                 {% if saldo_disponible > 0 %}
                                 <tr>
@@ -351,7 +345,7 @@
                                 {% endif %}
                                 <tr class="total-row">
                                     <td><strong>Saldo Actual</strong></td>
-                                    <td class="amount {% if saldo_actual > 0 %}positive{% else %}negative{% endif %}">
+                                    <td class="amount {% if valor_consignar > 0 %}positive{% else %}negative{% endif %}">
                                         {{ valor_consignar|format_currency|default:"0.00" }}
                                     </td>
                                 </tr>
@@ -361,7 +355,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Final Balance Statement -->
         <div class="final-balance {% if valor_consignar > 0 %}positive-balance{% else %}negative-balance{% endif %}">
             <h4>
@@ -373,7 +367,7 @@
             </h4>
             <p>{{ valor_consignar|abs|format_currency }} ({{ valor_consignar|abs|numero_a_letras }})</p>
         </div>
-        
+
         <div class="footer">
             <p>Este documento es informativo y representa el estado actual de su cuenta con Heaven's Fruits SAS</p>
         </div>
@@ -392,11 +386,11 @@
         // Función para filtrar filas
         function filterRows(limit) {
             const containers = document.querySelectorAll('.data-container');
-            
+
             containers.forEach(function(container) {
                 const rows = container.querySelectorAll('tr:not(.total-row)');
                 const totalRows = container.querySelectorAll('tr.total-row');
-                
+
                 // Mostrar u ocultar filas regulares según el límite
                 rows.forEach(function(row, index) {
                     if (limit === 'all' || index < parseInt(limit)) {
@@ -405,7 +399,7 @@
                         row.style.display = 'none';
                     }
                 });
-                
+
                 // Siempre mostrar las filas con totales
                 totalRows.forEach(function(row) {
                     row.style.display = '';
@@ -420,21 +414,32 @@
 
         // Function to export content to PDF using html2pdf.js
         function exportToPDF() {
-            const element = document.querySelector('.container-fluid'); // Select the main container
-            const proveedorNombre = "{{ proveedor.nombre|escapejs }}"; // Get provider name safely
-            const fechaActual = "{{ fecha_actual|date:"Y-m-d" }}"; // Get current date safely
+            const element = document.querySelector('.container-fluid');
+            const proveedorNombre = "{{ proveedor.nombre|escapejs }}";
+            const fechaActual = "{{ fecha_actual|date:'Y-m-d' }}";
             const filename = `estado_cuenta_${proveedorNombre}_${fechaActual}.pdf`;
 
-            // Temporarily show all rows for PDF export
-            const originalLimit = document.getElementById('limitSelector').value;
-            filterRows('all'); 
+            // Obtener el límite actual seleccionado por el usuario
+            const currentLimit = document.getElementById('limitSelector').value;
+            
+            // Asegurarnos de que se aplique el límite actual antes de generar el PDF
+            filterRows(currentLimit);
 
             const opt = {
-              margin:       [0.5, 0.5, 0.5, 0.5], // Margins in inches [top, left, bottom, right]
-              filename:     filename,
-              image:        { type: 'jpeg', quality: 0.98 },
-              html2canvas:  { scale: 2, useCORS: true, logging: true }, // Increase scale for better quality, enable CORS
-              jsPDF:        { unit: 'in', format: 'tabloid', orientation: 'landscape' } // Tabloid size (11x17 inches), landscape
+                margin: [0.5, 0.5, 0.5, 0.5],
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    logging: true,
+                    letterRendering: true
+                },
+                jsPDF: { 
+                    unit: 'in',
+                    format: 'tabloid',
+                    orientation: 'landscape'
+                }
             };
 
             // Hide buttons before generating PDF
@@ -442,14 +447,12 @@
             buttons.style.display = 'none';
 
             html2pdf().set(opt).from(element).save().then(() => {
-                // Restore buttons and original row limit after PDF is generated/saved
-                buttons.style.display = ''; 
-                filterRows(originalLimit); 
+                // Restore buttons after PDF is generated/saved
+                buttons.style.display = '';
             }).catch((error) => {
                 console.error("Error generating PDF:", error);
-                // Ensure buttons and limit are restored even if there's an error
-                buttons.style.display = ''; 
-                filterRows(originalLimit);
+                // Ensure buttons are restored even if there's an error
+                buttons.style.display = '';
             });
         }
     </script>

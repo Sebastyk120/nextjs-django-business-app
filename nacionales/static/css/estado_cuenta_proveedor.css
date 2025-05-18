@@ -27,12 +27,13 @@ body {
 }
 
 .section-title {
-    font-weight: 600;
-    color: #2d3748;
+    font-weight: 500;
+    color: #718096;
     margin-bottom: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 1.2rem;
 }
 
 .section-title i {
@@ -41,9 +42,12 @@ body {
 }
 
 .subtitle {
-    color: #718096;
-    font-size: 1rem;
+    color: #2d3748;
+    font-size: 2rem;
     text-align: center;
+    font-weight: 600;
+    margin-top: 10px;
+    margin-bottom: 20px;
 }
 
 /* Card Styles */
@@ -303,22 +307,29 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     padding: 20px;
     margin-top: 25px;
-    /* Añadir altura fija */
-    height: 400px;
+    /* Ajustar altura para gráficos más complejos */
+    height: 450px;
     position: relative;
 }
 
 .chart-title {
     color: #2d3748;
     font-weight: 600;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
     font-size: 1.1rem;
     text-align: center;
 }
 
+.chart-description {
+    color: #718096;
+    text-align: center;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
 /* Asegurar que el canvas se mantiene dentro del contenedor */
 .chart-container canvas {
-    max-height: 340px !important; /* Altura máxima del canvas */
+    max-height: 380px !important; /* Altura máxima del canvas */
     width: 100% !important;
 }
 

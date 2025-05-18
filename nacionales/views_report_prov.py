@@ -7,15 +7,8 @@ from nacionales.models import CompraNacional, VentaNacional, ReporteCalidadExpor
     ProveedorNacional, TransferenciasProveedor, BalanceProveedor
 
 
-def es_miembro_del_grupo(nombre_grupo):
-    def es_miembro(user):
-        return user.groups.filter(name=nombre_grupo).exists()
 
-    return es_miembro
 
-# Vistas para el estado de cuenta de proveedores: #
-@login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def reporte_cuenta_proveedor(request, proveedor_id):
     # Obtener el proveedor
     proveedor = get_object_or_404(ProveedorNacional, id=proveedor_id)
@@ -30,7 +23,7 @@ def reporte_cuenta_proveedor(request, proveedor_id):
         'rep_cal_exp__venta_nacional',
         'rep_cal_exp__venta_nacional__compra_nacional',
         'rep_cal_exp__venta_nacional__compra_nacional__fruta'
-    ).order_by('-rep_cal_exp__venta_nacional__compra_nacional__fecha_compra')
+    ).order_by('-rep_cal_exp__venta_nacional__compra_nacional__fecha_compra', '-rep_cal_exp__venta_nacional__compra_nacional__pk')
 
     # Reportes pendientes de pago
     reportes_pendientes = ReporteCalidadProveedor.objects.filter(
@@ -42,10 +35,13 @@ def reporte_cuenta_proveedor(request, proveedor_id):
         'rep_cal_exp__venta_nacional',
         'rep_cal_exp__venta_nacional__compra_nacional',
         'rep_cal_exp__venta_nacional__compra_nacional__fruta'
-    ).order_by('-p_fecha_reporte')
+    ).order_by('-rep_cal_exp__venta_nacional__compra_nacional__fecha_compra', '-rep_cal_exp__venta_nacional__compra_nacional__pk')
     
     # Total de reportes pendientes
     total_pendientes = reportes_pendientes.aggregate(total=Sum('p_total_pagar'))['total'] or 0
+    
+    # Calcular el monto pendiente total (considerando anticipos)
+    monto_pendiente_total = reportes_pendientes.aggregate(total=Sum('monto_pendiente'))['total'] or 0
     
     # Reportes sin factura
     reportes_sin_factura = ReporteCalidadProveedor.objects.filter(
@@ -55,7 +51,7 @@ def reporte_cuenta_proveedor(request, proveedor_id):
         'rep_cal_exp',
         'rep_cal_exp__venta_nacional',
         'rep_cal_exp__venta_nacional__compra_nacional'
-    ).order_by('-p_fecha_reporte')
+    ).order_by('-rep_cal_exp__venta_nacional__compra_nacional__fecha_compra', '-rep_cal_exp__venta_nacional__compra_nacional__pk')
     
     # Total de reportes sin factura
     total_sin_factura = reportes_sin_factura.aggregate(total=Sum('p_total_facturar'))['total'] or 0
@@ -67,7 +63,7 @@ def reporte_cuenta_proveedor(request, proveedor_id):
     # Obtener todas las compras del proveedor
     todas_compras = CompraNacional.objects.filter(
         proveedor=proveedor
-    ).select_related('fruta', 'tipo_empaque')
+    ).select_related('fruta', 'tipo_empaque').order_by('-fecha_compra', '-pk')
 
     compras_completas_ids = set(
         ReporteCalidadProveedor.objects.filter(
@@ -117,10 +113,13 @@ def reporte_cuenta_proveedor(request, proveedor_id):
 
         compras_proceso.append(datos_compra)
 
+    # Ordenar compras_proceso por fecha_compra de más reciente a más antigua
+    compras_proceso = sorted(compras_proceso, key=lambda x: x['fecha_compra'], reverse=True)
+
     # Obtener transferencias realizadas al proveedor
     transferencias = TransferenciasProveedor.objects.filter(
         proveedor=proveedor
-    ).order_by('-fecha_transferencia')
+    ).order_by('-fecha_transferencia', '-pk')
 
     # Calcular el saldo total
     total_por_pagar = total_pendientes
@@ -130,7 +129,7 @@ def reporte_cuenta_proveedor(request, proveedor_id):
     ).aggregate(total=Sum('valor_transferencia'))['total'] or 0
 
     saldo_actual = saldo_disponible
-    valor_consignar = total_por_pagar - saldo_actual
+    valor_consignar = monto_pendiente_total - saldo_actual
 
     # Calcular la utilidad total para mostrar en tarjeta adicional
     total_utilidad = ReporteCalidadProveedor.objects.filter(
@@ -150,6 +149,7 @@ def reporte_cuenta_proveedor(request, proveedor_id):
         'total_utilidad': total_utilidad,
         'reportes_pendientes': reportes_pendientes,
         'total_pendientes': total_pendientes,
+        'monto_pendiente_total': monto_pendiente_total,
         'reportes_sin_factura': reportes_sin_factura,
         'total_sin_factura': total_sin_factura,
         'saldo_disponible': saldo_disponible,

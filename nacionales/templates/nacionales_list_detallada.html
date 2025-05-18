@@ -106,28 +106,27 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-4 filter-group">
-                                    <h6>Estado Venta:</h6>
+                                    <h6>Estado Reporte (Exportador):</h6>
                                     <div class="filter-buttons">
-                                        <button class="filter-btn" data-filter="estado-venta" data-value="En Proceso">En Proceso</button>
-                                        <button class="filter-btn" data-filter="estado-venta" data-value="Completado">Completado</button>
+                                        <button class="filter-btn" data-filter="estado-venta" data-value="Pendiente">Pendiente</button>
                                         <button class="filter-btn" data-filter="estado-venta" data-value="Vencido">Vencido</button>
+                                        <button class="filter-btn" data-filter="estado-venta" data-value="Completado">Completado</button>
                                     </div>
                                 </div>
                                 <div class="col-md-4 filter-group">
-                                    <h6>Estado Reporte Exp:</h6>
+                                    <h6>Estado Facturacion Reporte (Exportador):</h6>
                                     <div class="filter-buttons">
-                                        <button class="filter-btn" data-filter="estado-rte-exp" data-value="En Proceso">En Proceso</button>
+                                        <button class="filter-btn" data-filter="estado-rte-exp" data-value="Pendiente">Pendiente</button>
                                         <button class="filter-btn" data-filter="estado-rte-exp" data-value="Facturado">Facturado</button>
-                                        <button class="filter-btn" data-filter="estado-rte-exp" data-value="Pagado">Pagado</button>
                                     </div>
                                 </div>
                                 <div class="col-md-4 filter-group">
-                                    <h6>Estado Reporte Prov:</h6>
+                                    <h6>Estado Reporte (Proveedor):</h6>
                                     <div class="filter-buttons">
                                         <button class="filter-btn" data-filter="estado-rte-prov" data-value="En Proceso">En Proceso</button>
                                         <button class="filter-btn" data-filter="estado-rte-prov" data-value="Reporte Enviado">Reporte Enviado</button>
+                                        <button class="filter-btn" data-filter="estado-rte-prov" data-value="Facturado">Facturado</button>
                                         <button class="filter-btn" data-filter="estado-rte-prov" data-value="Pagado">Pagado</button>
-                                        <button class="filter-btn" data-filter="estado-rte-prov" data-value="Facturado Por Proveedor">Facturado</button>
                                     </div>
                                 </div>
                             </div>
@@ -159,9 +158,9 @@
                                             <th>Fecha Compra</th>
                                             <th>Fruta</th>
                                             <th>Peso Bruto</th>
-                                            <th>Estado Venta</th>
-                                            <th>Estado Reporte Exp</th>
-                                            <th>Estado Reporte Prov</th>
+                                            <th>Estado Reporte (Exportador)</th>
+                                            <th>Estado Facturación Reporte (Exportador)</th>
+                                            <th>Estado Reporte (Proveedor)</th>
                                             <th>Progreso</th>
                                         </tr>
                                         </thead>
@@ -215,12 +214,12 @@
                         <div class="card-header bg-primary text-white">
                             <h5 class="card-title mb-0">
                                 <i class="fas fa-shopping-cart"></i> Compra Nacional
-                                {% if reporte_exp.pagado %}
-                                    <span class="badge bg-dark">Finalizado</span>
+                                {% if reporte_exp.vencimiento_factura %}
+                                    <span class="badge bg-dark">Completado</span>
                                 {% endif %}
                                 <button type="button" class="btn btn-sm btn-light float-end"
                                         data-bs-toggle="modal" data-bs-target="#editCompraNacionalModal"
-                                        data-id="{{ compra.id }}" {% if reporte_exp.pagado %} disabled {% endif %}>
+                                        data-id="{{ compra.id }}" {% if reporte_exp.vencimiento_factura%} disabled {% endif %}>
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
                             </h5>
@@ -287,12 +286,12 @@
                             <div class="card-header bg-success text-white">
                                 <h5 class="card-title mb-0">
                                     <i class="fas fa-store"></i> Venta Nacional
-                                    {% if reporte_exp.pagado %}
-                                        <span class="badge bg-dark">Finalizado</span>
+                                    {% if reporte_exp.vencimiento_factura %}
+                                        <span class="badge bg-dark">Completado</span>
                                     {% endif %}
                                     <button type="button" class="btn btn-sm btn-light float-end"
                                             data-bs-toggle="modal" data-bs-target="#editVentaNacionalModal"
-                                            data-id="{{ venta.id }}" {% if reporte_exp.pagado %}
+                                            data-id="{{ venta.id }}" {% if reporte_exp.vencimiento_factura %}
                                             disabled {% endif %}>
                                         <i class="fas fa-edit"></i> Editar
                                     </button>
@@ -345,7 +344,7 @@
                                         </div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Estado Venta</div>
+                                        <div class="info-label">Estado Reporte (Exportador)</div>
                                         <div class="info-value">
                                             <span class="status-badge status-{{ venta.estado_venta|slugify }}">{{ venta.estado_venta }}</span>
                                         </div>
@@ -367,13 +366,13 @@
                             <div class="card-header bg-info text-dark">
                                 <h5 class="card-title mb-0">
                                     <i class="fas fa-file-alt"></i> Reporte Calidad Exportador
-                                    {% if reporte_exp.pagado %}
-                                        <span class="badge bg-dark">Pagado</span>
+                                    {% if reporte_exp.vencimiento_factura %}
+                                        <span class="badge bg-dark">Completado</span>
                                     {% endif %}
                                     <button type="button" class="btn btn-sm btn-light float-end"
                                             data-bs-toggle="modal" data-bs-target="#editReporteExportadorModal"
                                             data-id="{{ reporte_exp.id }}"
-                                            {% if reporte_exp.pagado %} disabled {% endif %}>
+                                            {% if reporte_exp.vencimiento_factura %} disabled {% endif %}>
                                         <i class="fas fa-edit"></i> Editar
                                     </button>
                                 </h5>
@@ -443,21 +442,11 @@
                                         <div class="info-value">{{ reporte_exp.vencimiento_factura }}</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Estado Reporte Exp</div>
+                                        <div class="info-label">Estado Reporte Exportador</div>
                                         <div class="info-value">
                                             <span class="status-badge status-{{ reporte_exp.estado_reporte_exp|slugify }}">
                                                 {{ reporte_exp.estado_reporte_exp }}
                                             </span>
-                                        </div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Pagado</div>
-                                        <div class="info-value">
-                                            {% if reporte_exp.pagado %}
-                                                <span class="status-badge status-pagado">Sí</span>
-                                            {% else %}
-                                                <span class="status-badge status-pendiente">No</span>
-                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -491,7 +480,7 @@
                                         <div class="info-value">{{ reporte_prov.p_fecha_reporte }}</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Estado Reporte Prov</div>
+                                        <div class="info-label">Estado Reporte Proveedor</div>
                                         <div class="info-value">
                                             <span class="status-badge status-{{ reporte_prov.estado_reporte_prov|slugify }}">
                                                 {{ reporte_prov.estado_reporte_prov }}
@@ -552,13 +541,26 @@
                                         <div class="info-value">{{ reporte_prov.rte_ica|format_currency }}</div>
                                     </div>
                                     <div class="info-item">
-                                        <div class="info-label">Utilidad</div>
+                                        <div class="info-label">Utilidad Real</div>
                                         <div class="info-value">{{ reporte_prov.p_utilidad|format_currency }}</div>
                                     </div>
                                     <div class="info-item">
                                         <div class="info-label">% Utilidad</div>
                                         <div class="info-value">{{ reporte_prov.p_porcentaje_utilidad|floatformat:2 }}%</div>
                                     </div>
+
+                                    <div class="info-item">
+                                        <div class="info-label">Utilidad Sin Ajuste</div>
+                                        <div class="info-value">{{ reporte_prov.p_utilidad_sin_ajuste|format_currency }}</div>
+                                    </div>
+
+
+                                    <div class="info-item">
+                                        <div class="info-label">Diferencia Utilidad Real</div>
+                                        <div class="info-value">{{ reporte_prov.diferencia_utilidad|format_currency }}</div>
+                                    </div>
+
+
                                     <div class="info-item">
                                         <div class="info-label">Total a Pagar</div>
                                         <div class="info-value">{{ reporte_prov.p_total_pagar|format_currency }}</div>
