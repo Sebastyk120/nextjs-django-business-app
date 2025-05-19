@@ -92,6 +92,163 @@
             </div>
         </div>
 
+        {% if compra %}
+        <!-- Guide Header - Key Information -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-10">
+                <div class="card guide-header-card">
+                    <div class="card-body">
+                        <div class="guide-header">
+                            <div class="guide-header-main">
+                                <h4 class="guide-title">Guía Nacional: <span>{{ compra.numero_guia }}</span></h4>
+                                <div class="guide-key-info">
+                                    <div class="key-info-item">
+                                        <i class="fas fa-user-tie"></i>
+                                        <span>{{ compra.proveedor }}</span>
+                                    </div>
+                                    <div class="key-info-item">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <span>{{ compra.fecha_compra }}</span>
+                                    </div>
+                                    <div class="key-info-item">
+                                        <i class="fas fa-lemon"></i>
+                                        <span>{{ compra.fruta }}</span>
+                                    </div>
+                                    <div class="key-info-item">
+                                        <i class="fas fa-weight-hanging"></i>
+                                        <span>{{ compra.peso_compra|format_number }} kg</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Process Flow Timeline/Stepper -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-10">
+                <div class="card timeline-card">
+                    <div class="card-body">
+                        <div class="process-timeline">
+                            <!-- Compra Step -->
+                            <div class="timeline-step {% if compra %}completed{% endif %} active">
+                                <div class="step-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    {% if compra %}
+                                    <span class="step-check"><i class="fas fa-check"></i></span>
+                                    {% endif %}
+                                </div>
+                                <div class="step-content">
+                                    <h5 class="step-title">Compra Nacional</h5>
+                                    <div class="step-summary">
+                                        <p>{{ compra.proveedor }} - {{ compra.numero_guia }}</p>
+                                        <button type="button" class="btn btn-sm btn-edit" 
+                                                data-bs-toggle="modal" data-bs-target="#editCompraNacionalModal"
+                                                data-id="{{ compra.id }}" {% if reporte_exp.vencimiento_factura %} disabled {% endif %}>
+                                            <i class="fas fa-edit"></i> Editar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Venta Step -->
+                            <div class="timeline-step {% if venta %}completed{% endif %} {% if compra and not venta %}current{% endif %}">
+                                <div class="step-icon">
+                                    <i class="fas fa-store"></i>
+                                    {% if venta %}
+                                    <span class="step-check"><i class="fas fa-check"></i></span>
+                                    {% endif %}
+                                </div>
+                                <div class="step-content">
+                                    <h5 class="step-title">Venta Nacional</h5>
+                                    {% if venta %}
+                                    <div class="step-summary">
+                                        <p>{{ venta.exportador }} - {{ venta.fecha_llegada }}</p>
+                                        <button type="button" class="btn btn-sm btn-edit" 
+                                                data-bs-toggle="modal" data-bs-target="#editVentaNacionalModal"
+                                                data-id="{{ venta.id }}" {% if reporte_exp.vencimiento_factura %} disabled {% endif %}>
+                                            <i class="fas fa-edit"></i> Editar
+                                        </button>
+                                    </div>
+                                    {% elif compra %}
+                                    <button type="button" class="btn btn-sm btn-add"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#ventaNacionalModal"
+                                            data-url="{% url 'venta_nacional_create' compra.id %}">
+                                        <i class="fas fa-plus-circle"></i> Añadir Venta
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Reporte Exportador Step -->
+                            <div class="timeline-step {% if reporte_exp %}completed{% endif %} {% if venta and not reporte_exp %}current{% endif %}">
+                                <div class="step-icon">
+                                    <i class="fas fa-file-export"></i>
+                                    {% if reporte_exp %}
+                                    <span class="step-check"><i class="fas fa-check"></i></span>
+                                    {% endif %}
+                                </div>
+                                <div class="step-content">
+                                    <h5 class="step-title">Reporte Exportador</h5>
+                                    {% if reporte_exp %}
+                                    <div class="step-summary">
+                                        <p>Reporte: {{ reporte_exp.remision_exp }} - {{ reporte_exp.fecha_reporte }}</p>
+                                        <button type="button" class="btn btn-sm btn-edit" 
+                                                data-bs-toggle="modal" data-bs-target="#editReporteExportadorModal"
+                                                data-id="{{ reporte_exp.id }}" {% if reporte_exp.vencimiento_factura %} disabled {% endif %}>
+                                            <i class="fas fa-edit"></i> Editar
+                                        </button>
+                                    </div>
+                                    {% elif venta %}
+                                    <button type="button" class="btn btn-sm btn-add"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#reporteExportadorModal"
+                                            data-url="{% url 'reporte_exportador_create' venta.compra_nacional_id %}">
+                                        <i class="fas fa-plus-circle"></i> Añadir Reporte
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Reporte Proveedor Step -->
+                            <div class="timeline-step {% if reporte_prov %}completed{% endif %} {% if reporte_exp and not reporte_prov %}current{% endif %}">
+                                <div class="step-icon">
+                                    <i class="fas fa-file-invoice"></i>
+                                    {% if reporte_prov %}
+                                    <span class="step-check"><i class="fas fa-check"></i></span>
+                                    {% endif %}
+                                </div>
+                                <div class="step-content">
+                                    <h5 class="step-title">Reporte Proveedor</h5>
+                                    {% if reporte_prov %}
+                                    <div class="step-summary">
+                                        <p>Estado: {{ reporte_prov.estado_reporte_prov }}</p>
+                                        <button type="button" class="btn btn-sm btn-edit" 
+                                                data-bs-toggle="modal" data-bs-target="#editReporteProveedorModal"
+                                                data-id="{{ reporte_prov.id }}" {% if reporte_prov.completado %} disabled {% endif %}>
+                                            <i class="fas fa-edit"></i> Editar
+                                        </button>
+                                    </div>
+                                    {% elif reporte_exp %}
+                                    <button type="button" class="btn btn-sm btn-add"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#reporteProveedorModal"
+                                            data-url="{% url 'reporte_proveedor_create' reporte_exp.venta_nacional.compra_nacional_id %}">
+                                        <i class="fas fa-plus-circle"></i> Añadir Reporte
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         {% if not compra %}
             <div id="alertInfo">
                 <div class="alert alert-info text-center" role="alert">
@@ -205,391 +362,380 @@
             </div>
         {% endif %}
 
-        <!-- Results Section -->
+        <!-- Results Section (Modified to work with timeline) -->
         {% if compra %}
-            <div class="row">
-                <!-- Compra Nacional Card -->
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100 border-primary">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-shopping-cart"></i> Compra Nacional
-                                {% if reporte_exp.vencimiento_factura %}
-                                    <span class="badge bg-dark">Completado</span>
-                                {% endif %}
-                                <button type="button" class="btn btn-sm btn-light float-end"
-                                        data-bs-toggle="modal" data-bs-target="#editCompraNacionalModal"
-                                        data-id="{{ compra.id }}" {% if reporte_exp.vencimiento_factura%} disabled {% endif %}>
-                                    <i class="fas fa-edit"></i> Editar
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="accordion process-details-accordion" id="processDetailsAccordion">
+                        <!-- Compra Nacional Accordion Item -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingCompra">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapseCompra" aria-expanded="true" aria-controls="collapseCompra">
+                                    <i class="fas fa-shopping-cart me-2"></i> Compra Nacional
+                                    {% if reporte_exp.vencimiento_factura %}
+                                        <span class="badge bg-dark ms-2">Completado</span>
+                                    {% endif %}
                                 </button>
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="info-row">
-                                <div class="info-item">
-                                    <div class="info-label">Proveedor</div>
-                                    <div class="info-value">{{ compra.proveedor }}</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Número Guía</div>
-                                    <div class="info-value">{{ compra.numero_guia }}</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Fecha Compra</div>
-                                    <div class="info-value">{{ compra.fecha_compra }}</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Peso Bruto Guia/Compra</div>
-                                    <div class="info-value">{{ compra.peso_compra|format_number }} kg</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Cantidad Empaque</div>
-                                    <div class="info-value">{{ compra.cantidad_empaque }}</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Tipo Empaque</div>
-                                    <div class="info-value">{{ compra.tipo_empaque }}</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Precio Compra Exp</div>
-                                    <div class="info-value">{{ compra.precio_compra_exp|format_currency }}</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Precio Compra Nacional</div>
-                                    <div class="info-value">{{ compra.precio_compra_nal|format_currency }}</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Fruta</div>
-                                    <div class="info-value">{{ compra.fruta }}</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Remisión</div>
-                                    <div class="info-value">{{ compra.remision }}</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Origen</div>
-                                    <div class="info-value">{{ compra.origen_compra }}</div>
-                                </div>
-                                <div class="info-item fullwidth-item">
-                                    <div class="info-label">Observaciones</div>
-                                    <div class="info-value">{{ compra.observaciones|default:"No hay observaciones" }}</div>
+                            </h2>
+                            <div id="collapseCompra" class="accordion-collapse collapse show" 
+                                 aria-labelledby="headingCompra" data-bs-parent="#processDetailsAccordion">
+                                <div class="accordion-body">
+                                    <div class="info-row">
+                                        <div class="info-item">
+                                            <div class="info-label">Proveedor</div>
+                                            <div class="info-value">{{ compra.proveedor }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Número Guía</div>
+                                            <div class="info-value">{{ compra.numero_guia }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Fecha Compra</div>
+                                            <div class="info-value">{{ compra.fecha_compra }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Peso Bruto Guia/Compra</div>
+                                            <div class="info-value">{{ compra.peso_compra|format_number }} kg</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Cantidad Empaque</div>
+                                            <div class="info-value">{{ compra.cantidad_empaque }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Tipo Empaque</div>
+                                            <div class="info-value">{{ compra.tipo_empaque }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Precio Compra Exp</div>
+                                            <div class="info-value">{{ compra.precio_compra_exp|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Precio Compra Nacional</div>
+                                            <div class="info-value">{{ compra.precio_compra_nal|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Fruta</div>
+                                            <div class="info-value">{{ compra.fruta }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Remisión</div>
+                                            <div class="info-value">{{ compra.remision }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Origen</div>
+                                            <div class="info-value">{{ compra.origen_compra }}</div>
+                                        </div>
+                                        <div class="info-item fullwidth-item">
+                                            <div class="info-label">Observaciones</div>
+                                            <div class="info-value">{{ compra.observaciones|default:"No hay observaciones" }}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Venta Nacional Accordion Item -->
+                        {% if venta %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingVenta">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapseVenta" aria-expanded="false" aria-controls="collapseVenta">
+                                    <i class="fas fa-store me-2"></i> Venta Nacional
+                                    {% if reporte_exp.vencimiento_factura %}
+                                        <span class="badge bg-dark ms-2">Completado</span>
+                                    {% endif %}
+                                </button>
+                            </h2>
+                            <div id="collapseVenta" class="accordion-collapse collapse" 
+                                 aria-labelledby="headingVenta" data-bs-parent="#processDetailsAccordion">
+                                <div class="accordion-body">
+                                    <div class="info-row">
+                                        <div class="info-item">
+                                            <div class="info-label">Exportador</div>
+                                            <div class="info-value">{{ venta.exportador }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Fecha Llegada</div>
+                                            <div class="info-value">{{ venta.fecha_llegada }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Fecha Vencimiento</div>
+                                            <div class="info-value">{{ venta.fecha_vencimiento }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Cantidad Empaque Recibida</div>
+                                            <div class="info-value">{{ venta.cantidad_empaque_recibida }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Peso Bruto Recibido</div>
+                                            <div class="info-value">{{ venta.peso_bruto_recibido|format_number }} Kg</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Peso Neto Recibido</div>
+                                            <div class="info-value">{{ venta.peso_neto_recibido|format_number }} Kg</div>
+                                        </div>                                    
+                                        <div class="info-item">
+                                            <div class="info-label">Diferencia Peso Bruto</div>
+                                            <div class="info-value">
+                                                {% if venta.diferencia_peso < 0 %}
+                                                    <span class="text-danger">{{ venta.diferencia_peso|format_number }} Kg</span>
+                                                {% else %}
+                                                    <span class="text-success">{{ venta.diferencia_peso|format_number }} Kg</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Diferencia Empaque</div>
+                                            <div class="info-value">
+                                                {% if venta.diferencia_empaque < 0 %}
+                                                    <span class="text-danger">{{ venta.diferencia_empaque }}</span>
+                                                {% else %}
+                                                    <span class="text-success">{{ venta.diferencia_empaque }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Estado Reporte (Exportador)</div>
+                                            <div class="info-value">
+                                                <span class="status-badge status-{{ venta.estado_venta|slugify }}">{{ venta.estado_venta }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="info-item fullwidth-item">
+                                            <div class="info-label">Observaciones</div>
+                                            <div class="info-value">{{ venta.observaciones|default:"No hay observaciones" }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Reporte Calidad Exportador Accordion Item -->
+                        {% if reporte_exp %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingReporteExp">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapseReporteExp" aria-expanded="false" aria-controls="collapseReporteExp">
+                                    <i class="fas fa-file-alt me-2"></i> Reporte Calidad Exportador
+                                    {% if reporte_exp.vencimiento_factura %}
+                                        <span class="badge bg-dark ms-2">Completado</span>
+                                    {% endif %}
+                                </button>
+                            </h2>
+                            <div id="collapseReporteExp" class="accordion-collapse collapse" 
+                                 aria-labelledby="headingReporteExp" data-bs-parent="#processDetailsAccordion">
+                                <div class="accordion-body">
+                                    <div class="info-row">
+                                        <div class="info-item">
+                                            <div class="info-label">Remisión/Reporte</div>
+                                            <div class="info-value">{{ reporte_exp.remision_exp }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Fecha Reporte</div>
+                                            <div class="info-value">{{ reporte_exp.fecha_reporte }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Kg Totales</div>
+                                            <div class="info-value">{{ reporte_exp.kg_totales|format_number }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Kg Exportación</div>
+                                            <div class="info-value">{{ reporte_exp.kg_exportacion|format_number }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Kg Nacional</div>
+                                            <div class="info-value">{{ reporte_exp.kg_nacional|format_number }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Kg Merma</div>
+                                            <div class="info-value">{{ reporte_exp.kg_merma|format_number }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">% Exportación</div>
+                                            <div class="info-value">{{ reporte_exp.porcentaje_exportacion|format_percentage_color_exportacion }}</div>
+                                        </div>
+                                        
+                                        <div class="info-item">
+                                            <div class="info-label">% Nacional</div>
+                                            <div class="info-value">{{ reporte_exp.porcentaje_nacional|format_percentage_color_nacional }}</div>
+                                        </div>
+                                        
+                                        <div class="info-item">
+                                            <div class="info-label">% Merma</div>
+                                            <div class="info-value">{{ reporte_exp.porcentaje_merma|format_percentage_color_merma }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Precio Venta Kg Exp</div>
+                                            <div class="info-value">{{ reporte_exp.precio_venta_kg_exp|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Precio Venta Kg Nal</div>
+                                            <div class="info-value">{{ reporte_exp.precio_venta_kg_nal|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Total Factura</div>
+                                            <div class="info-value">{{ reporte_exp.precio_total|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Factura Heavens</div>
+                                            <div class="info-value">{{ reporte_exp.factura }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Fecha Factura Heavens</div>
+                                            <div class="info-value">{{ reporte_exp.fecha_factura }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Vencimiento Factura</div>
+                                            <div class="info-value">{{ reporte_exp.vencimiento_factura }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Estado Reporte Exportador</div>
+                                            <div class="info-value">
+                                                <span class="status-badge status-{{ reporte_exp.estado_reporte_exp|slugify }}">
+                                                    {{ reporte_exp.estado_reporte_exp }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Reporte Calidad Proveedor Accordion Item -->
+                        {% if reporte_prov %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingReporteProv">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapseReporteProv" aria-expanded="false" aria-controls="collapseReporteProv">
+                                    <i class="fas fa-file-invoice me-2"></i> Reporte Calidad Proveedor
+                                    {% if reporte_prov.completado %}
+                                        <span class="badge bg-dark ms-2">Pagado</span>
+                                    {% endif %}
+                                </button>
+                            </h2>
+                            <div id="collapseReporteProv" class="accordion-collapse collapse" 
+                                 aria-labelledby="headingReporteProv" data-bs-parent="#processDetailsAccordion">
+                                <div class="accordion-body">
+                                    <div class="info-row">
+                                        <div class="info-item">
+                                            <div class="info-label">Fecha Reporte</div>
+                                            <div class="info-value">{{ reporte_prov.p_fecha_reporte }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Estado Reporte Proveedor</div>
+                                            <div class="info-value">
+                                                <span class="status-badge status-{{ reporte_prov.estado_reporte_prov|slugify }}">
+                                                    {{ reporte_prov.estado_reporte_prov }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="info-item">
+                                            <div class="info-label">Kg Totales</div>
+                                            <div class="info-value">{{ reporte_prov.p_kg_totales|format_number }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Kg Exportación</div>
+                                            <div class="info-value">{{ reporte_prov.p_kg_exportacion|format_number }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Kg Nacional</div>
+                                            <div class="info-value">{{ reporte_prov.p_kg_nacional|format_number }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Kg Merma</div>
+                                            <div class="info-value">{{ reporte_prov.p_kg_merma|format_number }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">% Exportación</div>
+                                            <div class="info-value">{{ reporte_prov.p_porcentaje_exportacion|format_percentage_color_exportacion }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">% Nacional</div>
+                                            <div class="info-value">{{ reporte_prov.p_porcentaje_nacional|format_percentage_color_nacional }}</div>
+                                        </div>                                    
+                                        <div class="info-item">
+                                            <div class="info-label">% Merma</div>
+                                            <div class="info-value">{{ reporte_prov.p_porcentaje_merma|format_percentage_color_merma }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">$ Kg Exp</div>
+                                            <div class="info-value">{{ reporte_prov.p_precio_kg_exp|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">$ Kg Nal</div>
+                                            <div class="info-value">{{ reporte_prov.p_precio_kg_nal|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Total Facturar</div>
+                                            <div class="info-value">{{ reporte_prov.p_total_facturar|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Asohofrucol 1%</div>
+                                            <div class="info-value">{{ reporte_prov.asohofrucol|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Rte Fte 1.5%</div>
+                                            <div class="info-value">{{ reporte_prov.rte_fte|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Rte Ica 4.14/1000</div>
+                                            <div class="info-value">{{ reporte_prov.rte_ica|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Utilidad Real</div>
+                                            <div class="info-value">{{ reporte_prov.p_utilidad|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">% Utilidad</div>
+                                            <div class="info-value">{{ reporte_prov.p_porcentaje_utilidad|floatformat:2 }}%</div>
+                                        </div>
+
+                                        <div class="info-item">
+                                            <div class="info-label">Utilidad Sin Ajuste</div>
+                                            <div class="info-value">{{ reporte_prov.p_utilidad_sin_ajuste|format_currency }}</div>
+                                        </div>
+
+
+                                        <div class="info-item">
+                                            <div class="info-label">Diferencia Utilidad Real</div>
+                                            <div class="info-value">{{ reporte_prov.diferencia_utilidad|format_currency }}</div>
+                                        </div>
+
+
+                                        <div class="info-item">
+                                            <div class="info-label">Total a Pagar</div>
+                                            <div class="info-value">{{ reporte_prov.p_total_pagar|format_currency }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">No Factura Proveedor</div>
+                                            <div class="info-value">{{ reporte_prov.factura_prov }}</div>
+                                        </div> 
+                                        <div class="info-item">
+                                            <div class="info-label">Reporte Enviado</div>
+                                            <div class="info-value">{{ reporte_prov.reporte_enviado|yesno:"✓,✗" }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Reporte Pago</div>
+                                            <div class="info-value">{{ reporte_prov.reporte_pago|yesno:"✓,✗" }}</div>
+                                        </div>
+                                        <div class="info-item">
+                                            <div class="info-label">Completado</div>
+                                            {% if reporte_prov.completado %}
+                                                    <span class="status-badge status-pagado">Sí</span>
+                                                {% else %}
+                                                    <span class="status-badge status-pendiente">No</span>
+                                        {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
-
-                <!-- Venta Nacional Card -->
-                {% if venta %}
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100 border-success">
-                            <div class="card-header bg-success text-white">
-                                <h5 class="card-title mb-0">
-                                    <i class="fas fa-store"></i> Venta Nacional
-                                    {% if reporte_exp.vencimiento_factura %}
-                                        <span class="badge bg-dark">Completado</span>
-                                    {% endif %}
-                                    <button type="button" class="btn btn-sm btn-light float-end"
-                                            data-bs-toggle="modal" data-bs-target="#editVentaNacionalModal"
-                                            data-id="{{ venta.id }}" {% if reporte_exp.vencimiento_factura %}
-                                            disabled {% endif %}>
-                                        <i class="fas fa-edit"></i> Editar
-                                    </button>
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="info-row">
-                                    <div class="info-item">
-                                        <div class="info-label">Exportador</div>
-                                        <div class="info-value">{{ venta.exportador }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Fecha Llegada</div>
-                                        <div class="info-value">{{ venta.fecha_llegada }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Fecha Vencimiento</div>
-                                        <div class="info-value">{{ venta.fecha_vencimiento }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Cantidad Empaque Recibida</div>
-                                        <div class="info-value">{{ venta.cantidad_empaque_recibida }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Peso Bruto Recibido</div>
-                                        <div class="info-value">{{ venta.peso_bruto_recibido|format_number }} Kg</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Peso Neto Recibido</div>
-                                        <div class="info-value">{{ venta.peso_neto_recibido|format_number }} Kg</div>
-                                    </div>                                    
-                                    <div class="info-item">
-                                        <div class="info-label">Diferencia Peso Bruto</div>
-                                        <div class="info-value">
-                                            {% if venta.diferencia_peso < 0 %}
-                                                <span class="text-danger">{{ venta.diferencia_peso|format_number }} Kg</span>
-                                            {% else %}
-                                                <span class="text-success">{{ venta.diferencia_peso|format_number }} Kg</span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Diferencia Empaque</div>
-                                        <div class="info-value">
-                                            {% if venta.diferencia_empaque < 0 %}
-                                                <span class="text-danger">{{ venta.diferencia_empaque }}</span>
-                                            {% else %}
-                                                <span class="text-success">{{ venta.diferencia_empaque }}</span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Estado Reporte (Exportador)</div>
-                                        <div class="info-value">
-                                            <span class="status-badge status-{{ venta.estado_venta|slugify }}">{{ venta.estado_venta }}</span>
-                                        </div>
-                                    </div>
-                                    <div class="info-item fullwidth-item">
-                                        <div class="info-label">Observaciones</div>
-                                        <div class="info-value">{{ venta.observaciones|default:"No hay observaciones" }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
-
-                <!-- Reporte Calidad Exportador Card -->
-                {% if reporte_exp %}
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100 border-info">
-                            <div class="card-header bg-info text-dark">
-                                <h5 class="card-title mb-0">
-                                    <i class="fas fa-file-alt"></i> Reporte Calidad Exportador
-                                    {% if reporte_exp.vencimiento_factura %}
-                                        <span class="badge bg-dark">Completado</span>
-                                    {% endif %}
-                                    <button type="button" class="btn btn-sm btn-light float-end"
-                                            data-bs-toggle="modal" data-bs-target="#editReporteExportadorModal"
-                                            data-id="{{ reporte_exp.id }}"
-                                            {% if reporte_exp.vencimiento_factura %} disabled {% endif %}>
-                                        <i class="fas fa-edit"></i> Editar
-                                    </button>
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="info-row">
-                                    <div class="info-item">
-                                        <div class="info-label">Remisión/Reporte</div>
-                                        <div class="info-value">{{ reporte_exp.remision_exp }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Fecha Reporte</div>
-                                        <div class="info-value">{{ reporte_exp.fecha_reporte }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Kg Totales</div>
-                                        <div class="info-value">{{ reporte_exp.kg_totales|format_number }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Kg Exportación</div>
-                                        <div class="info-value">{{ reporte_exp.kg_exportacion|format_number }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Kg Nacional</div>
-                                        <div class="info-value">{{ reporte_exp.kg_nacional|format_number }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Kg Merma</div>
-                                        <div class="info-value">{{ reporte_exp.kg_merma|format_number }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">% Exportación</div>
-                                        <div class="info-value">{{ reporte_exp.porcentaje_exportacion|format_percentage_color_exportacion }}</div>
-                                    </div>
-                                    
-                                    <div class="info-item">
-                                        <div class="info-label">% Nacional</div>
-                                        <div class="info-value">{{ reporte_exp.porcentaje_nacional|format_percentage_color_nacional }}</div>
-                                    </div>
-                                    
-                                    <div class="info-item">
-                                        <div class="info-label">% Merma</div>
-                                        <div class="info-value">{{ reporte_exp.porcentaje_merma|format_percentage_color_merma }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Precio Venta Kg Exp</div>
-                                        <div class="info-value">{{ reporte_exp.precio_venta_kg_exp|format_currency }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Precio Venta Kg Nal</div>
-                                        <div class="info-value">{{ reporte_exp.precio_venta_kg_nal|format_currency }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Total Factura</div>
-                                        <div class="info-value">{{ reporte_exp.precio_total|format_currency }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Factura Heavens</div>
-                                        <div class="info-value">{{ reporte_exp.factura }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Fecha Factura Heavens</div>
-                                        <div class="info-value">{{ reporte_exp.fecha_factura }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Vencimiento Factura</div>
-                                        <div class="info-value">{{ reporte_exp.vencimiento_factura }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Estado Reporte Exportador</div>
-                                        <div class="info-value">
-                                            <span class="status-badge status-{{ reporte_exp.estado_reporte_exp|slugify }}">
-                                                {{ reporte_exp.estado_reporte_exp }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
-
-                <!-- Reporte Calidad Proveedor Card -->
-                {% if reporte_prov %}
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100 border-warning">
-                            <div class="card-header bg-warning text-dark">
-                                <h5 class="card-title mb-0">
-                                    <i class="fas fa-file-invoice"></i> Reporte Calidad Proveedor
-                                    {% if reporte_prov.completado %}
-                                        <span class="badge bg-dark">Pagado</span>
-                                    {% endif %}
-                                    <button type="button" class="btn btn-sm btn-light float-end"
-                                            data-bs-toggle="modal" data-bs-target="#editReporteProveedorModal"
-                                            data-id="{{ reporte_prov.id }}"
-                                            {% if reporte_prov.completado %} disabled {% endif %}>
-                                        <i class="fas fa-edit"></i> Editar
-                                    </button>
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="info-row">
-                                    <div class="info-item">
-                                        <div class="info-label">Fecha Reporte</div>
-                                        <div class="info-value">{{ reporte_prov.p_fecha_reporte }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Estado Reporte Proveedor</div>
-                                        <div class="info-value">
-                                            <span class="status-badge status-{{ reporte_prov.estado_reporte_prov|slugify }}">
-                                                {{ reporte_prov.estado_reporte_prov }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="info-item">
-                                        <div class="info-label">Kg Totales</div>
-                                        <div class="info-value">{{ reporte_prov.p_kg_totales|format_number }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Kg Exportación</div>
-                                        <div class="info-value">{{ reporte_prov.p_kg_exportacion|format_number }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Kg Nacional</div>
-                                        <div class="info-value">{{ reporte_prov.p_kg_nacional|format_number }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Kg Merma</div>
-                                        <div class="info-value">{{ reporte_prov.p_kg_merma|format_number }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">% Exportación</div>
-                                        <div class="info-value">{{ reporte_prov.p_porcentaje_exportacion|format_percentage_color_exportacion }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">% Nacional</div>
-                                        <div class="info-value">{{ reporte_prov.p_porcentaje_nacional|format_percentage_color_nacional }}</div>
-                                    </div>                                    
-                                    <div class="info-item">
-                                        <div class="info-label">% Merma</div>
-                                        <div class="info-value">{{ reporte_prov.p_porcentaje_merma|format_percentage_color_merma }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">$ Kg Exp</div>
-                                        <div class="info-value">{{ reporte_prov.p_precio_kg_exp|format_currency }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">$ Kg Nal</div>
-                                        <div class="info-value">{{ reporte_prov.p_precio_kg_nal|format_currency }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Total Facturar</div>
-                                        <div class="info-value">{{ reporte_prov.p_total_facturar|format_currency }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Asohofrucol 1%</div>
-                                        <div class="info-value">{{ reporte_prov.asohofrucol|format_currency }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Rte Fte 1.5%</div>
-                                        <div class="info-value">{{ reporte_prov.rte_fte|format_currency }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Rte Ica 4.14/1000</div>
-                                        <div class="info-value">{{ reporte_prov.rte_ica|format_currency }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Utilidad Real</div>
-                                        <div class="info-value">{{ reporte_prov.p_utilidad|format_currency }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">% Utilidad</div>
-                                        <div class="info-value">{{ reporte_prov.p_porcentaje_utilidad|floatformat:2 }}%</div>
-                                    </div>
-
-                                    <div class="info-item">
-                                        <div class="info-label">Utilidad Sin Ajuste</div>
-                                        <div class="info-value">{{ reporte_prov.p_utilidad_sin_ajuste|format_currency }}</div>
-                                    </div>
-
-
-                                    <div class="info-item">
-                                        <div class="info-label">Diferencia Utilidad Real</div>
-                                        <div class="info-value">{{ reporte_prov.diferencia_utilidad|format_currency }}</div>
-                                    </div>
-
-
-                                    <div class="info-item">
-                                        <div class="info-label">Total a Pagar</div>
-                                        <div class="info-value">{{ reporte_prov.p_total_pagar|format_currency }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">No Factura Proveedor</div>
-                                        <div class="info-value">{{ reporte_prov.factura_prov }}</div>
-                                    </div> 
-                                    <div class="info-item">
-                                        <div class="info-label">Reporte Enviado</div>
-                                        <div class="info-value">{{ reporte_prov.reporte_enviado|yesno:"✓,✗" }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Reporte Pago</div>
-                                        <div class="info-value">{{ reporte_prov.reporte_pago|yesno:"✓,✗" }}</div>
-                                    </div>
-                                    <div class="info-item">
-                                        <div class="info-label">Completado</div>
-                                        {% if reporte_prov.completado %}
-                                                <span class="status-badge status-pagado">Sí</span>
-                                            {% else %}
-                                                <span class="status-badge status-pendiente">No</span>
-                                    {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
             </div>
         {% endif %}
 
