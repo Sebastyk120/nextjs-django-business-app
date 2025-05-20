@@ -347,7 +347,8 @@ th {
     font-weight: 600;
     text-align: left;
     padding: 10px;
-    white-space: nowrap;
+    white-space: normal;
+    
 }
 
 td {

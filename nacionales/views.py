@@ -644,7 +644,7 @@ def export_data(request):
             'P % Nacional', 'P Precio Kg Nal', 'P Kg Merma', 
             'P % Merma', 'P Total Facturar', 'Asohofrucol', 
             'Rte Fte', 'Rte Ica', 'P Total Pagar', 'Monto Pendiente',
-            'P Utilidad', 'P Utilidad Sin Ajuste', 'Diferencia Utilidad',
+            'P Utilidad Real', 'P Utilidad Sin Ajuste', 'Diferencia Utilidades',
             'P % Utilidad', 'Reporte Enviado', 'Factura Prov', 
             'Reporte Pago', 'Estado Reporte Prov', 'Completado'
         ]

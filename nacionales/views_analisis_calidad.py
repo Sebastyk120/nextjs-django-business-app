@@ -107,10 +107,8 @@ def analisis_calidad_view(request):
         for item in calidad_semanal:
             if item['total_kg_exp_semana'] and item['total_kg_exp_semana'] > 0:
                 promedio_ponderado_calidad = (item['sum_prod_calidad_kg'] / item['total_kg_exp_semana']).quantize(Decimal('0.01'))
-            else:
-                promedio_ponderado_calidad = Decimal('0.00')
-            calidad_semanal_labels.append(item['semana'].strftime("%Y-%m-%d"))
-            calidad_semanal_data.append(float(promedio_ponderado_calidad))
+                calidad_semanal_labels.append(item['semana'].strftime("%Y-%m-%d"))
+                calidad_semanal_data.append(float(promedio_ponderado_calidad))
 
         # Comportamiento de precio semanal (Promedio Ponderado $/Kg)
         precio_semanal = query.filter(

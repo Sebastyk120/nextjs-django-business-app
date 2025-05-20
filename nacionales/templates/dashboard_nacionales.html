@@ -223,7 +223,7 @@
                 <th>Total Pagado</th>
                 <th>Facturado Exp.</th>
                 <th>Kilos Netos</th>
-                <th>Utilidades</th>
+                <th>Utilidad Real</th>
                 <th>% Kilos</th>
                 <th>% Utilidad</th>
                 <th>% Utilidad Compra</th>
@@ -1029,13 +1029,16 @@
         // Crear datasets para la evolución mensual de calidad por proveedor - Solo exportación
         const generarDatasetsEvolucion = () => {
             const colores = [
-                { bg: 'rgba(52, 152, 219, 0.7)', border: 'rgba(52, 152, 219, 1)' },  // Azul
-                { bg: 'rgba(46, 204, 113, 0.7)', border: 'rgba(46, 204, 113, 1)' },  // Verde
-                { bg: 'rgba(155, 89, 182, 0.7)', border: 'rgba(155, 89, 182, 1)' },  // Morado
-                { bg: 'rgba(241, 196, 15, 0.7)', border: 'rgba(241, 196, 15, 1)' },  // Amarillo
-                { bg: 'rgba(231, 76, 60, 0.7)', border: 'rgba(231, 76, 60, 1)' },    // Rojo
-                { bg: 'rgba(26, 188, 156, 0.7)', border: 'rgba(26, 188, 156, 1)' },  // Turquesa
-                { bg: 'rgba(230, 126, 34, 0.7)', border: 'rgba(230, 126, 34, 1)' },  // Naranja
+                { bg: 'rgba(255, 0, 0, 0.7)', border: 'rgba(255, 0, 0, 1)' },          // Rojo puro
+                { bg: 'rgba(0, 128, 0, 0.7)', border: 'rgba(0, 128, 0, 1)' },          // Verde esmeralda
+                { bg: 'rgba(0, 0, 255, 0.7)', border: 'rgba(0, 0, 255, 1)' },          // Azul puro
+                { bg: 'rgba(255, 165, 0, 0.7)', border: 'rgba(255, 165, 0, 1)' },      // Naranja brillante
+                { bg: 'rgba(128, 0, 128, 0.7)', border: 'rgba(128, 0, 128, 1)' },      // Púrpura
+                { bg: 'rgba(255, 255, 0, 0.7)', border: 'rgba(255, 255, 0, 1)' },      // Amarillo
+                { bg: 'rgba(0, 255, 255, 0.7)', border: 'rgba(0, 255, 255, 1)' },      // Cyan
+                { bg: 'rgba(255, 0, 255, 0.7)', border: 'rgba(255, 0, 255, 1)' },      // Magenta
+                { bg: 'rgba(0, 255, 0, 0.7)', border: 'rgba(0, 255, 0, 1)' },          // Verde lima
+                { bg: 'rgba(255, 128, 0, 0.7)', border: 'rgba(255, 128, 0, 1)' }       // Naranja dorado
             ];
             
             const datasets = [];
@@ -1054,7 +1057,7 @@
                     fill: false,
                     type: 'line',
                     yAxisID: 'y',
-                    hidden: false  // Mostrar todos por defecto, ya que solo tenemos exportación
+                    hidden: false
                 });
             });
             

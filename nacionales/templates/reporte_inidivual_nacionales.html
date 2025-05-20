@@ -240,33 +240,33 @@
 
             /* Estilo específico para "Total a Facturar (Proveedor)" */
             .items-table tfoot.invoice-table-footer tr.provider-total-row {
-                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-                color: white;
+                background: linear-gradient(135deg, var(--neutral-100), var(--neutral-200));
+                color: black;
                 box-shadow: var(--box-shadow);
             }
             .items-table tfoot.invoice-table-footer tr.provider-total-row td {
                 padding: 1.25rem 1rem; /* Más padding */
                 border-top: none;
-                color: white !important; /* Forzar color blanco en todas las celdas */
+                color: black !important; /* Forzar color blanco en todas las celdas */
             }
             .items-table tfoot.invoice-table-footer .provider-total-label {
-                font-size: 1.125rem; /* Aumentado de 1rem */
-                font-weight: 700;
+                font-size: 1rem; /* Aumentado de 1rem */
+                font-weight: 500;
                 text-align: right;
                 letter-spacing: 0.5px;
-                color: white !important; /* Asegurar que sea blanco */
+                color: black !important; /* Asegurar que sea blanco */
             }
             .items-table tfoot.invoice-table-footer .provider-total-value {
-                font-size: 1.5rem; /* Aumentado de 1.375rem */
-                font-weight: 700;
+                font-size: 1rem; /* Aumentado de 1.375rem */
+                font-weight: 500;
                 text-align: right;
                 text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-                color: white !important; /* Asegurar que sea blanco */
+                color: black !important; /* Asegurar que sea blanco */
             }
             .items-table tfoot.invoice-table-footer .footer-label {
                 font-size: 0.9rem; /* 14.4px */
                 font-weight: 500;
-                color: white !important; /* Asegurar que sea blanco */
+                color: black !important; /* Asegurar que sea blanco */
             }
 
             /* Impuestos y Retenciones */
@@ -756,8 +756,8 @@
                     <tfoot class="invoice-table-footer">
                         <tr class="provider-total-row">
                             <td colspan="2" class="footer-label">Kg Totales: {{ reporte_proveedor.p_kg_totales|format_number }} Kg</td>
-                            <td colspan="2" class="provider-total-label">Total a Facturar (Proveedor):</td>
-                            <td class="provider-total-value">{{ reporte_proveedor.p_total_facturar|format_currency }}</td>
+                            <td colspan="2" class="provider-total-label">Total Neto a Pagar (Heaven's Fruits al Proveedor):</td>
+                            <td class="provider-total-value">{{ reporte_proveedor.p_total_pagar|format_currency }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -814,11 +814,11 @@
             
             <section class="invoice-total">
                 <div class="total-row">
-                    <span class="total-label">Total Neto a Pagar (Heaven's Fruits al Proveedor):</span>
-                    <span class="total-value">{{ reporte_proveedor.p_total_pagar|format_currency }}</span>
+                    <span class="total-label">Total Que Debe Facturar Proveedor (Retenciones incluidas):</span>
+                    <span class="total-value">{{ reporte_proveedor.p_total_facturar|format_currency }}</span>
                 </div>
                 <div class="total-words">
-                    Son: {{ reporte_proveedor.p_total_pagar|numero_a_letras|capfirst }}
+                    Son: {{ reporte_proveedor.p_total_facturar|numero_a_letras|capfirst }}
                 </div>
             </section>
             
