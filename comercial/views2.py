@@ -422,7 +422,7 @@ def exportar_cartera_cliente_dashboard(request):
     
     # Encabezados de facturas
     headers_facturas = ['Factura', 'AWB', 'Fecha Entrega', 'Fecha Esperada Pago', 'Exportadora', 'Total Factura', 
-                        'Total Pagado', 'Nota Crédito', 'Descuento', 'Utilidad', 'Saldo', 'Estado']
+                        'Total Pagado', 'Nota Crédito', 'Descuento', 'Comision Bancaria', 'Saldo', 'Estado']
     for col_idx, header in enumerate(headers_facturas):
         col_letter = get_column_letter(col_idx + 1)
         ws_facturas[f'{col_letter}3'] = header

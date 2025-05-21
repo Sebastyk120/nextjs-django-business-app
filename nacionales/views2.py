@@ -297,7 +297,7 @@ def reporte_individual_proveedor(request):
         
         except (CompraNacional.DoesNotExist, VentaNacional.DoesNotExist, 
                 ReporteCalidadExportador.DoesNotExist, ReporteCalidadProveedor.DoesNotExist):
-            # No se encontraron resultados, dejar todo como None
+
             pass
     
     context = {

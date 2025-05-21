@@ -273,6 +273,7 @@ class ReporteCalidadProveedor(models.Model):
         if not self.rep_cal_exp_id:
             return
         
+        # Si intentamos marcar el reporte como completado manualmente, verificamos que cumpla con todos los requisitos
         if self.completado:
             if self.factura_prov is None:
                 raise ValidationError({
@@ -286,7 +287,7 @@ class ReporteCalidadProveedor(models.Model):
                 raise ValidationError(
                     'El reporte no puede ser completado si no se ha registrado el pago por el sistema.'
                 )
-
+        
         # Validación de campos relacionados
         if (self.p_kg_exportacion is None and self.p_kg_nacional is not None) or \
                 (self.p_kg_exportacion is not None and self.p_kg_nacional is None):
@@ -366,20 +367,21 @@ class ReporteCalidadProveedor(models.Model):
         self.p_utilidad = self.rep_cal_exp.precio_total - self.p_total_facturar
         self.p_porcentaje_utilidad = (self.p_utilidad / self.rep_cal_exp.precio_total) * Decimal("100.00")
 
-        # Estado del reporte
-        if self.reporte_enviado:
-            self.estado_reporte_prov = "Reporte Enviado"
-        if self.reporte_pago:
-            self.estado_reporte_prov = "Pagado"
-        if self.factura_prov:
-            self.estado_reporte_prov = "Facturado"
-            
-        # Automatizar el campo completado
-        if self.factura_prov and self.reporte_enviado and self.reporte_pago:
-            self.completado = True
+        # Automatizar el campo completado basado en condiciones necesarias
+        # Este valor se calcula siempre y no depende del estado previo
+        self.completado = bool(self.factura_prov and self.reporte_enviado and self.reporte_pago)
+
+        # Estado del reporte (ahora basado en completado)
+        if self.completado:
             self.estado_reporte_prov = "Completado"
+        elif self.reporte_pago:
+            self.estado_reporte_prov = "Pagado"
+        elif self.factura_prov:
+            self.estado_reporte_prov = "Facturado"
+        elif self.reporte_enviado:
+            self.estado_reporte_prov = "Reporte Enviado"
         else:
-            self.completado = False
+            self.estado_reporte_prov = "En Proceso"
 
         # Inicializar monto_pendiente con el total a pagar si es un nuevo registro
         if not self.pk:
@@ -482,14 +484,22 @@ def reevaluar_pagos_proveedor(proveedor):
                     else:
                         reporte.reporte_pago = False  # Aseguramos que se marque como no pagado si queda saldo pendiente
                     
+                    # Actualizamos si el reporte está completado basado en las condiciones
+                    reporte.completado = bool(reporte.factura_prov and reporte.reporte_enviado and reporte.reporte_pago)
+                    
                     # Guardamos los cambios en el reporte
-                    reporte.save(update_fields=['monto_pendiente', 'reporte_pago'])
+                    reporte.save(update_fields=['monto_pendiente', 'reporte_pago', 'completado'])
                 else:
                     # Si no hay saldo disponible, aseguramos que el reporte esté marcado como no pagado
                     reporte.reporte_pago = False
-                    reporte.save(update_fields=['reporte_pago'])
+                    
+                    # Aseguramos que completado sea actualizado basado en el cambio de reporte_pago
+                    reporte.completado = bool(reporte.factura_prov and reporte.reporte_enviado and reporte.reporte_pago)
+                    
+                    reporte.save(update_fields=['reporte_pago', 'completado'])
                 
                 # Actualizamos el estado del reporte basado en todos los campos relevantes
+                # Usamos completado directamente para determinar el estado
                 if reporte.completado:
                     nuevo_estado = "Completado"
                 elif reporte.reporte_pago:

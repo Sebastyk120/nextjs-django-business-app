@@ -288,7 +288,7 @@ class LandingPageView(TemplateView):
             # Mejorar el manejo de errores con detalles específicos
             try:
                 import traceback
-                # Usar el mismo método que funciona para reset password
+                # Usar el mismo metodo que funciona para reset password
                 result = send_mail(
                     f"Contacto sitio web: Consulta de {name} - {country}",
                     email_message,

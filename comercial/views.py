@@ -316,7 +316,7 @@ def exportar_detalles_pedidos_excel(request):
                 cell = worksheet.cell(row=row_idx, column=col_idx)
                 cell.fill = total_fill
 
-        # Aplicar autofilter a todo el rango de datos
+        # Aplicar autofilter a
         worksheet.auto_filter.ref = f"A1:{get_column_letter(len(columnas))}{row_idx - 1}"
 
         # Congelar la primera fila para que sea visible al desplazarse

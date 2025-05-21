@@ -9,7 +9,7 @@ def actualizar_venta_nacional(sender, instance, **kwargs):
     """
     try:
         venta_nacional = instance.ventanacional  # Accede al modelo relacionado
-        venta_nacional.save()  # Esto ejecutará el método save() de VentaNacional
+        venta_nacional.save()
     except VentaNacional.DoesNotExist:
         pass  # No existe una VentaNacional relacionada
 
@@ -20,7 +20,7 @@ def actualizar_reporte_calidad_exportador(sender, instance, **kwargs):
     """
     try:
         reporte = instance.reportecalidadexportador  # Accede al modelo relacionado
-        reporte.save()  # Esto ejecutará el método save() de ReporteCalidadExportador
+        reporte.save()  # Esto ejecutará el
     except ReporteCalidadExportador.DoesNotExist:
         pass  # No existe un ReporteCalidadExportador relacionado
 
@@ -41,6 +41,40 @@ def actualizar_reporte_calidad_proveedor(sender, instance, **kwargs):
     """
     try:
         reporte_prov = instance.reportecalidadproveedor  # Accede al modelo relacionado
-        reporte_prov.save()  # Esto ejecutará el método save() de ReporteCalidadProveedor
+        reporte_prov.save()  # Esto ejecutará el m
     except ReporteCalidadProveedor.DoesNotExist:
         pass  # No existe un ReporteCalidadProveedor relacionado
+
+@receiver(post_save, sender=ReporteCalidadProveedor)
+def sincronizar_campo_completado(sender, instance, **kwargs):
+    """
+    Asegura que el campo completado se sincronice correctamente con los campos
+    factura_prov, reporte_enviado y reporte_pago.
+    
+    Este signal es necesario en caso de que se realicen actualizaciones parciales 
+    que no llamen al m
+    """
+    from django.db import transaction
+    
+    # Evitamos recursión comprobando si estamos en una transacción de actualización
+    if transaction.get_autocommit():
+        # Calculamos el valor que debería tener el campo completado
+        debe_estar_completado = bool(instance.factura_prov and instance.reporte_enviado and instance.reporte_pago)
+        
+        # Si el valor actual no coincide con el que debería tener
+        if instance.completado != debe_estar_completado:
+            # Actualizamos usando update para evitar lla
+            # y así evitar un bucle infinito de señales
+            ReporteCalidadProveedor.objects.filter(pk=instance.pk).update(completado=debe_estar_completado)
+            
+            # También actualizamos el estado_reporte_prov si es necesario
+            nuevo_estado = "Completado" if debe_estar_completado else (
+                "Pagado" if instance.reporte_pago else (
+                    "Facturado" if instance.factura_prov else (
+                        "Reporte Enviado" if instance.reporte_enviado else "En Proceso"
+                    )
+                )
+            )
+            
+            if instance.estado_reporte_prov != nuevo_estado:
+                ReporteCalidadProveedor.objects.filter(pk=instance.pk).update(estado_reporte_prov=nuevo_estado)

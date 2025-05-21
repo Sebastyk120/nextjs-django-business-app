@@ -442,7 +442,7 @@ body {
         display: none; /* Ocultar panel visual en pantallas más pequeñas */
     }
     .login-form-panel {
-        flex: 1 0 100%; /* Ocupa todo el ancho */
+        flex: 1 0 100%;
         padding: 2rem; /* Aumentar padding si es necesario */
     }
     .form-content {

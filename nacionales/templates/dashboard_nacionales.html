@@ -599,14 +599,14 @@
             }
         }
 
-        // Gestionar "Seleccionar todo"
+
         selectAllCheckbox.addEventListener('change', function() {
             checkboxes.forEach(checkbox => {
                 checkbox.checked = selectAllCheckbox.checked;
             });
         });
 
-        // Actualizar "Seleccionar todo" cuando se cambian los checkboxes individuales
+
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const allChecked = Array.from(checkboxes).every(c => c.checked);

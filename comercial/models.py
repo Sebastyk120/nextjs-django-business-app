@@ -479,7 +479,7 @@ class Pedido(models.Model):
         elif self.awb is None or self.numero_factura is None:
             self.estado_pedido = "En Proceso"
 
-        # Llama al método save de la clase base para realizar el guardado
+        # Llama al metodo save de la clase base para realizar el guardado
         super().save(*args, **kwargs)
 
     def actualizar_tasa_representativa(self):
