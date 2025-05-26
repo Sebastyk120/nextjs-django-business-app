@@ -383,10 +383,24 @@ class Pedido(models.Model):
                 pedido_anterior = Pedido.objects.get(pk=self.pk)
                 if pedido_anterior.exportadora != self.exportadora:
                     DetallePedido.objects.filter(pedido=self).delete()
+                    # Reset all counters and financial fields when exporter changes
                     self.total_cajas_enviadas = 0
                     self.total_cajas_solicitadas = 0
                     self.total_piezas_solicitadas = 0
                     self.total_piezas_enviadas = 0
+                    self.valor_total_factura_usd = 0
+                    self.valor_pagado_cliente_usd = 0
+                    self.valor_total_nota_credito_usd = 0
+                    self.utilidad_bancaria_usd = 0
+                    self.descuento = 0
+                    self.valor_total_utilidad_usd = 0
+                    self.valor_utilidad_pesos = 0
+                    self.diferencia_por_abono = 0
+                    self.peso_awb = 0
+                    self.diferencia_peso_factura_awb = 0
+                    self.variedades = None
+                    self.total_peso_bruto_solicitado = 0
+                    self.total_peso_bruto_enviado = 0
                 if pedido_anterior.fecha_entrega and self.fecha_entrega and pedido_anterior.fecha_entrega != self.fecha_entrega:
                     self.estado_pedido = "Reprogramado"
             except Pedido.DoesNotExist:
@@ -791,7 +805,7 @@ class DetallePedido(models.Model):
         if self.lleva_contenedor is True:
             return cajas_solicitadas / self.referencia.cantidad_pallet_con_contenedor
         else:
-            return cajas_solicitadas / self.referencia.cantidad_pallet_sin_contenedor
+            return cajas_solicitadas / self.referencia.cantidad_pallet_sin_con_contenedor
 
     def calcular_no_piezas_final(self):
         # todos los valores son de tipo Decimal

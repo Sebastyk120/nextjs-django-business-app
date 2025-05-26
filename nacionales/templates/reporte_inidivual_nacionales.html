@@ -269,6 +269,77 @@
                 color: black !important; /* Asegurar que sea blanco */
             }
 
+            /* Total a Facturar (Proveedor) - PROMINENTE */
+            .invoice-total-facturar {
+                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+                color: white;
+                padding: 2rem;
+                border-radius: var(--border-radius-lg);
+                margin: 2rem 0;
+                text-align: center;
+                box-shadow: var(--box-shadow-lg);
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .invoice-total-facturar::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+                transform: rotate(45deg);
+                animation: shimmer 3s infinite;
+            }
+            
+            @keyframes shimmer {
+                0% { transform: translateX(-100%) rotate(45deg); }
+                100% { transform: translateX(100%) rotate(45deg); }
+            }
+            
+            .facturar-header {
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+                opacity: 0.9;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                position: relative;
+                z-index: 1;
+            }
+            
+            .facturar-amount {
+                font-size: 3rem;
+                font-weight: 800;
+                margin: 0.5rem 0;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                position: relative;
+                z-index: 1;
+            }
+            
+            .facturar-words {
+                margin-top: 1rem;
+                padding: 1rem;
+                background-color: rgba(255,255,255,0.15);
+                border-radius: var(--border-radius);
+                font-size: 1rem;
+                font-style: italic;
+                text-align: center;
+                position: relative;
+                z-index: 1;
+            }
+            
+            .facturar-note {
+                margin-top: 0.75rem;
+                font-size: 0.9rem;
+                opacity: 0.8;
+                font-weight: 400;
+                position: relative;
+                z-index: 1;
+            }
+
             /* Impuestos y Retenciones */
             .invoice-taxes {
                 margin-bottom: 1.5rem;
@@ -308,6 +379,32 @@
             }
             .taxes-table tr:last-child td strong {
                  color: var(--secondary-color);
+            }
+
+            /* Total a Pagar - DISCRETO */
+            .invoice-total-pagar {
+                background-color: var(--neutral-100);
+                border: 1px solid var(--neutral-300);
+                color: var(--neutral-700);
+                padding: 1rem 1.5rem;
+                border-radius: var(--border-radius);
+                margin-bottom: 1.5rem;
+                text-align: right;
+            }
+            
+            .pagar-label {
+                font-size: 0.9rem;
+                font-weight: 500;
+                color: var(--neutral-600);
+                display: block;
+                margin-bottom: 0.25rem;
+            }
+            
+            .pagar-value {
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: var(--neutral-800);
+                display: block;
             }
 
             /* Resumen por Categorías */
@@ -365,42 +462,6 @@
             .category-percent {
                 font-size: 0.8rem; /* 12.8px */
                 color: var(--neutral-500);
-            }
-            
-            /* Total a Pagar */
-            .invoice-total {
-                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-                color: white;
-                padding: 1.5rem; /* Más padding */
-                border-radius: var(--border-radius);
-                margin-bottom: 1.5rem;
-                text-align: right;
-            }
-            
-            .total-row { /* Simplificado, ya que .invoice-total es el contenedor principal del total */
-                margin-bottom: 0.5rem;
-            }
-            
-            .total-label {
-                font-size: 1.1rem; /* 17.6px */
-                font-weight: 500;
-                display: block; /* Para que ocupe su línea si es necesario */
-            }
-            
-            .total-value {
-                font-size: 2rem; /* 32px, más grande */
-                font-weight: 700;
-                display: block; /* Para que ocupe su línea */
-            }
-            
-            .total-words {
-                margin-top: 1rem;
-                padding: 0.75rem;
-                background-color: rgba(255,255,255,0.1);
-                border-radius: var(--border-radius-sm);
-                font-size: 0.9rem; /* 14.4px */
-                font-style: italic;
-                text-align: center;
             }
             
             /* Pie de Página */
@@ -625,6 +686,8 @@
                 .actions-bar { flex-direction: column; padding: 1rem; }
                 .search-container { margin: 1rem; padding: 1.5rem; }
                 .toast { bottom: 1rem; right: 1rem; left: 1rem; width: auto; }
+                .invoice-total-facturar { padding: 1.5rem; margin: 1rem 0; }
+                .facturar-amount { font-size: 2.5rem; }
             }
             
             /* Estilos para Impresión y PDF */
@@ -756,11 +819,22 @@
                     <tfoot class="invoice-table-footer">
                         <tr class="provider-total-row">
                             <td colspan="2" class="footer-label">Kg Totales: {{ reporte_proveedor.p_kg_totales|format_number }} Kg</td>
-                            <td colspan="2" class="provider-total-label">Total Neto a Pagar (Heaven's Fruits al Proveedor):</td>
-                            <td class="provider-total-value">{{ reporte_proveedor.p_total_pagar|format_currency }}</td>
+                            <td colspan="3" class="provider-total-label">Subtotal antes de retenciones</td>
                         </tr>
                     </tfoot>
                 </table>
+            </section>
+            
+            <!-- TOTAL A FACTURAR - PROMINENTE -->
+            <section class="invoice-total-facturar">
+                <div class="facturar-header">Total Que Debe Facturar el Proveedor</div>
+                <div class="facturar-amount">{{ reporte_proveedor.p_total_facturar|format_currency }}</div>
+                <div class="facturar-words">
+                    Son: {{ reporte_proveedor.p_total_facturar|numero_a_letras|capfirst }}
+                </div>
+                <div class="facturar-note">
+                    Este es el valor total que debe aparecer en su factura (incluye retenciones)
+                </div>
             </section>
             
             <section class="invoice-taxes">
@@ -791,6 +865,12 @@
                 </table>
             </section>
             
+            <!-- TOTAL A PAGAR - DISCRETO -->
+            <section class="invoice-total-pagar">
+                <span class="pagar-label">Total Neto a Pagar (Heaven's Fruits al Proveedor):</span>
+                <span class="pagar-value">{{ reporte_proveedor.p_total_pagar|format_currency }}</span>
+            </section>
+            
             <section class="invoice-summary">
                 <h2 class="summary-title">Resumen de Categorías de Fruta</h2>
                 <div class="summary-categories">
@@ -809,16 +889,6 @@
                         <div class="category-value">{{ reporte_proveedor.p_kg_merma|format_number }} Kg</div>
                         <div class="category-percent">{{ reporte_proveedor.p_porcentaje_merma|floatformat:2 }}%</div>
                     </div>
-                </div>
-            </section>
-            
-            <section class="invoice-total">
-                <div class="total-row">
-                    <span class="total-label">Total Que Debe Facturar Proveedor (Retenciones incluidas):</span>
-                    <span class="total-value">{{ reporte_proveedor.p_total_facturar|format_currency }}</span>
-                </div>
-                <div class="total-words">
-                    Son: {{ reporte_proveedor.p_total_facturar|numero_a_letras|capfirst }}
                 </div>
             </section>
             
@@ -904,7 +974,7 @@
                 .invoice-header { margin-bottom: 8px !important; padding-bottom: 8px !important; }
                 .invoice-header h1 { font-size: 16pt !important; }
                 .invoice-info, .invoice-client, .invoice-items, .invoice-taxes, 
-                .invoice-summary, .invoice-total { margin-bottom: 8px !important; }
+                .invoice-summary, .invoice-total-facturar, .invoice-total-pagar { margin-bottom: 8px !important; }
                 
                 .invoice-info-block h2 { font-size: 8pt !important; margin-bottom: 4px !important; }
                 .invoice-info-block p, .client-detail { font-size: 8pt !important; margin-bottom: 2px !important;}
@@ -917,19 +987,31 @@
                 .items-table tfoot.invoice-table-footer .provider-total-value { font-size: 11pt !important; }
                 .items-table tfoot.invoice-table-footer .footer-label { font-size: 8pt !important; }
 
+                .invoice-total-facturar { 
+                    padding: 12px !important; 
+                    margin: 12px 0 !important; 
+                    page-break-inside: avoid;
+                }
+                .facturar-header { font-size: 9pt !important; margin-bottom: 3px !important; }
+                .facturar-amount { font-size: 18pt !important; margin: 4px 0 !important; }
+                .facturar-words { font-size: 8pt !important; padding: 6px !important; margin-top: 6px !important; }
+                .facturar-note { font-size: 7pt !important; margin-top: 4px !important; }
+
                 .invoice-taxes h2 { font-size: 9pt !important; padding: 5px 8px !important; }
                 .taxes-table td { font-size: 8pt !important; padding: 4px 8px !important; }
+                
+                .invoice-total-pagar { 
+                    padding: 8px 12px !important; 
+                    margin-bottom: 8px !important; 
+                }
+                .pagar-label { font-size: 8pt !important; margin-bottom: 2px !important; }
+                .pagar-value { font-size: 10pt !important; }
                 
                 .summary-title { font-size: 10pt !important; margin-bottom: 6px !important; }
                 .summary-category { padding: 6px !important; }
                 .category-name { font-size: 7.5pt !important; }
                 .category-value { font-size: 9pt !important; }
                 .category-percent { font-size: 7pt !important; }
-
-                .invoice-total { padding: 10px !important; margin-bottom: 8px !important; }
-                .total-label { font-size: 9pt !important; }
-                .total-value { font-size: 14pt !important; }
-                .total-words { font-size: 8pt !important; padding: 5px !important; margin-top: 5px !important; }
 
                 .invoice-footer { margin-top: 8px !important; padding-top: 5px !important; font-size: 7pt !important; }
                 .invoice-footer p { margin-bottom: 1px !important; }
