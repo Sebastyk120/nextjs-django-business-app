@@ -805,7 +805,7 @@ class DetallePedido(models.Model):
         if self.lleva_contenedor is True:
             return cajas_solicitadas / self.referencia.cantidad_pallet_con_contenedor
         else:
-            return cajas_solicitadas / self.referencia.cantidad_pallet_sin_con_contenedor
+            return cajas_solicitadas / self.referencia.cantidad_pallet_sin_contenedor
 
     def calcular_no_piezas_final(self):
         # todos los valores son de tipo Decimal
