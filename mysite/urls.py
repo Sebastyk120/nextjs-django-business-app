@@ -1,16 +1,17 @@
 from django.contrib import admin
 from django.shortcuts import render
 from django.urls import path, include
-from autenticacion import views as principal
+from django.contrib.sitemaps.views import sitemap
+from autenticacion.sitemaps import LandingPageSitemap # Adjust import if sitemaps.py is elsewhere
 from django.conf import settings
 from django.conf.urls.static import static
 from autenticacion.views import LandingPageView, EnglishLandingPageView
 from django.contrib.sitemaps.views import sitemap # Import sitemap view
-from autenticacion.sitemaps import StaticViewSitemap # Import your sitemap
 from django.views.generic.base import TemplateView # Import TemplateView
 
 sitemaps = {
-    'static': StaticViewSitemap,
+    'landing': LandingPageSitemap,
+    # Add other sitemaps here if you have them
 }
 
 urlpatterns = [
