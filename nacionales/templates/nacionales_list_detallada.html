@@ -312,6 +312,7 @@
                                         <tr>
                                             <th>Número Guía</th>
                                             <th>Proveedor</th>
+                                            <th>Remision/Reporte</th>
                                             <th>Fecha Compra</th>
                                             <th>Fruta</th>
                                             <th>Peso Bruto Guía/Compra</th>
@@ -330,6 +331,7 @@
                                                 data-estado-rte-prov="{{ compra.estado_reporte_prov }}">
                                                 <td>{{ compra.numero_guia }}</td>
                                                 <td>{{ compra.proveedor }}</td>
+                                                <td>{{ compra.remision_exp|default:"Pendiente" }}</td>
                                                 <td>{{ compra.fecha_compra|date:"d/m/Y" }}</td>
                                                 <td>{{ compra.fruta }}</td>
                                                 <td>{{ compra.peso_compra|format_number }}</td>

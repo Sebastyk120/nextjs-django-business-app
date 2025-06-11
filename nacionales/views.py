@@ -135,16 +135,19 @@ def nacionales_list_detallada(request):
                 compra.estado_venta = compra.ventanacional.estado_venta
                 if hasattr(compra.ventanacional, 'reportecalidadexportador'):
                     compra.estado_reporte_exp = compra.ventanacional.reportecalidadexportador.estado_reporte_exp
+                    compra.remision_exp = compra.ventanacional.reportecalidadexportador.remision_exp
                     if hasattr(compra.ventanacional.reportecalidadexportador, 'reportecalidadproveedor'):
                         compra.estado_reporte_prov = compra.ventanacional.reportecalidadexportador.reportecalidadproveedor.estado_reporte_prov
                     else:
                         compra.estado_reporte_prov = 'Sin reporte Proveedor'
                 else:
                     compra.estado_reporte_exp = 'Sin reporte Exportador'
+                    compra.remision_exp = None
                     compra.estado_reporte_prov = 'Sin reporte Proveedor'
             else:
                 compra.estado_venta = 'Sin venta'
                 compra.estado_reporte_exp = 'Sin reporte Exportador'
+                compra.remision_exp = None
                 compra.estado_reporte_prov = 'Sin reporte Proveedor'
             compras_incompletas.append(compra)
 
