@@ -261,8 +261,27 @@
                             <h5 class="mb-0"><i class="fas fa-filter"></i> Filtros</h5>
                         </div>
                         <div class="card-body">
+                            <!-- Search Filters Row -->
+                            <div class="row search-filters-row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">
+                                        <i class="fas fa-user-tie me-1"></i>Buscar por Proveedor:
+                                    </label>
+                                    <input type="text" id="searchProveedor" class="form-control form-control-sm search-filter-input" 
+                                           placeholder="Escriba para filtrar por proveedor...">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">
+                                        <i class="fas fa-file-alt me-1"></i>Buscar por Remisión/Reporte:
+                                    </label>
+                                    <input type="text" id="searchRemision" class="form-control form-control-sm search-filter-input" 
+                                           placeholder="Escriba para filtrar por remisión/reporte...">
+                                </div>
+                            </div>
+                            
+                            <!-- Status Filters Row -->
                             <div class="row">
-                                <div class="col-md-4 filter-group">
+                                <div class="col-lg-4 filter-group">
                                     <h6>Estado Reporte (Exportador):</h6>
                                     <div class="filter-buttons">
                                         <button class="filter-btn" data-filter="estado-venta" data-value="Pendiente">Pendiente</button>
@@ -270,14 +289,14 @@
                                         <button class="filter-btn" data-filter="estado-venta" data-value="Completado">Completado</button>
                                     </div>
                                 </div>
-                                <div class="col-md-4 filter-group">
-                                    <h6>Estado Facturacion Reporte (Exportador):</h6>
+                                <div class="col-lg-4 filter-group">
+                                    <h6>Estado Facturación Reporte (Exportador):</h6>
                                     <div class="filter-buttons">
                                         <button class="filter-btn" data-filter="estado-rte-exp" data-value="Pendiente">Pendiente</button>
                                         <button class="filter-btn" data-filter="estado-rte-exp" data-value="Facturado">Facturado</button>
                                     </div>
                                 </div>
-                                <div class="col-md-4 filter-group">
+                                <div class="col-lg-4 filter-group">
                                     <h6>Estado Reporte (Proveedor):</h6>
                                     <div class="filter-buttons">
                                         <button class="filter-btn" data-filter="estado-rte-prov" data-value="En Proceso">En Proceso</button>
@@ -986,12 +1005,16 @@
             const resetFiltersButton = document.getElementById('resetFilters');
             const tabla = document.getElementById('tabla-compras-incompletas');
             const contadorCompras = document.getElementById('contador-compras');
+            const searchProveedor = document.getElementById('searchProveedor');
+            const searchRemision = document.getElementById('searchRemision');
             
             if (filterButtons.length > 0) {
                 const filters = {
                     'estado-venta': [],
                     'estado-rte-exp': [],
-                    'estado-rte-prov': []
+                    'estado-rte-prov': [],
+                    'search-proveedor': '',
+                    'search-remision': ''
                 };
                 
                 // Apply filter when button is clicked
@@ -1018,15 +1041,38 @@
                     });
                 });
                 
+                // Search input filters
+                if (searchProveedor) {
+                    searchProveedor.addEventListener('input', function() {
+                        filters['search-proveedor'] = this.value.toLowerCase().trim();
+                        applyFilters();
+                    });
+                }
+                
+                if (searchRemision) {
+                    searchRemision.addEventListener('input', function() {
+                        filters['search-remision'] = this.value.toLowerCase().trim();
+                        applyFilters();
+                    });
+                }
+                
                 // Reset all filters
                 if (resetFiltersButton) {
                     resetFiltersButton.addEventListener('click', function() {
                         filterButtons.forEach(button => button.classList.remove('active'));
                         
-                        // Clear filter arrays
+                        // Clear filter arrays and search inputs
                         Object.keys(filters).forEach(key => {
-                            filters[key] = [];
+                            if (Array.isArray(filters[key])) {
+                                filters[key] = [];
+                            } else {
+                                filters[key] = '';
+                            }
                         });
+                        
+                        // Clear search inputs
+                        if (searchProveedor) searchProveedor.value = '';
+                        if (searchRemision) searchRemision.value = '';
                         
                         // Show all rows
                         if (tabla) {
@@ -1058,6 +1104,10 @@
                         const estadoRteExp = row.getAttribute('data-estado-rte-exp');
                         const estadoRteProv = row.getAttribute('data-estado-rte-prov');
                         
+                        // Get text content for search filters
+                        const proveedorText = row.cells[1] ? row.cells[1].textContent.toLowerCase().trim() : '';
+                        const remisionText = row.cells[2] ? row.cells[2].textContent.toLowerCase().trim() : '';
+                        
                         // Check if row should be visible based on active filters
                         let shouldShow = true;
                         
@@ -1070,6 +1120,15 @@
                         }
                         
                         if (filters['estado-rte-prov'].length > 0 && !filters['estado-rte-prov'].includes(estadoRteProv)) {
+                            shouldShow = false;
+                        }
+                        
+                        // Apply search filters
+                        if (filters['search-proveedor'] && !proveedorText.includes(filters['search-proveedor'])) {
+                            shouldShow = false;
+                        }
+                        
+                        if (filters['search-remision'] && !remisionText.includes(filters['search-remision'])) {
                             shouldShow = false;
                         }
                         
