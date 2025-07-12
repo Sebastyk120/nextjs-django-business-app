@@ -1,7 +1,6 @@
 import json
 from datetime import datetime, timedelta
 from decimal import Decimal
-import numpy as np
 import pandas as pd
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
@@ -9,6 +8,13 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from comercial.models import Pedido, DetallePedido, Cliente, Fruta, Exportador
 import calendar
+
+# Import numpy conditionally
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
 
 
 def es_miembro_del_grupo(nombre_grupo):
@@ -105,14 +111,20 @@ def proyeccion_ventas(request):
             if key in ['declining_customers', 'growing_customers']:
                 for item in portfolio_changes[key]:
                     for k, v in item.items():
-                        if isinstance(v, (float, np.float64, Decimal)):
+                        # Handle numpy types if available
+                        if HAS_NUMPY and isinstance(v, (float, np.floating, Decimal)):
+                            item[k] = float(v)
+                        elif isinstance(v, (float, Decimal)):
                             item[k] = float(v)
     
     # Process summary metrics to ensure all values are JSON serializeable
     for key, value in summary_metrics.items():
-        if isinstance(value, (float, np.float64, Decimal)):
+        # Handle numpy types if available
+        if HAS_NUMPY and isinstance(value, (float, np.floating, Decimal)):
             summary_metrics[key] = float(value)
-    
+        elif isinstance(value, (float, Decimal)):
+            summary_metrics[key] = float(value)
+
     # Serialize data for JavaScript
     historical_data_json = json.dumps(convert_to_serializable(historical_data))
     forecast_data_json = json.dumps(convert_to_serializable(forecast_data))
@@ -902,15 +914,15 @@ def proyeccion_ventas_api(request):
             if key in ['declining_customers', 'growing_customers']:
                 for item in portfolio[key]:
                     for k, v in item.items():
-                        if isinstance(v, (float, np.float64, Decimal)):
+                        if isinstance(v, (float, Decimal)):
                             item[k] = float(v)
-    
+
     # Process summary metrics to ensure all values are JSON serializeable
     metrics = calculate_summary_metrics(historical_data, forecast_data)
     for key, value in metrics.items():
-        if isinstance(value, (float, np.float64, Decimal)):
+        if isinstance(value, (float, Decimal)):
             metrics[key] = float(value)
-    
+
     # Prepare data for JSON response
     response_data = {
         'historical_data': convert_to_serializable(historical_data),
