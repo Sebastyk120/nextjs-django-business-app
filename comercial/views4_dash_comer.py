@@ -885,7 +885,8 @@ def get_dashboard_comercial_data(request):
                         COUNT(DISTINCT p.id) as num_pedidos,
                         SUM(dp.kilos_enviados) as total_kilos,
                         SUM(dp.valor_x_producto) as total_facturado,
-                        SUM(dp.valor_total_utilidad_x_producto) as total_utilidades
+                        SUM(dp.valor_total_utilidad_x_producto) as total_utilidades,
+                        SUM(dp.valor_nota_credito_usd) as total_nc
                     FROM comercial_pedido p
                     JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
                     JOIN comercial_cliente c ON p.cliente_id = c.id
@@ -901,6 +902,7 @@ def get_dashboard_comercial_data(request):
                         'total_kilos': float(row[2]),
                         'total_facturado': float(row[3]),
                         'total_utilidades': float(row[4]),
+                        'total_nc': float(row[5]) if row[5] else 0,
                     }
                     for row in cursor.fetchall()
                 ]
@@ -911,6 +913,7 @@ def get_dashboard_comercial_data(request):
                 total_kilos=Coalesce(Sum('total_peso_bruto_enviado'), 0.0, output_field=DecimalField()),
                 total_facturado=Coalesce(Sum('valor_total_factura_usd'), 0.0, output_field=DecimalField()),
                 total_utilidades=Coalesce(Sum('valor_total_utilidad_usd'), 0.0, output_field=DecimalField()),
+                total_nc=Coalesce(Sum('valor_total_nota_credito_usd'), 0.0, output_field=DecimalField()),
             ).order_by('-total_utilidades'))
 
         # Calcular porcentajes
