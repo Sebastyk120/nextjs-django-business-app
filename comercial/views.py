@@ -2367,7 +2367,7 @@ def actualizar_dias_de_vencimiento_todos(request):
 
 # ------------------------ Vista para actualizar la TRM Banco de la republica -----------------------------------------
 def actualizar_tasas(request):
-    pedidos = Pedido.objects.order_by('-id')[:100]
+    pedidos = Pedido.objects.order_by('-id')[:60]
     for pedido in pedidos:
         pedido.actualizar_tasa_representativa()
     messages.success(request, 'Se Actualizaron Las Tasas Con Banco De La Republica Correctamente')
@@ -2422,7 +2422,7 @@ def actualizar_dias_de_vencimiento_etnico(request):
 
 
 def actualizar_tasas_etnico(request):
-    pedidos = Pedido.objects.order_by('-id')[:100]
+    pedidos = Pedido.objects.order_by('-id')[:60]
     for pedido in pedidos:
         pedido.actualizar_tasa_representativa()
     messages.success(request, 'Se Actualizo La TRM Con Banco De La Republica Correctamente')
@@ -2477,7 +2477,7 @@ def actualizar_dias_de_vencimiento_fieldex(request):
 
 
 def actualizar_tasas_fieldex(request):
-    pedidos = Pedido.objects.order_by('-id')[:100]
+    pedidos = Pedido.objects.order_by('-id')[:60]
     for pedido in pedidos:
         pedido.actualizar_tasa_representativa()
     messages.success(request, 'Se Actualizo La TRM Con Banco De La Republica Correctamente')
@@ -2532,7 +2532,7 @@ def actualizar_dias_de_vencimiento_juan(request):
 
 
 def actualizar_tasas_juan(request):
-    pedidos = Pedido.objects.order_by('-id')[:100]
+    pedidos = Pedido.objects.order_by('-id')[:60]
     for pedido in pedidos:
         pedido.actualizar_tasa_representativa()
     messages.success(request, 'Se Actualizo La TRM Con Banco De La Republica Correctamente')
@@ -2587,7 +2587,7 @@ def actualizar_dias_de_vencimiento_ci_dorado(request):
 
 
 def actualizar_tasas_ci_dorado(request):
-    pedidos = Pedido.objects.order_by('-id')[:100]
+    pedidos = Pedido.objects.order_by('-id')[:60]
     for pedido in pedidos:
         pedido.actualizar_tasa_representativa()
     messages.success(request, 'Se Actualizo La TRM Con Banco De La Republica Correctamente')
