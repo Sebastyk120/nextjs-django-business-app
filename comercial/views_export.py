@@ -1,5 +1,4 @@
 import io
-import time
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
@@ -7,10 +6,11 @@ from decimal import Decimal
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db.models import Q
 from django.http import HttpResponse
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.workbook import Workbook
 
-from .models import Pedido
+from .models import Pedido, DetallePedido
 
 
 def es_miembro_del_grupo(nombre_grupo):
@@ -401,16 +401,10 @@ def exportar_utilidades_excel(request):
 # ---------------------------------- Funcion que exporta los pedidos a Excel ------------------------------------------
 
 @login_required
-@user_passes_test(lambda u: any(es_miembro_del_grupo(grupo)(u) for grupo in ['Heavens', 'Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado']), login_url='home')
+@user_passes_test(lambda u: any(
+    es_miembro_del_grupo(grupo)(u) for grupo in ['Heavens', 'Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado']),
+                  login_url='home')
 def exportar_pedidos_excel_general(request):
-    from django.core.paginator import Paginator
-    from django.db import connection
-    import gc
-    
-    # Inicializar control de tiempo para timeout
-    start_time = time.time()
-    max_execution_time = 300  # 5 minutos máximo
-    
     # Determinar a qué grupo pertenece el usuario
     grupo = None
     if es_miembro_del_grupo('Heavens')(request.user):
@@ -423,62 +417,43 @@ def exportar_pedidos_excel_general(request):
         grupo = 'Juan_Matas'
     elif es_miembro_del_grupo('CI_Dorado')(request.user):
         grupo = 'CI_Dorado'
-        
+
     # 1. Crear un buffer en memoria para almacenar el archivo Excel
     output = io.BytesIO()
 
     # 2. Crear el Workbook en modo write_only para optimizar el uso de memoria
     workbook = Workbook(write_only=True)
-    ws = workbook.active
+    ws = workbook.create_sheet(title='Pedidos')
 
     # 3. Definir estilos para los encabezados
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill(start_color="1e0c42", end_color="1e0c42", fill_type="solid")
     sub_header_fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
 
-    # 4. Definir los encabezados completos para Pedido (TODOS los campos)
+    # 4. Definir los encabezados para Pedido y DetallePedido
     pedido_headers = [
-        # Información básica del pedido
-        'No Pedido', 'Cliente', 'Intermediario', 'Semana', 'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada',
-        'Exportador', 'Subexportadora', 'Dias Cartera', 'AWB', 'Destino', 'Numero Factura',
-        
-        # Totales del pedido
-        'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Total Peso Bruto Solicitado',
-        'Total Peso Bruto Enviado', 'Total Piezas Solicitadas', 'Total Piezas Enviadas',
-        
-        # Información financiera
-        'Nota Credito No', 'Motivo Nota Credito', 'Descuento Comercial', 'Valor Total NC USD',
-        'Tasa Representativa USD Diaria', 'TRM Cotización', 'Valor Pagado Cliente USD', 'Utilidad Bancaria USD',
-        'Fecha Pago Cliente', 'Fecha Monetización', 'TRM Monetización', 'Estado Factura',
-        'Diferencia Por Abono', 'Dias Vencimiento', 'Valor Total Factura USD', 'Valor Total Utilidad USD',
-        'Valor Total Recuperacion USD', 'Valor Utilidad Pesos', 'Documento Cobro Utilidad',
-        'Fecha Pago Utilidad', 'Estado Utilidad',
-        
-        # Estados y tracking
-        'Estado Pedido', 'Estado Cancelacion', 'Observaciones Generales', 'Variedades',
-        'Responsable Reserva', 'Estatus Reserva', 'Agencia Carga', 'Aerolinea', 'ETD', 'ETA',
-        'Peso AWB', 'Estado Documentos', 'Observaciones Tracking', 'ETA Real',
-        'Diferencia Peso Factura AWB', 'Termo'
+        'No', 'Cliente', 'Semana', 'Fecha Solicitud', 'Fecha Entrega', 'Fecha Llegada',
+        'Exportador', 'Subexportadora', 'Intermediario', 'Dias Cartera', 'AWB',
+        'Destino', 'Aerolinea', 'Agencia De Carga', 'Responsable Reserva', 'Numero Factura',
+        'Total Cajas Solicitadas', 'Total Cajas Enviadas', 'Peso Bruto Solicitado',
+        'Peso Bruto Enviado', 'Pallets Solicitados', 'Pallets Enviados', 'Peso AWB',
+        'ETA', 'ETD', 'Variedades', 'Descuento Comercial', 'No NC', 'Motivo NC',
+        'Valor Total NC', 'Valor Pagado Cliente', 'Estado Factura', 'Utilidad Bancaria USD',
+        'Fecha Pago Cliente', 'TRM Monetización', 'Fecha Monetización', 'Trm Banrep',
+        'Trm Cotización', 'Diferencia Pago', 'Dias Vencimiento', 'Valor Total Factura USD',
+        'Valor Utilidad USD', 'Valor Utilidad Pesos', 'Valor Recuperacion USD', 'Documento Cobro Utilidad',
+        'Fecha Pago Utilidad', 'Estado Utilidad', 'Estado Cancelacion', 'Estado Documentos',
+        'Estado Reserva', 'Termo', 'Diferencia AWB/Factura', 'Eta Real', 'Estado Pedido',
+        'Observaciones Tracking', 'Observaciones Generales'
     ]
 
-    # 5. Definir los encabezados completos para DetallePedido (TODOS los campos)
     detalle_headers = [
-        # Referencia al pedido
-        'No Pedido Detalle', 'Fruta', 'Presentacion', 
-        
-        # Cantidades y pesos
-        'Cajas Solicitadas', 'Presentacion Peso', 'Kilos Netos', 'Cajas Enviadas', 
-        'Kilos Enviados', 'Diferencia Cajas',
-        
-        # Información del producto
-        'Tipo Caja', 'Referencia', 'Stickers', 'Lleva Contenedor', 'Referencia Contenedor',
-        'Cantidad Contenedores',
-        
-        # Información financiera del detalle
-        'Tarifa Utilidad Por Caja', 'Tarifa Recuperacion', 'Valor Por Caja USD', 'Valor Por Producto',
-        'No Cajas NC', 'Valor Nota Credito USD Detalle', 'Afecta Utilidad',
-        'Valor Total Utilidad Por Producto', 'Valor Total Recuperacion Por Producto',
-        'Precio Proforma', 'Observaciones Detalle'
+        'Pedido', 'F Entrega', 'Exportador', 'Cliente', 'Fruta', 'Presentacion', 'Cajas Solicitadas',
+        'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados', 'Diferencia', 'Tipo Caja',
+        'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
+        'Tarifa Recuperacion',
+        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
+        'Valor Total utilidad Producto', 'Valor Total Recuperacion X Producto', 'Precio Proforma', 'Observaciones'
     ]
 
     # 5. Verificar si el usuario incluyó detalles
@@ -488,7 +463,7 @@ def exportar_pedidos_excel_general(request):
     fecha_inicial_str = request.POST.get('fecha_inicial')
     fecha_final_str = request.POST.get('fecha_final')
 
-    # 7. Filtrar los pedidos según fechas con optimizaciones
+    # 7. Filtrar los pedidos según fechas
     try:
         if (fecha_inicial_str and fecha_final_str):
             fecha_inicial = datetime.strptime(fecha_inicial_str, '%Y-%m-%d')
@@ -496,7 +471,7 @@ def exportar_pedidos_excel_general(request):
             base_filter = Q(fecha_entrega__gte=fecha_inicial, fecha_entrega__lte=fecha_final)
         else:
             base_filter = Q()
-            
+
         # Filtrar según el grupo del usuario
         if grupo == 'Heavens':
             # Si es Heavens, muestra TODOS los registros (de todas las exportadoras)
@@ -507,239 +482,174 @@ def exportar_pedidos_excel_general(request):
         else:
             # Si no tiene grupo específico (no debería ocurrir por el decorador)
             pedidos_qs = Pedido.objects.filter(base_filter)
-            
-        # Optimización crítica: usar select_related para evitar N+1 queries
+
         pedidos_qs = pedidos_qs.select_related(
             'cliente',
-            'exportadora', 
+            'exportadora',
             'subexportadora',
             'intermediario',
             'destino',
             'aerolinea',
             'agencia_carga',
             'responsable_reserva'
-        ).order_by('id')  # Orden consistente para paginación
-        
-        # Contar total de registros para validar límites
-        total_pedidos = pedidos_qs.count()
-        
-        # Límite de seguridad: máximo 10,000 pedidos por exportación
-        if total_pedidos > 10000:
-            return HttpResponse(
-                f"Demasiados registros ({total_pedidos}). Por favor, use filtros de fecha para reducir el conjunto de datos a menos de 10,000 registros.",
-                status=400
-            )
-            
-        # Usar paginación para procesar en lotes de 100 pedidos
-        paginator = Paginator(pedidos_qs, 100)
-            
+        ).iterator(chunk_size=50)
+
     except ValueError:
         return HttpResponse("Fecha inválida", status=400)
 
-    # Escribir encabezados una sola vez al inicio (optimizado)
-    if incluir_detalles:
-        # Crear encabezados combinados para mostrar tanto pedidos como detalles
-        combined_headers = ['TIPO'] + pedido_headers + detalle_headers
-        ws.append(combined_headers)
-    else:
-        # Solo encabezados de pedidos
-        ws.append(pedido_headers)
-    
-    # Procesar pedidos en lotes para optimizar memoria
-    for page_num in range(1, paginator.num_pages + 1):
-        page = paginator.page(page_num)
-        
-        # Prefetch detalles si es necesario
-        if incluir_detalles:
-            # Obtener IDs de pedidos de la página actual
-            pedido_ids = [p.id for p in page.object_list]
-            
-            # Hacer una consulta optimizada con prefetch_related
-            pedidos_con_detalles = Pedido.objects.filter(
-                id__in=pedido_ids
-            ).select_related(
-                'cliente',
-                'exportadora', 
-                'subexportadora',
-                'intermediario',
-                'destino',
-                'aerolinea',
-                'agencia_carga',
-                'responsable_reserva'
-            ).prefetch_related(
-                'detallepedido_set__fruta',
-                'detallepedido_set__presentacion', 
-                'detallepedido_set__tipo_caja',
-                'detallepedido_set__referencia'
-            ).order_by('id')
-        else:
-            pedidos_con_detalles = page.object_list
-            
-        for pedido in pedidos_con_detalles:
+    for pedido in pedidos_qs:
+        # 7.1 Escribir una fila de separación para mayor legibilidad (opcional)
+        ws.append([])
 
-            # Escribir los datos completos del Pedido (TODOS los campos)
-            pedido_data = [
-                # Información básica del pedido
-                pedido.pk,
-                pedido.cliente.nombre if pedido.cliente else '',
-                pedido.intermediario.nombre if pedido.intermediario else '',
-                pedido.semana or '',
-                pedido.fecha_solicitud.strftime('%Y-%m-%d') if pedido.fecha_solicitud else '',
-                pedido.fecha_entrega.strftime('%Y-%m-%d') if pedido.fecha_entrega else '',
-                pedido.fecha_llegada.strftime('%Y-%m-%d') if pedido.fecha_llegada else '',
-                pedido.exportadora.nombre if pedido.exportadora else '',
-                pedido.subexportadora.nombre if pedido.subexportadora else '',
-                pedido.dias_cartera or '',
-                pedido.awb or '',
-                pedido.destino.codigo if pedido.destino else '',
-                pedido.numero_factura or '',
-                
-                # Totales del pedido
-                pedido.total_cajas_solicitadas or 0,
-                pedido.total_cajas_enviadas or 0,
-                pedido.total_peso_bruto_solicitado or 0,
-                pedido.total_peso_bruto_enviado or 0,
-                pedido.total_piezas_solicitadas or 0,
-                pedido.total_piezas_enviadas or 0,
-                
-                # Información financiera
-                pedido.nota_credito_no or '',
-                pedido.motivo_nota_credito or '',
-                pedido.descuento or 0,
-                pedido.valor_total_nota_credito_usd or 0,
-                pedido.tasa_representativa_usd_diaria or 0,
-                pedido.trm_cotizacion or 0,
-                pedido.valor_pagado_cliente_usd or 0,
-                pedido.utilidad_bancaria_usd or 0,
-                pedido.fecha_pago.strftime('%Y-%m-%d') if pedido.fecha_pago else '',
-                pedido.fecha_monetizacion.strftime('%Y-%m-%d') if pedido.fecha_monetizacion else '',
-                pedido.trm_monetizacion or 0,
-                pedido.estado_factura or '',
-                pedido.diferencia_por_abono or 0,
-                pedido.dias_de_vencimiento or 0,
-                pedido.valor_total_factura_usd or 0,
-                pedido.valor_total_utilidad_usd or 0,
-                pedido.valor_total_recuperacion_usd or 0,
-                pedido.valor_utilidad_pesos or 0,
-                pedido.documento_cobro_utilidad or '',
-                pedido.fecha_pago_utilidad.strftime('%Y-%m-%d') if pedido.fecha_pago_utilidad else '',
-                pedido.estado_utilidad or '',
-                
-                # Estados y tracking
-                pedido.estado_pedido or '',
-                pedido.estado_cancelacion or '',
-                pedido.observaciones or '',
-                pedido.variedades or '',
-                pedido.responsable_reserva.nombre if pedido.responsable_reserva else '',
-                pedido.estatus_reserva or '',
-                pedido.agencia_carga.nombre if pedido.agencia_carga else '',
-                pedido.aerolinea.nombre if pedido.aerolinea else '',
-                pedido.etd.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.etd else '',
-                pedido.eta.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta else '',
-                pedido.peso_awb or 0,
-                pedido.estado_documentos or '',
-                pedido.observaciones_tracking or '',
-                pedido.eta_real.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta_real else '',
-                pedido.diferencia_peso_factura_awb or 0,
-                pedido.termo or ''
-            ]
-            
-            if not incluir_detalles:
-                # Si no incluimos detalles, escribir solo la fila del pedido con TODOS los campos
-                ws.append(pedido_data)
-            else:
-                # Si incluimos detalles, escribir formato reorganizado
-                # Primero escribir la fila del pedido principal
-                pedido_row = [
-                    'PEDIDO',
-                    pedido.pk,
-                    pedido.cliente.nombre if pedido.cliente else '',
-                    pedido.fecha_entrega.strftime('%Y-%m-%d') if pedido.fecha_entrega else '',
-                    pedido.exportadora.nombre if pedido.exportadora else '',
-                    pedido.awb,
-                    pedido.estado_pedido,
-                    pedido.total_cajas_solicitadas,
-                    pedido.total_cajas_enviadas,
-                    pedido.valor_total_factura_usd,
-                    # Columnas vacías para información de detalle
-                    '', '', '', '', '', '', '', ''
+        # 7.2 Escribir una fila de cabecera para "Pedido"
+        row_header_pedido = [WriteOnlyCell(ws, value='PEDIDO:')]
+        row_header_pedido[0].font = Font(bold=True, color='FFFFFF')
+        row_header_pedido[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+        ws.append(row_header_pedido)
+
+        # 7.3 Escribir los encabezados de Pedido
+        pedido_header_cells = []
+        for titulo in pedido_headers:
+            celda = WriteOnlyCell(ws, value=titulo)
+            celda.font = header_font
+            celda.fill = header_fill
+            pedido_header_cells.append(celda)
+        ws.append(pedido_header_cells)
+
+        # 7.4 Escribir los datos del Pedido
+        pedido_data = [
+            pedido.pk,
+            pedido.cliente.nombre if pedido.cliente else '',
+            pedido.semana,
+            pedido.fecha_solicitud.strftime('%Y-%m-%d') if pedido.fecha_solicitud else '',
+            pedido.fecha_entrega.strftime('%Y-%m-%d') if pedido.fecha_entrega else '',
+            pedido.fecha_llegada.strftime('%Y-%m-%d') if pedido.fecha_llegada else '',
+            pedido.exportadora.nombre if pedido.exportadora else '',
+            pedido.subexportadora.nombre if pedido.subexportadora else '',
+            pedido.intermediario.nombre if pedido.intermediario else '',
+            pedido.dias_cartera,
+            pedido.awb,
+            pedido.destino.codigo if pedido.destino else '',
+            pedido.aerolinea.nombre if pedido.aerolinea else '',
+            pedido.agencia_carga.nombre if pedido.agencia_carga else '',
+            pedido.responsable_reserva.nombre if pedido.responsable_reserva else '',
+            pedido.numero_factura,
+            pedido.total_cajas_solicitadas,
+            pedido.total_cajas_enviadas,
+            pedido.total_peso_bruto_solicitado,
+            pedido.total_peso_bruto_enviado,
+            pedido.total_piezas_solicitadas,
+            pedido.total_piezas_enviadas,
+            pedido.peso_awb,
+            pedido.eta.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta else '',
+            pedido.etd.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.etd else '',
+            pedido.variedades,
+            pedido.descuento,
+            pedido.nota_credito_no,
+            pedido.motivo_nota_credito,
+            pedido.valor_total_nota_credito_usd,
+            pedido.valor_pagado_cliente_usd,
+            pedido.estado_factura,
+            pedido.utilidad_bancaria_usd,
+            pedido.fecha_pago.strftime('%Y-%m-%d') if pedido.fecha_pago else '',
+            pedido.trm_monetizacion,
+            pedido.fecha_monetizacion.strftime('%Y-%m-%d') if pedido.fecha_monetizacion else '',
+            pedido.tasa_representativa_usd_diaria,
+            pedido.trm_cotizacion,
+            pedido.diferencia_por_abono,
+            pedido.dias_de_vencimiento,
+            pedido.valor_total_factura_usd,
+            pedido.valor_total_utilidad_usd,
+            pedido.valor_utilidad_pesos,
+            pedido.valor_total_recuperacion_usd,
+            pedido.documento_cobro_utilidad,
+            pedido.fecha_pago_utilidad.strftime('%Y-%m-%d') if pedido.fecha_pago_utilidad else '',
+            pedido.estado_utilidad,
+            pedido.estado_cancelacion,
+            pedido.estado_documentos,
+            pedido.estatus_reserva,
+            pedido.termo,
+            pedido.diferencia_peso_factura_awb,
+            pedido.eta_real.replace(tzinfo=None).strftime('%Y-%m-%d %H:%M:%S') if pedido.eta_real else '',
+            pedido.estado_pedido,
+            pedido.observaciones_tracking,
+            pedido.observaciones
+        ]
+        ws.append(pedido_data)
+
+        if incluir_detalles:
+            # Solamente si se marca 'incluir_detalles'
+            row_header_detalle = [WriteOnlyCell(ws, value='DETALLES DEL PEDIDO:')]
+            row_header_detalle[0].font = Font(bold=True, color='FFFFFF')
+            row_header_detalle[0].fill = PatternFill(start_color="0B6FA4", end_color="0B6FA4", fill_type="solid")
+            ws.append(row_header_detalle)
+
+            detalle_header_cells = []
+            for titulo in detalle_headers:
+                celda = WriteOnlyCell(ws, value=titulo)
+                celda.font = header_font
+                celda.fill = header_fill
+                detalle_header_cells.append(celda)
+            ws.append(detalle_header_cells)
+
+            detalles_qs = DetallePedido.objects.filter(pedido=pedido).select_related(
+                'pedido__exportadora',
+                'pedido__cliente',
+                'fruta',
+                'presentacion',
+                'tipo_caja',
+                'referencia'
+            ).iterator(chunk_size=50)
+
+            for detalle in detalles_qs:
+                detalle_row = [
+                    detalle.pedido.pk,
+                    detalle.pedido.fecha_entrega.strftime('%Y-%m-%d') if detalle.pedido.fecha_entrega else '',
+                    detalle.pedido.exportadora.nombre if detalle.pedido.exportadora else '',
+                    detalle.pedido.cliente.nombre if detalle.pedido.cliente else '',
+                    detalle.fruta.nombre if detalle.fruta else '',
+                    detalle.presentacion.nombre if detalle.presentacion else '',
+                    detalle.cajas_solicitadas,
+                    detalle.presentacion_peso,
+                    detalle.kilos,
+                    detalle.cajas_enviadas,
+                    detalle.kilos_enviados,
+                    detalle.diferencia,
+                    detalle.tipo_caja.nombre if detalle.tipo_caja else '',
+                    detalle.referencia.nombre if detalle.referencia else '',
+                    detalle.stickers,
+                    detalle.lleva_contenedor,
+                    detalle.referencia_contenedor,
+                    detalle.cantidad_contenedores,
+                    detalle.tarifa_utilidad,
+                    detalle.tarifa_recuperacion,
+                    detalle.valor_x_caja_usd,
+                    detalle.valor_x_producto,
+                    detalle.valor_total_recuperacion_x_producto,
+                    detalle.no_cajas_nc,
+                    detalle.valor_nota_credito_usd,
+                    detalle.afecta_utilidad,
+                    detalle.valor_total_utilidad_x_producto,
+                    detalle.precio_proforma,
+                    detalle.observaciones,
                 ]
-                ws.append(pedido_row)
-                
-                # Luego obtener y escribir los detalles del pedido (ya prefetched)
-                detalles = pedido.detallepedido_set.all()
-                
-                if detalles:
-                    # Escribir una fila por cada detalle
-                    for detalle in detalles:
-                        # Escribir los datos completos del DetallePedido (TODOS los campos)
-                        detalle_row = [
-                            'DETALLE',
-                            # Referencia al pedido
-                            pedido.pk,
-                            detalle.fruta.nombre if detalle.fruta else '',
-                            detalle.presentacion.nombre if detalle.presentacion else '',
-                            
-                            # Cantidades y pesos
-                            detalle.cajas_solicitadas or 0,
-                            detalle.presentacion_peso or 0,
-                            detalle.kilos or 0,
-                            detalle.cajas_enviadas or 0,
-                            detalle.kilos_enviados or 0,
-                            detalle.diferencia or 0,
-                            
-                            # Información del producto
-                            detalle.tipo_caja.nombre if detalle.tipo_caja else '',
-                            detalle.referencia.nombre if detalle.referencia else '',
-                            detalle.stickers or '',
-                            'Sí' if detalle.lleva_contenedor else 'No',
-                            detalle.referencia_contenedor or '',
-                            detalle.cantidad_contenedores or 0,
-                            
-                            # Información financiera del detalle
-                            detalle.tarifa_utilidad or 0,
-                            detalle.tarifa_recuperacion or 0,
-                            detalle.valor_x_caja_usd or 0,
-                            detalle.valor_x_producto or 0,
-                            detalle.no_cajas_nc or 0,
-                            detalle.valor_nota_credito_usd or 0,
-                            'Sí' if detalle.afecta_utilidad else 'No',
-                            detalle.valor_total_utilidad_x_producto or 0,
-                            detalle.valor_total_recuperacion_x_producto or 0,
-                            detalle.precio_proforma or 0,
-                            detalle.observaciones or ''
-                        ]
-                        ws.append(detalle_row)
-        
-        # Verificar timeout cada lote
-        current_time = time.time()
-        if current_time - start_time > max_execution_time:
-            return HttpResponse(
-                f"Tiempo de ejecución excedido ({max_execution_time} segundos). Por favor, use filtros de fecha más específicos para reducir el conjunto de datos.",
-                status=408  # Request Timeout
-            )
-        
-        # Liberar memoria después de cada lote
-        if page_num % 5 == 0:  # Cada 5 lotes (500 pedidos)
-            gc.collect()
-            
-        # Verificar conexiones de base de datos para evitar timeouts
-        connection.close()
+                ws.append(detalle_row)
+            # =============== FIN SECCIÓN DETALLES (CONDICIONAL) ===============
     # 9. Guardar y retornar el archivo
     workbook.save(output)
     output.seek(0)
-    
+
     # Personalizar el nombre del archivo según el grupo
     filename_parts = []
     if grupo and grupo != 'Heavens':
         filename_parts.append(f"{grupo}")
     filename_parts.append("pedidos")
-    
+
     if fecha_inicial_str and fecha_final_str:
         filename_parts.append(f"{fecha_inicial_str}_a_{fecha_final_str}")
-    
+
     filename = "_".join(filename_parts) + ".xlsx"
-    
+
     response = HttpResponse(
         output,
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
