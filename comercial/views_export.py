@@ -519,7 +519,7 @@ def exportar_pedidos_excel_general(request):
     # Escribir encabezados una sola vez al inicio (optimizado)
     if incluir_detalles:
         # Encabezados combinados para pedidos y detalles
-        combined_headers = pedido_headers + ['---DETALLES---'] + detalle_headers
+        combined_headers = pedido_headers + ['TIPO'] + detalle_headers
         # Usar lista simple para encabezados, aplicar formato después
         ws.append(combined_headers)
     else:
@@ -622,7 +622,12 @@ def exportar_pedidos_excel_general(request):
                 # Si no incluimos detalles, escribir solo la fila del pedido
                 ws.append(pedido_data)
             else:
-                # Si incluimos detalles, obtener los detalles del pedido (ya prefetched)
+                # Si incluimos detalles, primero escribir la fila del pedido completo
+                empty_detalle = [''] * len(detalle_headers)
+                pedido_row = pedido_data + ['---PEDIDO---'] + empty_detalle
+                ws.append(pedido_row)
+                
+                # Luego obtener y escribir los detalles del pedido (ya prefetched)
                 detalles = pedido.detallepedido_set.all()
                 
                 if detalles:
@@ -659,14 +664,10 @@ def exportar_pedidos_excel_general(request):
                             detalle.precio_proforma,
                             detalle.observaciones,
                         ]
-                        # Combinar datos del pedido con datos del detalle
-                        combined_row = pedido_data + ['---DETALLES---'] + detalle_data
+                        # Crear fila vacía para datos del pedido (ya se escribió arriba) y agregar datos del detalle
+                        empty_pedido = [''] * len(pedido_headers)
+                        combined_row = empty_pedido + ['---DETALLE---'] + detalle_data
                         ws.append(combined_row)
-                else:
-                    # Si no hay detalles, escribir solo la fila del pedido con columnas vacías para detalles
-                    empty_detalle = [''] * len(detalle_headers)
-                    combined_row = pedido_data + ['---DETALLES---'] + empty_detalle
-                    ws.append(combined_row)
         
         # Verificar timeout cada lote
         current_time = time.time()
