@@ -110,8 +110,20 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 
+# Configuración optimizada de base de datos para prevenir timeouts
+DATABASE_CONFIG = dj_database_url.config(default=os.getenv('DATABASE_PRIVATE_URL'))
+
+# Añadir configuraciones de optimización
+DATABASE_CONFIG.update({
+    'CONN_MAX_AGE': 600,  # Mantener conexiones por 10 minutos
+    'OPTIONS': {
+        'connect_timeout': 30,
+        'options': '-c statement_timeout=300000'  # 5 minutos timeout para queries
+    }
+})
+
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('DATABASE_PRIVATE_URL'))
+    'default': DATABASE_CONFIG
 }
 
 """
