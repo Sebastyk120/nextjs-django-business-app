@@ -17,11 +17,11 @@ max_requests = 1000  # Reiniciar worker después de 1000 requests
 max_requests_jitter = 100  # Añadir variabilidad para evitar reinicio simultáneo
 worker_tmp_dir = '/dev/shm'  # Usar memoria compartida si está disponible
 
-# Configuración de logging
-loglevel = 'info'
-accesslog = '-'  # Log a stdout
-errorlog = '-'   # Log a stderr
-access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(D)s'
+# Configuración de logging optimizada para producción
+loglevel = 'warning'  # Solo warnings y errores críticos
+accesslog = None      # Desactivar access logs para mejor rendimiento
+errorlog = '-'        # Mantener error logs en stderr
+# access_log_format no es necesario cuando accesslog = None
 
 # Configuración de bind
 bind = f"0.0.0.0:{os.environ.get('PORT', '8000')}"
@@ -39,18 +39,21 @@ user = None
 group = None
 tmp_upload_dir = None
 
-# Configuración de señales para graceful shutdown
+# Configuración de señales para graceful shutdown (optimizada para producción)
 def when_ready(server):
-    server.log.info("Gunicorn server is ready. Listening on: %s", server.address)
+    server.log.warning("Gunicorn server is ready. Listening on: %s", server.address)
 
 def worker_int(worker):
-    worker.log.info("Worker received INT or QUIT signal")
+    # Solo log en caso de problemas, no en operación normal
+    pass
 
 def pre_fork(server, worker):
-    server.log.info("Worker spawned (pid: %s)", worker.pid)
+    # Reducir logs de workers para producción
+    pass
 
 def post_fork(server, worker):
-    server.log.info("Worker spawned (pid: %s)", worker.pid)
+    # Reducir logs de workers para producción
+    pass
 
 def worker_abort(worker):
-    worker.log.info("Worker received SIGABRT signal")
+    worker.log.error("Worker received SIGABRT signal - PID: %s", worker.pid)
