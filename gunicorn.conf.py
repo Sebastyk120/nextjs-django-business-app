@@ -2,10 +2,11 @@
 import multiprocessing
 import os
 
-# Configuración de workers
-workers = int(os.environ.get('WEB_CONCURRENCY', multiprocessing.cpu_count() * 2 + 1))
+# Configuración de workers optimizada para memoria
+# Reducir workers para evitar alto uso de RAM
+workers = int(os.environ.get('WEB_CONCURRENCY', min(4, multiprocessing.cpu_count() + 1)))
 worker_class = 'sync'
-worker_connections = 1000
+worker_connections = 500  # Reducido para menor uso de memoria
 
 # Configuración de timeouts - CRÍTICO para resolver WORKER TIMEOUT
 timeout = 300  # 5 minutos para requests largos (exports, bulk updates)
@@ -13,9 +14,13 @@ keepalive = 5
 graceful_timeout = 120
 
 # Configuración de memoria para prevenir OOM (Out of Memory)
-max_requests = 1000  # Reiniciar worker después de 1000 requests
-max_requests_jitter = 100  # Añadir variabilidad para evitar reinicio simultáneo
+max_requests = 500   # Reiniciar worker más frecuentemente para liberar memoria
+max_requests_jitter = 50   # Reducir jitter
 worker_tmp_dir = '/dev/shm'  # Usar memoria compartida si está disponible
+
+# Configuración adicional para optimizar memoria
+worker_rlimit_as = 1073741824  # Límite de memoria virtual por worker (1GB)
+worker_rlimit_data = 536870912  # Límite de memoria de datos por worker (512MB)
 
 # Configuración de logging optimizada para producción
 loglevel = 'warning'  # Solo warnings y errores críticos

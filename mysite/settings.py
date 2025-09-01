@@ -115,7 +115,7 @@ DATABASE_CONFIG = dj_database_url.config(default=os.getenv('DATABASE_PRIVATE_URL
 
 # Añadir configuraciones de optimización
 DATABASE_CONFIG.update({
-    'CONN_MAX_AGE': 600,  # Mantener conexiones por 10 minutos
+    'CONN_MAX_AGE': 60,   # Reducido a 1 minuto para liberar conexiones más rápido
     'OPTIONS': {
         'connect_timeout': 30,
         'options': '-c statement_timeout=300000'  # 5 minutos timeout para queries
@@ -124,6 +124,58 @@ DATABASE_CONFIG.update({
 
 DATABASES = {
     'default': DATABASE_CONFIG
+}
+
+# Configuración de cache para optimizar memoria
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,  # Limitar entradas para controlar memoria
+            'CULL_FREQUENCY': 4,  # Eliminar 1/4 de las entradas cuando se alcanza MAX_ENTRIES
+        }
+    }
+}
+
+# Configuración de sesiones optimizada para memoria
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_CACHE_ALIAS = 'default'
+SESSION_COOKIE_AGE = 3600  # 1 hora en lugar de 2 semanas por defecto
+
+# Configuración de logging optimizada para memoria
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+            'level': 'WARNING',  # Solo warnings y errores
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': [],  # Desactivar logs de DB para ahorrar memoria
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
 }
 
 """
@@ -205,7 +257,13 @@ CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app", "https://*.heavensfruit.com"
 CORS_ORIGINS_WHITELIST = ["https://heavens-server-private.up.railway.app",
                           "https://heavensfruit.com",
                           "https://www.heavensfruit.com",]
+
+# Configuración adicional de sesiones para optimizar memoria
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = False  # No guardar sesión en cada request
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = True  # Solo HTTPS en producción
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 # CONFIGURACIÓN MAIL:
 DEFAULT_FROM_EMAIL = "subgerencia@heavensfruit.com"
