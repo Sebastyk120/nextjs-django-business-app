@@ -267,15 +267,28 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 
 # CONFIGURACIÓN MAIL:
 DEFAULT_FROM_EMAIL = "subgerencia@heavensfruit.com"
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.office365.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = DEFAULT_FROM_EMAIL
+DEFAULT_FROM_NAME = "Heavens Fruits"
+
+# Usar Mailjet como backend de email
+EMAIL_BACKEND = 'autenticacion.mailjet_backend.MailjetEmailBackend'
+
+# Verificar que las variables de entorno de Mailjet estén definidas
 try:
-    EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
-except KeyError:
-    raise ImproperlyConfigured('La variable de entorno EMAIL_HOST_PASSWORD no está definida')
+    MJ_APIKEY_PUBLIC = os.environ['MJ_APIKEY_PUBLIC']
+    MJ_APIKEY_PRIVATE = os.environ['MJ_APIKEY_PRIVATE']
+except KeyError as e:
+    raise ImproperlyConfigured(f'La variable de entorno {e} no está definida para Mailjet')
+
+# Configuración SMTP de respaldo (comentada)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.office365.com'
+# EMAIL_USE_TLS = True
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = DEFAULT_FROM_EMAIL
+# try:
+#     EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
+# except KeyError:
+#     raise ImproperlyConfigured('La variable de entorno EMAIL_HOST_PASSWORD no está definida')
 ADMIN_SITE_NAME = 'Administración Heavens Fruits'
 
 # Unfold Configuration
