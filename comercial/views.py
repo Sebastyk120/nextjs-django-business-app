@@ -25,7 +25,12 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.utils import get_column_letter
 from openpyxl.workbook import Workbook
-from xhtml2pdf import pisa
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 from mysite import settings
 from .forms import SearchForm, PedidoForm, EditarPedidoForm, EliminarPedidoForm, DetallePedidoForm, \
@@ -39,6 +44,269 @@ from .resources import obtener_datos_con_totales_cliente, crear_archivo_excel_cl
     crear_archivo_excel_enviar_cliente, obtener_datos_con_totales_enviar_cliente
 from .tables import PedidoTable, DetallePedidoTable, PedidoExportadorTable, CarteraPedidoTable, UtilidadPedidoTable, \
     ResumenPedidoTable, ReferenciasTable, SeguimienosTable, SeguimienosResumenTable
+from .pdf_functions_new import crear_pdf_resumen_pedido as crear_pdf_resumen_pedido_new
+from .pdf_functions_new import crear_pdf_resumen_semana as crear_pdf_resumen_semana_new
+
+
+# ----------- Funciones para generar PDF con ReportLab ---------------------
+def crear_pdf_resumen_pedido(pedido, detalles, total_cajas, total_peso, total_piezas):
+    """
+    Función para generar un PDF profesional con el resumen de un pedido usando ReportLab
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4),
+                           rightMargin=15, leftMargin=15,
+                           topMargin=20, bottomMargin=20)
+    
+    # Contenedor para los elementos del PDF
+    story = []
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    
+    # Estilo personalizado para el título
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=14,
+        spaceAfter=10,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#1a237e'),
+        fontName='Helvetica-Bold'
+    )
+    
+    # Estilo para subtítulos
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Heading3'],
+        fontSize=11,
+        spaceAfter=8,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#283593'),
+        fontName='Helvetica-Bold'
+    )
+    
+    # Título principal
+    title = Paragraph(f"RESUMEN PEDIDO #{pedido.id} - {pedido.fecha_solicitud.strftime('%d/%m/%Y') if pedido.fecha_solicitud else ''}", title_style)
+    story.append(title)
+    story.append(Spacer(1, 8))
+    
+    # Tabla de información del pedido con mejor diseño
+    info_data = [
+        ['Exportador', pedido.exportadora.nombre if pedido.exportadora else '', 'Cliente', pedido.cliente.nombre if pedido.cliente else ''],
+        ['Intermediario', pedido.intermediario.nombre if pedido.intermediario else 'N/A', 'Fecha Entrega', pedido.fecha_entrega.strftime('%d/%m/%Y') if pedido.fecha_entrega else ''],
+        ['Peso Bruto (kg)', f"{total_peso:.2f}", 'Piezas', str(total_piezas)],
+        ['Cajas Pedido', str(total_cajas), 'Destino', pedido.destino.codigo if pedido.destino else '']
+    ]
+    
+    info_table = Table(info_data, colWidths=[1.8*inch, 2.2*inch, 1.5*inch, 2.5*inch])
+    info_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e3f2fd')),
+        ('BACKGROUND', (2, 0), (2, -1), colors.HexColor('#e3f2fd')),
+        ('BACKGROUND', (1, 0), (1, -1), colors.white),
+        ('BACKGROUND', (3, 0), (3, -1), colors.white),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+        ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+        ('ALIGN', (3, 0), (3, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (1, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#1976d2'))
+    ]))
+    
+    story.append(info_table)
+    story.append(Spacer(1, 12))
+    
+    # Encabezado de la tabla de detalles
+    story.append(Paragraph("DETALLES DEL PEDIDO", subtitle_style))
+    story.append(Spacer(1, 6))
+    
+    # Datos de la tabla de detalles con columnas optimizadas
+    detalles_data = [['Fruta', 'Present.', 'Cajas', 'Peso\n(kg)', 'P.Bruto\n(kg)', 'Tipo\nCaja',
+                     'Referencia', 'Stick', 'Cont', 'Observaciones',
+                     'Precio', 'Utilid', 'Recup', 'Final', 'Profma']]
+    
+    for detalle in detalles:
+        obs = detalle.observaciones if detalle.observaciones else ''
+        obs_short = obs[:15] + '...' if len(obs) > 15 else obs
+        
+        detalles_data.append([
+            (detalle.fruta.nombre if detalle.fruta else '')[:10],
+            (detalle.presentacion.nombre if detalle.presentacion else '')[:8],
+            str(detalle.cajas_solicitadas),
+            f"{detalle.presentacion_peso:.1f}" if detalle.presentacion_peso else '',
+            f"{detalle.calcular_peso_bruto():.1f}",
+            (detalle.tipo_caja.nombre if detalle.tipo_caja else '')[:6],
+            (detalle.referencia.nombre if detalle.referencia else '')[:10],
+            'Sí' if detalle.stickers else 'No',
+            'Sí' if detalle.lleva_contenedor else 'No',
+            obs_short,
+            f"${detalle.valor_x_caja_usd - detalle.tarifa_utilidad - detalle.tarifa_recuperacion:.1f}" if detalle.valor_x_caja_usd else '',
+            f"${detalle.tarifa_utilidad:.1f}" if detalle.tarifa_utilidad else '',
+            f"${detalle.tarifa_recuperacion:.1f}" if detalle.tarifa_recuperacion else '',
+            f"${detalle.valor_x_caja_usd:.1f}" if detalle.valor_x_caja_usd else '',
+            f"${detalle.precio_proforma:.1f}" if detalle.precio_proforma else ''
+        ])
+    
+    # Crear tabla de detalles con anchos optimizados
+    col_widths = [0.65*inch, 0.6*inch, 0.45*inch, 0.45*inch, 0.5*inch, 0.5*inch,
+                  0.75*inch, 0.35*inch, 0.35*inch, 0.9*inch,
+                  0.5*inch, 0.5*inch, 0.5*inch, 0.5*inch, 0.6*inch]
+    
+    detalles_table = Table(detalles_data, colWidths=col_widths, repeatRows=1)
+    detalles_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1976d2')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 7),
+        ('FONTSIZE', (0, 1), (-1, -1), 6.5),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#fafafa')),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#1976d2')),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('WORDWRAP', (9, 0), (9, -1), True),
+    ]))
+    
+    # Alternar colores de filas para mejor legibilidad
+    for i in range(1, len(detalles_data)):
+        if i % 2 == 0:
+            detalles_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, i), (-1, i), colors.HexColor('#e8eaf6'))
+            ]))
+    
+    story.append(detalles_table)
+    
+    # Construir el PDF
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+
+def crear_pdf_resumen_semana(pedidos, semana, exportador_nombre):
+    """
+    Función para generar un PDF profesional con el resumen de exportaciones de la semana usando ReportLab
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4),
+                           rightMargin=12, leftMargin=12,
+                           topMargin=20, bottomMargin=20)
+    
+    # Contenedor para los elementos del PDF
+    story = []
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    
+    # Estilo personalizado para el título
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=14,
+        spaceAfter=10,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#1a237e'),
+        fontName='Helvetica-Bold'
+    )
+    
+    # Título principal
+    title_text = f"RESUMEN EXPORTACIONES - SEMANA {semana}"
+    if exportador_nombre:
+        title_text += f" - {exportador_nombre}"
+    
+    title = Paragraph(title_text, title_style)
+    story.append(title)
+    story.append(Spacer(1, 8))
+    
+    # Datos de la tabla de resumen con encabezados abreviados
+    resumen_data = [['Sem', 'Ord', 'Export', 'Cliente', 'Dest', 'Productos',
+                     'Caj\nSol', 'Caj\nEnv', 'Pal\nSol',
+                     'F.Entrega', 'Resp.Reserva', 'Est.Res',
+                     'AWB', 'Aerolinea', 'Ag.Carga', 'P.Bruto\nSol',
+                     'Est.Ped', 'Est.Doc', 'Comentarios']]
+    
+    for pedido in pedidos:
+        # Acortar textos largos
+        exportador = (pedido.exportadora.nombre if pedido.exportadora else '')[:10]
+        cliente = (pedido.cliente.nombre if pedido.cliente else '')[:12]
+        productos = pedido.variedades if pedido.variedades else ''
+        productos = productos[:20] + '...' if len(productos) > 20 else productos
+        resp_reserva = (pedido.responsable_reserva.nombre if pedido.responsable_reserva else '')[:10]
+        aerolinea = (pedido.aerolinea.nombre if pedido.aerolinea else '')[:10]
+        agencia = (pedido.agencia_carga.nombre if pedido.agencia_carga else '')[:10]
+        comentarios = pedido.observaciones_tracking if pedido.observaciones_tracking else ''
+        comentarios = comentarios[:20] + '...' if len(comentarios) > 20 else comentarios
+        
+        resumen_data.append([
+            str(pedido.semana) if pedido.semana else '',
+            str(pedido.id),
+            exportador,
+            cliente,
+            pedido.destino.codigo if pedido.destino else '',
+            productos,
+            str(pedido.total_cajas_solicitadas),
+            str(pedido.total_cajas_enviadas),
+            str(pedido.total_piezas_solicitadas),
+            pedido.fecha_entrega.strftime('%d/%m') if pedido.fecha_entrega else '',
+            resp_reserva,
+            (pedido.estatus_reserva or '')[:8],
+            (pedido.awb or '')[:12],
+            aerolinea,
+            agencia,
+            f"{pedido.total_peso_bruto_solicitado:.0f}" if pedido.total_peso_bruto_solicitado else '',
+            (pedido.estado_pedido or '')[:8],
+            (pedido.estado_documentos or '')[:8],
+            comentarios
+        ])
+    
+    # Crear tabla de resumen con anchos optimizados
+    col_widths = [0.28*inch, 0.35*inch, 0.65*inch, 0.8*inch, 0.4*inch, 0.85*inch,
+                  0.35*inch, 0.35*inch, 0.35*inch,
+                  0.5*inch, 0.65*inch, 0.5*inch,
+                  0.7*inch, 0.65*inch, 0.6*inch, 0.45*inch,
+                  0.5*inch, 0.5*inch, 0.85*inch]
+    
+    resumen_table = Table(resumen_data, colWidths=col_widths, repeatRows=1)
+    resumen_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1976d2')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 6),
+        ('FONTSIZE', (0, 1), (-1, -1), 5.5),
+        ('TOPPADDING', (0, 0), (-1, -1), 2),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        ('LEFTPADDING', (0, 0), (-1, -1), 2),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#fafafa')),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#1976d2')),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('WORDWRAP', (5, 0), (5, -1), True),
+        ('WORDWRAP', (18, 0), (18, -1), True),
+    ]))
+    
+    # Alternar colores de filas para mejor legibilidad
+    for i in range(1, len(resumen_data)):
+        if i % 2 == 0:
+            resumen_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, i), (-1, i), colors.HexColor('#e8eaf6'))
+            ]))
+    
+    story.append(resumen_table)
+    
+    # Construir el PDF
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
 
 
 # -----------Funcion para permisos por grupo ---------------------
@@ -2732,95 +3000,41 @@ def export_pdf_resumen_semana(request):
     else:
         exportador_nombre = None
 
-    # Generar la tabla con los datos filtrados
-    table = SeguimienosResumenTable(pedidos)
-    context = {
-        'table': table,
-        'semana': semana,
-        'exportador': exportador_nombre
-    }
-    html_string = render_to_string('seguimiento_resumen_pdf.html', context, request=request)
-
-    # Función para convertir HTML a PDF
-    def convert_html_to_pdf(source_html, output_filename):
-        result_file = open(output_filename, "w+b")
-        pisa_status = pisa.CreatePDF(source_html, dest=result_file)
-        result_file.close()
-        return pisa_status.err
-
-    # Generar el PDF
-    result = convert_html_to_pdf(html_string, 'output.pdf')
-
-    if result:
-        return HttpResponse("Error al generar el PDF", status=500)
-
-    with open('output.pdf', 'rb') as pdf:
-        response = HttpResponse(pdf.read(), content_type='application/pdf')
-        response['Content-Disposition'] = 'inline; filename="seguimiento_resumen.pdf"'
+    # Generar el PDF usando ReportLab
+    try:
+        pdf_buffer = crear_pdf_resumen_semana_new(pedidos, semana, exportador_nombre)
+        
+        response = HttpResponse(pdf_buffer.read(), content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="resumen_semana_{semana}.pdf"'
         return response
+    except Exception as e:
+        return HttpResponse(f"Error al generar el PDF: {str(e)}", status=500)
 
 
 @login_required(login_url=reverse_lazy('home'))
 def exportar_pdf_resumen_pedido(request, pedido_id):
-    start_time = time.time()
-
-    # Diccionario para almacenar los tiempos de las operaciones
-    tiempos = {}
-
     # Obtener el pedido y los detalles del pedido
     pedido = get_object_or_404(Pedido, pk=pedido_id)
     if not request.user.groups.filter(name=pedido.exportadora.nombre).exists():
         return HttpResponseForbidden("No tienes permiso para ver estos detalles del pedido")
-    tiempos['verificar_permisos'] = time.time() - start_time
 
     # Filtrar los detalles del pedido
     detalles = DetallePedido.objects.filter(pedido=pedido).select_related('pedido')
-    tiempos['filtrar_detalles'] = time.time() - start_time - tiempos['verificar_permisos']
 
     # Calcular totales
     total_cajas_solicitadas = detalles.aggregate(Sum('cajas_solicitadas'))['cajas_solicitadas__sum']
     total_peso_bruto = sum(detalle.calcular_peso_bruto() for detalle in detalles)
     total_piezas = math.ceil(sum(detalle.calcular_no_piezas() for detalle in detalles))
-    tiempos['calcular_totales'] = time.time() - start_time - tiempos['verificar_permisos'] - tiempos['filtrar_detalles']
 
-    # Generar la tabla con los datos filtrados
-    table = ResumenPedidoTable(detalles)
-    tiempos['generar_tabla'] = time.time() - start_time - tiempos['verificar_permisos'] - tiempos['filtrar_detalles'] - tiempos['calcular_totales']
-
-    # Contexto para la plantilla
-    context = {
-        'pedido': pedido,
-        'table': table,
-        'total_cajas_solicitadas': total_cajas_solicitadas,
-        'total_peso_bruto': total_peso_bruto,
-        'total_piezas': total_piezas
-    }
-
-    # Renderizar la plantilla a HTML
-    html_string = render_to_string('resumen_pedido_pdf.html', context, request=request)
-    tiempos['renderizar_html'] = time.time() - start_time - tiempos['verificar_permisos'] - tiempos['filtrar_detalles'] - tiempos['calcular_totales'] - tiempos['generar_tabla']
-
-    # Función para convertir HTML a PDF
-    def convert_html_to_pdf(source_html, output_filename):
-        result_file = open(output_filename, "w+b")
-        pisa_status = pisa.CreatePDF(source_html, dest=result_file)
-        result_file.close()
-        return pisa_status.err
-
-    # Generar el PDF
-    result = convert_html_to_pdf(html_string, 'output.pdf')
-    tiempos['generar_pdf'] = time.time() - start_time - tiempos['verificar_permisos'] - tiempos['filtrar_detalles'] - tiempos['calcular_totales'] - tiempos['generar_tabla'] - tiempos['renderizar_html']
-
-    if result:
-        return HttpResponse("Error al generar el PDF", status=500)
-
-    with open('output.pdf', 'rb') as pdf:
-        response = HttpResponse(pdf.read(), content_type='application/pdf')
+    # Generar el PDF usando ReportLab
+    try:
+        pdf_buffer = crear_pdf_resumen_pedido_new(pedido, detalles, total_cajas_solicitadas, total_peso_bruto, total_piezas)
+        
+        response = HttpResponse(pdf_buffer.read(), content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="resumen_pedido_{pedido_id}.pdf"'
-        tiempos['tiempo_total'] = time.time() - start_time
-
-    # Opcional: los tiempos se pueden guardar o imprimir al final si es necesario
-    return response
+        return response
+    except Exception as e:
+        return HttpResponse(f"Error al generar el PDF: {str(e)}", status=500)
 
 
 
