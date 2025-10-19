@@ -22,31 +22,20 @@ from .resources import (
 User = get_user_model()
 
 # ----------------------------------------------------------------------------
-# INLINE EJEMPLO (Opcional): DetallePedidoInline en PedidoAdmin
+# INLINE: DetallePedidoInline en PedidoAdmin
 # ----------------------------------------------------------------------------
 class DetallePedidoInline(TabularInline):
     """
     Para editar DetallePedido directamente desde el Pedido.
-    Ajusta fields, readonly_fields y extra según necesidades.
     """
     model = DetallePedido
-    extra = 0  # No crear filas extras por defecto
-    
-    # Campos a mostrar en el inline
+    extra = 0
     fields = ('fruta', 'presentacion', 'cajas_solicitadas', 'cajas_enviadas', 'diferencia', 'valor_x_caja_usd')
-    
-    # Campos de solo lectura
     readonly_fields = ('diferencia',)
-    
-    # Personalización de Unfold para inlines
-    show_change_link = True  # Muestra un enlace para editar el objeto relacionado
-    classes = ("collapse",)  # Permite colapsar/expandir la sección
-    
-    # Puedes agregar un verbose_name para personalizar el título de la sección
+    show_change_link = True
+    classes = ("collapse",)
     verbose_name = "Detalle del pedido"
     verbose_name_plural = "Detalles del pedido"
-    
-    # Opcional: Limitar número de objetos mostrados
     max_num = 20
 
 # ----------------------------------------------------------------------------
@@ -59,22 +48,16 @@ class PedidoAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin):
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
 
-    # Campos no editables vs editables
     campos_no_editables = [field.name for field in Pedido._meta.fields if not field.editable]
     campos_editables = [field.name for field in Pedido._meta.fields if field.editable]
 
-    # Muestra solo los campos más útiles en la lista. Evitar saturar la tabla
-    # Ejemplo: tomamos algunos campos clave
     list_display = (
         'id', 'cliente', 'fecha_entrega', 'estado_pedido',
         'awb', 'numero_factura', 'estado_factura',
         'valor_total_factura_usd', 'view_history'
     )
-    # Filtros
     list_filter = ('estado_pedido', 'exportadora', 'estado_factura', 'fecha_entrega')
-    # Orden por ID descendente
     ordering = ('-id',)
-    # Campos de búsqueda
     search_fields = (
         'id',
         'awb',
@@ -83,7 +66,6 @@ class PedidoAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin):
     )
     search_help_text = 'Buscar por número de pedido, AWB, factura o nombre del cliente.'
 
-    # Inline para editar DetallePedido desde Pedido (opcional)
     inlines = [DetallePedidoInline]
 
     def get_queryset(self, request):
@@ -91,8 +73,6 @@ class PedidoAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin):
         Sobrescribimos el queryset para cargar relaciones con select_related/prefetch_related.
         """
         qs = super().get_queryset(request)
-        # select_related para ForeignKey (cliente, intermediario, etc.)
-        # prefetch_related para relaciones inversas o M2M
         return (
             qs.select_related(
                 'cliente',
@@ -104,7 +84,7 @@ class PedidoAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin):
                 'agencia_carga',
                 'aerolinea',
             )
-            .prefetch_related('detallepedido_set')  # si deseas traer todos los detalles
+            .prefetch_related('detallepedido_set')
         )
 
     def view_history(self, obj):
@@ -129,18 +109,14 @@ class DetallePedidoAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin)
     campos_no_editables = [field.name for field in DetallePedido._meta.fields if not field.editable]
     campos_editables = [field.name for field in DetallePedido._meta.fields if field.editable]
 
-    # Ejemplo de list_display (seleccionar campos clave)
     list_display = (
         'id', 'pedido', 'fruta', 'presentacion',
         'cajas_solicitadas', 'cajas_enviadas', 'diferencia',
         'valor_x_caja_usd', 'valor_x_producto',
         'view_history'
     )
-    # Filtro
     list_filter = ('fruta', 'presentacion', 'tipo_caja', 'referencia')
-    # Orden
-    ordering = ('-pedido__id',)  # Ordena primero por ID de pedido
-    # Búsqueda
+    ordering = ('-pedido__id',)
     search_fields = (
         'pedido__id',
     )
@@ -203,7 +179,6 @@ class ClienteAdmin(ModelAdmin, ImportExportModelAdmin):
     ordering = ("nombre",)
     list_per_page = 20
 
-
 # ----------------------------------------------------------------------------
 # EXPORTADOR ADMIN
 # ----------------------------------------------------------------------------
@@ -213,7 +188,6 @@ class ExportadorAdmin(ModelAdmin, ImportExportModelAdmin):
     resource_class = ExportadorResource
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
-
 
 # ----------------------------------------------------------------------------
 # CONTENEDOR ADMIN
@@ -225,7 +199,6 @@ class ContenedorAdmin(ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
 
-
 # ----------------------------------------------------------------------------
 # FRUTA ADMIN
 # ----------------------------------------------------------------------------
@@ -235,7 +208,6 @@ class FrutaAdmin(ModelAdmin, ImportExportModelAdmin):
     resource_class = FrutaResource
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
-
 
 # ----------------------------------------------------------------------------
 # IATA ADMIN
@@ -247,7 +219,6 @@ class IataAdmin(ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
 
-
 # ----------------------------------------------------------------------------
 # PRESENTACION ADMIN
 # ----------------------------------------------------------------------------
@@ -258,12 +229,9 @@ class PresentacionAdmin(ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
 
-    # Campos a mostrar en la lista
     list_display = ('nombre', 'kilos')
-    # Campos de búsqueda
     search_fields = ('nombre',)
     search_help_text = 'Buscar por nombre de presentación.'
-    # Orden
     ordering = ('nombre',)
 
 # ----------------------------------------------------------------------------
@@ -284,7 +252,6 @@ class ReferenciasAdmin(ModelAdmin, ImportExportModelAdmin):
     search_fields = ('nombre',)
     search_help_text = 'Buscar por nombre de referencia'
 
-
 # ----------------------------------------------------------------------------
 # TIPO CAJA ADMIN
 # ----------------------------------------------------------------------------
@@ -294,7 +261,6 @@ class TipoCajaAdmin(ModelAdmin, ImportExportModelAdmin):
     resource_class = TipoCajaResource
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
-
 
 # ----------------------------------------------------------------------------
 # FILTRO PERSONALIZADO PARA CLIENTE PRESENTACION
@@ -311,9 +277,8 @@ class ClienteListFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(cliente__id(self.value()))
+            return queryset.filter(cliente__id=self.value())
         return queryset
-
 
 # ----------------------------------------------------------------------------
 # CLIENTE PRESENTACION ADMIN
@@ -326,7 +291,6 @@ class ClientePresentacionAdmin(ModelAdmin, ImportExportModelAdmin):
     resource_class = ClientePresentacionResource
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
-
 
 # ----------------------------------------------------------------------------
 # AUTORIZACION CANCELACION ADMIN
@@ -342,7 +306,6 @@ class AutorizacionCancelacionAdmin(ModelAdmin, ImportExportModelAdmin):
         'autorizado', 'fecha_solicitud', 'fecha_autorizacion'
     )
 
-
 # ----------------------------------------------------------------------------
 # AEROLINEA ADMIN
 # ----------------------------------------------------------------------------
@@ -352,7 +315,6 @@ class AerolineaAdmin(ModelAdmin, ImportExportModelAdmin):
     resource_class = AerolineaResource
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
-
 
 # ----------------------------------------------------------------------------
 # AGENCIA CARGA ADMIN
@@ -364,7 +326,6 @@ class AgenciaCargaAdmin(ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
 
-
 # ----------------------------------------------------------------------------
 # INTERMEDIARIO ADMIN
 # ----------------------------------------------------------------------------
@@ -375,7 +336,6 @@ class IntermediarioAdmin(ModelAdmin, ImportExportModelAdmin):
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
 
-
 # ----------------------------------------------------------------------------
 # SUBEXPORTADORA ADMIN
 # ----------------------------------------------------------------------------
@@ -385,7 +345,6 @@ class SubExportadoraAdmin(ModelAdmin, ImportExportModelAdmin):
     resource_class = SubExportadoraResource
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
-
 
 # ----------------------------------------------------------------------------
 # PRESENTACION REFERENCIA ADMIN
