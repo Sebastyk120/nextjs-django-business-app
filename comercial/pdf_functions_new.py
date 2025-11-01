@@ -308,9 +308,16 @@ def crear_pdf_resumen_semana(pedidos, semana, exportador_nombre):
         ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#1976d2')),
     ]))
     
-    # Alternar colores de filas para mejor legibilidad
+    # Alternar colores de filas para mejor legibilidad y resaltar pedidos cancelados
     for i in range(1, len(resumen_data)):
-        if i % 2 == 0:
+        # Verificar si el pedido está cancelado (columna 16 = estado_pedido)
+        pedido = pedidos[i-1]  # i-1 porque el primer elemento son los headers
+        if pedido.estado_pedido and pedido.estado_pedido.lower() == 'cancelado':
+            # Aplicar background rojo suave para pedidos cancelados
+            resumen_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, i), (-1, i), colors.HexColor('#ffebee'))
+            ]))
+        elif i % 2 == 0:
             resumen_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, i), (-1, i), colors.HexColor('#e8eaf6'))
             ]))
