@@ -10,6 +10,7 @@ origen_transferencia = (
     ('Mabelly Diaz', 'Mabelly Diaz'),
     ('Pedro Diaz Melo', 'Pedro Diaz Melo'),
     ('Valentina Garay', 'Valentina Garay'),
+    ('HEAVENS CO', 'HEAVENS CO'),
 )
 
 regimen = (
