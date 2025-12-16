@@ -53,6 +53,11 @@
 </nav>
 
 <body>
+    <div class="background-container">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
 <!-- Hero Section -->
 <div class="hero-section">
     <div class="container">
@@ -174,7 +179,7 @@
                     <a href="{% url 'pedido_list_general' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa fa-globe"></i> Pedidos General</a>
                     <a href="{% url 'utilidad_list_heavens' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa-solid fa-hand-holding-dollar"></i> Utilidades</a>
                     <a href="{% url 'cartera_list_heavens' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa fa-wallet"></i> Cartera</a>
-                    <a href="{% url 'comparador_cotizaciones' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa fa-bank"></i> Cotizaciones</a>
+                    <a href="{% url 'cotizacion_conjunta_usuario' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa-solid fa-file-invoice-dollar"></i> Cotización Conjunta</a>
                     <a href="{% url 'seguimiento_pedido_list_general' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa fa-plane"></i> Seguimiento Pedidos</a>
                     <a href="{% url 'resumen_seguimiento_list_heavens' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa fa-bookmark"></i> Resumen Semanal Pedidos</a>
                     <a href="{% url 'historicos' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa fa-clipboard-list"></i> Histórico De Movimientos General</a>
@@ -310,7 +315,7 @@
                 <p class="mb-0">Heaven's Fruits  SAS - Todos los derechos reservados © {% now "Y" %}</p>
             </div>
             <div class="col-md-6 text-md-end">
-                <p class="mb-0" style="font-size: 0.8em;">Desarrollado por Sebastian Melo - v2.0</p>
+                <p class="mb-0" style="font-size: 0.8em;">Desarrollado por Sebastian Melo - v2.5</p>
             </div>
         </div>
     </div>

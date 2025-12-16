@@ -48,9 +48,9 @@ class PedidoTable(tables.Table):
 
     def render_dias_de_vencimiento(self, value):
         if value <= 0:
-            return format_html(f'<span style="color: green;">{value}</span>')
+            return format_html('<span style="color: green;">{}</span>', value)
         else:
-            return format_html(f'<span style="color: red;">{value}</span>')
+            return format_html('<span style="color: red;">{}</span>', value)
 
     def render_tasa_representativa_usd_diaria(self, value):
         return format_currency(value)
@@ -131,11 +131,11 @@ class DetallePedidoTable(tables.Table):
 
     def render_afecta_utilidad(self, record):
         if record.afecta_utilidad is True:
-            return format_html('<span style="color: green;">✔</span>')
+            return format_html('<span style="color: green;">{}</span>', '✔')
         elif record.afecta_utilidad is False:
-            return format_html('<span style="color: red;">✘</span>')
+            return format_html('<span style="color: red;">{}</span>', '✘')
         else:
-            return format_html('<span style="color: blue;">Dcto</span>')
+            return format_html('<span style="color: blue;">{}</span>', 'Dcto')
 
     def render_tarifa_utilidad(self, value):
         return format_currency(value)
@@ -201,9 +201,9 @@ class PedidoExportadorTable(tables.Table):
 
     def render_dias_de_vencimiento(self, value):
         if value <= 0:
-            return format_html(f'<span style="color: green;">{value}</span>')
+            return format_html('<span style="color: green;">{}</span>', value)
         else:
-            return format_html(f'<span style="color: red;">{value}</span>')
+            return format_html('<span style="color: red;">{}</span>', value)
 
     def render_valor_total_factura_usd(self, value):
         return format_currency(value)
@@ -272,9 +272,9 @@ class CarteraPedidoTable(tables.Table):
 
     def render_dias_de_vencimiento(self, value):
         if value <= 0:
-            return format_html(f'<span style="color: green;">{value}</span>')
+            return format_html('<span style="color: green;">{}</span>', value)
         else:
-            return format_html(f'<span style="color: red;">{value}</span>')
+            return format_html('<span style="color: red;">{}</span>', value)
 
     def render_valor_total_factura_usd(self, value):
         return format_currency(value)
@@ -324,9 +324,9 @@ class UtilidadPedidoTable(tables.Table):
 
     def render_cobro_utilidad(self, record):
         if record.estado_utilidad == "Por Facturar" or record.estado_utilidad == "Facturada":
-            return format_html('<span style="color: green;">✔</span>')
+            return format_html('<span style="color: green;">{}</span>', '✔')
         else:
-            return format_html('<span style="color: red;">✘</span>')
+            return format_html('<span style="color: red;">{}</span>', '✘')
 
     def render_valor_total_utilidad_usd(self, value):
         return format_currency(value)
@@ -373,9 +373,9 @@ class ResumenPedidoTable(tables.Table):
 
     def render_lleva_contenedor(self, record):
         if record.lleva_contenedor is True:
-            return format_html('<span style="color: green;">✔</span>')
+            return format_html('<span style="color: green;">{}</span>', '✔')
         elif record.lleva_contenedor is False:
-            return format_html('<span style="color: red;">✘</span>')
+            return format_html('<span style="color: red;">{}</span>', '✘')
 
     def render_precio_und_caja(self, record):
         return format_currency(record.valor_x_caja_usd - record.tarifa_utilidad - record.tarifa_recuperacion)

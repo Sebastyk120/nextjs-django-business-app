@@ -112,17 +112,21 @@
                         <li><a class="dropdown-item" href="{% url 'cartera_list_ci_dorado' %}">Cartera CI Dorado</a></li>
                     </ul>
                 </li>
-                <!-- Cotizaciones -->
+                <!-- Costos y Tarifas -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                        aria-expanded="false">
-                        <i class="bi bi-bank2"></i> Cotizaciones
+                        <i class="bi bi-currency-exchange"></i> Costos y Tarifas
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark">
-                        <li><a class="dropdown-item" href="{% url 'comparador_cotizaciones' %}">Validador Cot</a></li>
-                        <li><a class="dropdown-item" href="{% url 'cotizacion_etnico' %}">Cotización Etnico</a></li>
-                        <li><a class="dropdown-item" href="{% url 'cotizacion_fieldex' %}">Cotización Fieldex</a></li>
-                        <li><a class="dropdown-item" href="{% url 'cotizacion_juan' %}">Cotización Juan Matas</a></li>
+                        <li><a class="dropdown-item" href="{% url 'cotizacion_conjunta_usuario' %}">Cotización Conjunta</a></li>
+                        <li><a class="dropdown-item" href="{% url 'historial_cotizaciones' %}">Historial Cotizaciones</a></li>
+                        <li><a class="dropdown-item" href="{% url 'tarifas_aereas' %}">Tarifas Aéreas</a></li>
+                        <li><a class="dropdown-item" href="{% url 'gestion_precios_fruta' %}">Gestión Precios Fruta</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'admin:comercial_costosestibado_changelist' %}">Costos Estibado</a></li>
+                        <li><a class="dropdown-item" href="{% url 'admin:comercial_insumo_changelist' %}">Insumos</a></li>
+                        <li><a class="dropdown-item" href="{% url 'admin:comercial_clientepresentacion_changelist' %}">Cliente Presentación</a></li>
                     </ul>
                 </li>
                 <!-- Seguimiento Y Resumen Exportaciones -->

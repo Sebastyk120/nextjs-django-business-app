@@ -56,6 +56,6 @@ class InventarioTable(tables.Table):
         stock_actual = (record.compras_efectivas + record.saldos_iniciales) - (
                 record.salidas + record.traslado_propio + record.traslado_remisionado + record.ventas)
         if stock_actual < 0:
-            return format_html(f'<span style="color: red;">{stock_actual}</span>')
+            return format_html('<span style="color: red;">{}</span>', stock_actual)
         else:
-            return format_html(f'<span style="color: black;">{stock_actual}</span>')
+            return format_html('<span style="color: black;">{}</span>', stock_actual)

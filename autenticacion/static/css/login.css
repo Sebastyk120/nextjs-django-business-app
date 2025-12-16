@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
     --primary-color: #2A9D8F; /* Verde Esmeralda Sofisticado */
@@ -13,7 +13,7 @@
     --input-focus-border: var(--primary-color);
     --danger-color: #dc3545;
     --success-color: #198754;
-    --font-family-main: 'Inter', sans-serif;
+    --font-family-main: 'Outfit', sans-serif;
     --box-shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.08);
     --box-shadow-strong: 0 8px 25px rgba(42, 157, 143, 0.2); /* Sombra con color primario */
 }
