@@ -618,28 +618,6 @@ UNFOLD = {
                     },
                 ],
             },
-            {
-                "title": _("Cartera"),
-                "separator": True,
-                "collapsible": True,
-                "items": [
-                    {
-                        "title": _("Cotización Etnico"),
-                        "icon": "attach_money",
-                        "link": reverse_lazy("admin:cartera_cotizacionetnico_changelist"),
-                    },
-                    {
-                        "title": _("Cotización Fieldex"),
-                        "icon": "monetization_on",
-                        "link": reverse_lazy("admin:cartera_cotizacionfieldex_changelist"),
-                    },
-                    {
-                        "title": _("Cotización Juan"),
-                        "icon": "paid",
-                        "link": reverse_lazy("admin:cartera_cotizacionjuan_changelist"),
-                    },
-                ],
-            },
         ],
     },
     "STYLES": [
