@@ -19,7 +19,6 @@ urlpatterns = [
     path('autenticacion/', include('autenticacion.urls')),
     path('comercial/', include('comercial.urls')),
     path('inventarios/', include('inventarios.urls')),
-    path('cartera/', include('cartera.urls')),
     path('nacionales/', include('nacionales.urls')),
     path('', LandingPageView.as_view(), name='landing_page'),
     path('en/', EnglishLandingPageView.as_view(), name='english_landing_page'),  # Add English version URL

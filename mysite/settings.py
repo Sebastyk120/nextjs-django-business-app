@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'simple_history',
     'widget_tweaks',
-    'cartera.apps.CarteraConfig',
     'comercial.apps.ComercialConfig',
     'inventarios.apps.InventariosConfig',
     'nacionales.apps.NacionalesConfig',
