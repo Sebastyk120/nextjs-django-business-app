@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'inventarios.apps.InventariosConfig',
     'nacionales.apps.NacionalesConfig',
     'captcha',
+    'corsheaders',
 ]
 
 SITE_ID = 1  # Added for sitemaps
@@ -69,6 +70,7 @@ SITE_ID = 1  # Added for sitemaps
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -245,14 +247,24 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 ALLOWED_HOSTS = [
-    'heavens-server-private.up.railway.app', 'localhost',
+    'heavens-server-private.up.railway.app', 'localhost', '127.0.0.1',
     'heavensfruit.com', 'www.heavensfruit.com',
 ]
-CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app", "https://*.heavensfruit.com"]
+CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app", "https://*.heavensfruit.com", "http://localhost:3000", "http://127.0.0.1:3000"]
+
+CORS_ALLOWED_ORIGINS = [
+    "https://heavens-server-private.up.railway.app",
+    "https://heavensfruit.com",
+    "https://www.heavensfruit.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 CORS_ORIGINS_WHITELIST = ["https://heavens-server-private.up.railway.app",
                           "https://heavensfruit.com",
-                          "https://www.heavensfruit.com",]
+                          "https://www.heavensfruit.com",
+                          "http://localhost:3000",
+                          "http://127.0.0.1:3000",]
 
 # Configuración adicional de sesiones para optimizar memoria
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -615,28 +627,6 @@ UNFOLD = {
                         "title": _("Balance Proveedor"),
                         "icon": "account_balance",
                         "link": reverse_lazy("admin:nacionales_balanceproveedor_changelist"),
-                    },
-                ],
-            },
-            {
-                "title": _("Cartera"),
-                "separator": True,
-                "collapsible": True,
-                "items": [
-                    {
-                        "title": _("Cotización Etnico"),
-                        "icon": "attach_money",
-                        "link": reverse_lazy("admin:cartera_cotizacionetnico_changelist"),
-                    },
-                    {
-                        "title": _("Cotización Fieldex"),
-                        "icon": "monetization_on",
-                        "link": reverse_lazy("admin:cartera_cotizacionfieldex_changelist"),
-                    },
-                    {
-                        "title": _("Cotización Juan"),
-                        "icon": "paid",
-                        "link": reverse_lazy("admin:cartera_cotizacionjuan_changelist"),
                     },
                 ],
             },
