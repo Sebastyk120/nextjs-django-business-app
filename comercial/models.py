@@ -15,7 +15,6 @@ from django.utils import timezone
 from simple_history.models import HistoricalRecords
 from .choices import motivo_nota, estatus_reserva_list, estado_documentos_list
 
-
 class Iata(models.Model):
     codigo = models.CharField(max_length=3, unique=True)
     ciudad = models.CharField(max_length=25)
@@ -50,6 +49,7 @@ class TipoCaja(models.Model):
 
 class Contenedor(models.Model):
     nombre = models.CharField(max_length=255, verbose_name="Nombre del Contenedor", unique=True)
+    precio = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2, verbose_name="Precio COP", null=True, blank=True)
 
     class Meta:
         ordering = ['nombre']
@@ -61,31 +61,13 @@ class Contenedor(models.Model):
 class Referencias(models.Model):
     nombre = models.CharField(max_length=255, verbose_name="Referencia")
     referencia_nueva = models.CharField(max_length=255, verbose_name="Referencia Nueva", blank=True, null=True)
-    contenedor = models.ForeignKey(
-        Contenedor, on_delete=models.CASCADE, verbose_name="Contenedor", null=True, blank=True
-    )
-    cant_contenedor = models.IntegerField(
-        validators=[MinValueValidator(0)],
-        verbose_name="Cantidad Cajas En Contenedor", null=True, blank=True
-    )
-    precio = models.DecimalField(
-        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
-        verbose_name="Precio", null=True, blank=True
-    )
+    contenedor = models.ForeignKey(Contenedor, on_delete=models.CASCADE, verbose_name="Contenedor", null=True, blank=True)
+    cant_contenedor = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Cantidad Cajas En Contenedor", null=True, blank=True)
+    precio = models.DecimalField( validators=[MinValueValidator(0)], max_digits=10, decimal_places=2, verbose_name="Precio", null=True, blank=True )
     exportador = models.ForeignKey(Exportador, on_delete=models.CASCADE, verbose_name="Exportador")
-    cantidad_pallet_con_contenedor = models.IntegerField(
-        validators=[MinValueValidator(0)],
-        verbose_name="Cajas Pallet Contenedor", null=True, blank=True
-    )
-    cantidad_pallet_sin_contenedor = models.IntegerField(
-        validators=[MinValueValidator(0)],
-        verbose_name="Cajas Pallet Sin Contenedor", null=True, blank=True
-    )
-    porcentaje_peso_bruto = models.DecimalField(
-        max_digits=5, decimal_places=2,
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
-        verbose_name="Porcentaje de Peso Bruto",
-    )
+    cantidad_pallet_con_contenedor = models.IntegerField( validators=[MinValueValidator(0)], verbose_name="Cajas Pallet Contenedor", null=True, blank=True)
+    cantidad_pallet_sin_contenedor = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Cajas Pallet Sin Contenedor", null=True, blank=True)
+    porcentaje_peso_bruto = models.DecimalField(max_digits=5, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(100)], verbose_name="Porcentaje de Peso Bruto")
 
     class Meta:
         ordering = ['nombre']
@@ -136,6 +118,22 @@ class Presentacion(models.Model):
         return f'{self.nombre} - {self.kilos}'
 
 
+class Insumo(models.Model):
+    nombre = models.CharField(max_length=255, verbose_name="Insumo")
+    precio = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2, verbose_name="Precio", null=True, blank=True)
+    unidad_medida = models.CharField(max_length=20, verbose_name="Unidad de Medida", null=True, blank=True)
+
+    class Meta:
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f'{self.nombre} - {self.unidad_medida} -$ {self.precio}'
+
+
+    # Modelo PresentacionInsumo eliminado; el costo de insumos
+    # se calcula exclusivamente desde PresentacionInsumoCliente.
+
+
 class Fruta(models.Model):
     nombre = models.CharField(max_length=20, unique=True)
     descripcion = models.TextField(verbose_name="Descripción", blank=True, null=True)
@@ -152,20 +150,88 @@ class Fruta(models.Model):
 
 
 class ClientePresentacion(models.Model):
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    """
+    Configuración de presentación para un cliente específico
+    """
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='presentaciones_config')
     presentacion = models.ForeignKey(Presentacion, on_delete=models.CASCADE)
     fruta = models.ForeignKey(Fruta, on_delete=models.CASCADE)
+    exportador = models.ForeignKey(
+        Exportador, on_delete=models.CASCADE,
+        verbose_name="Exportador Proveedor",
+        null=True, blank=True
+    )
+    referencia = models.ForeignKey(
+        Referencias, on_delete=models.CASCADE,
+        verbose_name="Referencia (Caja)",
+        limit_choices_to={'exportador': models.F('exportador')},
+        null=True, blank=True
+    )
+
+    # Mano de obra se movió a CostoPresentacionCliente
+    fecha_creacion = models.DateTimeField(default=timezone.now)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    activo = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ['cliente']
-        unique_together = ('cliente', 'presentacion', 'fruta')
+        ordering = ['cliente', 'fruta']
+        unique_together = ('cliente', 'presentacion', 'fruta', 'exportador')
+        verbose_name = "Cliente Presentación"
+        verbose_name_plural = "Clientes Presentaciones"
 
     def __str__(self):
-        # Manejar ausencia de IDs
         cliente_str = self.cliente.nombre if self.cliente_id else "SIN CLIENTE"
-        pres_str = f"{self.presentacion.nombre} - {self.presentacion.kilos}" if self.presentacion_id else "SIN PRESENTACIÓN"
+        pres_str = f"{self.presentacion.nombre} - {self.presentacion.kilos}kg" if self.presentacion_id else "SIN PRESENTACIÓN"
         fruta_str = self.fruta.nombre if self.fruta_id else "SIN FRUTA"
-        return f'{cliente_str} -P: {pres_str} - {fruta_str}'
+        exp_str = self.exportador.nombre if self.exportador_id else "SIN EXPORTADOR"
+        return f'{cliente_str} | {fruta_str} | {pres_str} | {exp_str}'
+
+    @property
+    def costo_total_insumos(self):
+        """Suma el costo de insumos SOLO personalizados por cliente"""
+        costo_total = Decimal('0')
+        for pic in PresentacionInsumoCliente.objects.filter(cliente_presentacion=self).select_related('insumo'):
+            cantidad = pic.cantidad_efectiva
+            costo_total += cantidad * (pic.insumo.precio or Decimal('0'))
+        return costo_total
+
+
+class PresentacionInsumoCliente(models.Model):
+    """
+    Permite override de insumos específicos para un cliente
+    Si no existe aquí, se hereda de PresentacionInsumo
+    """
+    cliente_presentacion = models.ForeignKey(
+        'ClientePresentacion', on_delete=models.CASCADE,
+        related_name='insumos_personalizados'
+    )
+    insumo = models.ForeignKey(Insumo, on_delete=models.CASCADE)
+    cantidad = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Cantidad Personalizada", null=True, blank=True
+    )
+
+    class Meta:
+        ordering = ['cliente_presentacion']
+        unique_together = ['cliente_presentacion', 'insumo']
+        verbose_name = "Presentación Insumo Cliente"
+        verbose_name_plural = "Presentaciones Insumos Clientes"
+
+    def __str__(self):
+        cantidad_str = self.cantidad if self.cantidad else "Default"
+        return f"{self.cliente_presentacion} - {self.insumo} (x{cantidad_str})"
+
+    @property
+    def cantidad_efectiva(self):
+        """Retorna cantidad personalizada; si no hay, 0 (sin insumo)"""
+        if self.cantidad is not None:
+            return self.cantidad
+        return Decimal('0')
+
+    @property
+    def costo_total(self):
+        """Costo total considerando cantidad efectiva"""
+        return self.cantidad_efectiva * (self.insumo.precio or Decimal('0'))
 
 
 class PresentacionReferencia(models.Model):
@@ -192,6 +258,35 @@ class PresentacionReferencia(models.Model):
         return f"Refe: {ref_str} Presen: {pres_str} -Marca: {caja_str} -Fruta {fruta_str}"
 
 
+
+
+
+class ListaPreciosFrutaExportador(models.Model):
+    fruta = models.ForeignKey(Fruta, on_delete=models.CASCADE)
+    exportadora = models.ForeignKey(Exportador, on_delete=models.CASCADE)
+    precio_kilo = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2, verbose_name="Precio Kg", null=True, blank=True)
+    fecha = models.DateField(auto_now=True, verbose_name='Fecha Ultima Actualización')
+    precio_anterior = models.DecimalField(validators=[MinValueValidator(0)], max_digits=10, decimal_places=2, verbose_name="Precio Anterior", null=True, blank=True)
+
+    class Meta:
+        ordering = ['fruta', 'exportadora', '-fecha']
+        unique_together = [['fruta', 'exportadora']]
+
+    def __str__(self):
+        return f"{self.exportadora} - {self.fruta} - $ {self.precio_kilo}/kg"
+
+
+@receiver(pre_save, sender=ListaPreciosFrutaExportador)
+def guardar_precio_anterior_fruta(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old_instance = ListaPreciosFrutaExportador.objects.get(pk=instance.pk)
+            if old_instance.precio_kilo != instance.precio_kilo:
+                instance.precio_anterior = old_instance.precio_kilo
+        except ListaPreciosFrutaExportador.DoesNotExist:
+            pass
+
+
 class AgenciaCarga(models.Model):
     nombre = models.CharField(max_length=50, verbose_name="Agencia Carga", unique=True)
 
@@ -211,6 +306,822 @@ class Aerolinea(models.Model):
 
     def __str__(self):
         return self.nombre
+
+
+class TarifaAerea(models.Model):
+    aerolinea = models.ForeignKey(Aerolinea, on_delete=models.CASCADE, related_name='tarifas')
+    destino = models.ForeignKey(Iata, on_delete=models.CASCADE, verbose_name="Destino")
+    tarifa_por_kilo = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Tarifa USD/Kg"
+    )
+    fecha = models.DateField(auto_now=True, verbose_name='Fecha Ultima Actualización')
+    es_activa = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['aerolinea', 'destino', '-fecha']
+        unique_together = [['aerolinea', 'destino']]
+        verbose_name_plural = "Tarifas Aéreas"
+
+    def __str__(self):
+        return f'{self.aerolinea.nombre} → {self.destino.codigo} - ${self.tarifa_por_kilo}/kg'
+
+
+class CostoPresentacionCliente(models.Model):
+    """
+    MODELO CENTRAL: Costo COMPLETO de una presentación para un cliente
+    considerando aerolinea, destino y tipo de acuerdo.
+    """
+    cliente_presentacion = models.ForeignKey(
+        ClientePresentacion, on_delete=models.CASCADE,
+        related_name='costos_contextuales'
+    )
+    # Aerolínea y Destino se gestionan en la cotización, no se almacenan aquí
+
+    # COSTOS DE EMPAQUE
+    mano_obra_cop = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=12, decimal_places=2,
+        verbose_name="Mano de Obra COP por Kg", default=0
+    )
+
+    deshidratacion_fruta = models.DecimalField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)], max_digits=5, decimal_places=2,
+        verbose_name="Deshidratación Fruta (%)", default=0,
+        help_text="Porcentaje de deshidratación a sumar por caja. Ej: 1.25 aplica +1.25% sobre los kilos de la presentación"
+    )
+
+    # MARGEN / UTILIDAD
+    margen_adicional_usd = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Margen Adicional USD por Caja", default=0,
+        help_text="Margen que aplicas a esta venta específica / se divide en Heavens y Exportador"
+    )
+
+    # CONTROL
+    es_activo = models.BooleanField(default=True, verbose_name="¿Es Activo?")
+    fecha_inicio = models.DateField(auto_now_add=True, verbose_name="Fecha Inicio Vigencia")
+    fecha_fin = models.DateField(
+        null=True, blank=True,
+        verbose_name="Fecha Fin Vigencia (dejar vacío para vigencia indefinida)"
+    )
+    aprobada = models.BooleanField(default=False)
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
+    trm_aprobacion = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    desglose_aprobado = models.JSONField(null=True, blank=True, default=None)
+
+    class Meta:
+        ordering = ['-fecha_inicio']
+        unique_together = ['cliente_presentacion']
+        indexes = [
+            models.Index(fields=['cliente_presentacion']),
+            models.Index(fields=['es_activo']),
+        ]
+        verbose_name = "Costo Presentación Cliente"
+        verbose_name_plural = "Costos Presentaciones Clientes"
+
+    def __str__(self):
+        return f"{self.cliente_presentacion}"
+
+    # ==================== GETTERS DE COSTOS ====================
+
+    @property
+    def costo_insumos(self):
+        """Costo de insumos de la presentación"""
+        return self.cliente_presentacion.costo_total_insumos
+
+    @property
+    def costo_fruta_por_caja(self):
+        try:
+            precio_fruta = ListaPreciosFrutaExportador.objects.get(
+                fruta=self.cliente_presentacion.fruta,
+                exportadora=self.cliente_presentacion.exportador
+            )
+            kilos_por_caja = self.cliente_presentacion.presentacion.kilos or Decimal('0')
+            precio_kilo = precio_fruta.precio_kilo or Decimal('0')
+            return kilos_por_caja * precio_kilo
+        except ListaPreciosFrutaExportador.DoesNotExist:
+            return Decimal('0')
+
+    def costo_contenedor_por_caja(self, use_contenedor=None):
+        referencia = self.cliente_presentacion.referencia
+        flag = use_contenedor if use_contenedor is not None else bool(referencia.contenedor)
+        if not flag or not referencia.contenedor or not referencia.cant_contenedor:
+            return Decimal('0')
+        contenedor_precio = referencia.contenedor.precio or Decimal('0')
+        cant_cajas_por_contenedor = referencia.cant_contenedor or 0
+        if contenedor_precio <= 0 or cant_cajas_por_contenedor <= 0:
+            return Decimal('0')
+        return contenedor_precio / cant_cajas_por_contenedor
+
+    def costo_referencia_por_caja(self):
+        ref = self.cliente_presentacion.referencia
+        if not ref:
+            return Decimal('0')
+        precio_ref = ref.precio or Decimal('0')
+        if precio_ref <= 0:
+            return Decimal('0')
+        return precio_ref
+
+    @property
+    def costo_estibado_por_caja(self):
+        """
+        Costo de estibado (malla, esquineros, etc) prorrateado por caja
+        Usa costos generales de estibado
+        """
+        referencia = self.cliente_presentacion.referencia
+
+        try:
+            # Buscar el primer registro activo de costos de estibado
+            costos_estibado = CostosEstibado.objects.filter(es_activo=True).first()
+            if not costos_estibado:
+                return Decimal('0')
+            
+            cajas_por_pallet = (
+                referencia.cantidad_pallet_con_contenedor
+                if referencia.contenedor else
+                referencia.cantidad_pallet_sin_contenedor
+            ) or 1
+
+            costo_total_pallet = costos_estibado.costo_total
+
+            return costo_total_pallet / cajas_por_pallet
+        except Exception:
+            return Decimal('0')
+
+    def costo_estibado_por_caja_prorrateado(self, total_cajas_pedido=1, use_contenedor=None):
+        """
+        Costo de estibado prorrateado según el total de cajas del pedido
+        Usa costos generales de estibado
+        """
+        referencia = self.cliente_presentacion.referencia
+        try:
+            # Buscar el primer registro activo de costos de estibado
+            costos_estibado = CostosEstibado.objects.filter(es_activo=True).first()
+            if not costos_estibado:
+                return Decimal('0')
+            
+            with_contenedor = use_contenedor if use_contenedor is not None else bool(referencia.contenedor)
+            cajas_por_pallet = (
+                referencia.cantidad_pallet_con_contenedor
+                if with_contenedor else
+                referencia.cantidad_pallet_sin_contenedor
+            )
+            if not cajas_por_pallet or cajas_por_pallet <= 0:
+                return Decimal('0')
+            
+            costo_total_pallet = costos_estibado.costo_total
+            
+            if total_cajas_pedido and total_cajas_pedido > 0:
+                pallets = Decimal(math.ceil(float(Decimal(total_cajas_pedido) / Decimal(cajas_por_pallet))))
+                return (costo_total_pallet * pallets) / Decimal(total_cajas_pedido)
+            return Decimal('0')
+        except Exception:
+            return Decimal('0')
+
+    def tarifa_aerea_por_caja(self, aerolinea_id=None, destino_id=None):
+        """Calcula la tarifa aérea por caja usando el peso bruto (deshidratación + peso caja)"""
+        if not aerolinea_id or not destino_id:
+            return Decimal('0')
+        try:
+            tarifa = TarifaAerea.objects.get(
+                aerolinea_id=aerolinea_id,
+                destino_id=destino_id,
+                es_activa=True
+            )
+            # Usar kilos_peso_bruto para el flete (incluye deshidratación + peso bruto de la caja)
+            kilos_por_caja = self.kilos_peso_bruto()
+            tarifa_por_kilo = tarifa.tarifa_por_kilo or Decimal('0')
+            return kilos_por_caja * tarifa_por_kilo
+        except TarifaAerea.DoesNotExist:
+            return Decimal('0')
+
+    def costos_embarque_unitarios(self, aerolinea_id=None, destino_id=None):
+        """
+        Costos de embarque base (solo FOB, sin costos CIF).
+        Primero busca un registro específico para la combinación aerolinea-destino.
+        Si no existe, usa el registro por defecto.
+        """
+        try:
+            costos = None
+            # Primero buscar registro específico para la combinación aerolinea-destino
+            if aerolinea_id and destino_id:
+                costos = CostosUnicosEmbarque.objects.filter(
+                    aerolinea_id=aerolinea_id,
+                    destino_id=destino_id,
+                    es_activo=True
+                ).first()
+            
+            # Si no hay registro específico, usar el registro por defecto
+            if not costos:
+                costos = CostosUnicosEmbarque.objects.filter(
+                    aerolinea__isnull=True,
+                    destino__isnull=True,
+                    es_activo=True
+                ).first()
+            
+            if costos:
+                return (
+                    (costos.transporte_aeropuerto or Decimal('0')) +
+                    (costos.termo or Decimal('0')) +
+                    (costos.precinto or Decimal('0')) +
+                    (costos.aduana or Decimal('0')) +
+                    (costos.comision_bancaria or Decimal('0'))
+                )
+        except:
+            pass
+        return Decimal('0')
+
+    def costos_embarque_base_cop(self, aerolinea_id=None, destino_id=None):
+        """
+        Costos de embarque base en COP.
+        Primero busca un registro específico para la combinación aerolinea-destino.
+        Si no existe, usa el registro por defecto.
+        """
+        try:
+            costos = None
+            # Primero buscar registro específico para la combinación aerolinea-destino
+            if aerolinea_id and destino_id:
+                costos = CostosUnicosEmbarque.objects.filter(
+                    aerolinea_id=aerolinea_id,
+                    destino_id=destino_id,
+                    es_activo=True
+                ).first()
+            
+            # Si no hay registro específico, usar el registro por defecto
+            if not costos:
+                costos = CostosUnicosEmbarque.objects.filter(
+                    aerolinea__isnull=True,
+                    destino__isnull=True,
+                    es_activo=True
+                ).first()
+            
+            if costos:
+                return (
+                    (costos.transporte_aeropuerto or Decimal('0')) +
+                    (costos.termo or Decimal('0')) +
+                    (costos.precinto or Decimal('0')) +
+                    (costos.aduana or Decimal('0')) +
+                    (costos.comision_bancaria or Decimal('0'))
+                )
+        except:
+            pass
+        return Decimal('0')
+
+    def costos_cif_usd(self, aerolinea_id=None, destino_id=None):
+        """
+        Costos adicionales CIF en USD (due agent, due carrier, fito, certificado origen).
+        Busca primero un registro específico para la combinación aerolinea-destino.
+        Si no existe, usa el registro por defecto.
+        """
+        try:
+            costos = None
+            # Primero buscar registro específico para la combinación aerolinea-destino
+            if aerolinea_id and destino_id:
+                costos = CostosUnicosEmbarque.objects.filter(
+                    aerolinea_id=aerolinea_id,
+                    destino_id=destino_id,
+                    es_activo=True
+                ).first()
+            
+            # Si no hay registro específico, usar el registro por defecto
+            if not costos:
+                costos = CostosUnicosEmbarque.objects.filter(
+                    aerolinea__isnull=True,
+                    destino__isnull=True,
+                    es_activo=True
+                ).first()
+            
+            if costos:
+                return (
+                    (costos.due_agent_usd or Decimal('0')) +
+                    (costos.due_carrier_usd or Decimal('0')) +
+                    (costos.fito_usd or Decimal('0')) +
+                    (costos.certificado_origen_usd or Decimal('0'))
+                )
+        except:
+            pass
+        return Decimal('0')
+
+    # ==================== CALCULO DEL PRECIO FINAL ====================
+
+    def calcular_costo_total_por_caja(self, total_cajas_pedido=1, trm=Decimal('1'), cajas_item=None, use_contenedor=None, aerolinea_id=None, destino_id=None):
+        """
+        COSTO TOTAL POR CAJA (sin margen)
+
+        Args:
+            total_cajas_pedido: Total de cajas en el pedido (para prorratear costos únicos)
+            trm: Tasa de cambio (si es en pesos)
+
+        Returns:
+            Decimal: Costo total en USD
+        """
+        cop_total = (
+            (self.costo_insumos or Decimal('0')) +
+            (self.costo_fruta_por_caja or Decimal('0')) +
+            (self.costo_referencia_por_caja() or Decimal('0')) +
+            (self.costo_contenedor_por_caja(use_contenedor) or Decimal('0')) +
+            (self.costo_estibado_por_caja_prorrateado(cajas_item or total_cajas_pedido, use_contenedor) or Decimal('0')) +
+            ((self.mano_obra_cop or Decimal('0')) * (self.kilos_ajustados() or Decimal('0'))) +
+            ((self.costos_embarque_base_cop(aerolinea_id, destino_id) or Decimal('0')) / (total_cajas_pedido or 1))
+        )
+
+        usd_total = (cop_total / (trm or Decimal('1')))
+
+        # Incoterm (CIF/FOB) se aplica fuera de este método
+        
+        return usd_total
+
+    def calcular_precio_venta(self, total_cajas_pedido=1, trm=Decimal('1'),
+                              porcentaje_heavens=Decimal('35')):
+        """
+        PRECIO DE VENTA AL CLIENTE
+
+        Estructura de margen:
+        - 65% para Exportador
+        - 35% para Heavens Fruit (configurable)
+
+        Args:
+            total_cajas_pedido: Total de cajas en el pedido
+            trm: Tasa de cambio
+            porcentaje_heavens: Tu porcentaje de margen (default 35%)
+
+        Returns:
+            Dict con desglose de costos
+        """
+        costo_base = self.calcular_costo_total_por_caja(total_cajas_pedido, trm)
+        costo_base += (self.margen_adicional_usd or Decimal('0'))
+
+        porcentaje_exportador = Decimal('100') - (porcentaje_heavens or Decimal('0'))
+
+        if porcentaje_exportador == 0:
+            precio_final = costo_base
+            utilidad_heavens = Decimal('0')
+        else:
+            precio_final = costo_base / (porcentaje_exportador / Decimal('100'))
+            utilidad_heavens = precio_final - costo_base
+
+        return {
+            'costo_base': costo_base,
+            'margen_adicional': self.margen_adicional_usd,
+            'precio_final_usd': precio_final,
+            'utilidad_heavens_usd': utilidad_heavens,
+            'utilidad_exportador_usd': precio_final * (porcentaje_exportador / Decimal('100')) - (self.margen_adicional_usd or Decimal('0')),
+            'porcentaje_heavens': porcentaje_heavens,
+        }
+
+    def get_desglose_costos(self, total_cajas_pedido=1, trm=Decimal('1'), cajas_item=None, use_contenedor=None, aerolinea_id=None, destino_id=None):
+        return {
+            'insumos_usd': (self.costo_insumos or Decimal('0')) / (trm or Decimal('1')),
+            'fruta_usd': (self.costo_fruta_por_caja or Decimal('0')) / (trm or Decimal('1')),
+            'referencia_usd': (self.costo_referencia_por_caja() or Decimal('0')) / (trm or Decimal('1')),
+            'contenedor_usd': (self.costo_contenedor_por_caja(use_contenedor) or Decimal('0')) / (trm or Decimal('1')),
+            'estibado_usd': (self.costo_estibado_por_caja_prorrateado(cajas_item or total_cajas_pedido, use_contenedor) or Decimal('0')) / (trm or Decimal('1')),
+            'mano_obra_usd': (((self.mano_obra_cop or Decimal('0')) * (self.cliente_presentacion.presentacion.kilos or Decimal('0'))) / (trm or Decimal('1'))),
+            'costos_embarque_base_usd': ((self.costos_embarque_base_cop(aerolinea_id, destino_id) or Decimal('0')) / (total_cajas_pedido or 1)) / (trm or Decimal('1')),
+            # Costos CIF ya están en USD, solo se prorratean por caja
+            'costos_cif_usd': (self.costos_cif_usd(aerolinea_id, destino_id) or Decimal('0')) / (total_cajas_pedido or 1),
+            'tarifa_aerea_usd': (self.tarifa_aerea_por_caja(aerolinea_id, destino_id) or Decimal('0')),
+        }
+
+    def validar_campos_para_calculo(self, use_contenedor=None):
+        errores = []
+        cp = self.cliente_presentacion
+        ref = cp.referencia
+        use = use_contenedor if use_contenedor is not None else (bool(ref.contenedor) if ref else False)
+        kilos = cp.presentacion.kilos or Decimal('0')
+        if kilos <= 0:
+            errores.append(f'Presentación sin kilos (actual: {kilos})')
+        if not ref:
+            errores.append('Referencia no configurada')
+            return {'ok': False, 'errores': errores}
+        precio_ref = ref.precio or Decimal('0')
+        if precio_ref <= 0:
+            errores.append(f'Referencia "{ref.nombre}" sin precio (actual: {precio_ref})')
+        if use:
+            if not ref.contenedor_id:
+                errores.append(f'Referencia "{ref.nombre}" sin contenedor')
+            else:
+                precio_cont = ref.contenedor.precio or Decimal('0')
+                if precio_cont <= 0:
+                    errores.append(f'Contenedor "{ref.contenedor.nombre}" sin precio (actual: {precio_cont})')
+            if not ref.cant_contenedor or ref.cant_contenedor <= 0:
+                errores.append(f'Cantidad de cajas por contenedor inválida (actual: {ref.cant_contenedor})')
+            if not ref.cantidad_pallet_con_contenedor or ref.cantidad_pallet_con_contenedor <= 0:
+                errores.append(f'Cajas por pallet con contenedor inválidas (actual: {ref.cantidad_pallet_con_contenedor})')
+        else:
+            if not ref.cantidad_pallet_sin_contenedor or ref.cantidad_pallet_sin_contenedor <= 0:
+                errores.append(f'Cajas por pallet sin contenedor inválidas (actual: {ref.cantidad_pallet_sin_contenedor})')
+        try:
+            if not CostosEstibado.objects.filter(es_activo=True).exists():
+                errores.append('Costos de estibado generales no configurados')
+        except Exception:
+            pass
+        try:
+            precios = ListaPreciosFrutaExportador.objects.get(
+                fruta=cp.fruta,
+                exportadora=cp.exportador
+            )
+            if not precios.precio_kilo or precios.precio_kilo <= 0:
+                errores.append(f'Precio kilo fruta inválido (actual: {precios.precio_kilo}) para {cp.fruta} - {cp.exportador}')
+        except ListaPreciosFrutaExportador.DoesNotExist:
+            errores.append(f'Precio kilo fruta no configurado para {cp.fruta} - {cp.exportador}')
+        return {'ok': len(errores) == 0, 'errores': errores}
+
+    def pallets_necesarios(self, cajas_item=1):
+        referencia = self.cliente_presentacion.referencia
+        cajas_por_pallet = (
+            referencia.cantidad_pallet_con_contenedor if referencia.contenedor else referencia.cantidad_pallet_sin_contenedor
+        ) or 1
+        return Decimal(math.ceil(float(Decimal(cajas_item) / Decimal(cajas_por_pallet))))
+
+    def costo_por_kg_fob(self, cajas_item=1, total_cajas_pedido=1, trm=Decimal('1')):
+        kilos = self.cliente_presentacion.presentacion.kilos or Decimal('1')
+        desglose = self.get_desglose_costos(total_cajas_pedido=total_cajas_pedido, trm=trm, cajas_item=cajas_item)
+        base = (
+            desglose['insumos_usd'] +
+            desglose['fruta_usd'] +
+            desglose['referencia_usd'] +
+            desglose['contenedor_usd'] +
+            desglose['estibado_usd'] +
+            desglose['mano_obra_usd'] +
+            desglose['costos_embarque_base_usd']
+        )
+        return base / kilos
+
+    def costo_por_kg_cif(self, cajas_item=1, total_cajas_pedido=1, trm=Decimal('1')):
+        kilos = self.kilos_ajustados() or Decimal('1')
+        desglose = self.get_desglose_costos(total_cajas_pedido=total_cajas_pedido, trm=trm, cajas_item=cajas_item)
+        base = (
+            desglose['insumos_usd'] +
+            desglose['fruta_usd'] +
+            desglose['referencia_usd'] +
+            desglose['contenedor_usd'] +
+            desglose['estibado_usd'] +
+            desglose['mano_obra_usd'] +
+            desglose['costos_embarque_base_usd'] +
+            desglose['costos_cif_usd'] +
+            desglose['tarifa_aerea_usd']
+        )
+        return base / kilos
+
+    def kilos_ajustados(self):
+        """Retorna los kilos ajustados considerando la deshidratación"""
+        kilos = self.cliente_presentacion.presentacion.kilos or Decimal('0')
+        pct = self.deshidratacion_fruta or Decimal('0')
+        factor = (Decimal('1') + (pct / Decimal('100')))
+        return kilos * factor
+
+    def kilos_peso_bruto(self):
+        """
+        Retorna los kilos con peso bruto (deshidratación + porcentaje_peso_bruto)
+        Este es el peso real que se usa para calcular el flete aéreo CIF
+        """
+        kilos = self.cliente_presentacion.presentacion.kilos or Decimal('0')
+        pct_deshidratacion = self.deshidratacion_fruta or Decimal('0')
+        pct_peso_bruto = self.cliente_presentacion.referencia.porcentaje_peso_bruto or Decimal('0')
+        factor_deshidratacion = (Decimal('1') + (pct_deshidratacion / Decimal('100')))
+        factor_peso_bruto = (Decimal('1') + (pct_peso_bruto / Decimal('100')))
+        return kilos * factor_deshidratacion * factor_peso_bruto
+
+
+class CostosUnicosEmbarque(models.Model):
+    """Costos fijos por embarque (vinculados a aerolinea/destino)"""
+    aerolinea = models.ForeignKey(
+        Aerolinea, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='costos_embarque', verbose_name="Aerolinea (opcional)"
+    )
+    destino = models.ForeignKey(
+        Iata, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='costos_embarque', verbose_name="Destino (opcional)"
+    )
+
+    transporte_aeropuerto = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Transporte Aeropuerto", null=True, blank=True
+    )
+    termo = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Termoregistro", null=True, blank=True
+    )
+    precinto = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Precinto", null=True, blank=True
+    )
+    aduana = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Aduana", null=True, blank=True
+    )
+    comision_bancaria = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Comisión Bancaria", null=True, blank=True
+    )
+    # Costos CIF (guardados en USD, dependen de TRM al calcular)
+    due_agent_usd = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Due Agent (USD)", null=True, blank=True,
+        help_text="Costo en USD, solo aplica para negociación CIF"
+    )
+    due_carrier_usd = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Due Carrier (USD)", null=True, blank=True,
+        help_text="Costo en USD, solo aplica para negociación CIF"
+    )
+    fito_usd = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Fito (USD)", null=True, blank=True,
+        help_text="Costo en USD, solo aplica para negociación CIF"
+    )
+    certificado_origen_usd = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Certificado Origen (USD)", null=True, blank=True,
+        help_text="Costo en USD, solo aplica para negociación CIF"
+    )
+
+    fecha_actualizacion = models.DateField(auto_now=True)
+    es_activo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-fecha_actualizacion']
+        unique_together = [['aerolinea', 'destino']]
+        verbose_name = "Costos Únicos Embarque"
+        verbose_name_plural = "Costos Únicos Embarque"
+
+    def clean(self):
+        """
+        Validación para asegurar que solo exista un registro sin aerolinea ni destino.
+        Este registro sirve como costos FOB por defecto.
+        """
+        from django.core.exceptions import ValidationError
+        
+        # Si ambos campos son nulos, verificar que no exista otro registro igual
+        if self.aerolinea is None and self.destino is None:
+            existing = CostosUnicosEmbarque.objects.filter(
+                aerolinea__isnull=True,
+                destino__isnull=True
+            ).exclude(pk=self.pk)
+            
+            if existing.exists():
+                raise ValidationError(
+                    "Ya existe un registro de costos por defecto (sin aerolínea ni destino). "
+                    "Solo puede existir un único registro por defecto para los costos FOB."
+                )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        if self.aerolinea is None and self.destino is None:
+            return "Por Defecto (General) → General"
+        aero = self.aerolinea.nombre if self.aerolinea else "(Sin Aerolínea)"
+        dest = self.destino.codigo if self.destino else "(Sin Destino)"
+        return f"{aero} → {dest}"
+    
+    @property
+    def es_registro_por_defecto(self):
+        """Indica si este es el registro por defecto (sin aerolinea ni destino)"""
+        return self.aerolinea is None and self.destino is None
+
+    @property
+    def costo_total_base_cop(self):
+        """Costos base en COP (FOB y CIF)"""
+        return sum([
+            self.transporte_aeropuerto or Decimal('0'),
+            self.termo or Decimal('0'),
+            self.precinto or Decimal('0'),
+            self.aduana or Decimal('0'),
+            self.comision_bancaria or Decimal('0'),
+        ])
+
+    @property
+    def costos_cif_usd(self):
+        """Costos adicionales CIF en USD (due agent, due carrier, fito, certificado origen)"""
+        return sum([
+            self.due_agent_usd or Decimal('0'),
+            self.due_carrier_usd or Decimal('0'),
+            self.fito_usd or Decimal('0'),
+            self.certificado_origen_usd or Decimal('0'),
+        ])
+
+
+class CostosEstibado(models.Model):
+    """Costos generales de estibado que aplican a todas las cotizaciones"""
+    nombre = models.CharField(
+        max_length=100, verbose_name="Nombre/Descripción",
+        default="Costos Estibado General",
+        help_text="Identificador para este conjunto de costos"
+    )
+
+    estiba = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Estiba", null=True, blank=True
+    )
+    malla_tela = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Malla Tela", null=True, blank=True
+    )
+
+    malla_termica = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Malla Termica", null=True, blank=True
+    )
+
+    esquineros_zuncho = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Esquineros Zuncho", null=True, blank=True
+    )
+    entrega = models.DecimalField(
+        validators=[MinValueValidator(0)], max_digits=10, decimal_places=2,
+        verbose_name="Entrega", null=True, blank=True
+    )
+
+    fecha_actualizacion = models.DateField(auto_now=True)
+    es_activo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-fecha_actualizacion']
+        verbose_name = "Costos Estibado"
+        verbose_name_plural = "Costos Estibado"
+
+    def __str__(self):
+        return f"{self.nombre} - ${self.costo_total}"
+
+    @property
+    def costo_total(self):
+        """Suma de todos los costos de estibado"""
+        return sum([
+            self.estiba or Decimal('0'),
+            self.malla_tela or Decimal('0'),
+            self.malla_termica or Decimal('0'),
+            self.esquineros_zuncho or Decimal('0'),
+            self.entrega or Decimal('0')
+        ])
+
+
+class CotizacionConjuntaHistorico(models.Model):
+    """
+    Snapshot completo de una cotización conjunta aprobada.
+    Guarda toda la información utilizada en el cálculo para poder
+    visualizarla exactamente igual en cualquier momento futuro,
+    independientemente de cambios en los modelos base.
+    """
+    
+    # === CABECERA DE LA COTIZACIÓN ===
+    numero_cotizacion = models.CharField(
+        max_length=50, unique=True, verbose_name="Número de Cotización",
+        help_text="Identificador único generado automáticamente"
+    )
+    
+    # FKs para referencia (el snapshot JSON tiene los valores del momento)
+    cliente = models.ForeignKey(
+        Cliente, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='cotizaciones_historico', verbose_name="Cliente"
+    )
+    aerolinea = models.ForeignKey(
+        Aerolinea, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='cotizaciones_historico', verbose_name="Aerolínea"
+    )
+    destino = models.ForeignKey(
+        Iata, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='cotizaciones_historico', verbose_name="Destino"
+    )
+    
+    # Tipo de negociación
+    TIPO_NEGOCIACION_CHOICES = [
+        ('CIF', 'CIF'),
+        ('FOB', 'FOB'),
+    ]
+    tipo_negociacion = models.CharField(
+        max_length=3, choices=TIPO_NEGOCIACION_CHOICES, default='CIF',
+        verbose_name="Tipo de Negociación"
+    )
+    
+    # Parámetros de cálculo usados
+    trm = models.DecimalField(
+        max_digits=12, decimal_places=2, verbose_name="TRM Usado"
+    )
+    utilidad_general_pct = models.DecimalField(
+        max_digits=5, decimal_places=2, verbose_name="Utilidad General (%)"
+    )
+    heavens_pct = models.DecimalField(
+        max_digits=5, decimal_places=2, verbose_name="% Heavens"
+    )
+    exportador_pct = models.DecimalField(
+        max_digits=5, decimal_places=2, verbose_name="% Exportador"
+    )
+    
+    # Totales de la cotización
+    total_cajas = models.IntegerField(verbose_name="Total Cajas")
+    total_pallets = models.IntegerField(verbose_name="Total Pallets")
+    estibado_por_caja_usd = models.DecimalField(
+        max_digits=10, decimal_places=4, verbose_name="Estibado por Caja USD",
+        null=True, blank=True
+    )
+    
+    # === SNAPSHOTS COMPLETOS EN JSON ===
+    
+    # Snapshot de la cabecera con nombres (no solo IDs)
+    cabecera_snapshot = models.JSONField(
+        verbose_name="Cabecera Snapshot",
+        help_text="Nombres de cliente, aerolínea, destino tal como estaban en ese momento"
+    )
+    
+    # Snapshot de costos globales usados (embarque, estibado, tarifa aérea)
+    costos_globales_snapshot = models.JSONField(
+        verbose_name="Costos Globales Snapshot",
+        help_text="Costos de embarque, estibado y tarifa aérea usados en el cálculo"
+    )
+    
+    # Snapshot de todos los items/productos con su detalle completo
+    items_snapshot = models.JSONField(
+        verbose_name="Items Snapshot",
+        help_text="Lista completa de productos con todos los valores calculados y datos usados"
+    )
+    
+    # Resumen de totales calculados
+    totales_snapshot = models.JSONField(
+        verbose_name="Totales Snapshot",
+        help_text="Resumen de totales y utilidades de toda la cotización",
+        null=True, blank=True
+    )
+    
+    # === CONTROL Y AUDITORÍA ===
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
+    fecha_aprobacion = models.DateTimeField(
+        default=timezone.now, verbose_name="Fecha de Aprobación"
+    )
+    usuario = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='cotizaciones_aprobadas', verbose_name="Usuario que Aprobó"
+    )
+    notas = models.TextField(
+        null=True, blank=True, verbose_name="Notas",
+        help_text="Notas o comentarios adicionales sobre esta cotización"
+    )
+    
+    class Meta:
+        ordering = ['-fecha_aprobacion']
+        verbose_name = "Cotización Conjunta Histórico"
+        verbose_name_plural = "Cotizaciones Conjuntas Histórico"
+        indexes = [
+            models.Index(fields=['cliente', 'fecha_aprobacion']),
+            models.Index(fields=['numero_cotizacion']),
+        ]
+    
+    def __str__(self):
+        cliente_str = self.cliente.nombre if self.cliente else "SIN CLIENTE"
+        return f"{self.numero_cotizacion} - {cliente_str} ({self.fecha_aprobacion.strftime('%d/%m/%Y')})"
+    
+    @classmethod
+    def generar_numero_cotizacion(cls):
+        """Genera un número de cotización único basado en fecha y secuencial"""
+        from datetime import datetime
+        hoy = datetime.now()
+        prefijo = f"COT-{hoy.strftime('%Y%m%d')}"
+        
+        # Buscar el último número del día
+        ultimo = cls.objects.filter(
+            numero_cotizacion__startswith=prefijo
+        ).order_by('-numero_cotizacion').first()
+        
+        if ultimo:
+            try:
+                ultimo_num = int(ultimo.numero_cotizacion.split('-')[-1])
+                nuevo_num = ultimo_num + 1
+            except (ValueError, IndexError):
+                nuevo_num = 1
+        else:
+            nuevo_num = 1
+        
+        return f"{prefijo}-{nuevo_num:04d}"
+    
+    def get_item_by_fruta_presentacion(self, fruta_nombre, presentacion_nombre):
+        """Busca un item específico en el snapshot por fruta y presentación"""
+        if not self.items_snapshot:
+            return None
+        for item in self.items_snapshot:
+            meta = item.get('meta', {})
+            if meta.get('fruta') == fruta_nombre and meta.get('presentacion') == presentacion_nombre:
+                return item
+        return None
+    
+    @property
+    def resumen_productos(self):
+        """Retorna un resumen de productos para visualización rápida"""
+        if not self.items_snapshot:
+            return []
+        resumen = []
+        for item in self.items_snapshot:
+            meta = item.get('meta', {})
+            resumen.append({
+                'fruta': meta.get('fruta', 'N/A'),
+                'presentacion': meta.get('presentacion', 'N/A'),
+                'cajas': item.get('cajas', 0),
+                'precio_fob': item.get('precio_final_fob', 0),
+                'precio_cif': item.get('precio_final_cif', 0),
+                'utilidad_total': item.get('utilidad_total', 0),
+            })
+        return resumen
 
 
 class SubExportadora(models.Model):
@@ -511,7 +1422,7 @@ class Pedido(models.Model):
         if response.status_code == 200:
             data = response.json()
             df = pd.DataFrame(data)
-            df['vigenciadesde'] = pd.to_datetime(df['vigenciadesde'])
+            df.loc[:, 'vigenciadesde'] = pd.to_datetime(df['vigenciadesde'])
             df = df.sort_values('vigenciadesde')
             fecha_base = pd.to_datetime(fecha_base)
             df_filtrado = df[df['vigenciadesde'] <= fecha_base]
@@ -916,8 +1827,4 @@ def detalle_pedido_post_delete(sender, instance, **kwargs):
 @receiver(post_save, sender=Pedido)
 def actualizar_tasa_representativa_post_save(sender, instance, **kwargs):
     instance.actualizar_tasa_representativa()
-
-
-
-
 

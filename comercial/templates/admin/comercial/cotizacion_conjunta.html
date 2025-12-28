@@ -1,0 +1,393 @@
+{% extends "admin/base.html" %}
+{% load i18n unfold %}
+
+{% block breadcrumbs %}{% if not is_popup %}
+<div class="px-4 hf-breadcrumbs">
+  <div class="container mx-auto">
+    <ul class="flex flex-wrap">
+      {% url 'admin:index' as link %}
+      {% trans 'Inicio' as name %}
+      {% include 'unfold/helpers/breadcrumb_item.html' with link=link name=name %}
+      {% trans 'Cotización Conjunta' as name %}
+      {% include 'unfold/helpers/breadcrumb_item.html' with name=name %}
+    </ul>
+  </div>
+</div>
+{% endif %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div
+    class="container mx-auto max-w-6xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <h1 class="text-xl font-semibold text-gray-900 dark:text-white">{% trans "Cotización Conjunta" %}</h1>
+
+    <form method="post" class="mt-4">
+      {% csrf_token %}
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{% trans "Cliente" %}</label>
+          <select name="cliente"
+            class="mt-1 hf-input-wide rounded-md border border-gray-300 bg-white p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            required>
+            <option value="">--</option>
+            {% for c in clientes %}
+            <option value="{{ c.id }}" {% if c.id|stringformat:"s" == cliente_id %}selected{% endif %}>{{ c.nombre }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{% trans "Aerolínea" %}</label>
+          <select name="aerolinea"
+            class="mt-1 hf-input-wide rounded-md border border-gray-300 bg-white p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            required>
+            <option value="">--</option>
+            {% for a in aerolineas %}
+            <option value="{{ a.id }}" {% if a.id|stringformat:"s" == aerolinea_id %}selected{% endif %}>{{ a.nombre }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{% trans "Destino (IATA)" %}</label>
+          <select name="destino"
+            class="mt-1 hf-input-wide rounded-md border border-gray-300 bg-white p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            required>
+            <option value="">--</option>
+            {% for d in destinos %}
+            <option value="{{ d.id }}" {% if d.id|stringformat:"s" == destino_id %}selected{% endif %}>{{ d.codigo }} - {{ d.ciudad }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">TRM</label>
+          <input type="number" step="0.01" name="trm" value="{{ trm }}" placeholder="4000.00"
+            class="mt-1 hf-input rounded-md border border-gray-300 bg-white p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            required />
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{% trans "Tipo de negociación" %}</label>
+        <select name="tipo_negociacion"
+          class="mt-1 hf-input rounded-md border border-gray-300 bg-white p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+          <option value="CIF" {% if tipo_negociacion == 'CIF' %}selected{% endif %}>CIF</option>
+          <option value="FOB" {% if tipo_negociacion == 'FOB' %}selected{% endif %}>FOB</option>
+        </select>
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{% trans "% Utilidad General" %}</label>
+          <input type="number" step="1" min="0" max="100" name="utilidad_general_pct" value="{{ utilidad_general_pct }}"
+            class="mt-1 hf-input rounded-md border border-gray-300 bg-white p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{% blocktrans %}Porcentaje de utilidad sobre el costo FOB. Esta utilidad se divide entre Heavens y Exportador según los porcentajes indicados.{% endblocktrans %}</p>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{% trans "% Heavens (de la utilidad)" %}</label>
+            <input type="number" step="1" min="0" max="100" name="heavens_pct" value="{{ heavens_pct }}"
+              class="mt-1 hf-input rounded-md border border-gray-300 bg-white p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">{% trans "% Exportador (de la utilidad)" %}</label>
+            <input type="number" step="1" min="0" max="100" name="exportador_pct" value="{{ exportador_pct }}"
+              class="mt-1 hf-input rounded-md border border-gray-300 bg-white p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+          </div>
+        </div>
+      </div>
+
+      {% if errores_detalle %}
+      <div
+        class="mt-4 rounded-md border border-yellow-300 bg-yellow-50 p-4 text-yellow-900 dark:border-yellow-600 dark:bg-gray-900 dark:text-yellow-300">
+        <div class="mb-2 text-sm font-semibold">{% trans "Presentaciones con datos faltantes" %}</div>
+        <ul class="list-disc pl-5">
+          {% for e in errores_detalle %}
+          <li class="text-sm"><span class="font-medium">{{ e.nombre }}</span>:{% for err in e.errores %}<span
+              class="ml-2 hf-chip hf-chip-warning">{{ err }}</span>{% endfor %}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if cps %}
+      <div class="mt-6 overflow-x-auto">
+        <table class="hf-table">
+          <thead>
+            <tr>
+              <th>{% trans "Fruta" %}</th>
+              <th>{% trans "Presentación" %}</th>
+              <th class="num">{% trans "Kg" %}</th>
+              <th class="num">{% trans "Cajas" %}</th>
+              <th>{% trans "Contenedor" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cp in cps %}
+            <tr>
+              <td class="text-sm text-gray-900 dark:text-white">{{ cp.fruta }}</td>
+              <td class="text-sm text-gray-900 dark:text-white">{{ cp.presentacion }}</td>
+              <td class="num text-sm text-gray-900 dark:text-white">{{ cp.presentacion.kilos }}</td>
+              <td class="num">
+                <input type="number" min="0" step="1" name="cajas_{{ cp.id }}"
+                  value="{{ cp.entered_boxes|default_if_none:'' }}"
+                  class="hf-input-sm rounded-md border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+              </td>
+              <td>
+                <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+                  <input type="checkbox" name="cont_{{ cp.id }}" {% if cp.referencia.contenedor %}checked{% endif %}
+                    class="rounded" />
+                  {% trans "Usar" %}
+                </label>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      <div class="mt-6 flex items-center justify-end gap-3">
+        <button type="button" onclick="openInsumosModal()"
+          class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700">{% trans "Gestionar Insumos" %}</button>
+        <button type="submit"
+          class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">{% trans "Calcular" %}</button>
+        <button type="submit" name="aprobar" value="1"
+          class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700">{% trans "Aprobar y Congelar" %}</button>
+      </div>
+    </form>
+  </div>
+
+  {% if rows %}
+  <div
+    class="container mx-auto max-w-6xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    {% if global_errors %}
+    <div
+      class="mb-4 rounded-md border border-red-300 bg-red-50 p-4 text-red-900 dark:border-red-600 dark:bg-gray-900 dark:text-red-300">
+      <div class="mb-2 text-sm font-semibold">{% trans "Incidencias generales" %}</div>
+      <ul class="list-disc pl-5">
+        {% for g in global_errors %}
+        <li class="text-sm">{{ g }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% if errores_detalle %}
+    <div
+      class="mb-4 rounded-md border border-yellow-300 bg-yellow-50 p-4 text-yellow-900 dark:border-yellow-600 dark:bg-gray-900 dark:text-yellow-300">
+      <div class="mb-2 text-sm font-semibold">{% trans "Presentaciones con datos faltantes" %}</div>
+      <ul class="list-disc pl-5">
+        {% for e in errores_detalle %}
+        <li class="text-sm">
+          <span class="font-medium">{{ e.nombre }}</span>:
+          {% for err in e.errores %}
+          <span class="ml-2 hf-chip hf-chip-warning">{{ err }}</span>
+          {% endfor %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    <div class="hf-header">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{% trans "Resultados" %}</h2>
+      <div class="space-x-2">
+        <span class="hf-chip">{% trans "Total cajas" %}: {{ total_cajas }}</span>
+        <span class="hf-chip">{% trans "Total pallets" %}: {{ total_pallets }}</span>
+        {% if tipo_negociacion == 'CIF' and not cif_enabled %}
+        <span class="hf-chip hf-chip-warning">CIF deshabilitado: tarifa aérea no disponible o inactiva</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="mt-4 overflow-x-auto">
+      <table class="hf-table">
+        <thead>
+          <tr>
+            <th>{% trans "Fruta" %}</th>
+            <th class="num">{% trans "Kg Neto" %}</th>
+            <th class="num">{% trans "Kg CIF" %}</th>
+            <th class="num">{% trans "FOB $/Kg" %}</th>
+            <th class="num">{% trans "FOB $/Caja" %}</th>
+            <th class="num">{% trans "CIF $/Kg" %}</th>
+            <th class="num">{% trans "CIF $/Caja" %}</th>
+            <th class="num">{% trans "Precio Venta FOB $/Caja" %}</th>
+            <th class="num">{% trans "Precio Venta CIF $/Caja" %}</th>
+            <th class="num">{% trans "Cajas" %}</th>
+            <th class="num">{% trans "Pallets (item)" %}</th>
+            <th class="num">{% trans "Util Total $/Caja" %}</th>
+            <th class="num">{% trans "Util Heavens $/Caja" %}</th>
+            <th class="num">{% trans "Util Exportador $/Caja" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td class="text-sm text-gray-900 dark:text-white">{{ r.cp.fruta }}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">{{ r.kilos }}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">{% if cif_enabled %}{{ r.kilos_cif|floatformat:2 }}{% else %}N/A{% endif %}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">${{ r.fob_kg|floatformat:2 }}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">${{ r.fob_box|floatformat:2 }}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">{% if cif_enabled %}${{ r.cif_kg|floatformat:2 }}{% else %}N/A{% endif %}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">{% if cif_enabled %}${{ r.cif_box|floatformat:2 }}{% else %}N/A{% endif %}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">${{ r.precio_final_fob|floatformat:2 }}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">{% if cif_enabled %}${{ r.precio_final_cif|floatformat:2 }}{% else %}N/A{% endif %}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">{{ r.boxes }}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">{{ r.pallets_item }}</td>
+            <td class="num text-sm font-semibold text-green-600 dark:text-green-400">${{ r.utilidad_total|floatformat:2 }}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">${{ r.util_heavens|floatformat:2 }}</td>
+            <td class="num text-sm text-gray-900 dark:text-white">${{ r.util_exportador|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Modal Gestión Insumos -->
+<div id="insumosModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeInsumosModal()"></div>
+    <span class="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
+    <div class="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl sm:align-middle dark:bg-gray-800">
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 dark:bg-gray-800">
+        <div class="sm:flex sm:items-start">
+          <div class="mt-3 w-full text-center sm:mt-0 sm:ml-4 sm:text-left">
+            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white" id="modal-title">Gestión de Insumos</h3>
+            <div class="mt-4">
+                <div class="flex justify-between mb-4">
+                    <h4 class="text-md font-bold text-gray-700 dark:text-gray-300">Listado de Insumos</h4>
+                    <button type="button" onclick="showCreateInsumoForm()" class="rounded bg-green-600 px-3 py-1 text-white hover:bg-green-700">Crear Nuevo</button>
+                </div>
+                
+                <div class="overflow-x-auto h-64 mb-4 border rounded dark:border-gray-600">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nombre</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Precio</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Unidad</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="insumosTableBody" class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="insumoFormContainer" class="hidden border-t pt-4 mt-4 dark:border-gray-600">
+                    <h4 class="text-md font-bold mb-2 text-gray-700 dark:text-gray-300" id="formTitle">Crear Insumo</h4>
+                    <form id="insumoForm" onsubmit="handleInsumoSubmit(event)">
+                        <input type="hidden" id="insumoId" name="id">
+                        <input type="hidden" id="insumoAction" name="action" value="create">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</label>
+                                <input type="text" id="insumoNombre" name="nombre" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Precio</label>
+                                <input type="number" step="0.01" id="insumoPrecio" name="precio" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unidad de Medida</label>
+                                <input type="text" id="insumoUnidad" name="unidad_medida" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end gap-2">
+                            <button type="button" onclick="hideInsumoForm()" class="rounded bg-gray-300 px-3 py-1 text-black hover:bg-gray-400 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-500">Cancelar</button>
+                            <button type="submit" class="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-700">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 dark:bg-gray-800">
+        <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600" onclick="closeInsumosModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    function openInsumosModal() {
+        document.getElementById('insumosModal').classList.remove('hidden');
+        fetchInsumos();
+    }
+    
+    function closeInsumosModal() {
+        document.getElementById('insumosModal').classList.add('hidden');
+        hideInsumoForm();
+    }
+    
+    function fetchInsumos() {
+        fetch('{% url "manage_insumos" %}')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('insumosTableBody');
+                tbody.innerHTML = '';
+                data.insumos.forEach(insumo => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${insumo.nombre}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">$${insumo.precio}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${insumo.unidad_medida || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick='editInsumo(${JSON.stringify(insumo)})' class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Editar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+    }
+    
+    function showCreateInsumoForm() {
+        document.getElementById('insumoFormContainer').classList.remove('hidden');
+        document.getElementById('formTitle').innerText = 'Crear Insumo';
+        document.getElementById('insumoForm').reset();
+        document.getElementById('insumoAction').value = 'create';
+        document.getElementById('insumoId').value = '';
+    }
+    
+    function editInsumo(insumo) {
+        document.getElementById('insumoFormContainer').classList.remove('hidden');
+        document.getElementById('formTitle').innerText = 'Editar Insumo';
+        document.getElementById('insumoNombre').value = insumo.nombre;
+        document.getElementById('insumoPrecio').value = insumo.precio;
+        document.getElementById('insumoUnidad').value = insumo.unidad_medida;
+        document.getElementById('insumoId').value = insumo.id;
+        document.getElementById('insumoAction').value = 'update';
+    }
+    
+    function hideInsumoForm() {
+        document.getElementById('insumoFormContainer').classList.add('hidden');
+    }
+    
+    function handleInsumoSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        fetch('{% url "manage_insumos" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                hideInsumoForm();
+                fetchInsumos();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => alert('Error: ' + error));
+    }
+</script>
+{% endblock %}

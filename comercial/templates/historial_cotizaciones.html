@@ -1,0 +1,466 @@
+{% extends 'comercialbase.html' %}
+{% load static humanize %}
+
+{% block title %}Historial de Cotizaciones{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/historial_cotizaciones.css' %}">
+
+<div class="container-fluid py-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <div>
+            <h1 class="page-title mb-1">Historial de Cotizaciones</h1>
+            <p class="page-subtitle mb-3">Consulta y recupera cotizaciones aprobadas anteriormente.</p>
+        </div>
+        <div class="d-inline-block">
+            <div class="d-flex align-items-center bg-white rounded-pill px-4 py-2 shadow-sm mx-auto" style="border: 1px solid rgba(67, 97, 238, 0.3); box-shadow: 0 4px 12px rgba(67, 97, 238, 0.15)!important;">
+                <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                    <i class="fas fa-history text-primary"></i>
+                </div>
+                <span class="fw-bold text-dark h5 mb-0 me-1">{{ historico_list|length }}</span>
+                <span class="text-secondary small text-uppercase fw-bold" style="font-size: 0.7rem;">Registros</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="controls-bar d-flex flex-wrap gap-3 align-items-center justify-content-between">
+        <div class="search-input-group flex-grow-1">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" 
+                   class="form-control form-control-premium" 
+                   id="searchInput" 
+                   placeholder="Buscar por cliente, número, ruta o usuario..."
+                   onkeyup="filterTable()">
+        </div>
+        <div class="d-flex gap-2">
+            <select class="form-select form-control-premium w-auto pe-5" id="typeFilter" onchange="filterTable()">
+                <option value="">Todos los tipos</option>
+                <option value="FOB">FOB</option>
+                <option value="CIF">CIF</option>
+            </select>
+            <!-- Date Sort Button (Simple Toggle) -->
+             <button class="btn-soft-primary shadow-sm" 
+                     style="width: 42px; height: 42px;" 
+                     onclick="toggleSortDate()"
+                     data-bs-toggle="tooltip"
+                     title="Ordenar por fecha">
+                <i class="fas fa-sort-amount-down" id="sortIcon"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla Historial -->
+    <div class="premium-card animate-fade-in">
+        <div class="table-responsive">
+            <table class="table table-custom align-middle mb-0 text-nowrap" id="historialTable">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Fecha / No.</th>
+                        <th>Cliente</th>
+                        <th>Ruta</th>
+                        <th class="text-center">Tipo</th>
+                        <th class="text-center">Cajas</th>
+                        <th class="text-end">Utilidad</th>
+                        <th>Aprobado Por</th>
+                        <th class="pe-4 text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in historico_list %}
+                    <tr class="searchable-row" 
+                        data-search="{{ item.cliente }} {{ item.numero }} {{ item.aerolinea }} {{ item.destino }} {{ item.usuario }}"
+                        data-type="{{ item.tipo }}"
+                        data-date="{{ item.fecha|date:'YmdHis' }}">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 rounded p-2 me-3 text-center" style="min-width: 50px;">
+                                    <div class="fw-bold text-primary h6 mb-0">{{ item.fecha|date:"d" }}</div>
+                                    <div class="small text-uppercase text-primary text-opacity-75" style="font-size: 0.65rem;">{{ item.fecha|date:"M" }}</div>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark text-decoration-none">{{ item.numero }}</div>
+                                    <div class="small text-muted">{{ item.fecha|date:"H:i" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark fs-6">{{ item.cliente }}</div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-plane text-primary me-2 fa-fw small"></i>
+                                    <span class="text-dark small fw-medium">{{ item.aerolinea }}</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-map-marker-alt text-danger me-2 fa-fw small opacity-75"></i>
+                                    <span class="text-dark small fw-medium">{{ item.destino }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge-premium {% if item.tipo == 'CIF' %}badge-soft-info{% else %}badge-soft-primary{% endif %}">
+                                {{ item.tipo }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                             <div class="fw-bold text-secondary">{{ item.total_cajas|intcomma }}</div>
+                        </td>
+                        <td class="text-end">
+                            <div class="fw-bold text-success">${{ item.total_utilidad|stringformat:".2f"|intcomma }}</div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-initials text-uppercase">
+                                    {{ item.usuario|make_list|first }}
+                                </div>
+                                <div class="small fw-medium text-dark">{{ item.usuario }}</div>
+                            </div>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{% url 'historial_cotizacion_pdf' item.id %}" 
+                                   class="btn-soft-danger" 
+                                   target="_blank"
+                                   data-bs-toggle="tooltip" 
+                                   title="Descargar PDF">
+                                    <i class="far fa-file-pdf"></i>
+                                </a>
+                                <button class="btn-soft-primary" 
+                                        onclick="openHistoricoModal(this)"
+                                        data-json="{{ item.json_data|force_escape }}"
+                                        data-bs-toggle="tooltip" 
+                                        title="Ver Detalles">
+                                    <i class="far fa-eye"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr id="noResultsRow">
+                        <td colspan="8" class="text-center py-5">
+                            <div class="d-flex flex-column align-items-center justify-content-center py-4">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-4 mb-3 animate-fade-in" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-search fa-2x text-primary opacity-50"></i>
+                                </div>
+                                <h5 class="text-dark fw-bold">No se encontraron cotizaciones</h5>
+                                <p class="text-muted small mb-0">Intenta ajustar los filtros de búsqueda o crea una nueva.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <!-- Row for 'No search results' (hidden by default) -->
+                    <tr id="noSearchMatchRow" style="display: none;">
+                         <td colspan="8" class="text-center py-5">
+                            <div class="d-flex flex-column align-items-center justify-content-center py-4">
+                                <div class="bg-warning bg-opacity-10 rounded-circle p-4 mb-3 animate-fade-in" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-filter fa-2x text-warning opacity-50"></i>
+                                </div>
+                                <h5 class="text-dark fw-bold">Sin coincidencias</h5>
+                                <p class="text-muted small mb-0">No hay resultados para tu búsqueda actual.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle Histórico Premium -->
+<div class="modal fade" id="historicoModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content modal-content-premium shadow-lg">
+            <div class="modal-header modal-header-premium">
+                <div class="d-flex align-items-center w-100">
+                    <div class="bg-white bg-opacity-25 rounded-circle p-3 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="fas fa-file-invoice fs-4 text-white"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="modal-title fw-bold mb-1">Detalle de Cotización</h5>
+                        <div class="text-white-50 small d-flex align-items-center opacity-75">
+                            <span id="modalSubTitle" class="font-monospace">COT-000000 | 01/01/2025</span>
+                            <span class="mx-2">•</span>
+                            <span id="modalTipo" class="badge bg-white bg-opacity-25 fw-normal">-</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            
+            <div class="modal-body bg-light p-0">
+                <!-- Info Bar -->
+                <div class="modal-info-bar">
+                    <div class="info-item text-center">
+                        <span class="label">TRM Aprobada</span>
+                        <div class="value" id="modalTrm">-</div>
+                    </div>
+                    <div class="vr bg-light"></div>
+                    <div class="info-item text-center">
+                        <span class="label">Utilidad General</span>
+                        <div class="value text-success"><span id="modalUtilPct">-</span>%</div>
+                    </div>
+                    <div class="vr bg-light"></div>
+                    <div class="info-item text-center">
+                        <span class="label">Total Cajas</span>
+                        <div class="value text-dark" id="modalTotalCajas">-</div>
+                    </div>
+                    <div class="vr bg-light"></div>
+                    <div class="info-item text-center">
+                        <span class="label">Utilidad Total</span>
+                        <div class="value text-success" id="modalTotalUtilidad">-</div>
+                    </div>
+                </div>
+
+                <div class="p-4">
+                    <!-- Nav Tabs -->
+                     <ul class="nav nav-tabs nav-tabs-premium mb-4" id="historialTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#items-pane" type="button">
+                                <i class="fas fa-list-ul me-2"></i>Items Detallados
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#costos-pane" type="button">
+                                <i class="fas fa-calculator me-2"></i>Costos Globales
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="historialTabsContent">
+                        <!-- Items Pane -->
+                        <div class="tab-pane fade show active" id="items-pane" role="tabpanel">
+                            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0 detail-table" id="modalItemsTable">
+                                        <thead>
+                                            <tr>
+                                                <th class="ps-4">Producto / Presentación</th>
+                                                <th class="text-center">Cant.</th>
+                                                <th class="text-end">FOB Unit.</th>
+                                                <th class="text-end">CIF Unit.</th>
+                                                <th class="text-end">Util. Unit.</th>
+                                                <th class="text-end pe-4">Total Utilidad</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-end text-muted small fst-italic">
+                                * Valores históricos al momento de aprobar la cotización.
+                            </div>
+                        </div>
+
+                        <!-- Costos Pane -->
+                        <div class="tab-pane fade" id="costos-pane" role="tabpanel">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <h6 class="text-primary fw-bold mb-3 d-flex align-items-center">
+                                            <i class="fas bg-blue-soft p-2 rounded me-2 fa-plane-departure"></i> Costos de Embarque
+                                        </h6>
+                                        <div id="modalCostosEmbarque" class="ps-1">
+                                            <!-- JS -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <h6 class="text-secondary fw-bold mb-3 d-flex align-items-center">
+                                            <i class="fas bg-gray-100 p-2 rounded me-2 fa-cubes"></i> Costos de Estibado
+                                        </h6>
+                                        <div id="modalCostosEstibado" class="ps-1">
+                                            <!-- JS -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                             <div class="mt-4 p-3 bg-white border rounded-3 text-center">
+                                 <div class="small text-muted mb-1 text-uppercase fw-bold">Distribución de Utilidad</div>
+                                 <div class="d-flex justify-content-center gap-4">
+                                     <div>
+                                         <span class="text-secondary fw-bold">Heavens Fruit:</span> 
+                                         <span class="fw-bold text-dark" id="modalHeavensPct">-</span>%
+                                     </div>
+                                     <div class="vr"></div>
+                                     <div>
+                                         <span class="text-secondary fw-bold">Exportador:</span> 
+                                         <span class="fw-bold text-dark" id="modalExpPct">-</span>%
+                                     </div>
+                                 </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top bg-white py-3 justify-content-center">
+                <button type="button" class="btn btn-secondary px-5 rounded-pill" data-bs-dismiss="modal">Cerrar Detalle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Tooltips
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+
+    // Formatting Helper
+    function formatMoney(amount) {
+        if (amount === null || amount === undefined) return '-';
+        return '$' + parseFloat(amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    // Modal Logic
+    function openHistoricoModal(btn) {
+        const data = JSON.parse(btn.getAttribute('data-json'));
+        const meta = data.meta;
+        const totales = data.totales || {};
+        const items = data.items || [];
+        const globalCosts = data.costos_globales || {};
+
+        // Header & Info Bar
+        document.getElementById('modalSubTitle').textContent = `${meta.numero} | ${meta.fecha}`;
+        document.getElementById('modalTrm').textContent = formatMoney(meta.trm).replace('$', '');
+        document.getElementById('modalTipo').textContent = meta.tipo_negociacion;
+        document.getElementById('modalUtilPct').textContent = meta.utilidad_pct;
+        document.getElementById('modalHeavensPct').textContent = meta.heavens_pct;
+        document.getElementById('modalExpPct').textContent = meta.exportador_pct;
+        
+        document.getElementById('modalTotalCajas').textContent = parseInt(meta.total_cajas).toLocaleString();
+        document.getElementById('modalTotalUtilidad').textContent = formatMoney(totales.total_utilidad_usd);
+
+        // Populate Items Table
+        const tbody = document.querySelector('#modalItemsTable tbody');
+        tbody.innerHTML = '';
+        items.forEach(item => {
+            const tr = document.createElement('tr');
+            const kilos = item.meta.kilos_neto ? ` - ${parseFloat(item.meta.kilos_neto).toFixed(2)} Kg` : '';
+            tr.innerHTML = `
+                <td class="ps-4">
+                    <div class="fw-bold text-dark text-wrap" style="max-width: 250px;">${item.meta.fruta}</div>
+                    <div class="d-flex align-items-center gap-1 small text-muted">
+                        <span>${item.meta.presentacion}${kilos}</span>
+                         ${item.meta.exportador ? '<span class="badge bg-light text-dark border ms-1">'+item.meta.exportador+'</span>' : ''}
+                    </div>
+                </td>
+                <td class="text-center fw-bold text-secondary">${item.cajas}</td>
+                <td class="text-end font-monospace text-dark">${formatMoney(item.precio_final_fob)}</td>
+                <td class="text-end font-monospace text-muted">${item.precio_final_cif ? formatMoney(item.precio_final_cif) : '-'}</td>
+                <td class="text-end text-success small font-monospace">${formatMoney(item.utilidad_total / item.cajas)}</td>
+                <td class="text-end pe-4 fw-bold text-success font-monospace">${formatMoney(item.utilidad_total)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Populate Costos
+        const renderCostList = (obj) => {
+            if (!obj || Object.keys(obj).every(k => !obj[k])) return '<div class="text-muted small text-center italic">Sin costos registrados</div>';
+            
+            let html = '<ul class="list-unstyled mb-0 d-flex flex-column gap-2">';
+            // Manual mapping for pretty names
+            const orderedKeys = [
+                {k: 'transporte_aeropuerto', l: 'Transporte Aeropuerto'},
+                {k: 'termo', l: 'Termoregistro'},
+                {k: 'precinto', l: 'Precinto'},
+                {k: 'aduana', l: 'Aduana'},
+                {k: 'comision_bancaria', l: 'Comisión Bancaria'},
+                {k: 'due_agent_usd', l: 'Due Agent (USD)'},
+                {k: 'due_carrier_usd', l: 'Due Carrier (USD)'},
+                {k: 'estiba', l: 'Estiba'},
+                {k: 'malla_tela', l: 'Malla Tela'},
+                {k: 'esquineros_zuncho', l: 'Esquineros'},
+                {k: 'entrega', l: 'Entrega'}
+            ];
+
+            orderedKeys.forEach(field => {
+                if (obj[field.k] && obj[field.k] > 0) {
+                     html += `
+                     <li class="d-flex justify-content-between align-items-center border-bottom border-light pb-1">
+                        <span class="text-muted small">${field.l}</span>
+                        <span class="fw-medium text-dark font-monospace">${parseFloat(obj[field.k]).toLocaleString('en-US',{minimumFractionDigits: 2})}</span>
+                     </li>`;
+                }
+            });
+            html += '</ul>';
+            return html;
+        };
+
+        document.getElementById('modalCostosEmbarque').innerHTML = renderCostList(globalCosts.costos_embarque);
+        document.getElementById('modalCostosEstibado').innerHTML = renderCostList(globalCosts.costos_estibado);
+
+        const modal = new bootstrap.Modal(document.getElementById('historicoModal'));
+        modal.show();
+    }
+
+    // Client-side Filter & Search
+    function filterTable() {
+        const input = document.getElementById('searchInput').value.toLowerCase();
+        const typeFilter = document.getElementById('typeFilter').value;
+        const rows = document.querySelectorAll('.searchable-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const text = row.getAttribute('data-search').toLowerCase();
+            const type = row.getAttribute('data-type');
+            
+            const matchesSearch = text.includes(input);
+            const matchesType = typeFilter === '' || type === typeFilter;
+
+            if (matchesSearch && matchesType) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Show/Hide "No Results" row
+        const noMatchRow = document.getElementById('noSearchMatchRow');
+        const defaultEmptyRow = document.getElementById('noResultsRow'); // Only if list was empty from server
+        
+        if (visibleCount === 0) {
+             // If there was a default empty row (list empty from server), check if it exists
+             if (!defaultEmptyRow) {
+                 if (noMatchRow) noMatchRow.style.display = '';
+             }
+        } else {
+            if (noMatchRow) noMatchRow.style.display = 'none';
+        }
+    }
+
+    let sortAsc = false;
+    function toggleSortDate() {
+        sortAsc = !sortAsc;
+        const icon = document.getElementById('sortIcon');
+        icon.className = sortAsc ? 'fas fa-sort-amount-up text-primary' : 'fas fa-sort-amount-down text-secondary';
+        
+        const tableBody = document.querySelector('#historialTable tbody');
+        const rows = Array.from(document.querySelectorAll('.searchable-row'));
+
+        rows.sort((a, b) => {
+            const dateA = a.getAttribute('data-date');
+            const dateB = b.getAttribute('data-date');
+            return sortAsc ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
+        });
+
+        rows.forEach(row => tableBody.appendChild(row));
+        
+        // Re-append the utility rows (no results) at the end
+        const noMatchRow = document.getElementById('noSearchMatchRow');
+        if (noMatchRow) tableBody.appendChild(noMatchRow);
+        
+        const noResultsRow = document.getElementById('noResultsRow'); // original empty
+        if (noResultsRow) tableBody.appendChild(noResultsRow);
+    }
+</script>
+{% endblock %}

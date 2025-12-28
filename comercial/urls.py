@@ -1,9 +1,7 @@
-from django.contrib import admin
 from django.urls import path
-from . import views, views2, views_proyec_vent, views4_dash_comer, views_export
+from . import views, views2, views_proyec_vent, views4_dash_comer, views_export, views_cotizacion_conjunta, views_tarifas, views_tarifa_fruta, views_historial_cotizacion_pdf
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path('redirect_based_on_group', views.redirect_based_on_group_pedidos, name='redirect_based_on_group'),
     path('redirect_based_on_group_cartera', views.redirect_based_on_group_cartera, name='redirect_based_on_group_cartera'),
 
@@ -88,4 +86,22 @@ urlpatterns = [
     # Dashboard y proyección de ventas
     path('proyeccion-ventas/', views_proyec_vent.proyeccion_ventas, name='proyeccion_ventas'),
     path('api/proyeccion-ventas/', views_proyec_vent.proyeccion_ventas_api, name='proyeccion_ventas_api'),
+    
+    # Cotización Conjunta para usuario final
+    path('cotizacion-conjunta/', views_cotizacion_conjunta.CotizacionConjuntaUsuarioView.as_view(), name='cotizacion_conjunta_usuario'),
+    
+    # Tarifas Aéreas
+    path('tarifas-aereas/', views_tarifas.TarifaAereaView.as_view(), name='tarifas_aereas'),
+
+    # Gestión de Precios Fruta Exportador
+    path('gestion-precios-fruta/', views_tarifa_fruta.tarifa_frutas_view, name='gestion_precios_fruta'),
+    
+    # Historial de Cotizaciones
+    path('historial-cotizaciones/', views_historial_cotizacion_pdf.HistorialCotizacionesView.as_view(), name='historial_cotizaciones'),
+    path('historial-cotizaciones/<int:historico_id>/pdf/', views_historial_cotizacion_pdf.HistorialCotizacionPDFView.as_view(), name='historial_cotizacion_pdf'),
+    
+    # Editor Modal AJAX
+    path('cotizacion-editor-producto/<int:cp_id>/', views_cotizacion_conjunta.cotizacion_editor_producto, name='cotizacion_editor_producto'),
+    path('ajax/load-referencias-json/', views_cotizacion_conjunta.load_referencias_json, name='ajax_load_referencias_json'),
+    path('manage-insumos/', views_cotizacion_conjunta.manage_insumos, name='manage_insumos'),
 ]

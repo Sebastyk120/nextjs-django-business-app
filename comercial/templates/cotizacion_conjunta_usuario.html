@@ -1,0 +1,1403 @@
+{% extends "comercialbase.html" %}
+{% load static %}
+{% block content %}
+    <link rel="stylesheet" href="{% static 'css/cotizacion_conjunta_usuario.css' %}">
+    <div class="container-fluid px-4 py-4">
+        <!-- Header -->
+        <div class="page-header d-flex justify-content-center align-items-center text-center rounded-bottom mb-4">
+            <div>
+                <h2 class="page-title"><i class="bi bi-calculator me-2 text-primary"></i>Cotización Conjunta Heavens
+                </h2>
+                <p class="page-subtitle mt-1">Gestión unificada de costos y rentabilidad</p>
+            </div>
+            <div class="text-end d-none d-md-block">
+            <span class="badge badge-custom badge-info-light">
+                <i class="bi bi-calendar-event me-1"></i> {{ today|date:"d M Y" }}
+            </span>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-12">
+
+                <form method="post" id="mainCalculationForm">
+                    {% csrf_token %}
+
+                    <!-- Configuration Card -->
+                    <div class="custom-card mb-4">
+                        <div class="card-header-custom">
+                            <h5 class="card-header-title">
+                                <i class="bi bi-sliders text-secondary"></i> Configuración
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- Primary Filters -->
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label-custom">Cliente</label>
+                                    <select name="cliente" class="form-select form-select-custom" required
+                                            onchange="this.form.submit()">
+                                        <option value="">-- Seleccione --</option>
+                                        {% for c in clientes %}
+                                            <option value="{{ c.id }}"
+                                                    {% if c.id|stringformat:"s" == cliente_id %}selected{% endif %}>{{ c.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label-custom">Aerolínea</label>
+                                    <select name="aerolinea" class="form-select form-select-custom" required>
+                                        <option value="">-- Seleccione --</option>
+                                        {% for a in aerolineas %}
+                                            <option value="{{ a.id }}"
+                                                    {% if a.id|stringformat:"s" == aerolinea_id %}selected{% endif %}>{{ a.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label-custom">Destino</label>
+                                    <select name="destino" class="form-select form-select-custom" required>
+                                        <option value="">-- Seleccione --</option>
+                                        {% for d in destinos %}
+                                            <option value="{{ d.id }}"
+                                                    {% if d.id|stringformat:"s" == destino_id %}selected{% endif %}>{{ d.codigo }}
+                                                - {{ d.ciudad }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-2">
+                                    <label class="form-label-custom">TRM (COP/USD)</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text input-group-text-custom">$</span>
+                                        <input type="number" step="0.01" name="trm" value="{{ trm }}"
+                                               class="form-control form-control-custom" required/>
+                                    </div>
+                                </div>
+
+                                <!-- Secondary Settings -->
+                                <div class="col-6 col-md-3 col-lg-1">
+                                    <label class="form-label-custom">Negociación</label>
+                                    <select name="tipo_negociacion" class="form-select form-select-custom">
+                                        <option value="CIF" {% if tipo_negociacion == 'CIF' %}selected{% endif %}>CIF
+                                        </option>
+                                        <option value="FOB" {% if tipo_negociacion == 'FOB' %}selected{% endif %}>FOB
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-1">
+                                    <label class="form-label-custom">Utilidad</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="1" min="0" max="100" name="utilidad_general_pct"
+                                               value="{{ utilidad_general_pct }}"
+                                               class="form-control form-control-custom"/>
+                                        <span class="input-group-text input-group-text-custom">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-1">
+                                    <label class="form-label-custom">% Heavens</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="1" min="0" max="100" name="heavens_pct"
+                                               value="{{ heavens_pct }}" class="form-control form-control-custom"/>
+                                        <span class="input-group-text input-group-text-custom">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3 col-lg-1">
+                                    <label class="form-label-custom">% Exp.</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="1" min="0" max="100" name="exportador_pct"
+                                               value="{{ exportador_pct }}" class="form-control form-control-custom"/>
+                                        <span class="input-group-text input-group-text-custom">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if errores_detalle %}
+                        <div class="custom-card border-warning mb-4 bg-warning-subtle">
+                            <div class="card-body py-3 d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle-fill text-warning fs-4 me-3"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1 text-warning-emphasis">Atención: Datos Faltantes</h6>
+                                    <div class="small text-secondary">
+                                        {% for e in errores_detalle %}
+                                            <span class="d-block"><strong>{{ e.nombre }}</strong>: {{ e.errores|join:", " }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if cps %}
+                        <div class="row g-2">
+                            <!-- Products Selection -->
+                            <div class="col-lg-4">
+                                <div class="custom-card h-100">
+                                    <div class="card-header-custom">
+                                        <h5 class="card-header-title">
+                                            <i class="bi bi-box-seam text-secondary"></i> Productos
+                                        </h5>
+                                        <button type="submit" class="btn btn-custom btn-primary-custom btn-sm">
+                                            <i class="bi bi-arrow-repeat"></i> Calcular
+                                        </button>
+                                        <button type="button" onclick="openInsumosModal()"
+                                                class="btn btn-custom btn-success-custom btn-sm ms-2">
+                                            <i class="bi bi-gear"></i> Insumos
+                                        </button>
+                                    </div>
+                                    <div class="p-2" style="max-height: 500px; overflow-y: auto; overflow-x: hidden;">
+                                        <div class="row g-2">
+                                            {% for cp in cps %}
+                                                <div class="col-6">
+                                                    <div class="p-2 h-100 rounded bg-white position-relative shadow-sm product-card-hover d-flex flex-column justify-content-between">
+                                                        <div class="mb-2">
+                                                            <a href="#"
+                                                               data-url="{% url 'cotizacion_editor_producto' cp.id %}"
+                                                               class="fw-bold text-primary text-xs text-truncate text-decoration-none d-block edit-product-btn"
+                                                               title="Editar {{ cp.fruta }}">
+                                                                {{ cp.fruta }} <i
+                                                                    class="bi bi-pencil-square ms-1 text-xs opacity-50"></i>
+                                                            </a>
+                                                            <div class="text-secondary text-xs text-truncate"
+                                                                 title="{{ cp.presentacion }}"
+                                                                 style="font-size: 0.7rem;">{{ cp.presentacion }}</div>
+                                                        </div>
+                                                        <div class="d-flex align-items-center justify-content-between gap-1 mt-auto">
+                                                            <div style="flex: 1;">
+                                                                <input type="number" min="0" step="1"
+                                                                       name="cajas_{{ cp.id }}"
+                                                                       value="{{ cp.entered_boxes|default:'' }}"
+                                                                       class="form-control form-control-custom form-control-sm text-center px-1"
+                                                                       style="font-size: 0.8rem;"
+                                                                       placeholder="0"
+                                                                       onfocus="if(this.value=='0'){this.value=''}"
+                                                                       onclick="this.select()">
+                                                            </div>
+                                                            <div class="form-check form-switch m-0">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                       name="cont_{{ cp.id }}"
+                                                                       {% if cp.checked_state %}checked{% endif %}>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Results Table -->
+                            <div class="col-lg-8">
+                                {% if rows %}
+                                    <div class="custom-card h-100 anime-slide-up">
+                                        <div class="card-header-custom">
+                                            <h5 class="card-header-title">
+                                                <i class="bi bi-clipboard-data text-secondary"></i> Resultados
+                                            </h5>
+                                            <div class="d-flex gap-2">
+                                    <span class="badge badge-custom badge-info-light">
+                                        {{ total_cajas }} Cajas
+                                    </span>
+                                                <span class="badge badge-custom badge-info-light">
+                                        {{ total_pallets }} Pallets
+                                    </span>
+                                            </div>
+                                        </div>
+
+                                        {% if global_errors %}
+                                            <div class="alert alert-danger m-3 py-2 text-sm">
+                                                <ul class="mb-0 ps-3">
+                                                    {% for g in global_errors %}
+                                                        <li>{{ g }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+
+                                        <div class="table-responsive">
+                                            <table class="table table-custom table-sm table-hover m-0">
+                                                <thead>
+                                                <tr>
+                                                    <th rowspan="2" class="border-end bg-light">Producto</th>
+                                                    <th colspan="2" class="group-header border-end">Pesos (Kg)</th>
+                                                    <th colspan="4" class="group-header border-end">Costos Unitarios
+                                                        ($)
+                                                    </th>
+                                                    <th colspan="2" class="group-header border-end">Precios Venta ($)
+                                                    </th>
+                                                    <th colspan="2" class="group-header border-end">Logística</th>
+                                                    <th colspan="3" class="group-header">Rentabilidad ($)</th>
+                                                </tr>
+                                                <tr>
+                                                    <!-- Pesos -->
+                                                    <th class="text-end text-xs text-secondary">Neto</th>
+                                                    <th class="text-end text-xs text-secondary border-end">CIF</th>
+                                                    <!-- Costos -->
+                                                    <th class="text-end text-xs text-secondary">FOB Kg</th>
+                                                    <th class="text-end text-xs text-secondary">FOB Box</th>
+                                                    <th class="text-end text-xs text-secondary">CIF Kg</th>
+                                                    <th class="text-end text-xs text-secondary border-end">CIF Box</th>
+                                                    <!-- Precios -->
+                                                    <th class="text-end text-xs text-secondary">FOB</th>
+                                                    <th class="text-end text-xs text-secondary border-end">CIF</th>
+                                                    <!-- Logistica -->
+                                                    <th class="text-end text-xs text-secondary">Cajas</th>
+                                                    <th class="text-end text-xs text-secondary border-end">Pallets</th>
+                                                    <!-- Rentabilidad -->
+                                                    <th class="text-end text-xs text-secondary fw-bold text-success">
+                                                        Total
+                                                    </th>
+                                                    <th class="text-end text-xs text-secondary">Hvns</th>
+                                                    <th class="text-end text-xs text-secondary">Exp</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {% for r in rows %}
+                                                    <tr style="cursor: pointer;" onclick="openCostDetail(this)"
+                                                        data-json="{{ r.modal_data_json|force_escape }}">
+                                                        <td class="fw-medium border-end text-xs position-relative">
+                                                            <span class="text-primary">{{ r.cp.fruta }}</span> <span
+                                                                class="text-muted">- {{ r.cp.presentacion }}</span>
+                                                        </td>
+
+                                                        <td class="text-end">{{ r.kilos|floatformat:1 }}</td>
+                                                        <td class="text-end border-end">{% if cif_enabled %}
+                                                            {{ r.kilos_cif|floatformat:1 }}{% else %}
+                                                            <span class="text-muted">-</span>{% endif %}</td>
+
+                                                        <td class="text-end fw-medium text-secondary bg-subtle-primary">{{ r.fob_kg|floatformat:2 }}</td>
+                                                        <td class="text-end">{{ r.fob_box|floatformat:2 }}</td>
+                                                        <td class="text-end fw-medium text-secondary bg-subtle-primary">
+                                                            {% if cif_enabled %}{{ r.cif_kg|floatformat:2 }}{% else %}
+                                                                <span class="text-muted">-</span>{% endif %}</td>
+                                                        <td class="text-end border-end">
+                                                            {% if cif_enabled %}{{ r.cif_box|floatformat:2 }}{% else %}
+                                                                <span class="text-muted">-</span>{% endif %}</td>
+
+                                                        <td class="text-end fw-bold text-primary">{{ r.precio_final_fob|floatformat:2 }}</td>
+                                                        <td class="text-end border-end">{% if cif_enabled %}
+                                                            {{ r.precio_final_cif|floatformat:2 }}{% else %}
+                                                            <span class="text-muted">-</span>{% endif %}</td>
+
+                                                        <td class="text-end">{{ r.boxes }}</td>
+                                                        <td class="text-end border-end">{{ r.pallets_item }}</td>
+
+                                                        <td class="text-end fw-bold text-success bg-subtle-success">{{ r.utilidad_total|floatformat:2 }}</td>
+                                                        <td class="text-end text-secondary">{{ r.util_heavens|floatformat:2 }}</td>
+                                                        <td class="text-end text-secondary">{{ r.util_exportador|floatformat:2 }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="card-footer bg-white border-top p-3 d-flex justify-content-end">
+                                            <button type="submit" name="aprobar" value="1"
+                                                    class="btn btn-custom btn-success-custom shadow-sm">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                                <span>Aprobar Cotización</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="text-center py-5 text-muted">
+                                        <i class="bi bi-calculator display-4 mb-3 d-block text-secondary opacity-50"></i>
+                                        <p>Configure los parámetros y seleccione productos para ver los resultados.</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <!-- Modal Detalle de Costos (Redesigned) -->
+    <div class="modal fade" id="costDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen-custom modal-dialog-centered">
+            <div class="modal-content glass-panel">
+                <!-- Header -->
+                <div class="modal-header py-2">
+                    <div class="d-flex align-items-center w-100 gap-3">
+                        <!-- Title & Subtitle -->
+                        <div style="min-width: fit-content;">
+                            <h5 class="modal-title fs-6 fw-bold text-primary mb-0" id="modalTitle">Detalle</h5>
+                            <div class="text-xs text-secondary d-flex align-items-center gap-2">
+                                <i class="bi bi-box-seam"></i>
+                                <span id="modalSubtitle">Análisis detallado</span>
+                            </div>
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="vr text-secondary opacity-25 d-none d-lg-block mx-2" style="height: 25px;"></div>
+
+                        <!-- Data Pills (Moved from Body) -->
+                        <div class="info-pill-container d-flex align-items-center flex-nowrap overflow-x-auto custom-scrollbar pb-1 flex-grow-1"
+                             style="gap: 0.5rem;">
+                            <!-- Base Data -->
+                            <div class="info-pill">
+                                <span class="label">Cliente</span>
+                                <span class="value text-truncate" style="max-width: 150px;" id="displayCliente">-</span>
+                            </div>
+                            <div class="info-pill">
+                                <span class="label">Exportador</span>
+                                <span class="value" id="displayExportador">-</span>
+                            </div>
+                            <div class="info-pill">
+                                <span class="label">Destino</span>
+                                <span class="value" id="displayDestino">-</span>
+                            </div>
+                            <div class="info-pill">
+                                <span class="label">Aerolínea</span>
+                                <span class="value" id="displayAerolinea">-</span>
+                            </div>
+                            <div class="info-pill bg-primary-subtle border-primary-subtle">
+                                <span class="label text-primary">Tarifa/Kg</span>
+                                <span class="value text-primary" id="displayTarifaKilo">-</span>
+                            </div>
+                            <!-- Financials -->
+                            <div class="info-pill ms-auto border-warning-subtle bg-warning-subtle">
+                                <span class="label text-warning-emphasis">TRM</span>
+                                <span class="value text-warning-emphasis" id="displayTrmValue">-</span>
+                            </div>
+                            <div class="info-pill border-success-subtle bg-success-subtle">
+                                <span class="label text-success-emphasis">Utilidad</span>
+                                <span class="value text-success-emphasis" id="displayUtilidadPct">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Close Button -->
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body p-0 d-flex flex-column h-100" style="min-height: 600px;">
+
+
+                    <form method="post" id="updateCostForm" class="d-flex flex-column flex-grow-1 overflow-hidden">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_costo" value="1">
+                        <input type="hidden" name="cp_id" id="modalCpId">
+
+                        <!-- Hidden persistence inputs -->
+                        <input type="hidden" name="cliente" value="{{ cliente_id }}">
+                        <input type="hidden" name="aerolinea" value="{{ aerolinea_id }}">
+                        <input type="hidden" name="destino" value="{{ destino_id }}">
+                        <input type="hidden" name="trm" value="{{ trm }}">
+                        <input type="hidden" name="utilidad_general_pct" value="{{ utilidad_general_pct }}">
+                        <input type="hidden" name="heavens_pct" value="{{ heavens_pct }}">
+                        <input type="hidden" name="exportador_pct" value="{{ exportador_pct }}">
+                        <input type="hidden" name="tipo_negociacion" value="{{ tipo_negociacion }}">
+
+                        <!-- Container for dynamic product inputs (copied from main form) -->
+                        <div id="modalProductInputs"></div>
+
+                        <div class="row g-0 flex-grow-1 h-100">
+
+                            <!-- Column 1: Financial Breakdown (The "Receipt") -->
+                            <div class="col-lg-5 col-xl-5 border-end bg-white h-100 overflow-auto">
+                                <div class="p-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-receipt text-primary"></i>
+                                        <span>Desglose Costos por Caja</span>
+                                    </div>
+
+                                    <div class="card border-0 shadow-sm mb-4">
+                                        <div class="table-responsive rounded">
+                                            <table class="table table-compact-modal mb-0">
+                                                <thead>
+                                                <tr>
+                                                    <th style="width: 45%">Concepto</th>
+                                                    <th class="text-end" style="width: 20%">USD</th>
+                                                    <th class="text-end" style="width: 25%">COP</th>
+                                                    <th class="text-end" style="width: 10%">%</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody id="breakdownTableBody">
+                                                <!-- Dynamic Content -->
+                                                </tbody>
+                                                <tfoot class="total-row">
+                                                <tr>
+                                                    <td class="ps-3 text-secondary">COSTO FOB BASE</td>
+                                                    <td class="text-end" id="costoFobBaseDisplay">$0.00</td>
+                                                    <td class="text-end font-monospace small"
+                                                        id="costoFobBaseCopDisplay">$0
+                                                    </td>
+                                                    <td class="text-end">100%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3 border-0 text-success">+ Utilidad</td>
+                                                    <td class="text-end border-0 text-success fw-bold"
+                                                        id="utilidadDisplay">$0.00
+                                                    </td>
+                                                    <td class="text-end border-0 text-success small"
+                                                        id="utilidadCopDisplay">$0
+                                                    </td>
+                                                    <td class="text-end border-0 text-success small"
+                                                        id="utilidadPctDisplay">0%
+                                                    </td>
+                                                </tr>
+                                                <tr class="bg-primary text-white">
+                                                    <td class="ps-3 bg-primary text-white"
+                                                        style="border-top: 2px solid #000;">PRECIO VENTA FOB
+                                                    </td>
+                                                    <td class="text-end bg-primary text-white fw-bold fs-6"
+                                                        style="border-top: 2px solid #000;" id="totalFobDisplay">$0.00
+                                                    </td>
+                                                    <td class="text-end bg-primary text-white opacity-75 small"
+                                                        style="border-top: 2px solid #000;" id="totalFobCopDisplay">$0
+                                                    </td>
+                                                    <td class="text-end bg-primary text-white opacity-75 small"
+                                                        style="border-top: 2px solid #000;" id="totalPctDisplay">-
+                                                    </td>
+                                                </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Profit Summary Mini-Card -->
+                                    <div class="detail-card bg-success-subtle border-success-subtle">
+                                        <div class="detail-card-body">
+                                            <div class="row text-center">
+                                                <div class="col-4 border-end border-success-subtle">
+                                                    <div class="text-xs text-success-emphasis text-uppercase fw-bold mb-1">
+                                                        Total
+                                                    </div>
+                                                    <div class="h6 mb-0 text-success fw-bold" id="saleTotalProfit">-
+                                                    </div>
+                                                </div>
+                                                <div class="col-4 border-end border-success-subtle">
+                                                    <div class="text-xs text-secondary text-uppercase fw-bold mb-1">
+                                                        Heavens (<span id="saleHeavensPct">-</span>%)
+                                                    </div>
+                                                    <div class="h6 mb-0 text-secondary" id="saleHeavensProfit">-</div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="text-xs text-secondary text-uppercase fw-bold mb-1">Exp
+                                                        (<span id="saleExportadorPct">-</span>%)
+                                                    </div>
+                                                    <div class="h6 mb-0 text-secondary" id="saleExportadorProfit">-
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mt-3 g-2">
+                                        <div class="col-6">
+                                            <div class="d-flex justify-content-between p-2 bg-light rounded border">
+                                                <span class="text-xs fw-bold text-secondary">P. FOB / Kg</span>
+                                                <span class="text-xs fw-bold text-primary" id="saleFobPerKg">-</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="d-flex justify-content-between p-2 bg-light rounded border">
+                                                <span class="text-xs fw-bold text-secondary">P. CIF / Kg</span>
+                                                <span class="text-xs fw-bold text-primary" id="saleCifPerKg">-</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="d-flex justify-content-between p-2 bg-light rounded border">
+                                                <span class="text-xs fw-bold text-secondary">P. FOB</span>
+                                                <span class="text-xs fw-bold text-success" id="saleFobPrice">-</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="d-flex justify-content-between p-2 bg-light rounded border">
+                                                <span class="text-xs fw-bold text-secondary">P. CIF</span>
+                                                <span class="text-xs fw-bold text-success" id="saleCifPrice">-</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- Column 2: Detailed Analysis (Scrollable) -->
+                            <div class="col-lg-4 col-xl-4 border-end bg-subtle-gray h-100 overflow-auto">
+                                <div class="p-4">
+                                    <div class="section-title">
+                                        <i class="bi bi-search text-primary"></i>
+                                        <span>Análisis y Detalles</span>
+                                    </div>
+
+                                    <!-- Fruit Analysis Card -->
+                                    <div class="detail-card">
+                                        <div class="detail-card-header text-primary">
+                                            <span><i class="bi bi-apple me-2"></i>Análisis Fruta</span>
+                                        </div>
+                                        <div class="detail-card-body p-0">
+                                            <table class="table table-sm table-borderless text-xs mb-0 table-striped">
+                                                <tr>
+                                                    <td class="ps-3">Precio/kg (Arranca)</td>
+                                                    <td class="text-end pe-3 fw-medium" id="fruitBasePrice">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Kilos Ajustados</td>
+                                                    <td class="text-end pe-3" id="fruitKilosAjustados">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Costo Caja (Neto)</td>
+                                                    <td class="text-end pe-3" id="fruitNetCost">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Impacto Deshidratación</td>
+                                                    <td class="text-end pe-3 text-danger" id="fruitDelta">-</td>
+                                                </tr>
+                                                <tr class="fw-bold border-top">
+                                                    <td class="ps-3">Costo Caja (Real)</td>
+                                                    <td class="text-end pe-3 text-primary" id="fruitRealCost">-</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Weight Analysis Card -->
+                                    <div class="detail-card">
+                                        <div class="detail-card-header">
+                                            <span><i class="bi bi-speedometer2 me-2"></i>Cálculo de Kilos</span>
+                                        </div>
+                                        <div class="detail-card-body p-0">
+                                            <table class="table table-sm table-borderless text-xs mb-0 table-striped">
+                                                <tr>
+                                                    <td class="ps-3">Kilos Base</td>
+                                                    <td class="text-end pe-3" id="weightBase">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Factor Deshidratación</td>
+                                                    <td class="text-end pe-3" id="weightFactorDeshid">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Kilos FOB (c/deshid)</td>
+                                                    <td class="text-end pe-3 fw-medium" id="weightFob">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="ps-3">Factor Peso Bruto</td>
+                                                    <td class="text-end pe-3" id="weightFactorBruto">-</td>
+                                                </tr>
+                                                <tr class="fw-bold border-top">
+                                                    <td class="ps-3">Kilos CIF Total</td>
+                                                    <td class="text-end pe-3" id="weightCif">-</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- CIF / Logistics -->
+                                    <div class="detail-card">
+                                        <div class="detail-card-header" data-bs-toggle="collapse"
+                                             data-bs-target="#cifCollapse" style="cursor: pointer;">
+                                            <span class="text-primary"><i class="bi bi-globe me-2"></i>Desglose CIF & Logística</span>
+                                            <i class="bi bi-chevron-down text-muted"></i>
+                                        </div>
+                                        <div id="cifCollapse" class="collapse">
+                                            <div class="detail-card-body p-0 border-top">
+                                                <div class="bg-light px-3 py-1 text-xs fw-bold text-secondary border-bottom">
+                                                    CIF Unitario
+                                                </div>
+                                                <table class="table table-sm table-borderless text-xs mb-0"
+                                                       id="cifTable"></table>
+
+                                                <div class="bg-light px-3 py-1 text-xs fw-bold text-secondary border-top border-bottom">
+                                                    Costos Embarque
+                                                </div>
+                                                <table class="table table-sm table-borderless text-xs mb-0"
+                                                       id="shipmentTable"></table>
+
+                                                <div class="bg-light px-3 py-1 text-xs fw-bold text-secondary border-top border-bottom">
+                                                    Estibado
+                                                </div>
+                                                <table class="table table-sm table-borderless text-xs mb-0"
+                                                       id="stowingTable"></table>
+
+                                                <div class="bg-light px-3 py-1 text-xs fw-bold text-secondary border-top border-bottom">
+                                                    Pallets
+                                                </div>
+                                                <table class="table table-sm table-borderless text-xs mb-0"
+                                                       id="palletTable"></table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Column 3: Configuration (Edit) -->
+                            <div class="col-lg-3 col-xl-3 h-100 overflow-hidden bg-light">
+                                <div class="d-flex flex-column h-100">
+                                    <div class="p-4 flex-grow-1 overflow-y-auto custom-scrollbar">
+                                        <div class="section-title">
+                                            <i class="bi bi-sliders me-2"></i>
+                                            <span>Variables</span>
+                                        </div>
+
+                                        <div class="bg-white p-3 rounded shadow-sm border mb-3">
+                                            <h6 class="text-xs fw-bold text-primary mb-3 text-uppercase">General</h6>
+
+                                            <div class="row g-2 mb-2">
+                                                <div class="col-6">
+                                                    <div class="compact-input-group">
+                                                        <label>Mano Obra (COP)</label>
+                                                        <div class="input-group input-group-sm">
+                                                            <span class="input-group-text px-1">$</span>
+                                                            <input type="number" step="0.01" name="mano_obra_cop"
+                                                                   id="inputManoObra" class="form-control px-1"
+                                                                   required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="compact-input-group">
+                                                        <label>Deshid. (%)</label>
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="number" step="0.01" min="0" max="100"
+                                                                   name="deshidratacion_pct" id="inputDeshid"
+                                                                   class="form-control px-1" required>
+                                                            <span class="input-group-text px-1">%</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="compact-input-group mb-2">
+                                                <label>Margen Adicional (USD)</label>
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">$</span>
+                                                    <input type="number" step="0.01" name="margen_adicional_usd"
+                                                           id="inputMargen" class="form-control" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="bg-subtle-gray p-2 rounded text-xs gap-1 d-flex flex-column border">
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="text-muted">Insumos (COP)</span>
+                                                    <strong id="displayInsumosCop">$0</strong>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span class="text-muted">TRM Actual</span>
+                                                    <strong id="displayTrm">$0</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="bg-white p-3 rounded shadow-sm border">
+                                            <h6 class="text-xs fw-bold text-warning-emphasis mb-3 text-uppercase d-flex justify-content-between">
+                                                Referencia
+                                                <i class="bi bi-gear-fill text-warning"></i>
+                                            </h6>
+
+                                            <div class="row g-2 mb-2">
+                                                <div class="col-6">
+                                                    <div class="compact-input-group">
+                                                        <label>Precio Ref (USD)</label>
+                                                        <input type="number" step="0.01" name="referencia_precio"
+                                                               id="inputRefPrice" class="form-control form-control-sm"
+                                                               required>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="compact-input-group">
+                                                        <label>Peso Bruto (%)</label>
+                                                        <div class="input-group input-group-sm">
+                                                            <input type="number" step="0.01"
+                                                                   name="referencia_peso_bruto" id="inputRefPesoBruto"
+                                                                   class="form-control px-1" required>
+                                                            <span class="input-group-text px-1">%</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-2 mb-2">
+                                                <div class="col-12">
+                                                    <div class="compact-input-group">
+                                                        <label>Cajas Pallet Sin Contenedor</label>
+                                                        <input type="number" step="1" name="referencia_pallet_sin"
+                                                               id="inputRefPalletSin"
+                                                               class="form-control form-control-sm" required>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Contenedor Section -->
+                                            <div class="border-top pt-2 mt-2">
+                                                <div class="row g-2 mb-2">
+                                                    <div class="col-12">
+                                                        <div class="compact-input-group">
+                                                            <label class="text-primary fw-bold"><i
+                                                                    class="bi bi-box-seam me-1"></i>Contenedor</label>
+                                                            <select name="referencia_contenedor" id="inputRefContenedor"
+                                                                    class="form-select form-select-sm"
+                                                                    onchange="toggleContenedorFields()">
+                                                                <option value="">-- Sin Contenedor --</option>
+                                                                {% for cont in contenedores %}
+                                                                    <option value="{{ cont.id }}">{{ cont.nombre }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Container-dependent fields -->
+                                                <div id="containerDependentFields" class="bg-light rounded p-2 border"
+                                                     style="display: none;">
+                                                    <div class="row g-2 mb-2">
+                                                        <div class="col-6">
+                                                            <div class="compact-input-group">
+                                                                <label>Cajas x Contenedor</label>
+                                                                <input type="number" step="1"
+                                                                       name="referencia_cant_contenedor"
+                                                                       id="inputRefCantContenedor"
+                                                                       class="form-control form-control-sm">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="compact-input-group">
+                                                                <label>Precio Contenedor (COP)</label>
+                                                                <input type="number" step="0.01"
+                                                                       name="contenedor_precio" id="inputContPrice"
+                                                                       class="form-control form-control-sm">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2">
+                                                        <div class="col-12">
+                                                            <div class="compact-input-group">
+                                                                <label>Cajas Pallet Contenedor</label>
+                                                                <input type="number" step="1"
+                                                                       name="referencia_pallet_con"
+                                                                       id="inputRefPalletCon"
+                                                                       class="form-control form-control-sm">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="p-3 bg-white border-top shadow-sm mt-auto z-1">
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <button type="submit"
+                                                        class="btn btn-primary w-100 shadow-sm rounded-pill py-2 fw-medium text-xs">
+                                                    <i class="bi bi-check-lg me-1"></i>Guardar
+                                                </button>
+                                            </div>
+                                            <div class="col-6">
+                                                <button type="button"
+                                                        class="btn btn-light w-100 text-secondary rounded-pill py-2 fw-medium text-xs"
+                                                        data-bs-dismiss="modal">
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% block extra_js %}
+        
+        <!-- Add separate script block -->
+        <script>
+            // Toggle container-dependent fields based on contenedor selection
+            function toggleContenedorFields() {
+                const contSelect = document.getElementById('inputRefContenedor');
+                const dependentFields = document.getElementById('containerDependentFields');
+                const inputCantContenedor = document.getElementById('inputRefCantContenedor');
+                const inputContPrice = document.getElementById('inputContPrice');
+                const inputPalletCon = document.getElementById('inputRefPalletCon');
+
+                if (!contSelect || !dependentFields) return;
+
+                const hasContenedor = contSelect.value !== '';
+
+                if (hasContenedor) {
+                    dependentFields.style.display = 'block';
+                    if (inputCantContenedor) inputCantContenedor.disabled = false;
+                    if (inputContPrice) inputContPrice.disabled = false;
+                    if (inputPalletCon) inputPalletCon.disabled = false;
+                } else {
+                    dependentFields.style.display = 'none';
+                    // Clear and disable container-related inputs when no container selected
+                    if (inputCantContenedor) {
+                        inputCantContenedor.value = '';
+                        inputCantContenedor.disabled = true;
+                    }
+                    if (inputContPrice) {
+                        inputContPrice.value = '';
+                        inputContPrice.disabled = true;
+                    }
+                    if (inputPalletCon) {
+                        inputPalletCon.value = '';
+                        inputPalletCon.disabled = true;
+                    }
+                }
+            }
+
+            // Function to copy product inputs to modal form before submit
+            function copyProductInputsToModal() {
+                const container = document.getElementById('modalProductInputs');
+                if (!container) {
+                    console.error('Modal product inputs container not found');
+                    return;
+                }
+
+                // Clear previous inputs
+                container.innerHTML = '';
+
+                // Find all product inputs from the main form using its specific ID
+                const mainForm = document.getElementById('mainCalculationForm');
+                if (!mainForm) {
+                    console.error('Main calculation form not found');
+                    return;
+                }
+
+                let copiedBoxes = 0;
+                let copiedChecks = 0;
+
+                // Copy box inputs (cajas_X)
+                const boxInputs = mainForm.querySelectorAll('input[name^="cajas_"]');
+                boxInputs.forEach(input => {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = input.name;
+                    hiddenInput.value = input.value || '';
+                    container.appendChild(hiddenInput);
+                    if (input.value && input.value !== '' && input.value !== '0') {
+                        copiedBoxes++;
+                    }
+                });
+
+                // Copy checkbox inputs (cont_X)
+                const checkboxInputs = mainForm.querySelectorAll('input[name^="cont_"]');
+                checkboxInputs.forEach(input => {
+                    if (input.checked) {
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = input.name;
+                        hiddenInput.value = 'on';
+                        container.appendChild(hiddenInput);
+                        copiedChecks++;
+                    }
+                });
+
+                console.log('Product inputs copied to modal:', copiedBoxes, 'boxes,', copiedChecks, 'checkboxes');
+            }
+
+            // Copy product inputs when modal opens (not on submit - too late)
+            function openCostDetail(row) {
+                try {
+                    const jsonStr = row.getAttribute('data-json');
+                    if (!jsonStr) return;
+
+                    const raw = JSON.parse(jsonStr);
+                    populateModal(raw);
+
+                    // Copy product inputs BEFORE showing modal, so they're ready for submit
+                    copyProductInputsToModal();
+
+                    const modal = new bootstrap.Modal(document.getElementById('costDetailModal'));
+                    modal.show();
+                } catch (e) {
+                    console.error("Error parsing cost data", e);
+                }
+            }
+
+            function populateModal(data) {
+                const d = data.breakdown;
+                const c = data.config;
+                const m = data.meta;
+                const ref = data.ref_data || {};
+                const fruit = data.fruit_analysis || {};
+                const cif = data.cif_breakdown || {};
+                const airline = data.airline_info || {};
+                const ship = data.shipment_costs_base || {};
+                const stow = data.stowing_data || {};
+                const pallet = data.pallet_calcs || {};
+                const weight = data.weight_calcs || {};
+                const sale = data.sale_details || {};
+
+                // Header
+                document.getElementById('modalTitle').innerText = `${m.fruta} - ${m.presentacion}`;
+                document.getElementById('modalSubtitle').innerText = `${(m.kilos_neto ?? m.kilos ?? 0).toFixed(2)} kg Neto`;
+
+                // Helpers
+                const fmtCop = (val) => `$${parseFloat(val).toLocaleString('es-CO', {maximumFractionDigits: 0})}`;
+                const fmtUsd = (val) => `$${parseFloat(val).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })}`;
+                const fmtNum = (val, dec = 2) => parseFloat(val).toLocaleString('en-US', {
+                    minimumFractionDigits: dec,
+                    maximumFractionDigits: dec
+                });
+
+                // 1. Base Data & Top Info
+                if (document.getElementById('displayCliente')) document.getElementById('displayCliente').innerText = c.cliente || '-';
+                if (document.getElementById('displayExportador')) document.getElementById('displayExportador').innerText = c.exportador || '-';
+                if (document.getElementById('displayTrmValue')) document.getElementById('displayTrmValue').innerText = fmtCop(c.trm).replace('$', '');
+                if (document.getElementById('displayUtilidadPct')) document.getElementById('displayUtilidadPct').innerText = `${sale.utilidad_pct || 0}%`;
+
+                if (document.getElementById('displayAerolinea')) document.getElementById('displayAerolinea').innerText = airline.nombre || '-';
+                if (document.getElementById('displayDestino')) document.getElementById('displayDestino').innerText = `${airline.destino_code || ''} - ${airline.destino_city || ''}`.trim() || '-';
+                if (document.getElementById('displayTarifaKilo')) document.getElementById('displayTarifaKilo').innerText = fmtUsd(airline.tarifa_kilo || 0);
+
+                // Form Inputs - General
+                if (document.getElementById('modalCpId')) document.getElementById('modalCpId').value = c.cp_id;
+                if (document.getElementById('inputManoObra')) document.getElementById('inputManoObra').value = c.mano_obra_cop;
+                if (document.getElementById('inputDeshid')) document.getElementById('inputDeshid').value = c.deshidratacion_pct;
+                if (document.getElementById('inputMargen')) document.getElementById('inputMargen').value = c.margen_adicional_usd;
+                if (document.getElementById('displayInsumosCop')) {
+                    document.getElementById('displayInsumosCop').innerText = fmtCop(c.costo_insumos_cop);
+                    document.getElementById('displayTrm').innerText = fmtCop(c.trm);
+                }
+
+                // Form Inputs - Reference
+                const setVal = (id, v) => {
+                    if (document.getElementById(id)) document.getElementById(id).value = v;
+                };
+                if (ref.precio !== undefined) {
+                    setVal('inputRefPrice', ref.precio_referencia || ref.precio);
+                    setVal('inputRefPalletCon', ref.pallet_con_cont || ref.pallet_con);
+                    setVal('inputRefPalletSin', ref.pallet_sin_cont || ref.pallet_sin);
+                    setVal('inputRefCantContenedor', ref.cant_contenedor);
+                    setVal('inputRefPesoBruto', ref.peso_bruto_pct);
+                    setVal('inputContPrice', ref.contenedor_precio || ref.precio_contenedor);
+
+                    // Set contenedor select value
+                    const contSelect = document.getElementById('inputRefContenedor');
+                    if (contSelect) {
+                        contSelect.value = ref.contenedor_id || '';
+                        toggleContenedorFields();
+                    }
+                }
+
+                // 2. Cost Breakdown Table
+                const tbody = document.getElementById('breakdownTableBody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    const fobBoxTotal = d.fob_box_usd || 0;
+                    const fobBaseTotal = fobBoxTotal;
+
+                    const addRow = (label, usd, cop_val = null, includeInPct = true) => {
+                        const tr = document.createElement('tr');
+                        const pct = (includeInPct && fobBaseTotal > 0) ? (usd / fobBaseTotal * 100).toFixed(1) : '0.0';
+
+                        let displayCop = '-';
+                        if (cop_val !== null) displayCop = fmtCop(cop_val);
+                        else if (c.trm) displayCop = fmtCop(usd * c.trm);
+
+                        tr.innerHTML = `
+                            <td class="ps-3"><div class="fw-medium text-secondary text-xs">${label}</div></td>
+                            <td class="text-end fw-bold text-dark text-xs">${fmtUsd(usd)}</td>
+                            <td class="text-end text-xs text-muted">${displayCop}</td>
+                            <td class="text-end text-xs"><span class="badge bg-light text-secondary border">${pct}%</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    };
+
+                    const frutaCost = d.fruta_ajustada_usd || d.fruta_usd || 0;
+                    addRow('Fruta (Costo Real)', frutaCost, frutaCost * c.trm);
+
+                    if ((d.referencia_usd || 0) > 0) addRow('Referencia', d.referencia_usd);
+                    if ((d.contenedor_usd || 0) > 0) addRow('Contenedor', d.contenedor_usd);
+
+                    addRow('Mano de Obra', d.mano_obra_usd, c.mano_obra_cop * m.kilos_neto);
+
+                    // Estibado logic might need stow total
+                    let estibadoCop = null;
+                    if (stow.total_cop) estibadoCop = stow.total_cop / (pallet.boxes_per_pallet || 1);
+                    addRow('Estibado', d.estibado_usd, estibadoCop);
+
+                    addRow('Costos Embarque Base', d.costos_embarque_base_usd);
+
+                    if (c.is_cif && d.costos_cif_usd > 0) addRow('Costos CIF (Otros)', d.costos_cif_usd, null, false);
+                    if (c.is_cif && d.tarifa_aerea_usd > 0) {
+                        let label = 'Flete Aéreo';
+                        // if(airline.nombre) label += ` (${airline.nombre})`;
+                        addRow(label, d.tarifa_aerea_usd, null, false);
+                    }
+
+                    addRow('Margen Adicional', c.margen_adicional_usd, c.margen_adicional_usd * c.trm, false);
+
+                    // Totals
+                    const costoFobBase = fobBaseTotal + (c.margen_adicional_usd || 0);
+                    if (document.getElementById('costoFobBaseDisplay')) {
+                        document.getElementById('costoFobBaseDisplay').innerText = fmtUsd(costoFobBase);
+                        document.getElementById('costoFobBaseCopDisplay').innerText = fmtCop(costoFobBase * c.trm);
+                    }
+
+                    const utilidad = d.utilidad_total_usd || 0;
+                    const utilidadPct = costoFobBase > 0 ? ((utilidad / costoFobBase) * 100).toFixed(1) : '0.0';
+                    if (document.getElementById('utilidadDisplay')) {
+                        document.getElementById('utilidadDisplay').innerText = fmtUsd(utilidad);
+                        document.getElementById('utilidadCopDisplay').innerText = fmtCop(utilidad * c.trm);
+                        document.getElementById('utilidadPctDisplay').innerText = `${utilidadPct}%`;
+                    }
+
+                    if (document.getElementById('totalFobDisplay')) {
+                        document.getElementById('totalFobDisplay').innerText = fmtUsd(d.precio_final_fob_usd);
+                        document.getElementById('totalFobCopDisplay').innerText = fmtCop(d.precio_final_fob_usd * c.trm);
+                        const totalPct = costoFobBase > 0 ? (((d.precio_final_fob_usd / costoFobBase) - 1) * 100).toFixed(1) : '0.0';
+                        document.getElementById('totalPctDisplay').innerText = `+${totalPct}%`;
+                    }
+                }
+
+                // 3. Details
+                if (document.getElementById('fruitBasePrice')) {
+                    document.getElementById('fruitBasePrice').innerText = fmtCop(fruit.precio_kilo) + ' COP';
+                    document.getElementById('fruitKilosAjustados').innerText = fmtNum(fruit.kilos_ajustados, 2);
+                    document.getElementById('fruitNetCost').innerText = fmtCop(fruit.costo_caja_neto) + ' COP';
+                    document.getElementById('fruitDelta').innerText = `+${fmtCop(fruit.delta_deshidratacion)} COP`;
+                    document.getElementById('fruitRealCost').innerText = fmtCop(fruit.costo_caja_ajustado) + ' COP';
+                }
+
+                if (document.getElementById('weightBase')) {
+                    document.getElementById('weightBase').innerText = fmtNum(weight.kilos_base, 2);
+                    document.getElementById('weightFactorDeshid').innerText = `${fmtNum(weight.pct_deshidratacion, 2)}%`;
+                    document.getElementById('weightFob').innerText = fmtNum(weight.kilos_fob, 2);
+                    document.getElementById('weightFactorBruto').innerText = `${fmtNum(weight.pct_peso_bruto, 2)}%`;
+
+                    const weightFinalValue = document.getElementById('weightCif');
+                    if (weightFinalValue) {
+                        if (weight.peso_cif_total > 0) weightFinalValue.innerText = fmtNum(weight.peso_cif_total, 2);
+                        else weightFinalValue.innerText = fmtNum(weight.peso_fob_total, 2);
+                    }
+                }
+
+                // Populators
+                const populateTable = (tableId, dataObj, isUsd = true) => {
+                    const tbl = document.getElementById(tableId);
+                    if (!tbl) return;
+                    tbl.innerHTML = '';
+                    if (dataObj && Object.keys(dataObj).length > 0) {
+                        for (const [key, val] of Object.entries(dataObj)) {
+                            if (key === 'total_cop' || key === 'nombre') continue;
+                            const currency = isUsd ? ' USD' : ' COP';
+                            if (val > 0) tbl.innerHTML += `<tr><td class="text-capitalize ps-2 text-secondary">${key.replace(/_/g, ' ')}</td><td class="text-end pe-2 text-dark">${isUsd ? fmtUsd(val) : fmtCop(val)}${currency}</td></tr>`;
+                        }
+                    }
+                };
+
+                populateTable('cifTable', cif, true);
+                if (Object.keys(cif).length === 0 && document.getElementById('cifTable')) document.getElementById('cifTable').innerHTML = '<tr><td class="text-xs text-muted ps-2">No aplica</td></tr>';
+
+                populateTable('shipmentTable', ship, false);
+
+                const stowTable = document.getElementById('stowingTable');
+                if (stowTable) {
+                    stowTable.innerHTML = '';
+                    if (stow && Object.keys(stow).length > 0) {
+                        if (stow.nombre) stowTable.innerHTML += `<tr><td class="fw-bold ps-2 text-primary">${stow.nombre}</td><td class="text-end"></td></tr>`;
+                        ['estiba', 'malla_tela', 'malla_termica', 'esquineros_zuncho', 'entrega'].forEach(f => {
+                            if (stow[f] > 0) stowTable.innerHTML += `<tr><td class="text-capitalize ps-2 text-secondary">${f.replace(/_/g, ' ')}</td><td class="text-end pe-2">${fmtCop(stow[f])} COP</td></tr>`;
+                        });
+                        stowTable.innerHTML += `<tr class="border-top"><td class="fw-bold ps-2">Total</td><td class="text-end fw-bold pe-2">${fmtCop(stow.total_cop)} COP</td></tr>`;
+                    } else {
+                        stowTable.innerHTML = '<tr><td class="text-xs text-muted ps-2">-</td></tr>';
+                    }
+                }
+
+                const palletTable = document.getElementById('palletTable');
+                if (palletTable) {
+                    palletTable.innerHTML = `
+                        <tr><td class="ps-2 text-secondary">Cajas Totales</td><td class="text-end pe-2">${pallet.total_boxes}</td></tr>
+                        <tr><td class="ps-2 text-secondary">Cajas/Pallet</td><td class="text-end pe-2">${pallet.boxes_per_pallet}</td></tr>
+                        <tr><td class="ps-2 fw-bold text-dark">Pallets</td><td class="text-end pe-2 fw-bold">${pallet.total_pallets}</td></tr>
+                        <tr><td class="ps-2 text-secondary">Estibado/Caja</td><td class="text-end pe-2 text-primary">${fmtUsd(pallet.stowing_per_box_usd)} USD</td></tr>
+                    `;
+                }
+
+                // Sale Price & Profit
+                if (document.getElementById('saleFobPrice')) {
+                    document.getElementById('saleFobPrice').innerText = fmtUsd(sale.precio_fob);
+                    document.getElementById('saleCifPrice').innerText = fmtUsd(sale.precio_cif);
+                    document.getElementById('saleTotalProfit').innerText = fmtUsd(sale.utilidad_total);
+
+                    document.getElementById('saleHeavensPct').innerText = sale.utilidad_heavens_pct.toFixed(2);
+                    document.getElementById('saleHeavensProfit').innerText = fmtUsd(sale.utilidad_heavens);
+
+                    document.getElementById('saleExportadorPct').innerText = sale.utilidad_exportador_pct.toFixed(2);
+                    document.getElementById('saleExportadorProfit').innerText = fmtUsd(sale.utilidad_exportador);
+
+                    document.getElementById('saleFobPerKg').innerText = fmtUsd(sale.fob_per_kg);
+                    document.getElementById('saleCifPerKg').innerText = fmtUsd(sale.cif_per_kg);
+                }
+            }
+        </script>
+
+
+        <!-- Modal Editor Producto -->
+        <div class="modal fade" id="productEditorModal" tabindex="-1" aria-labelledby="productEditorModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-white py-3 border-bottom-0">
+                        <h6 class="modal-title mb-0 fw-bold text-primary" id="productEditorModalLabel">
+                            <i class="bi bi-pencil-square me-2"></i>Editar Producto
+                        </h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body bg-light">
+                        <!-- Content loaded via AJAX -->
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            $(document).ready(function () {
+                // Restore form state from sessionStorage (after product editor save)
+                var savedState = sessionStorage.getItem('cotizacion_form_state');
+                if (savedState) {
+                    try {
+                        var formData = JSON.parse(savedState);
+                        var mainForm = document.getElementById('mainCalculationForm');
+                        if (mainForm) {
+                            // Restore box inputs
+                            Object.keys(formData).forEach(function (key) {
+                                var input = mainForm.querySelector('[name="' + key + '"]');
+                                if (input) {
+                                    if (input.type === 'checkbox') {
+                                        input.checked = formData[key] === 'checked';
+                                    } else {
+                                        input.value = formData[key];
+                                    }
+                                }
+                            });
+                        }
+                        // Clear saved state after restoration
+                        sessionStorage.removeItem('cotizacion_form_state');
+                    } catch (e) {
+                        console.error('Error restoring form state:', e);
+                    }
+                }
+
+                // Edit Product Modal Trigger
+                $(document).on('click', '.edit-product-btn', function (e) {
+                    e.preventDefault();
+                    var url = $(this).data('url');
+                    var modal = $('#productEditorModal');
+                    var modalBody = modal.find('.modal-body');
+
+                    // Show modal first with loader
+                    modal.modal('show');
+
+                    // Reset loader (in case it was replaced previously)
+                    modalBody.html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-2 text-muted small">Cargando datos...</p></div>');
+
+                    // Fetch content
+                    $.get(url, function (data) {
+                        modalBody.html(data);
+                    }).fail(function () {
+                        modalBody.html('<div class="alert alert-danger m-3">Error al cargar la información del producto.</div>');
+                    });
+                });
+            });
+        </script>
+
+
+
+
+
+        <!-- Modal Gestión Insumos (Bootstrap 5) -->
+        <div class="modal fade" id="insumosModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-white border-bottom">
+                        <h5 class="modal-title fw-bold text-dark">
+                            <i class="bi bi-box-seam me-2 text-primary"></i>Gestión de Insumos
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body bg-light">
+                        <!-- List View -->
+                        <div id="insumosListView">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold text-secondary mb-0">Listado de Insumos</h6>
+                                <button type="button" onclick="showCreateInsumoForm()"
+                                        class="btn btn-primary btn-sm rounded-pill px-3">
+                                    <i class="bi bi-plus-lg me-1"></i>Crear Nuevo
+                                </button>
+                            </div>
+
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body p-0">
+                                    <div class="table-responsive" style="max-height: 400px;">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light sticky-top">
+                                            <tr>
+                                                <th class="ps-4 py-3 text-secondary text-xs text-uppercase">Nombre</th>
+                                                <th class="py-3 text-secondary text-xs text-uppercase">Precio</th>
+                                                <th class="py-3 text-secondary text-xs text-uppercase">Unidad</th>
+                                                <th class="pe-4 py-3 text-end text-secondary text-xs text-uppercase">
+                                                    Acciones
+                                                </th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="insumosTableBody" class="bg-white">
+                                            <!-- Rows injected by JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Create/Edit Form (Hidden by default) -->
+                        <div id="insumoFormContainer" class="d-none mt-4">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white border-bottom">
+                                    <h6 class="fw-bold mb-0 text-primary" id="formTitle">Crear Insumo</h6>
+                                </div>
+                                <div class="card-body">
+                                    <form id="insumoForm" onsubmit="handleInsumoSubmit(event)">
+                                        <input type="hidden" id="insumoId" name="id">
+                                        <input type="hidden" id="insumoAction" name="action" value="create">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label text-sm fw-medium text-secondary">Nombre</label>
+                                                <input type="text" id="insumoNombre" name="nombre" required
+                                                       class="form-control form-control-sm">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label text-sm fw-medium text-secondary">Precio</label>
+                                                <div class="input-group input-group-sm">
+                                                    <span class="input-group-text">$</span>
+                                                    <input type="number" step="0.01" id="insumoPrecio" name="precio"
+                                                           class="form-control">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label text-sm fw-medium text-secondary">Unidad</label>
+                                                <input type="text" id="insumoUnidad" name="unidad_medida"
+                                                       class="form-control form-control-sm">
+                                            </div>
+                                        </div>
+                                        <div class="mt-4 d-flex justify-content-end gap-2">
+                                            <button type="button" onclick="hideInsumoForm()"
+                                                    class="btn btn-light btn-sm rounded-pill px-3">Cancelar
+                                            </button>
+                                            <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3">
+                                                Guardar
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-white border-top">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function openInsumosModal() {
+                var modal = new bootstrap.Modal(document.getElementById('insumosModal'));
+                modal.show();
+                fetchInsumos();
+            }
+
+            function fetchInsumos() {
+                fetch('{% url "manage_insumos" %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const tbody = document.getElementById('insumosTableBody');
+                        tbody.innerHTML = '';
+                        if (data.insumos.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">No hay insumos registrados</td></tr>';
+                            return;
+                        }
+                        data.insumos.forEach(insumo => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                        <td class="ps-4 fw-medium text-dark">${insumo.nombre}</td>
+                        <td class="text-success fw-bold">$${insumo.precio}</td>
+                        <td class="text-muted small">${insumo.unidad_medida || '-'}</td>
+                        <td class="pe-4 text-end">
+                            <button onclick='editInsumo(${JSON.stringify(insumo)})' class="btn btn-link btn-sm p-0 text-decoration-none text-primary fw-medium">
+                                <i class="bi bi-pencil-square me-1"></i>Editar
+                            </button>
+                        </td>
+                    `;
+                            tbody.appendChild(tr);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            function showCreateInsumoForm() {
+                document.getElementById('insumoFormContainer').classList.remove('d-none');
+                document.getElementById('insumosListView').classList.add('d-none'); // Hide list to focus on form
+                document.getElementById('formTitle').innerText = 'Crear Insumo';
+                document.getElementById('insumoForm').reset();
+                document.getElementById('insumoAction').value = 'create';
+                document.getElementById('insumoId').value = '';
+            }
+
+            function editInsumo(insumo) {
+                document.getElementById('insumoFormContainer').classList.remove('d-none');
+                document.getElementById('insumosListView').classList.add('d-none');
+                document.getElementById('formTitle').innerText = 'Editar Insumo';
+                document.getElementById('insumoNombre').value = insumo.nombre;
+                document.getElementById('insumoPrecio').value = insumo.precio;
+                document.getElementById('insumoUnidad').value = insumo.unidad_medida;
+                document.getElementById('insumoId').value = insumo.id;
+                document.getElementById('insumoAction').value = 'update';
+            }
+
+            function hideInsumoForm() {
+                document.getElementById('insumoFormContainer').classList.add('d-none');
+                document.getElementById('insumosListView').classList.remove('d-none');
+            }
+
+            function handleInsumoSubmit(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+
+                fetch('{% url "manage_insumos" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            hideInsumoForm();
+                            fetchInsumos();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => alert('Error: ' + error));
+            }
+        </script>
+    {% endblock %}
+{% endblock %}

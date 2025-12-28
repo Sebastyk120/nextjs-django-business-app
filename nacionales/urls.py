@@ -1,9 +1,7 @@
-from django.contrib import admin
 from django.urls import path
 from . import views, views2, views_report_prov, views_api, views_estado_cuenta_proveedor, views_analisis_calidad
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path('nacionales_list_general', views.nacionales_list_general, name='nacionales_list_general'),
     path('autocomplete_guia/', views2.autocomplete_guia, name='autocomplete_guia'),
     path('autocomplete_factura/', views2.autocomplete_factura, name='autocomplete_factura'),

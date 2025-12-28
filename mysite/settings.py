@@ -27,14 +27,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-rc^*w^w&6g9_(uvx#6s*bnt!w)l0rdi%!l7mv#y%uc&x%wo5pk'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-
-# FORM SUBMISSION
-# Comment out the following line and place your railway URL, and your production URL in the array.
-# CSRF_TRUSTED_ORIGINS = ["*"]
 
 # Application definition
 
@@ -50,8 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.sites',  # Added for sitemaps
-    'django.contrib.sitemaps',  # Added for sitemaps
+    'django.contrib.sites',
+    'django.contrib.sitemaps',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'django_tables2',
@@ -105,7 +101,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'mysite.wsgi.application'
+ASGI_APPLICATION = 'mysite.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
@@ -179,7 +175,7 @@ LOGGING = {
     },
 }
 
-"""
+""""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -523,6 +519,59 @@ UNFOLD = {
                     },
                 ],
             },
+                    {
+                        "title": _("Costos y Tarifas"),
+                        "separator": True,
+                        "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Cotización Conjunta"),
+                        "icon": "table_view",
+                        "link": reverse_lazy("admin:comercial_cotizacion_conjunta"),
+                    },
+                    {
+                        "title": _("Historial Cotizaciones"),
+                        "icon": "receipt_long",
+                        "link": reverse_lazy("admin:comercial_cotizacionconjuntahistorico_changelist"),
+                    },
+                    {
+                        "title": _("Tarifas Aéreas"),
+                        "icon": "flight_class",
+                        "link": reverse_lazy("admin:comercial_tarifaaerea_changelist"),
+                    },
+                    {
+                        "title": _("Precios Fruta Exp."),
+                        "icon": "price_change",
+                        "link": reverse_lazy("admin:comercial_listapreciosfrutaexportador_changelist"),
+                    },
+                    {
+                        "title": _("Costos Embarque"),
+                        "icon": "local_shipping",
+                        "link": reverse_lazy("admin:comercial_costosunicosembarque_changelist"),
+                    },
+                    {
+                        "title": _("Costos Estibado"),
+                        "icon": "layers",
+                        "link": reverse_lazy("admin:comercial_costosestibado_changelist"),
+                    },
+                    {
+                        "title": _("Insumos"),
+                        "icon": "construction",
+                        "link": reverse_lazy("admin:comercial_insumo_changelist"),
+                    },
+                    # Plantillas Insumos removido: gestion solo por cliente
+                    {
+                        "title": _("Insumos Cliente"),
+                        "icon": "person_add",
+                        "link": reverse_lazy("admin:comercial_presentacioninsumocliente_changelist"),
+                    },
+                    {
+                        "title": _("Costos Presentación Cliente"),
+                        "icon": "request_quote",
+                        "link": reverse_lazy("admin:comercial_costopresentacioncliente_changelist"),
+                    },
+                ],
+            },
             {
                 "title": _("Nacionales"),
                 "separator": True,
@@ -594,6 +643,10 @@ UNFOLD = {
             },
         ],
     },
+    "STYLES": [
+        lambda request: static("css/styles.css"),
+    ],
+    "SCRIPTS": [],
 }
 
 # Captcha Configuration

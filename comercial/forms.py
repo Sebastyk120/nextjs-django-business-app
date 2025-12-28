@@ -1,7 +1,8 @@
 from django import forms
+from django.forms import inlineformset_factory
 from django.core.exceptions import ValidationError
 from django.forms import DateInput
-from .models import Pedido, Cliente, DetallePedido, Referencias, Presentacion, Exportador, Fruta, Intermediario
+from .models import Pedido, Cliente, DetallePedido, Referencias, Presentacion, Exportador, Fruta, Intermediario, ClientePresentacion, CostoPresentacionCliente, PresentacionInsumoCliente, Insumo
 
 
 class SearchFormReferencias(forms.Form):
@@ -626,3 +627,67 @@ class EditarPedidoSeguimientoForm(forms.ModelForm):
             'eta': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'eta_real': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
+
+# ----------------------------------------------------------------------------
+# FORMULARIOS PARA EDICION DE CLIENTE PRESENTACION (MODAL COTIZACION)
+# ----------------------------------------------------------------------------
+
+class ClientePresentacionEditorForm(forms.ModelForm):
+    class Meta:
+        model = ClientePresentacion
+        fields = ['exportador', 'referencia']
+        widgets = {
+            'exportador': forms.Select(attrs={'class': 'form-select form-select-sm', 'id': 'id_exportador'}),
+            'referencia': forms.Select(attrs={'class': 'form-select form-select-sm', 'id': 'id_referencia'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Filtro inicial de referencias
+        if 'exportador' in self.data:
+            try:
+                exportador_id = int(self.data.get('exportador'))
+                self.fields['referencia'].queryset = Referencias.objects.filter(exportador_id=exportador_id).order_by('nombre')
+            except (ValueError, TypeError):
+                pass
+        elif self.instance.pk and self.instance.exportador:
+            self.fields['referencia'].queryset = Referencias.objects.filter(exportador=self.instance.exportador).order_by('nombre')
+        else:
+            self.fields['referencia'].queryset = Referencias.objects.none()
+
+
+class CostoPresentacionClienteEditorForm(forms.ModelForm):
+    class Meta:
+        model = CostoPresentacionCliente
+        fields = ['mano_obra_cop', 'deshidratacion_fruta', 'margen_adicional_usd', 'es_activo']
+        widgets = {
+            'mano_obra_cop': forms.NumberInput(attrs={'class': 'form-control form-control-sm'}),
+            'deshidratacion_fruta': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01'}),
+            'margen_adicional_usd': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01'}),
+            'es_activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['mano_obra_cop'].label = "Mano de Obra (COP)"
+        self.fields['deshidratacion_fruta'].label = "Deshidratación (%)"
+        self.fields['margen_adicional_usd'].label = "Margen Adicional (USD)"
+
+
+class PresentacionInsumoClienteForm(forms.ModelForm):
+    class Meta:
+        model = PresentacionInsumoCliente
+        fields = ['insumo', 'cantidad']
+        widgets = {
+            'insumo': forms.Select(attrs={'class': 'form-select form-select-sm'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'step': '0.01'}),
+        }
+
+PresentacionInsumoClienteFormSet = inlineformset_factory(
+    ClientePresentacion,
+    PresentacionInsumoCliente,
+    form=PresentacionInsumoClienteForm,
+    extra=1,
+    can_delete=True
+)

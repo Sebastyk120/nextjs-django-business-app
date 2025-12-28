@@ -1,0 +1,275 @@
+
+<div class="row">
+    <div class="col-12">
+        {% if error %}
+        <div class="alert alert-danger py-2 mb-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+            {% if form_cp.errors or form_costo.errors or formset_insumos.errors %}
+                <ul class="mb-0 small">
+                    {% for field in form_cp %}
+                        {% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}
+                    {% endfor %}
+                    {% for field in form_costo %}
+                        {% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}
+                    {% endfor %}
+                    {{ formset_insumos.non_form_errors }}
+                </ul>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <form id="productEditorForm" method="post" action="{% url 'cotizacion_editor_producto' cp.id %}">
+            {% csrf_token %}
+            
+            <!-- SECCION: Configuración Principal (ClientePresentacion) -->
+            <div class="card mb-3 border-0 shadow-sm">
+                <div class="card-header bg-primary-subtle text-primary fw-medium py-2">
+                    <i class="bi bi-gear me-2"></i>Configuración del Producto
+                </div>
+                <div class="card-body py-2">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label text-xs text-secondary mb-1">Exportador</label>
+                            {{ form_cp.exportador }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-xs text-secondary mb-1">Referencia</label>
+                            {{ form_cp.referencia }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCION: Costos y Parámetros (CostoPresentacionCliente) -->
+            <div class="card mb-3 border-0 shadow-sm">
+                <div class="card-header bg-success-subtle text-success-emphasis fw-medium py-2">
+                    <i class="bi bi-currency-dollar me-2"></i>Parametros de Costo
+                </div>
+                <div class="card-body py-2">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label text-xs text-secondary mb-1">{{ form_costo.mano_obra_cop.label }}</label>
+                            {{ form_costo.mano_obra_cop }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-xs text-secondary mb-1">{{ form_costo.deshidratacion_fruta.label }}</label>
+                            {{ form_costo.deshidratacion_fruta }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-xs text-secondary mb-1">{{ form_costo.margen_adicional_usd.label }}</label>
+                            {{ form_costo.margen_adicional_usd }}
+                        </div>
+                        <div class="col-12 pt-1">
+                            <div class="form-check form-switch">
+                                {{ form_costo.es_activo }}
+                                <label class="form-check-label small" for="{{ form_costo.es_activo.id_for_label }}">
+                                    Configuración Activa
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCION: Insumos (PresentacionInsumoCliente) -->
+            <div class="card mb-3 border-0 shadow-sm">
+                <div class="card-header bg-warning-subtle text-warning-emphasis fw-medium py-2 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-box2 me-2"></i>Insumos Personalizados</span>
+                    <button type="button" class="btn btn-xs btn-outline-warning text-dark border-0" id="add-insumo-btn">
+                        <i class="bi bi-plus-lg"></i> Agregar
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    {{ formset_insumos.management_form }}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless mb-0 fs-7" id="insumos-table">
+                            <thead class="bg-light border-bottom">
+                                <tr>
+                                    <th class="ps-3" style="width: 50%;">Insumo</th>
+                                    <th style="width: 35%;">Cantidad</th>
+                                    <th class="text-end pe-3" style="width: 15%;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="insumo-form-container">
+                                {% for form in formset_insumos %}
+                                    <tr class="insumo-form-row align-middle border-bottom">
+                                        <td class="ps-3">
+                                            {% for hidden in form.hidden_fields %}
+                                                {{ hidden }}
+                                            {% endfor %}
+                                            {{ form.insumo }}
+                                            {% if form.insumo.errors %}
+                                                <div class="text-danger small">{{ form.insumo.errors }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ form.cantidad }}
+                                            {% if form.cantidad.errors %}
+                                                <div class="text-danger small">{{ form.cantidad.errors }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end pe-3">
+                                            {% if formset_insumos.can_delete %}
+                                                <div class="d-none">{{ form.DELETE }}</div>
+                                                <button type="button" class="btn btn-sm text-danger remove-insumo-btn" title="Eliminar">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr id="no-insumos-row">
+                                        <td colspan="3" class="text-center text-muted py-3">
+                                            <i class="bi bi-inbox me-2"></i>No hay insumos configurados
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-end">
+                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="saveProductEditorBtn">
+                    <span class="spinner-border spinner-border-sm d-none me-1" role="status" aria-hidden="true"></span>
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Empty form template using script tag to preserve HTML structure -->
+<script type="text/template" id="empty-insumo-form">
+<tr class="insumo-form-row align-middle border-bottom">
+    <td class="ps-3">
+        <input type="hidden" name="insumos-__prefix__-id" id="id_insumos-__prefix__-id">
+        <select name="insumos-__prefix__-insumo" id="id_insumos-__prefix__-insumo" class="form-select form-select-sm">
+            <option value="">---------</option>
+            {% for insumo in formset_insumos.form.fields.insumo.queryset %}
+                <option value="{{ insumo.pk }}">{{ insumo }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        <input type="number" name="insumos-__prefix__-cantidad" step="0.01" class="form-control form-control-sm" id="id_insumos-__prefix__-cantidad">
+    </td>
+    <td class="text-end pe-3">
+        <div class="d-none"><input type="checkbox" name="insumos-__prefix__-DELETE" id="id_insumos-__prefix__-DELETE"></div>
+        <button type="button" class="btn btn-sm text-danger remove-insumo-btn">
+            <i class="bi bi-trash"></i>
+        </button>
+    </td>
+</tr>
+</script>
+
+<script>
+    // Use jQuery with explicit reference (safer for dynamically loaded content)
+    (function($) {
+        // Dynamic Exportador -> Referencia
+        $('#id_exportador').on('change', function() {
+            var url = "{% url 'ajax_load_referencias_json' %}";
+            var exportadorId = $(this).val();
+            var $refSelect = $('#id_referencia');
+            
+            if(!exportadorId) {
+                $refSelect.html('<option value="">---------</option>');
+                return;
+            }
+
+            $.ajax({
+                url: url,
+                data: { 'exportador_id': exportadorId },
+                success: function(data) {
+                    var options = '<option value="">---------</option>';
+                    data.forEach(function(item) {
+                        options += '<option value="' + item.id + '">' + item.nombre + '</option>';
+                    });
+                    $refSelect.html(options);
+                }
+            });
+        });
+
+        // Formset Management (Add Row)
+        $('#add-insumo-btn').on('click', function() {
+            // Remove "no insumos" row if exists
+            $('#no-insumos-row').remove();
+            
+            var formIdx = parseInt($('#id_insumos-TOTAL_FORMS').val());
+            var template = $('#empty-insumo-form').html();
+            var newRow = template.replace(/__prefix__/g, formIdx);
+            $('#insumo-form-container').append(newRow);
+            $('#id_insumos-TOTAL_FORMS').val(formIdx + 1);
+        });
+
+        // Formset Management (Delete Row)
+        $(document).on('click', '.remove-insumo-btn', function() {
+            var $row = $(this).closest('tr');
+            var $deleteInput = $row.find('input[name$="-DELETE"]');
+            
+            if ($deleteInput.length && $row.find('input[name$="-id"]').val()) {
+                // Existing record - mark for deletion
+                $deleteInput.prop('checked', true);
+                $row.hide(); 
+            } else {
+                // New unsaved row - just remove from DOM
+                $row.remove();
+            }
+        });
+
+        // Form Submission via AJAX
+        $('#productEditorForm').on('submit', function(e) {
+            e.preventDefault();
+            var $form = $(this);
+            var $btn = $('#saveProductEditorBtn');
+            var $spinner = $btn.find('.spinner-border');
+            
+            $btn.prop('disabled', true);
+            $spinner.removeClass('d-none');
+
+            $.ajax({
+                type: "POST",
+                url: $form.attr('action'),
+                data: $form.serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        // Save main form values to sessionStorage before reload
+                        var mainForm = document.getElementById('mainCalculationForm');
+                        if (mainForm) {
+                            var formData = {};
+                            // Save box inputs
+                            mainForm.querySelectorAll('input[name^="cajas_"]').forEach(function(input) {
+                                if (input.value) formData[input.name] = input.value;
+                            });
+                            // Save checkbox inputs
+                            mainForm.querySelectorAll('input[name^="cont_"]').forEach(function(input) {
+                                if (input.checked) formData[input.name] = 'checked';
+                            });
+                            // Save select inputs (cliente, aerolinea, etc.)
+                            mainForm.querySelectorAll('select').forEach(function(select) {
+                                if (select.value) formData[select.name] = select.value;
+                            });
+                            sessionStorage.setItem('cotizacion_form_state', JSON.stringify(formData));
+                        }
+                        
+                        // Close modal and reload page to reflect changes
+                        $('#productEditorModal').modal('hide');
+                        location.reload(); 
+                    } else {
+                        // Replace modal body with new HTML (containing errors)
+                        $('#productEditorModal .modal-body').html(response);
+                    }
+                },
+                error: function(xhr) {
+                   alert('Error al guardar. Intente nuevamente.');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false);
+                    $spinner.addClass('d-none');
+                }
+            });
+        });
+    })(jQuery);
+</script>

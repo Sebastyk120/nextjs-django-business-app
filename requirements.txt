@@ -20,7 +20,7 @@ dj-database-url==3.0.1
 django-unfold==1.0.0
 et-xmlfile==2.0.0
 filelock==3.20.0
-gunicorn==23.0.0
+uvicorn[standard]
 MarkupPy==1.14
 numpy==2.3.1
 num2words==0.5.14

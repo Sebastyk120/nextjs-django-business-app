@@ -42,6 +42,9 @@ class Item(models.Model):
     observaciones = models.CharField(max_length=255, verbose_name="Observaciones", blank=True, null=True)
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE, verbose_name="Usuario")
 
+    class Meta:
+        ordering = ['-fecha_movimiento']
+
     def __str__(self):
         return (f"Referencia: {self.numero_item} -Bodega: {self.bodega} -Cantidad {self.cantidad_cajas} "
                 f"- {self.fecha_movimiento}")
@@ -58,7 +61,7 @@ class Movimiento(models.Model):
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE, verbose_name="Usuario")
 
     class Meta:
-        ordering = ['-fecha']
+        ordering = ['-fecha_movimiento']
 
     def __str__(self):
         return f"{self.item_historico} - {self.cantidad_cajas_h} - {self.bodega} - {self.fecha}"

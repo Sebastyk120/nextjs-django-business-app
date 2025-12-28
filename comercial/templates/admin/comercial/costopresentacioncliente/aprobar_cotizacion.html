@@ -1,0 +1,65 @@
+{% extends "admin/base.html" %}
+{% load i18n l10n admin_urls unfold %}
+
+{% block breadcrumbs %}{% if not is_popup %}
+    <div class="px-4 hf-breadcrumbs">
+        <div class="container mx-auto">
+            <ul class="flex flex-wrap">
+                {% url 'admin:index' as link %}
+                {% trans 'Inicio' as name %}
+                {% include 'unfold/helpers/breadcrumb_item.html' with link=link name=name %}
+                {% trans 'Aprobar Cotización' as name %}
+                {% include 'unfold/helpers/breadcrumb_item.html' with name=name %}
+            </ul>
+        </div>
+    </div>
+{% endif %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="container mx-auto rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div class="flex items-center justify-between">
+            <h1 class="text-xl font-semibold text-gray-900 dark:text-white">{% trans "Aprobar Cotizaciones" %}</h1>
+        </div>
+
+        <div class="mt-4">
+            <p class="text-sm text-gray-600 dark:text-gray-300">{% trans "Se aprobarán y guardarán los costos históricos para las siguientes cotizaciones:" %}</p>
+            <ul class="mt-2 space-y-1 text-gray-800 dark:text-gray-200">
+                {% for obj in queryset %}
+                <li class="flex items-center gap-2">
+                    <span class="inline-flex h-2 w-2 rounded-full bg-indigo-500"></span>
+                    <span>{{ obj }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <form action="" method="post" class="mt-6">
+            {% csrf_token %}
+            {% for obj in queryset %}
+            <input type="hidden" name="_selected_action" value="{{ obj.pk }}" />
+            {% endfor %}
+            <input type="hidden" name="action" value="aprobar_cotizacion" />
+            <input type="hidden" name="apply" value="1" />
+
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                    <label for="trm" class="block text-sm font-medium text-gray-700 dark:text-gray-200">TRM del Día (COP → USD)</label>
+                    <input type="number" step="0.01" name="trm" id="trm" required placeholder="Ej: 4000.00" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{% trans "Esta TRM se utilizará para convertir todos los costos a USD y congelar la cotización." %}</p>
+                </div>
+                <div>
+                    <label for="total_cajas" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Total de Cajas del Pedido</label>
+                    <input type="number" min="1" step="1" name="total_cajas" id="total_cajas" required placeholder="Ej: 600" class="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{% trans "Se prorratearán los costos únicos de embarque por este total de cajas." %}</p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex items-center justify-end gap-3">
+                <a href="#" onclick="window.history.back(); return false;" class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">{% trans "Cancelar" %}</a>
+                <button type="submit" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">{% trans "Confirmar y Aprobar" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

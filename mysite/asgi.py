@@ -14,3 +14,7 @@ from django.core.asgi import get_asgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 
 application = get_asgi_application()
+
+# Inicializar directorios de medios después de cargar la aplicación
+from mysite.media_directories import ensure_media_directories
+ensure_media_directories()
