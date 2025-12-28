@@ -119,14 +119,14 @@
                         <i class="bi bi-currency-exchange"></i> Costos y Tarifas
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark">
-                        <li><a class="dropdown-item" href="#">Cotización Conjunta</a></li>
-                        <li><a class="dropdown-item" href="#">Historial Cotizaciones</a></li>
-                        <li><a class="dropdown-item" href="#">Tarifas Aéreas</a></li>
-                        <li><a class="dropdown-item" href="#">Gestión Precios Fruta</a></li>
+                        <li><a class="dropdown-item" href="{% url 'cotizacion_conjunta_usuario' %}">Cotización Conjunta</a></li>
+                        <li><a class="dropdown-item" href="{% url 'historial_cotizaciones' %}">Historial Cotizaciones</a></li>
+                        <li><a class="dropdown-item" href="{% url 'tarifas_aereas' %}">Tarifas Aéreas</a></li>
+                        <li><a class="dropdown-item" href="{% url 'gestion_precios_fruta' %}">Gestión Precios Fruta</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Costos Estibado</a></li>
-                        <li><a class="dropdown-item" href="#">Insumos</a></li>
-                        <li><a class="dropdown-item" href="#">Cliente Presentación</a></li>
+                        <li><a class="dropdown-item" href="{% url 'admin:comercial_costosestibado_changelist' %}">Costos Estibado</a></li>
+                        <li><a class="dropdown-item" href="{% url 'admin:comercial_insumo_changelist' %}">Insumos</a></li>
+                        <li><a class="dropdown-item" href="{% url 'admin:comercial_clientepresentacion_changelist' %}">Cliente Presentación</a></li>
                     </ul>
                 </li>
                 <!-- Seguimiento Y Resumen Exportaciones -->

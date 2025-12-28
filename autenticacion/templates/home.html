@@ -179,7 +179,13 @@
                     <a href="{% url 'pedido_list_general' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa fa-globe"></i> Pedidos General</a>
                     <a href="{% url 'utilidad_list_heavens' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa-solid fa-hand-holding-dollar"></i> Utilidades</a>
                     <a href="{% url 'cartera_list_heavens' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa fa-wallet"></i> Cartera</a>
-                    <a href="#" class="list-group-item list-group-item-action ios-menu-item"><i class="fa-solid fa-file-invoice-dollar"></i> Cotización Conjunta</a>
+                    <a href="{% url 'cotizacion_conjunta_usuario' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa-solid fa-file-invoice-dollar"></i> Cotización Conjunta</a>
+                    <a href="{% url 'historial_cotizaciones' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa-solid fa-clock-rotate-left"></i> Historial Cotizaciones</a>
+                    <a href="{% url 'tarifas_aereas' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa-solid fa-plane-up"></i> Tarifas Aéreas</a>
+                    <a href="{% url 'gestion_precios_fruta' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa-solid fa-tags"></i> Gestión Precios Fruta</a>
+                    <a href="{% url 'admin:comercial_costosestibado_changelist' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa-solid fa-pallet"></i> Costos Estibado</a>
+                    <a href="{% url 'admin:comercial_insumo_changelist' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa-solid fa-box-open"></i> Insumos</a>
+                    <a href="{% url 'admin:comercial_clientepresentacion_changelist' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa-solid fa-users-gear"></i> Cliente Presentación</a>
                     <a href="{% url 'seguimiento_pedido_list_general' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa fa-plane"></i> Seguimiento Pedidos</a>
                     <a href="{% url 'resumen_seguimiento_list_heavens' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa fa-bookmark"></i> Resumen Semanal Pedidos</a>
                     <a href="{% url 'historicos' %}" class="list-group-item list-group-item-action ios-menu-item"><i class="fa fa-clipboard-list"></i> Histórico De Movimientos General</a>
