@@ -127,3 +127,5 @@ outputs/
 *.kate-swp
 *.bak
 *.swp
+!frontend/src/lib/
+!frontend/src/lib/

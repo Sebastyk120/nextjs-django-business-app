@@ -119,10 +119,10 @@ DATABASE_CONFIG.update({
         'options': '-c statement_timeout=300000'  # 5 minutos timeout para queries
     }
 })
-
+""""
 DATABASES = {
     'default': DATABASE_CONFIG
-}
+}"""
 
 # Configuración de cache para optimizar memoria
 CACHES = {
@@ -176,7 +176,7 @@ LOGGING = {
     },
 }
 
-""""
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -186,7 +186,7 @@ DATABASES = {
         'HOST': 'localhost',  # Deja esto como 'localhost' si estás ejecutando PostgreSQL localmente
         'PORT': '5432',  # Puerto de PostgreSQL (por defecto es 5432)
     }
-}"""
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -266,12 +266,21 @@ CORS_ORIGINS_WHITELIST = ["https://heavens-server-private.up.railway.app",
                           "http://localhost:3000",
                           "http://127.0.0.1:3000",]
 
+# Allow credentials (cookies, authorization headers) in CORS requests
+CORS_ALLOW_CREDENTIALS = True
+
 # Configuración adicional de sesiones para optimizar memoria
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = False  # No guardar sesión en cada request
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = True  # Solo HTTPS en producción
+# Para desarrollo local (localhost), SESSION_COOKIE_SECURE debe ser False
+# En producción con HTTPS, cambiar a True
+SESSION_COOKIE_SECURE = False
+# SameSite 'Lax' permite cookies en navegación normal pero no en requests AJAX cross-origin
+# Para permitir AJAX cross-origin en desarrollo, usar 'None' (requiere Secure=True) o mantener 'Lax'
+# Como estamos en HTTP local, usamos 'Lax' y confiamos en CORS_ALLOW_CREDENTIALS
 SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_DOMAIN = None  # None permite localhost
 
 # CONFIGURACIÓN MAIL:
 DEFAULT_FROM_EMAIL = "subgerencia@heavensfruit.com"
