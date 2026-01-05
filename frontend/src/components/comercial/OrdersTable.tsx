@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import axiosClient from "@/lib/axios";
 
 interface ExtendedColumnConfig {
     key: keyof Pedido;
@@ -175,7 +176,21 @@ export function OrdersTable({ data, visibleColumns, columnsConfig, onEdit, onVie
 
                                         {/* Removed Receipt (AWB/Factura) Button as per request */}
 
-                                        <button className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-orange-100 hover:text-orange-700 focus-visible:outline-none disabled:opacity-50 text-slate-500" title="Ver PDF">
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    const response = await axiosClient.get(`/comercial/pedido_resumen_pdf/${pedido.id}`, {
+                                                        responseType: 'blob'
+                                                    });
+                                                    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+                                                    window.open(url, '_blank');
+                                                } catch (error) {
+                                                    console.error("Error fetching PDF:", error);
+                                                }
+                                            }}
+                                            className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-orange-100 hover:text-orange-700 focus-visible:outline-none disabled:opacity-50 text-slate-500"
+                                            title="Ver PDF"
+                                        >
                                             <FileText className="h-3.5 w-3.5" />
                                         </button>
                                         {(() => {

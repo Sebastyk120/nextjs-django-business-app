@@ -44,7 +44,7 @@ from .resources import obtener_datos_con_totales_cliente, crear_archivo_excel_cl
     crear_archivo_excel_enviar_cliente, obtener_datos_con_totales_enviar_cliente
 from .tables import PedidoTable, DetallePedidoTable, PedidoExportadorTable, CarteraPedidoTable, UtilidadPedidoTable, \
     ResumenPedidoTable, ReferenciasTable, SeguimienosTable, SeguimienosResumenTable
-from .pdf_functions_new import crear_pdf_resumen_pedido as crear_pdf_resumen_pedido_new
+from .pdf_functions_new import crear_pdf_resumen_pedido_new
 from .pdf_functions_new import crear_pdf_resumen_semana as crear_pdf_resumen_semana_new
 
 
