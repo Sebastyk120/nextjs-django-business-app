@@ -131,7 +131,7 @@ const MENU_ITEMS: { section?: string; items: MenuItem[] }[] = [
                 icon: Settings,
                 submenu: [
                     { title: "Listado General", href: "/nacionales/general" },
-                    { title: "Listado Detallado", href: "/nacionales/detallado" },
+                    { title: "Nacionales Detallada", href: "/nacionales-detallada" },
                     { title: "Analisis Calidad", href: "/nacionales/calidad" },
                 ],
             },

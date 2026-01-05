@@ -1,5 +1,6 @@
 from django.urls import path, include
 from . import views, views2, views_report_prov, views_api, views_estado_cuenta_proveedor, views_analisis_calidad, api_nacionales
+from .api_nacionales import DashboardNacionalesAPIView
 from rest_framework.routers import DefaultRouter
 
 # DRF Router for API endpoints
@@ -48,6 +49,7 @@ urlpatterns = [
     path('exportar-excel-analisis-calidad/', views_analisis_calidad.exportar_excel_analisis_calidad, name='exportar_excel_analisis_calidad'),
 
     # API endpoints
+    path('api/dashboard/', DashboardNacionalesAPIView.as_view(), name='api_dashboard_nacionales'),
     path('api/balance-proveedores/', views_api.api_balance_proveedores, name='api_balance_proveedores'),
     path('api/get-reporte-detalle/', views_analisis_calidad.get_reporte_detalle, name='get_reporte_detalle'),
 ]

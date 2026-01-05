@@ -27,6 +27,12 @@ export function IncompletePurchasesTable({ data, filters, onSelect }: Incomplete
     // Apply filters
     const filteredData = useMemo(() => {
         return data.filter((compra) => {
+            // Guide search
+            if (filters.search &&
+                !compra.numero_guia.toLowerCase().includes(filters.search.toLowerCase())) {
+                return false;
+            }
+
             // Provider search
             if (filters.proveedorSearch &&
                 !compra.proveedor_nombre?.toLowerCase().includes(filters.proveedorSearch.toLowerCase())) {
@@ -101,8 +107,8 @@ export function IncompletePurchasesTable({ data, filters, onSelect }: Incomplete
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                 <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-500" />
-                    Procesos Incompletos
+                    <AlertCircle className={cn("h-4 w-4", filters.search ? "text-blue-500" : "text-amber-500")} />
+                    {filters.search ? "Resultados de Búsqueda" : "Procesos Incompletos"}
                 </h3>
                 <Badge variant="secondary" className="bg-white">
                     {filteredData.length} de {data.length} registros

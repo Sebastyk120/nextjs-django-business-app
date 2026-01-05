@@ -1,6 +1,8 @@
+import datetime
 from rest_framework import viewsets, filters, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.db.models import Q
 from .models import (
     CompraNacional, VentaNacional, ReporteCalidadExportador, 
@@ -11,6 +13,7 @@ from .serializers import (
     ReporteCalidadExportadorSerializer, ReporteCalidadProveedorSerializer,
     ProveedorNacionalSerializer, EmpaqueSerializer
 )
+from .services import DashboardNacionalesService
 from comercial.models import Fruta, Exportador
 from comercial.serializers import FrutaSerializer, ExportadorSerializer
 
@@ -76,15 +79,15 @@ class CompraNacionalViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def search_guia(self, request):
-        guia = request.query_params.get('guia', '')
+        guia = request.query_params.get('guia', '').strip()
         if not guia:
             return Response({'error': 'Parameter guia is required'}, status=400)
         
-        compra = CompraNacional.objects.filter(numero_guia=guia).first()
+        compra = CompraNacional.objects.filter(numero_guia__iexact=guia).first()
         if compra:
              serializer = self.get_serializer(compra)
              return Response(serializer.data)
-        return Response({'message': 'No found'}, status=404)
+        return Response({'message': 'Not found', 'id': None}, status=200)
     
     @action(detail=False, methods=['get'])
     def autocomplete_guia(self, request):
@@ -124,3 +127,52 @@ class EmpaqueViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Empaque.objects.all().order_by('nombre')
     serializer_class = EmpaqueSerializer
     permission_classes = [permissions.IsAuthenticated, IsHeavensGroup]
+
+
+class DashboardNacionalesAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsHeavensGroup]
+
+    def get(self, request):
+        fecha_inicio_str = request.query_params.get('fecha_inicio')
+        fecha_fin_str = request.query_params.get('fecha_fin')
+        proveedor_id = request.query_params.get('proveedor_id')
+        fruta_id = request.query_params.get('fruta_id')
+
+        fecha_inicio = None
+        fecha_fin = None
+
+        if fecha_inicio_str:
+            try:
+                fecha_inicio = datetime.datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        if fecha_fin_str:
+            try:
+                fecha_fin = datetime.datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        proveedor_id_int = None
+        if proveedor_id:
+            try:
+                proveedor_id_int = int(proveedor_id)
+            except ValueError:
+                pass
+
+        fruta_id_int = None
+        if fruta_id:
+            try:
+                fruta_id_int = int(fruta_id)
+            except ValueError:
+                pass
+
+        service = DashboardNacionalesService(
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            proveedor_id=proveedor_id_int,
+            fruta_id=fruta_id_int
+        )
+
+        data = service.get_full_dashboard_data()
+        return Response(data)

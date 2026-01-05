@@ -40,10 +40,14 @@ export default function NacionalesPage() {
     const [openReporteExpModal, setOpenReporteExpModal] = useState(false);
     const [openReporteProvModal, setOpenReporteProvModal] = useState(false);
 
+    const [isSearching, setIsSearching] = useState(false);
+
     // Initial load of incomplete purchases
     useEffect(() => {
-        fetchIncompletas();
-    }, []);
+        if (!searchTerm) {
+            fetchIncompletas();
+        }
+    }, [searchTerm]);
 
     const fetchIncompletas = async () => {
         setLoading(true);
@@ -58,39 +62,68 @@ export default function NacionalesPage() {
         }
     };
 
-    const handleSearch = async (term: string) => {
-        setSearchTerm(term);
-        if (!term) {
-            setSearchResult(null);
-            return;
-        }
-
-        if (term.length > 2) {
-            try {
-                const response = await axiosClient.get(`/nacionales/api/compra/search_guia/?guia=${term}`);
-                if (response.data && response.data.id) {
-                    setSearchResult(response.data);
-                } else {
-                    setSearchResult(null);
-                }
-            } catch (error) {
+    // Debounced search logic
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (searchTerm.length > 2) {
+                performGlobalSearch(searchTerm);
+            } else if (!searchTerm) {
                 setSearchResult(null);
+                setFilters(initialFilterState);
             }
-        } else {
-            setSearchResult(null);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    const performGlobalSearch = async (term: string) => {
+        setIsSearching(true);
+        try {
+            // 1. Try exact guide search for detail view
+            const exactResponse = await axiosClient.get(`/nacionales/api/compra/search_guia/?guia=${term}`);
+
+            if (exactResponse.data && exactResponse.data.id) {
+                setSearchResult(exactResponse.data);
+                setIsSearching(false);
+                return;
+            }
+
+            // 2. If no exact match (or message is 'Not found'), do a global search to update the table results
+            // This allows finding "Complete" guides too
+            const searchResponse = await axiosClient.get(`/nacionales/api/compra/?search=${term}`);
+            const results = searchResponse.data.results || searchResponse.data;
+
+            if (results && results.length > 0) {
+                setIncompletas(results);
+                setSearchResult(null);
+            } else {
+                setIncompletas([]);
+            }
+        } catch (error) {
+            console.error("Search error:", error);
+        } finally {
+            setIsSearching(false);
         }
     };
 
+    const handleSearch = (term: string) => {
+        setSearchTerm(term);
+        // Local filtering for immediate feedback
+        setFilters(prev => ({ ...prev, search: term }));
+    };
+
     const refreshCurrentView = () => {
-        fetchIncompletas();
-        if (searchResult) {
-            handleSearch(searchResult.numero_guia);
+        if (searchTerm) {
+            performGlobalSearch(searchTerm);
+        } else {
+            fetchIncompletas();
         }
     };
 
     const handleClearSearch = () => {
         setSearchTerm("");
         setSearchResult(null);
+        setFilters(initialFilterState);
         fetchIncompletas();
     };
 
@@ -138,7 +171,11 @@ export default function NacionalesPage() {
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
                     <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        {isSearching ? (
+                            <div className="absolute left-2.5 top-2.5 h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-emerald-600" />
+                        ) : (
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        )}
                         <Input
                             placeholder="Buscar guía específica..."
                             className="pl-9 h-10"
