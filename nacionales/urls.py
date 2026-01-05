@@ -1,7 +1,20 @@
-from django.urls import path
-from . import views, views2, views_report_prov, views_api, views_estado_cuenta_proveedor, views_analisis_calidad
+from django.urls import path, include
+from . import views, views2, views_report_prov, views_api, views_estado_cuenta_proveedor, views_analisis_calidad, api_nacionales
+from rest_framework.routers import DefaultRouter
+
+# DRF Router for API endpoints
+router = DefaultRouter()
+router.register(r'api/compra', api_nacionales.CompraNacionalViewSet, basename='api_compra_nacional')
+router.register(r'api/venta', api_nacionales.VentaNacionalViewSet, basename='api_venta_nacional')
+router.register(r'api/reporte-exp', api_nacionales.ReporteCalidadExportadorViewSet, basename='api_reporte_exportador')
+router.register(r'api/reporte-prov', api_nacionales.ReporteCalidadProveedorViewSet, basename='api_reporte_proveedor')
+router.register(r'api/proveedores', api_nacionales.ProveedorNacionalViewSet, basename='api_proveedor_nacional')
+router.register(r'api/empaques', api_nacionales.EmpaqueViewSet, basename='api_empaque_nacional')
 
 urlpatterns = [
+    # Include DRF router URLs
+    path('', include(router.urls)),
+    
     path('nacionales_list_general', views.nacionales_list_general, name='nacionales_list_general'),
     path('autocomplete_guia/', views2.autocomplete_guia, name='autocomplete_guia'),
     path('autocomplete_factura/', views2.autocomplete_factura, name='autocomplete_factura'),
