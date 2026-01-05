@@ -1,7 +1,26 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
+from .api_inventario import (
+    InventarioViewSet, ItemViewSet, MovimientoViewSet,
+    BodegaViewSet, ProveedorViewSet, ReferenciasViewSet, ContenedorViewSet
+)
+
+# DRF Router Configuration
+router = DefaultRouter()
+router.register(r'api/inventario-resumen', InventarioViewSet, basename='api-inventario-resumen')
+router.register(r'api/items', ItemViewSet, basename='api-items')
+router.register(r'api/movimientos', MovimientoViewSet, basename='api-movimientos')
+router.register(r'api/bodegas', BodegaViewSet, basename='api-bodegas')
+router.register(r'api/proveedores', ProveedorViewSet, basename='api-proveedores')
+router.register(r'api/referencias', ReferenciasViewSet, basename='api-referencias-inventario')
+router.register(r'api/contenedores', ContenedorViewSet, basename='api-contenedores')
 
 urlpatterns = [
+    # API endpoints
+    path('', include(router.urls)),
+
+    # Existing template views
     path('historico_items', views.MovimientoListView.as_view(), name='historicos'),
     path('inventario_bodega_etnico', views.InventarioBodegaEtnicoListView.as_view(), name='inventario_bodega_etnico'),
     path('inventario_bodega_fieldex', views.InventarioBodegaFieldexListView.as_view(), name='inventario_bodega_fieldex'),

@@ -38,12 +38,12 @@ const COMPANIES: Company[] = [
         description: "Gestión comercial y proyecciones estratégicas",
         logo: "/img/heavens.webp",
         menuItems: [
-            { label: "Proyección Ventas", icon: TrendingUp, href: "#" },
-            { label: "Dashboard Comercial", icon: ShoppingBag, href: "#" },
+            { label: "Proyección Ventas (Todas las Exp.)", icon: TrendingUp, href: "#" },
+            { label: "Dashboard Comercial (Todas las Exp.)", icon: ShoppingBag, href: "#" },
             { label: "Dashboard Compras Nacionales", icon: Store, href: "#" },
             { label: "Pedidos General", icon: Globe, href: "#" },
-            { label: "Utilidades", icon: HandCoins, href: "#" },
-            { label: "Cartera", icon: Wallet, href: "#" },
+
+            { label: "Estado Cuenta Clientes", icon: Wallet, href: "#" },
             { label: "Cotización Conjunta", icon: FileText, href: "#" },
             { label: "Historial Cotizaciones", icon: History, href: "#" },
             { label: "Tarifas Aéreas", icon: Plane, href: "#" },
@@ -53,7 +53,7 @@ const COMPANIES: Company[] = [
             { label: "Cliente Presentación", icon: Users, href: "#" },
             { label: "Seguimiento Pedidos", icon: PlaneTakeoff, href: "#" },
             { label: "Resumen Semanal Pedidos", icon: Bookmark, href: "#" },
-            { label: "Histórico De Movimientos", icon: ClipboardList, href: "#" },
+            { label: "Histórico De Movimientos (Todas las Exp.)", icon: ClipboardList, href: "#" },
         ],
     },
     {
@@ -63,11 +63,11 @@ const COMPANIES: Company[] = [
         logo: "/img/etnico.webp",
         menuItems: [
             { label: "Pedidos", icon: ShoppingBag, href: "#" },
-            { label: "Utilidades", icon: HandCoins, href: "#" },
-            { label: "Cartera", icon: Wallet, href: "#" },
-            { label: "Stock Inventario Bodega", icon: Boxes, href: "#" },
-            { label: "Movimientos Inventario", icon: Database, href: "#" },
-            { label: "Referencia De Cajas", icon: Box, href: "#" },
+
+            { label: "Estado Cuenta Clientes", icon: Wallet, href: "#" },
+            { label: "Stock Inventario Bodega (Todas las Exp.)", icon: Boxes, href: "#" },
+            { label: "Movimientos Inventario (Todas las Exp.)", icon: Database, href: "#" },
+            { label: "Referencia De Cajas (Todas las Exp.)", icon: Box, href: "#" },
             { label: "Administración", icon: Building, href: "#" },
         ],
     },
@@ -78,11 +78,11 @@ const COMPANIES: Company[] = [
         logo: "/img/fieldex.webp",
         menuItems: [
             { label: "Pedidos", icon: ShoppingBag, href: "#" },
-            { label: "Utilidades", icon: HandCoins, href: "#" },
-            { label: "Cartera", icon: Wallet, href: "#" },
-            { label: "Stock Inventario Bodega", icon: Boxes, href: "#" },
-            { label: "Movimientos Inventario", icon: Database, href: "#" },
-            { label: "Referencia De Cajas", icon: Box, href: "#" },
+
+            { label: "Estado Cuenta Clientes", icon: Wallet, href: "#" },
+            { label: "Stock Inventario Bodega (Todas las Exp.)", icon: Boxes, href: "#" },
+            { label: "Movimientos Inventario (Todas las Exp.)", icon: Database, href: "#" },
+            { label: "Referencia De Cajas (Todas las Exp.)", icon: Box, href: "#" },
             { label: "Administración", icon: Building, href: "#" },
         ],
     },
@@ -93,11 +93,11 @@ const COMPANIES: Company[] = [
         logo: "/img/juan_matas.webp",
         menuItems: [
             { label: "Pedidos", icon: ShoppingBag, href: "#" },
-            { label: "Utilidades", icon: HandCoins, href: "#" },
-            { label: "Cartera", icon: Wallet, href: "#" },
-            { label: "Stock Inventario Bodega", icon: Boxes, href: "#" },
-            { label: "Movimientos Inventario", icon: Database, href: "#" },
-            { label: "Referencia De Cajas", icon: Box, href: "#" },
+
+            { label: "Estado Cuenta Clientes", icon: Wallet, href: "#" },
+            { label: "Stock Inventario Bodega (Todas las Exp.)", icon: Boxes, href: "#" },
+            { label: "Movimientos Inventario (Todas las Exp.)", icon: Database, href: "#" },
+            { label: "Referencia De Cajas (Todas las Exp.)", icon: Box, href: "#" },
             { label: "Administración", icon: Building, href: "#" },
         ],
     },
@@ -108,11 +108,11 @@ const COMPANIES: Company[] = [
         logo: "/img/ci_dorado.webp",
         menuItems: [
             { label: "Pedidos", icon: ShoppingBag, href: "#" },
-            { label: "Utilidades", icon: HandCoins, href: "#" },
-            { label: "Cartera", icon: Wallet, href: "#" },
-            { label: "Stock Inventario Bodega", icon: Boxes, href: "#" },
-            { label: "Movimientos Inventario", icon: Database, href: "#" },
-            { label: "Referencia De Cajas", icon: Box, href: "#" },
+
+            { label: "Estado Cuenta Clientes", icon: Wallet, href: "#" },
+            { label: "Stock Inventario Bodega (Gral.)", icon: Boxes, href: "#" },
+            { label: "Movimientos Inventario (Gral.)", icon: Database, href: "#" },
+            { label: "Referencia De Cajas (Gral.)", icon: Box, href: "#" },
             { label: "Administración", icon: Building, href: "#" },
         ],
     },
@@ -135,6 +135,7 @@ const COMPANIES: Company[] = [
 ];
 
 import { CompanyPortal } from "@/components/dashboard/CompanyPortal";
+import { CancellationNotifications } from "@/components/dashboard/CancellationNotifications";
 
 export default function HomePage() {
     const [view, setView] = useState<'companies' | 'portal'>('companies');
@@ -157,6 +158,7 @@ export default function HomePage() {
 
     return (
         <div className="container px-4 py-8 mx-auto">
+            <CancellationNotifications />
             {view === 'companies' ? (
                 <div className="space-y-12 animate-in fade-in duration-500">
                     {/* Hero Section */}

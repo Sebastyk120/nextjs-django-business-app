@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'import_export',
     'rest_framework',
+    'django_filters',  # Required for DRF filtering
     'django_extensions',
     'simple_history',
     'widget_tweaks',

@@ -1,4 +1,5 @@
-import { fetchFromDjango } from './api';
+import axiosClient from './axios';
+import { AxiosError } from 'axios';
 
 // API Response interfaces
 interface AuthResponse {
@@ -12,45 +13,21 @@ interface LoginResponse extends AuthResponse {
     redirect_url?: string;
 }
 
-// Get CSRF token from cookie
-function getCookie(name: string): string | null {
-    if (typeof document === 'undefined') return null;
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
 export const auth = {
-    // Login to Django
     // Login to Django
     async login(formData: FormData): Promise<LoginResponse> {
         try {
-            const csrftoken = getCookie('csrftoken');
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const response = await axiosClient.post<LoginResponse>(
+                '/autenticacion/api/login/',
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
 
-            const response = await fetch(`${API_URL}/autenticacion/api/login/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken || '',
-                },
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Error al iniciar sesión');
-            }
-
-            const data = await response.json();
+            const data = response.data;
 
             if (data.success) {
                 // Save auth state
@@ -63,11 +40,12 @@ export const auth = {
             }
 
             return data;
-        } catch (error: any) {
+        } catch (error) {
+            const axiosError = error as AxiosError<AuthResponse>;
             console.error('Login error:', error);
             return {
                 success: false,
-                message: error.message || 'Error de conexión'
+                message: axiosError.response?.data?.message || 'Error de conexión',
             };
         }
     },
@@ -75,67 +53,56 @@ export const auth = {
     // Logout from Django
     async logout(): Promise<AuthResponse> {
         try {
+            // Clear local storage first
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('isAuthenticated');
                 localStorage.removeItem('user');
             }
 
-            const csrftoken = getCookie('csrftoken');
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const response = await axiosClient.post<AuthResponse>(
+                '/autenticacion/api/logout/'
+            );
 
-            const response = await fetch(`${API_URL}/autenticacion/api/logout/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken || '',
-                },
-            });
-
-            if (response.redirected) {
-                window.location.href = response.url;
-                return { success: true };
-            }
-
-            return await response.json();
-        } catch (error: any) {
+            return response.data;
+        } catch (error) {
+            const axiosError = error as AxiosError<AuthResponse>;
             console.error('Logout error:', error);
+
             // Even if server request fails, clear local state
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('isAuthenticated');
                 localStorage.removeItem('user');
             }
-            return { success: false, message: error.message };
+
+            return {
+                success: false,
+                message: axiosError.response?.data?.message || 'Error al cerrar sesión',
+            };
         }
     },
 
     // Request password reset
     async requestPasswordReset(email: string): Promise<AuthResponse> {
-        // ... (existing implementation)
         try {
-            const csrftoken = getCookie('csrftoken');
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
             const formData = new FormData();
             formData.append('email', email);
 
-            const response = await fetch(`${API_URL}/autenticacion/api/password-reset/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken || '',
-                },
-                body: formData,
-            });
+            const response = await axiosClient.post<AuthResponse>(
+                '/autenticacion/api/password-reset/',
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Error al solicitar restablecimiento');
-            }
-
-            return await response.json();
-        } catch (error: any) {
+            return response.data;
+        } catch (error) {
+            const axiosError = error as AxiosError<AuthResponse>;
             return {
                 success: false,
-                message: error.message || 'Ocurrió un error al procesar la solicitud'
+                message: axiosError.response?.data?.message || 'Ocurrió un error al procesar la solicitud',
             };
         }
     },
@@ -152,18 +119,13 @@ export const auth = {
             }
         }
 
-        // Fallback to server check (using the new API route)
+        // Fallback to server check (call Django directly, not Next.js API route)
         try {
-            const response = await fetch('/api/check-auth', {
-                method: 'GET',
-                credentials: 'include',
-            });
+            const response = await axiosClient.get<{ authenticated: boolean; user?: any }>(
+                '/autenticacion/api/check-auth/'
+            );
 
-            if (!response.ok) {
-                return { authenticated: false };
-            }
-
-            const data = await response.json();
+            const data = response.data;
 
             // Sync local storage if server says authenticated
             if (data.authenticated && typeof window !== 'undefined') {
@@ -174,9 +136,10 @@ export const auth = {
             }
 
             return data;
-        } catch (error: any) {
+        } catch (error) {
             console.error('Auth check error:', error);
             return { authenticated: false };
         }
-    }
+    },
 };
+

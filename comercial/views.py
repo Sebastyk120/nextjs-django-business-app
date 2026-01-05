@@ -8,7 +8,7 @@ import pandas as pd
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden, FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -393,8 +393,21 @@ class ResumenPedidoListView(SingleTableView):
 
 # ------------------ Exportacion de Detalles de Pedidos Excel General -------------------------------------
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
+@user_passes_test(lambda u: any(es_miembro_del_grupo(grupo)(u) for grupo in ['Heavens', 'Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado']), login_url='home')
 def exportar_detalles_pedidos_excel(request):
+    # Determinar a qué grupo pertenece el usuario
+    grupo = None
+    if es_miembro_del_grupo('Heavens')(request.user):
+        grupo = 'Heavens'
+    elif es_miembro_del_grupo('Etnico')(request.user):
+        grupo = 'Etnico'
+    elif es_miembro_del_grupo('Fieldex')(request.user):
+        grupo = 'Fieldex'
+    elif es_miembro_del_grupo('Juan_Matas')(request.user):
+        grupo = 'Juan_Matas'
+    elif es_miembro_del_grupo('CI_Dorado')(request.user):
+        grupo = 'CI_Dorado'
+
     # Crear un buffer en memoria
     output = io.BytesIO()
 
@@ -472,28 +485,32 @@ def exportar_detalles_pedidos_excel(request):
     numero_pedido_final = request.POST.get('numero_pedido_final')
 
     try:
+        # Construir filtro base por número de pedido
         if numero_pedido_inicial and numero_pedido_final:
             numero_pedido_inicial = int(numero_pedido_inicial)
             numero_pedido_final = int(numero_pedido_final)
-            queryset = DetallePedido.objects.select_related(
-                'pedido__exportadora',
-                'pedido__cliente',
-                'fruta',
-                'presentacion',
-                'tipo_caja',
-                'referencia',
-                # Agrega otros campos relacionados según sea necesario
-            ).filter(pedido__pk__range=(numero_pedido_inicial, numero_pedido_final))
+            base_filter = Q(pedido__pk__range=(numero_pedido_inicial, numero_pedido_final))
         else:
-            queryset = DetallePedido.objects.select_related(
-                'pedido__exportadora',
-                'pedido__cliente',
-                'fruta',
-                'presentacion',
-                'tipo_caja',
-                'referencia',
-                # Agrega otros campos relacionados según sea necesario
-            ).all()
+            base_filter = Q()
+
+        # Filtrar según el grupo del usuario
+        if grupo == 'Heavens':
+            # Si es Heavens, muestra TODOS los registros
+            final_filter = base_filter
+        elif grupo:
+            # Para otros grupos, filtrar solo los pedidos de su exportadora
+            final_filter = base_filter & Q(pedido__exportadora__nombre=grupo)
+        else:
+            final_filter = base_filter
+
+        queryset = DetallePedido.objects.select_related(
+            'pedido__exportadora',
+            'pedido__cliente',
+            'fruta',
+            'presentacion',
+            'tipo_caja',
+            'referencia',
+        ).filter(final_filter)
 
         # Variables para totales
         totals = {idx: 0 for idx in numeric_indices}
@@ -2987,8 +3004,19 @@ def export_pdf_resumen_semana(request):
         messages.error(request, 'Debe seleccionar por lo menos una semana.')
         return redirect('resumen_seguimiento_list_heavens')
 
-    # Filtrar los datos basados en los parámetros
-    pedidos = Pedido.objects.all()
+    # Filtrar según el grupo del usuario
+    if es_miembro_del_grupo('Heavens')(request.user) or es_miembro_del_grupo('Autorizadores')(request.user):
+        pedidos = Pedido.objects.all()
+    elif es_miembro_del_grupo('Etnico')(request.user):
+        pedidos = Pedido.objects.filter(exportadora__nombre='Etnico')
+    elif es_miembro_del_grupo('Fieldex')(request.user):
+        pedidos = Pedido.objects.filter(exportadora__nombre='Fieldex')
+    elif es_miembro_del_grupo('Juan_Matas')(request.user):
+        pedidos = Pedido.objects.filter(exportadora__nombre='Juan Matas')
+    elif es_miembro_del_grupo('CI_Dorado')(request.user):
+        pedidos = Pedido.objects.filter(exportadora__nombre='CI Dorado')
+    else:
+        pedidos = Pedido.objects.none()
     if semana:
         pedidos = pedidos.filter(semana=semana)
     if exportador_id:
@@ -3015,7 +3043,9 @@ def export_pdf_resumen_semana(request):
 def exportar_pdf_resumen_pedido(request, pedido_id):
     # Obtener el pedido y los detalles del pedido
     pedido = get_object_or_404(Pedido, pk=pedido_id)
-    if not request.user.groups.filter(name=pedido.exportadora.nombre).exists():
+    if not (request.user.groups.filter(name=pedido.exportadora.nombre).exists() or 
+            es_miembro_del_grupo('Heavens')(request.user) or 
+            es_miembro_del_grupo('Autorizadores')(request.user)):
         return HttpResponseForbidden("No tienes permiso para ver estos detalles del pedido")
 
     # Filtrar los detalles del pedido
@@ -3042,7 +3072,7 @@ def exportar_pdf_resumen_pedido(request, pedido_id):
 
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home'))
+@user_passes_test(lambda u: u.groups.filter(name__in=['Heavens', 'Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado', 'Autorizadores']).exists(), login_url=reverse_lazy('home'))
 def exportar_excel_seguimiento_tracking(request):
     if request.method == 'POST':
         form = ExportSearchFormSeguimientos(request.POST)
@@ -3052,7 +3082,19 @@ def exportar_excel_seguimiento_tracking(request):
             fecha_inicial = form.cleaned_data.get('fecha_inicial')
             fecha_final = form.cleaned_data.get('fecha_final')
 
-            pedidos = Pedido.objects.all()
+            # Filtrar según el grupo del usuario
+            if es_miembro_del_grupo('Heavens')(request.user) or es_miembro_del_grupo('Autorizadores')(request.user):
+                pedidos = Pedido.objects.all()
+            elif es_miembro_del_grupo('Etnico')(request.user):
+                pedidos = Pedido.objects.filter(exportadora__nombre='Etnico')
+            elif es_miembro_del_grupo('Fieldex')(request.user):
+                pedidos = Pedido.objects.filter(exportadora__nombre='Fieldex')
+            elif es_miembro_del_grupo('Juan_Matas')(request.user):
+                pedidos = Pedido.objects.filter(exportadora__nombre='Juan Matas')
+            elif es_miembro_del_grupo('CI_Dorado')(request.user):
+                pedidos = Pedido.objects.filter(exportadora__nombre='CI Dorado')
+            else:
+                pedidos = Pedido.objects.none()
 
             if cliente:
                 pedidos = pedidos.filter(cliente=cliente)
@@ -3143,7 +3185,7 @@ def exportar_excel_seguimiento_tracking(request):
 # -------------------- Exportacion Explicita de Excel Del resumen de exportaciones Por semana -------------------------
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'), login_url=reverse_lazy('home'))
+@user_passes_test(lambda u: u.groups.filter(name__in=['Heavens', 'Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado', 'Autorizadores']).exists(), login_url=reverse_lazy('home'))
 def exportar_excel_seguimiento_resumen(request):
     semana = request.GET.get('semana')
     exportador_id = request.GET.get('exportadora')
@@ -3153,8 +3195,19 @@ def exportar_excel_seguimiento_resumen(request):
         messages.error(request, 'Debe seleccionar por lo menos una semana.')
         return redirect('resumen_seguimiento_list_heavens')
 
-    # Filtrar los datos basados en los parámetros
-    pedidos = Pedido.objects.all()
+    # Filtrar según el grupo del usuario
+    if es_miembro_del_grupo('Heavens')(request.user) or es_miembro_del_grupo('Autorizadores')(request.user):
+        pedidos = Pedido.objects.all()
+    elif es_miembro_del_grupo('Etnico')(request.user):
+        pedidos = Pedido.objects.filter(exportadora__nombre='Etnico')
+    elif es_miembro_del_grupo('Fieldex')(request.user):
+        pedidos = Pedido.objects.filter(exportadora__nombre='Fieldex')
+    elif es_miembro_del_grupo('Juan_Matas')(request.user):
+        pedidos = Pedido.objects.filter(exportadora__nombre='Juan Matas')
+    elif es_miembro_del_grupo('CI_Dorado')(request.user):
+        pedidos = Pedido.objects.filter(exportadora__nombre='CI Dorado')
+    else:
+        pedidos = Pedido.objects.none()
     if semana:
         pedidos = pedidos.filter(semana=semana)
     if exportador_id:

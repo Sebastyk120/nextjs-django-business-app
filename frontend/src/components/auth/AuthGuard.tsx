@@ -20,7 +20,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                 // (e.g. if user cleared storage but still has cookie)
                 const authStatus = await auth.checkAuth();
                 if (!authStatus.authenticated) {
-                    router.push("/autenticacion/login");
+                    router.push("/login");
                     return;
                 }
             } else {

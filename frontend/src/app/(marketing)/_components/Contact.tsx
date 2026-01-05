@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Send, MapPin, Phone, Mail, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import axiosClient from "@/lib/axios";
+
 
 interface ContactFormData {
     name: string;
@@ -97,11 +98,8 @@ export default function Contact() {
 
     const fetchCaptcha = async () => {
         try {
-            const res = await fetch("/api/captcha");
-            if (res.ok) {
-                const data = await res.json();
-                setCaptcha(data);
-            }
+            const response = await axiosClient.get<CaptchaData>('/autenticacion/api/get_captcha/');
+            setCaptcha(response.data);
         } catch (error) {
             console.error("Error fetching captcha", error);
         }
@@ -117,28 +115,25 @@ export default function Contact() {
         setSubmitStatus('idle');
 
         try {
-            const res = await fetch("/api/contact", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...data, captchaKey: captcha.key })
+            const response = await axiosClient.post('/autenticacion/api/contact_submit/', {
+                ...data,
+                captchaKey: captcha.key
             });
 
-            const result = await res.json();
-
-            if (res.ok && result.success) {
+            if (response.data.success) {
                 setSubmitStatus('success');
                 setStatusMessage(t.success);
                 reset();
                 fetchCaptcha(); // Refresh captcha
             } else {
                 setSubmitStatus('error');
-                setStatusMessage(result.errors ? t.errorFields : t.errorSubmit);
-                // Usually refresh captcha on error too as it gets invalidated
+                setStatusMessage(response.data.errors ? t.errorFields : t.errorSubmit);
                 fetchCaptcha();
             }
-        } catch (error) {
+        } catch (error: any) {
             setSubmitStatus('error');
-            setStatusMessage(t.errorConnection);
+            setStatusMessage(error.response?.data?.message || t.errorConnection);
+            fetchCaptcha();
         }
     };
 

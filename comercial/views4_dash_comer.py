@@ -1,5 +1,7 @@
+
 import io
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 import xlsxwriter
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -14,12 +16,11 @@ from comercial.models import Pedido, DetallePedido, Cliente, Intermediario, Frut
 def es_miembro_del_grupo(nombre_grupo):
     def es_miembro(user):
         return user.groups.filter(name=nombre_grupo).exists()
-
     return es_miembro
 
 
 @login_required
-@user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
+@user_passes_test(lambda u: any(es_miembro_del_grupo(g)(u) for g in ['Heavens', 'Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado']), login_url='home')
 def dashboard_comercial(request):
     context = get_dashboard_comercial_data(request)
     return render(request, 'dashboard_comercial.html', context)
@@ -38,14 +39,16 @@ def obtener_nombre_mes(mes):
 
 # ------------------------------ Exportacion Dashboard Comercial ---------------------------------------------------
 
+@login_required
+@user_passes_test(lambda u: any(es_miembro_del_grupo(g)(u) for g in ['Heavens', 'Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado']), login_url='home')
 def exportar_dashboard_comercial(request):
     # Obtener los mismos parámetros de filtro que el dashboard
     fecha_inicio_str = request.GET.get('fecha_inicio')
     fecha_fin_str = request.GET.get('fecha_fin')
-    cliente_id = request.GET.get('cliente')
-    intermediario_id = request.GET.get('intermediario')
-    fruta_id = request.GET.get('fruta')
-    exportador_id = request.GET.get('exportador')
+    cliente_id = request.GET.get('cliente_id') or request.GET.get('cliente')
+    intermediario_id = request.GET.get('intermediario_id') or request.GET.get('intermediario')
+    fruta_id = request.GET.get('fruta_id') or request.GET.get('fruta')
+    exportador_id = request.GET.get('exportador_id') or request.GET.get('exportador')
     
     # Establecer fechas por defecto si no están definidas (mismo código que en dashboard_comercial)
     if not fecha_inicio_str:
@@ -223,11 +226,14 @@ def exportar_dashboard_comercial(request):
             ws_resumen.write(row, 2, valor_anterior, number_format)
         
         # Aplicar formato condicional para la variación
-        variacion_decimal = variacion / 100  # Convertir a decimal para el formato de porcentaje
-        if variacion > 0:
-            ws_resumen.write(row, 3, variacion_decimal, positive_format)
+        if isinstance(variacion, (int, float, Decimal)):
+            variacion_decimal = float(variacion) / 100  # Convertir a decimal para el formato de porcentaje
+            if variacion > 0:
+                ws_resumen.write(row, 3, variacion_decimal, positive_format)
+            else:
+                ws_resumen.write(row, 3, variacion_decimal, negative_format)
         else:
-            ws_resumen.write(row, 3, variacion_decimal, negative_format)
+            ws_resumen.write(row, 3, variacion, text_format)
         
         row += 1
     
@@ -475,10 +481,22 @@ def get_dashboard_comercial_data(request):
     fecha_fin_str = request.GET.get('fecha_fin')
     fecha_inicio_anterior_str = request.GET.get('fecha_inicio_anterior')
     fecha_fin_anterior_str = request.GET.get('fecha_fin_anterior')
-    cliente_id = request.GET.get('cliente')
-    intermediario_id = request.GET.get('intermediario')
-    fruta_id = request.GET.get('fruta')
-    exportador_id = request.GET.get('exportador')
+    cliente_id = request.GET.get('cliente_id') or request.GET.get('cliente')
+    intermediario_id = request.GET.get('intermediario_id') or request.GET.get('intermediario')
+    fruta_id = request.GET.get('fruta_id') or request.GET.get('fruta')
+    exportador_id = request.GET.get('exportador_id') or request.GET.get('exportador')
+
+    # Determinar restricciones por grupo de usuario (Seguridad)
+    user = request.user
+    if not user.groups.filter(name='Heavens').exists():
+        # Si no es de Heavens, buscar a qué exportadora pertenece
+        for grupo_name in ['Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado']:
+            if user.groups.filter(name=grupo_name).exists():
+                # Encontrar el ID del exportador que coincide con el nombre del grupo
+                exportador_obj = Exportador.objects.filter(nombre=grupo_name).first()
+                if exportador_obj:
+                    exportador_id = str(exportador_obj.id)
+                    break
 
     # Establecer fechas por defecto si no están definidas
     if not fecha_inicio_str:
@@ -929,6 +947,15 @@ def get_dashboard_comercial_data(request):
     frutas = Fruta.objects.all().order_by('nombre')
     exportadores = Exportador.objects.all().order_by('nombre')
 
+    # Aplicar restricciones de exportador a las listas de opciones si hay un filtro activo
+    if exportador_id:
+        clientes = clientes.filter(pedido__exportadora_id=exportador_id).distinct()
+        # Filter fruits by actual order details, not by price list configuration
+        frutas = frutas.filter(detallepedido__pedido__exportadora_id=exportador_id).distinct()
+        # Si el usuario está restringido por grupo, solo ve su propia exportadora
+        if not user.groups.filter(name='Heavens').exists():
+            exportadores = exportadores.filter(id=exportador_id)
+
     # Calcular periodos comparativos
     periodo_anterior_inicio = fecha_inicio - timedelta(days=(fecha_fin - fecha_inicio).days)
     periodo_anterior_fin = fecha_inicio - timedelta(days=1)
@@ -986,9 +1013,9 @@ def get_dashboard_comercial_data(request):
 
     # Calcular porcentajes de cambio
     def calcular_porcentaje(actual, anterior):
-        if anterior == 0:
-            return "N/A"
-        return round(((actual - anterior) / anterior) * 100, 2)
+        if not anterior or anterior == 0:
+            return 0
+        return round(((float(actual) - float(anterior)) / float(anterior)) * 100, 2)
 
     kilos_percent = calcular_porcentaje(total_kilos, kilos_prev)
     cajas_percent = calcular_porcentaje(total_cajas, cajas_prev)
@@ -1042,19 +1069,19 @@ def get_dashboard_comercial_data(request):
         # Datos para tabla
         'clientes_data': clientes_data,
         # Datos de comparaciones
-        'kilos_prev': kilos_prev > 0,
+        'kilos_prev': float(kilos_prev),
         'kilos_percent': kilos_percent,
-        'cajas_prev': cajas_prev > 0,
+        'cajas_prev': float(cajas_prev),
         'cajas_percent': cajas_percent,
-        'facturado_prev': facturado_prev > 0,
+        'facturado_prev': float(facturado_prev),
         'facturado_percent': facturado_percent,
-        'utilidad_usd_prev': utilidad_usd_prev > 0,
+        'utilidad_usd_prev': float(utilidad_usd_prev),
         'utilidad_usd_percent': utilidad_usd_percent,
-        'recuperacion_prev': recuperacion_prev > 0,
+        'recuperacion_prev': float(recuperacion_prev),
         'recuperacion_percent': recuperacion_percent,
-        'notas_credito_prev': notas_credito_prev > 0,
+        'notas_credito_prev': float(notas_credito_prev),
         'notas_credito_percent': notas_credito_percent,
-        'cancelados_prev': cancelados_prev > 0,
+        'cancelados_prev': float(cancelados_prev),
         'cancelados_percent': cancelados_percent,
     }
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { NavigationMenu } from "@/components/dashboard/NavigationMenu";
+
 import Link from "next/link";
 import {
     DropdownMenu,
@@ -76,7 +78,8 @@ export function DashboardHeader() {
     return (
         <header className="sticky top-0 z-50 w-full border-b border-slate-200/50 bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60">
             <div className="container flex h-16 items-center justify-between px-4 md:px-8">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                    <NavigationMenu />
                     <Link href="/" className="flex items-center gap-3 group">
                         <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/20 transition-all duration-300 group-hover:shadow-emerald-500/40 group-hover:scale-105">
                             <Home className="h-4 w-4 text-white" />

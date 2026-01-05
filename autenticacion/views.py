@@ -18,7 +18,7 @@ from captcha.models import CaptchaStore
 from captcha.helpers import captcha_image_url
 import json
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.tokens import default_token_generator
+
 
 def fruits_api(request):
     try:
@@ -27,7 +27,11 @@ def fruits_api(request):
         data = []
         for f in frutas:
             try:
-                img_url = f.imagen.url if f.imagen else None
+                if f.imagen:
+                    # Build absolute URL
+                    img_url = request.build_absolute_uri(f.imagen.url)
+                else:
+                    img_url = None
             except Exception:
                 img_url = None
                 
@@ -42,6 +46,7 @@ def fruits_api(request):
         return JsonResponse(data, safe=False)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
 
 def get_captcha_api(request):
     try:
@@ -124,85 +129,6 @@ def login1(request):
 def salir(request):
     logout(request)
     return redirect('/')
-
-# API Views for Next.js Authentication
-@csrf_exempt
-def api_login(request):
-    if request.method == 'POST':
-        # Handle both JSON and form-data
-        try:
-            if request.content_type == 'application/json':
-                data = json.loads(request.body)
-                username = data.get('username')
-                password = data.get('password')
-            else:
-                username = request.POST.get('username')
-                password = request.POST.get('password')
-            
-            user = authenticate(request, username=username, password=password)
-            
-            if user is not None:
-                login(request, user)
-                return JsonResponse({
-                    'success': True, 
-                    'message': 'Login successful',
-                    'redirect_url': '/home/',
-                    'user': {
-                        'username': user.username,
-                        'email': user.email
-                    }
-                })
-            else:
-                return JsonResponse({'success': False, 'message': 'Credenciales incorrectas'}, status=401)
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)}, status=500)
-    return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
-
-@csrf_exempt
-def api_logout(request):
-    if request.method == 'POST':
-        logout(request)
-        return JsonResponse({'success': True, 'message': 'Logout successful'})
-    return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
-
-@csrf_exempt
-def api_password_reset(request):
-    if request.method == 'POST':
-        try:
-            form = PasswordResetForm(request.POST)
-            if form.is_valid():
-                opts = {
-                    'use_https': request.is_secure(),
-                    'token_generator': default_token_generator,
-                    'from_email': settings.DEFAULT_FROM_EMAIL,
-                    'email_template_name': 'registration/password_reset_email.html',
-                    'subject_template_name': 'registration/password_reset_subject.txt',
-                    'request': request,
-                    'html_email_template_name': None,
-                }
-                form.save(**opts)
-                return JsonResponse({'success': True, 'message': 'Password reset email sent'})
-            else:
-                return JsonResponse({'success': False, 'message': 'Invalid email', 'errors': form.errors}, status=400)
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': str(e)}, status=500)
-    return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
-
-@csrf_exempt
-def api_check_auth(request):
-    """Check if user is authenticated and return user info"""
-    if request.user.is_authenticated:
-        return JsonResponse({
-            'authenticated': True,
-            'user': {
-                'username': request.user.username,
-                'email': request.user.email,
-                'first_name': request.user.first_name,
-                'last_name': request.user.last_name
-            }
-        })
-    else:
-        return JsonResponse({'authenticated': False})
 
 
 class CustomPasswordResetView(PasswordResetView):

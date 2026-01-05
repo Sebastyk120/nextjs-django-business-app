@@ -1,0 +1,113 @@
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+
+// Create axios instance with default config
+const axiosClient = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+    withCredentials: true, // Important for session-based auth
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+// Function to get CSRF token from cookies
+function getCookie(name: string): string | null {
+    if (typeof document === 'undefined') return null;
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Request interceptor to add CSRF token
+axiosClient.interceptors.request.use(
+    (config: InternalAxiosRequestConfig) => {
+        // Add CSRF token for non-GET requests
+        if (config.method !== 'get') {
+            const csrftoken = getCookie('csrftoken');
+            if (csrftoken) {
+                config.headers['X-CSRFToken'] = csrftoken;
+            }
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response interceptor for error handling
+axiosClient.interceptors.response.use(
+    (response: AxiosResponse) => {
+        return response;
+    },
+    (error: AxiosError) => {
+        // Handle specific error cases
+        if (error.response) {
+            switch (error.response.status) {
+                case 401:
+                    console.error('Unauthorized - Please log in');
+                    // Optionally redirect to login
+                    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+                        // Clear auth state
+                        localStorage.removeItem('isAuthenticated');
+                        localStorage.removeItem('user');
+                    }
+                    break;
+                case 403:
+                    console.error('Forbidden - You do not have permission');
+                    break;
+                case 404:
+                    console.error('Not Found - Resource does not exist');
+                    break;
+                case 500:
+                    console.error('Server Error - Please try again later');
+                    break;
+            }
+        } else if (error.request) {
+            console.error('Network Error - No response from server');
+        } else {
+            console.error('Error:', error.message);
+        }
+
+        return Promise.reject(error);
+    }
+);
+
+export default axiosClient;
+
+// Helper function for API calls with better error handling
+export async function apiRequest<T>(
+    method: 'get' | 'post' | 'put' | 'patch' | 'delete',
+    url: string,
+    data?: any,
+    config?: any
+): Promise<T> {
+    try {
+        const response = await axiosClient.request<T>({
+            method,
+            url,
+            data,
+            ...config,
+        });
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            // Extract error message from response
+            const message =
+                error.response?.data?.message ||
+                error.response?.data?.detail ||
+                error.message ||
+                'An error occurred';
+            throw new Error(message);
+        }
+        throw error;
+    }
+}

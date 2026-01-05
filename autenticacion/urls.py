@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 from .views import LandingPageView, EnglishLandingPageView
+from .api_views import LoginAPIView, LogoutAPIView, CheckAuthAPIView, PasswordResetAPIView
 from django.contrib.auth.decorators import login_required
 
 class CustomPasswordResetDoneView(auth_views.PasswordResetDoneView):
@@ -30,10 +31,12 @@ urlpatterns = [
     path('api/fruits/', views.fruits_api, name='fruits_api'),
     path('api/get_captcha/', views.get_captcha_api, name='get_captcha_api'),
     path('api/contact_submit/', views.contact_api_submit, name='contact_api_submit'),
-    path('api/login/', views.api_login, name='api_login'),
-    path('api/logout/', views.api_logout, name='api_logout'),
-    path('api/password-reset/', views.api_password_reset, name='api_password_reset'),
-    path('api/check-auth/', views.api_check_auth, name='api_check_auth'),
+    
+    # DRF API endpoints for authentication
+    path('api/login/', LoginAPIView.as_view(), name='api_login'),
+    path('api/logout/', LogoutAPIView.as_view(), name='api_logout'),
+    path('api/password-reset/', PasswordResetAPIView.as_view(), name='api_password_reset'),
+    path('api/check-auth/', CheckAuthAPIView.as_view(), name='api_check_auth'),
     
     # Rutas de autenticación
     path('login/', views.login1, name='login'),

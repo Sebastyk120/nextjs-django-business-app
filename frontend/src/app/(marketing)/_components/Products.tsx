@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Fruit } from "@/types/fruit";
 import ProductModal from "./ProductModal";
+import axiosClient from "@/lib/axios";
 
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -41,12 +42,9 @@ export default function Products() {
     useEffect(() => {
         const fetchFruits = async () => {
             try {
-                const res = await fetch("/api/fruits");
-                if (res.ok) {
-                    const data = await res.json();
-                    setFruits(data);
-                    setFilteredFruits(data);
-                }
+                const response = await axiosClient.get<Fruit[]>('/autenticacion/api/fruits/');
+                setFruits(response.data);
+                setFilteredFruits(response.data);
             } catch (error) {
                 console.error("Failed to fetch fruits", error);
             } finally {

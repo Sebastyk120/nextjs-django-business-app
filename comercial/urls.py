@@ -1,10 +1,36 @@
-from django.urls import path
-from . import views, views2, views_proyec_vent, views4_dash_comer, views_export, views_cotizacion_conjunta, views_tarifas, views_tarifa_fruta, views_historial_cotizacion_pdf
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from . import views, views2, views_proyec_vent, views4_dash_comer, views_export, views_cotizacion_conjunta, views_tarifas, views_tarifa_fruta, views_historial_cotizacion_pdf, api_dashboard_comercial, api_proyeccion_ventas, api_estado_cuenta
+from .api_pedidos import (
+    PedidoViewSet, ClienteViewSet, IntermediarioViewSet,
+    ExportadorViewSet, SubExportadoraViewSet, IataViewSet, DetallePedidoViewSet,
+    FrutaViewSet, PresentacionViewSet, TipoCajaViewSet, ReferenciasViewSet,
+    AgenciaCargaViewSet
+)
+
+# DRF Router for API endpoints
+router = DefaultRouter()
+router.register(r'api/pedidos', PedidoViewSet, basename='pedido')
+router.register(r'api/clientes', ClienteViewSet, basename='cliente')
+router.register(r'api/intermediarios', IntermediarioViewSet, basename='intermediario')
+router.register(r'api/exportadores', ExportadorViewSet, basename='exportador')
+router.register(r'api/subexportadoras', SubExportadoraViewSet, basename='subexportadora')
+
+router.register(r'api/destinos', IataViewSet, basename='destino')
+router.register(r'api/agencias-carga', AgenciaCargaViewSet, basename='agencia-carga')
+router.register(r'api/detalles-pedido', DetallePedidoViewSet, basename='detalle-pedido')
+router.register(r'api/frutas', FrutaViewSet, basename='fruta')
+router.register(r'api/presentaciones', PresentacionViewSet, basename='presentacion')
+router.register(r'api/tipos-caja', TipoCajaViewSet, basename='tipo-caja')
+router.register(r'api/referencias', ReferenciasViewSet, basename='referencia')
 
 urlpatterns = [
+    # Include DRF router URLs
+    path('', include(router.urls)),
+    
+    # Existing URLs
     path('redirect_based_on_group', views.redirect_based_on_group_pedidos, name='redirect_based_on_group'),
     path('redirect_based_on_group_cartera', views.redirect_based_on_group_cartera, name='redirect_based_on_group_cartera'),
-
     path('pedido_detalles/<int:pedido_id>', views.DetallePedidoListView.as_view(), name='pedido_detalle_list'),
     path('pedido_list_general', views.PedidoListView.as_view(), name='pedido_list_general'),
     path('seguimiento_pedido_list_general', views.SeguimientosPedidosListView.as_view(), name='seguimiento_pedido_list_general'),
@@ -22,9 +48,7 @@ urlpatterns = [
     path('pedido_list_etnico', views.PedidoEtnicoListView.as_view(), name='pedido_list_etnico'),
     path('pedido_list_fieldex', views.PedidoFieldexListView.as_view(), name='pedido_list_fieldex'),
     path('pedido_list_juan', views.PedidoJuanListView.as_view(), name='pedido_list_juan'),
-
     path('pedido_list_ci_dorado', views.PedidoCiDoradoListView.as_view(), name='pedido_list_ci_dorado'),
-
     path('pedido_editar_exportador', views.PedidoExportadorUpdateView.as_view(), name='pedido_editar_exportador'),
     path('pedido_editar_seguimiento', views.PedidoUpdateSebguimientoView.as_view(), name='pedido_editar_seguimiento'),
     path('cartera_list_heavens', views.CarteraHeavensListView.as_view(), name='cartera_list_heavens'),
@@ -37,18 +61,13 @@ urlpatterns = [
     path('exportar_cartera_cliente_antigua', views.ExportarCarteraClienteVistaAntiguaView.as_view(), name='exportar_cartera_cliente_antigua'),
     path('exportar_cartera_cliente_enviar', views.ExportarCarteraClienteEnviarView.as_view(), name='exportar_cartera_cliente_enviar'),
     path('exportar_pedidos_excel_general', views_export.exportar_pedidos_excel_general, name='exportar_pedidos_excel_general'),
-
     path('exportar_excel_seguimiento_tracking', views.exportar_excel_seguimiento_tracking, name='exportar_excel_seguimiento_tracking'),
-
     path('utilidad_list_heavens', views.UtilidadHeavensListView.as_view(), name='utilidad_list_heavens'),
     path('utilidad_list_etnico', views.UtilidadEtnicoListView.as_view(), name='utilidad_list_etnico'),
     path('utilidad_list_fieldex', views.UtilidadFiedexListView.as_view(), name='utilidad_list_fieldex'),
     path('utilidad_list_juan', views.UtilidadJuanListView.as_view(), name='utilidad_list_juan'),
     path('utilidad_list_ci_dorado', views.UtilidadCiDoradoListView.as_view(), name='utilidad_list_ci_dorado'),
     path('exportar_utilidades_general', views_export.exportar_utilidades_excel, name='exportar_utilidades_general'),
-
-
-
     path('exportar_detalles_p_heavens', views.exportar_detalles_pedidos_excel, name='exportar_detalles_p_heavens'),
     path('pedido_resumen/<int:pedido_id>', views.ResumenPedidoListView.as_view(), name='pedido_resumen'),
     path('referencia_list_etnico', views.ReferenciasEtnicoListView.as_view(), name='referencia_list_etnico'),
@@ -57,15 +76,12 @@ urlpatterns = [
     path('referencia_list_ci_dorado', views.ReferenciasCiDoradoListView.as_view(), name='referencia_list_ci_dorado'),
     path('referencia_editar_general', views.ReferenciaUpdateView.as_view(), name='referencia_editar_general'),
     path('exportar_referencias_excel', views.exportar_referencias_excel, name='exportar_referencias_excel'),
-
     path('actualizar_vencimiento_general/', views.actualizar_dias_de_vencimiento_todos, name='actualizar_dias_de_vencimiento_todos'),
     path('actualizar_tasas_general/', views.actualizar_tasas, name='actualizar_tasas'),
-
     path('actualizar_vencimiento_etnico/', views.actualizar_dias_de_vencimiento_etnico, name='actualizar_vencimiento_etnico'),
     path('actualizar_tasas_etnico/', views.actualizar_tasas_etnico, name='actualizar_tasas_etnico'),
     path('actualizar_vencimiento_fieldex/', views.actualizar_dias_de_vencimiento_fieldex, name='actualizar_vencimiento_fieldex'),
     path('actualizar_vencimiento_ci_dorado/', views.actualizar_dias_de_vencimiento_ci_dorado, name='actualizar_vencimiento_ci_dorado'),
-
     path('actualizar_tasas_fieldex/', views.actualizar_tasas_fieldex, name='actualizar_tasas_fieldex'),
     path('actualizar_vencimiento_juan/', views.actualizar_dias_de_vencimiento_juan, name='actualizar_vencimiento_juan'),
     path('actualizar_tasas_juan/', views.actualizar_tasas_juan, name='actualizar_tasas_juan'),
@@ -74,7 +90,6 @@ urlpatterns = [
     path('autorizacion/<int:autorizacion_id>/autorizar/', views.autorizar_cancelacion, name='autorizar_cancelacion'),
     path('filtrar_presentaciones/', views.filtrar_presentaciones, name='filtrar_presentaciones'),
     path('ajax/load-referencias/', views.load_referencias, name='ajax_load_referencias'),
-
     path('exportar_resumen_semana_pdf/', views.export_pdf_resumen_semana, name='exportar_resumen_semana_pdf'),
     path('pedido_resumen_pdf/<int:pedido_id>', views.exportar_pdf_resumen_pedido, name='pedido_resumen_pdf'),
     path('exportar_excel_seguimientos_resumen/', views.exportar_excel_seguimiento_resumen, name='exportar_excel_seguimientos_resumen'),
@@ -82,26 +97,24 @@ urlpatterns = [
     path('dashboard_cliente/', views2.dashboard_cliente, name='dashboard_cliente'),
     path('dashboard_cliente/exportar/', views2.exportar_cartera_cliente_dashboard, name='exportar_cartera_cliente_dashboard'),
     path('exportar-dashboard-comercial/', views4_dash_comer.exportar_dashboard_comercial, name='exportar_dashboard_comercial'),
-    
+    path('api/dashboard/', api_dashboard_comercial.dashboard_comercial_api, name='dashboard_comercial_api'), # API para el dashboard comercial NextJs
+    path('api/estado-cuenta/', api_estado_cuenta.estado_cuenta_api, name='estado_cuenta_api'), # API para el estado de cuenta cliente NextJs
     # Dashboard y proyección de ventas
     path('proyeccion-ventas/', views_proyec_vent.proyeccion_ventas, name='proyeccion_ventas'),
     path('api/proyeccion-ventas/', views_proyec_vent.proyeccion_ventas_api, name='proyeccion_ventas_api'),
-    
+    path('api/proyeccion-ventas-v2/', api_proyeccion_ventas.ProyeccionVentasAPIView.as_view(), name='proyeccion_ventas_api_v2'),
     # Cotización Conjunta para usuario final
     path('cotizacion-conjunta/', views_cotizacion_conjunta.CotizacionConjuntaUsuarioView.as_view(), name='cotizacion_conjunta_usuario'),
-    
     # Tarifas Aéreas
     path('tarifas-aereas/', views_tarifas.TarifaAereaView.as_view(), name='tarifas_aereas'),
-
     # Gestión de Precios Fruta Exportador
     path('gestion-precios-fruta/', views_tarifa_fruta.tarifa_frutas_view, name='gestion_precios_fruta'),
-    
     # Historial de Cotizaciones
     path('historial-cotizaciones/', views_historial_cotizacion_pdf.HistorialCotizacionesView.as_view(), name='historial_cotizaciones'),
     path('historial-cotizaciones/<int:historico_id>/pdf/', views_historial_cotizacion_pdf.HistorialCotizacionPDFView.as_view(), name='historial_cotizacion_pdf'),
-    
     # Editor Modal AJAX
     path('cotizacion-editor-producto/<int:cp_id>/', views_cotizacion_conjunta.cotizacion_editor_producto, name='cotizacion_editor_producto'),
     path('ajax/load-referencias-json/', views_cotizacion_conjunta.load_referencias_json, name='ajax_load_referencias_json'),
     path('manage-insumos/', views_cotizacion_conjunta.manage_insumos, name='manage_insumos'),
 ]
+
