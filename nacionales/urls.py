@@ -11,6 +11,7 @@ router.register(r'api/reporte-exp', api_nacionales.ReporteCalidadExportadorViewS
 router.register(r'api/reporte-prov', api_nacionales.ReporteCalidadProveedorViewSet, basename='api_reporte_proveedor')
 router.register(r'api/proveedores', api_nacionales.ProveedorNacionalViewSet, basename='api_proveedor_nacional')
 router.register(r'api/empaques', api_nacionales.EmpaqueViewSet, basename='api_empaque_nacional')
+router.register(r'api/transferencias', api_nacionales.TransferenciasProveedorViewSet, basename='api_transferencias')
 
 urlpatterns = [
     # Include DRF router URLs

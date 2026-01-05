@@ -14,6 +14,7 @@ import { KilosParticipationChart } from "@/components/nacionales/dashboard/Kilos
 import { QualityEvolutionChart } from "@/components/nacionales/dashboard/QualityEvolutionChart";
 import { ProveedoresDetailTable } from "@/components/nacionales/dashboard/ProveedoresDetailTable";
 import { NacionalesDashboardModals } from "@/components/nacionales/dashboard/NacionalesDashboardModals";
+import { ExportDataModal } from "@/components/nacionales/dashboard/ExportDataModal";
 import { Button } from "@/components/ui/button";
 import {
     ShoppingCart,
@@ -54,6 +55,7 @@ export default function DashboardNacionalesPage() {
     const [estadoCuentaOpen, setEstadoCuentaOpen] = useState(false);
     const [resumenReportesOpen, setResumenReportesOpen] = useState(false);
     const [balanceOpen, setBalanceOpen] = useState(false);
+    const [exportOpen, setExportOpen] = useState(false);
 
     const fetchData = useCallback(async (currentFilters?: DashboardNacionalesFilters) => {
         setLoading(true);
@@ -93,14 +95,14 @@ export default function DashboardNacionalesPage() {
     const handleFilterChange = (key: string, value: string) => {
         // Para fechas, usamos string vacío en lugar de null para evitar error de uncontrolled input
         let newValue: string | null = value;
-        
+
         if (key === 'fecha_inicio' || key === 'fecha_fin') {
             newValue = value; // Mantener como string (vacío o valor)
         } else {
             // Para selectores (proveedor/fruta), usamos null si está vacío
             newValue = value || null;
         }
-        
+
         const newFilters = { ...filters, [key]: newValue };
         setFilters(newFilters as DashboardNacionalesFilters);
     };
@@ -124,41 +126,6 @@ export default function DashboardNacionalesPage() {
         fetchData(defaultFilters);
     };
 
-    const handleExportExcel = async () => {
-        try {
-            toast.info("Generando reporte...");
-
-            const params = new URLSearchParams();
-            params.append('data', 'dashboard');
-            if (filters.fecha_inicio) params.append('fecha_inicio', filters.fecha_inicio);
-            if (filters.fecha_fin) params.append('fecha_fin', filters.fecha_fin);
-            if (filters.proveedor_id) params.append('proveedor', filters.proveedor_id);
-            if (filters.fruta_id) params.append('fruta', filters.fruta_id);
-
-            const response = await axiosClient.get(
-                `/nacionales/export_data/?${params.toString()}`,
-                {
-                    responseType: 'blob',
-                    timeout: 30000
-                }
-            );
-
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            const dateStr = format(new Date(), 'yyyy-MM-dd');
-            link.setAttribute('download', `Dashboard_Nacionales_${dateStr}.xlsx`);
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode?.removeChild(link);
-            window.URL.revokeObjectURL(url);
-
-            toast.success("Reporte descargado correctamente");
-        } catch (error) {
-            console.error("Error exporting:", error);
-            toast.error("Error al descargar el reporte");
-        }
-    };
 
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('es-CO', {
@@ -237,7 +204,7 @@ export default function DashboardNacionalesPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleExportExcel}
+                        onClick={() => setExportOpen(true)}
                         className="bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50"
                     >
                         <Download className="h-4 w-4 mr-2" />
@@ -338,6 +305,12 @@ export default function DashboardNacionalesPage() {
                 setResumenReportesOpen={setResumenReportesOpen}
                 balanceOpen={balanceOpen}
                 setBalanceOpen={setBalanceOpen}
+            />
+
+            <ExportDataModal
+                open={exportOpen}
+                onOpenChange={setExportOpen}
+                filters={filters}
             />
         </div>
     );

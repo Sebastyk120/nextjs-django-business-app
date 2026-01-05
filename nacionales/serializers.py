@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     CompraNacional, VentaNacional, ReporteCalidadExportador, 
-    ReporteCalidadProveedor, ProveedorNacional, Empaque
+    ReporteCalidadProveedor, ProveedorNacional, Empaque, TransferenciasProveedor
 )
 from comercial.models import Fruta, Exportador
 from comercial.serializers import FrutaSerializer, ExportadorSerializer
@@ -88,8 +88,18 @@ class CompraNacionalSerializer(serializers.ModelSerializer):
             return "Pendiente"
         return None
         
+
     def get_remision_exp(self, obj):
          if hasattr(obj, 'ventanacional') and hasattr(obj.ventanacional, 'reportecalidadexportador'):
             return obj.ventanacional.reportecalidadexportador.remision_exp
          return None
+
+
+class TransferenciasProveedorSerializer(serializers.ModelSerializer):
+    proveedor_nombre = serializers.ReadOnlyField(source='proveedor.nombre')
+
+    class Meta:
+        model = TransferenciasProveedor
+        fields = '__all__'
+
 

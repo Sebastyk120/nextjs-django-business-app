@@ -6,12 +6,12 @@ from rest_framework.views import APIView
 from django.db.models import Q
 from .models import (
     CompraNacional, VentaNacional, ReporteCalidadExportador, 
-    ReporteCalidadProveedor, ProveedorNacional, Empaque
+    ReporteCalidadProveedor, ProveedorNacional, Empaque, TransferenciasProveedor
 )
 from .serializers import (
     CompraNacionalSerializer, VentaNacionalSerializer, 
     ReporteCalidadExportadorSerializer, ReporteCalidadProveedorSerializer,
-    ProveedorNacionalSerializer, EmpaqueSerializer
+    ProveedorNacionalSerializer, EmpaqueSerializer, TransferenciasProveedorSerializer
 )
 from .services import DashboardNacionalesService
 from comercial.models import Fruta, Exportador
@@ -176,3 +176,36 @@ class DashboardNacionalesAPIView(APIView):
 
         data = service.get_full_dashboard_data()
         return Response(data)
+
+
+class TransferenciasProveedorViewSet(viewsets.ModelViewSet):
+    serializer_class = TransferenciasProveedorSerializer
+    permission_classes = [permissions.IsAuthenticated, IsHeavensGroup]
+
+    def get_queryset(self):
+        queryset = TransferenciasProveedor.objects.all().select_related('proveedor').order_by('-fecha_transferencia')
+        
+        proveedor_id = self.request.query_params.get('proveedor')
+        fecha_inicio = self.request.query_params.get('fecha_inicio')
+        fecha_fin = self.request.query_params.get('fecha_fin')
+        origen = self.request.query_params.get('origen')
+        
+        if proveedor_id:
+            queryset = queryset.filter(proveedor_id=proveedor_id)
+        if fecha_inicio:
+            queryset = queryset.filter(fecha_transferencia__gte=fecha_inicio)
+        if fecha_fin:
+            queryset = queryset.filter(fecha_transferencia__lte=fecha_fin)
+        if origen:
+            queryset = queryset.filter(origen_transferencia=origen)
+            
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def choices(self, request):
+        """Return choices for filters"""
+        from .choices import origen_transferencia
+        return Response({
+            'origenes': [x[0] for x in origen_transferencia]
+        })
+
