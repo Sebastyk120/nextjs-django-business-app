@@ -89,7 +89,7 @@ class GuiaSearchForm(forms.Form):
 
 @login_required
 @user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
-def relacion_facturas_vencidas(request):
+def relacion_facturas_remision_guia(request):
     today = timezone.now().date()
     form = ReportesAsociadosForm(request.GET or None)
     facturas_vencidas = []
@@ -194,7 +194,7 @@ def relacion_facturas_vencidas(request):
         'criterio_busqueda': criterio_busqueda
     }
     
-    return render(request, 'relacion_facturas_vencidas.html', context)
+    return render(request, 'relacion_facturas_remision_guia.html', context)
 
 @login_required
 @user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
