@@ -29,6 +29,8 @@ export default function Header({ onOpenLanguage }: HeaderProps) {
             links: [
                 { name: "Inicio", href: "#inicio" },
                 { name: "Productos", href: "#productos" },
+                { name: "Trayectoria", href: "#trayectoria" },
+                { name: "Historia", href: "#historia" },
                 { name: "Nosotros", href: "#nosotros" },
                 { name: "Servicios", href: "#servicios" },
                 { name: "Contacto", href: "#contacto" },
@@ -42,6 +44,8 @@ export default function Header({ onOpenLanguage }: HeaderProps) {
             links: [
                 { name: "Home", href: "#inicio" },
                 { name: "Products", href: "#productos" },
+                { name: "Trajectory", href: "#trayectoria" },
+                { name: "History", href: "#historia" },
                 { name: "About Us", href: "#nosotros" },
                 { name: "Services", href: "#servicios" },
                 { name: "Contact", href: "#contacto" },

@@ -387,32 +387,32 @@ export function OrderDetailsDrawer({
                             <Table>
                                 <TableHeader className="bg-slate-100 sticky top-0 z-10 shadow-sm">
                                     <TableRow className="hover:bg-transparent [&>th]:align-bottom [&>th]:pb-3">
-                                        <TableHead className="w-[40px] font-semibold text-slate-700 text-xs px-2">#</TableHead>
-                                        <TableHead className="min-w-[120px] font-semibold text-slate-700 text-xs text-center flex flex-col justify-end items-center"><span className="block mb-1">Fruta</span></TableHead>
-                                        <TableHead className="min-w-[120px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Presentación</span></TableHead>
-                                        <TableHead className="min-w-[70px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Cajas<br />Sol.</span></TableHead>
-                                        <TableHead className="min-w-[70px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Peso<br />Caja</span></TableHead>
-                                        <TableHead className="min-w-[70px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Kilos<br />Netos</span></TableHead>
-                                        <TableHead className="min-w-[70px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Cajas<br />Env.</span></TableHead>
-                                        <TableHead className="min-w-[70px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Kilos<br />Env.</span></TableHead>
-                                        <TableHead className="min-w-[70px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Dife-<br />rencia</span></TableHead>
-                                        <TableHead className="min-w-[110px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Marca Caja</span></TableHead>
-                                        <TableHead className="min-w-[110px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Referencia</span></TableHead>
-                                        <TableHead className="min-w-[110px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Stickers</span></TableHead>
-                                        <TableHead className="min-w-[80px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Contenedor</span></TableHead>
-                                        <TableHead className="min-w-[70px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">No.<br />Cont.</span></TableHead>
-                                        <TableHead className="min-w-[80px] font-semibold text-slate-700 text-xs text-center text-emerald-600"><span className="block leading-tight">Utilidad<br />($)</span></TableHead>
-                                        <TableHead className="min-w-[80px] font-semibold text-slate-700 text-xs text-center text-blue-600"><span className="block leading-tight">Recup.<br />($)</span></TableHead>
-                                        <TableHead className="min-w-[80px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Costo<br />($)</span></TableHead>
-                                        <TableHead className="min-w-[80px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Valor<br />Prod.</span></TableHead>
-                                        <TableHead className="min-w-[80px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Precio<br />Prof.</span></TableHead>
-                                        <TableHead className="min-w-[70px] font-semibold text-slate-700 text-xs text-center text-orange-600"><span className="block leading-tight">NC<br />Cajas</span></TableHead>
-                                        <TableHead className="min-w-[80px] font-semibold text-slate-700 text-xs text-center text-orange-600"><span className="block leading-tight">Valor<br />NC</span></TableHead>
-                                        <TableHead className="min-w-[80px] font-semibold text-slate-700 text-xs text-center text-orange-600"><span className="block leading-tight">Afecta<br />Util?</span></TableHead>
-                                        <TableHead className="min-w-[80px] font-semibold text-slate-700 text-xs text-center text-emerald-600"><span className="block leading-tight">Total<br />Util.</span></TableHead>
-                                        <TableHead className="min-w-[80px] font-semibold text-slate-700 text-xs text-center text-blue-600"><span className="block leading-tight">Total<br />Recup.</span></TableHead>
-                                        <TableHead className="min-w-[150px] font-semibold text-slate-700 text-xs text-center"><span className="block leading-tight">Observaciones</span></TableHead>
-                                        <TableHead className="w-[80px] sticky right-0 bg-slate-100 shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)] z-20 font-semibold text-slate-700 text-xs text-center align-middle">Acciones</TableHead>
+                                        <TableHead className="w-[40px] font-semibold text-slate-700 text-xs px-2 text-center">#</TableHead>
+                                        <TableHead className="w-[120px] min-w-[120px] font-semibold text-slate-700 text-xs text-center">Fruta</TableHead>
+                                        <TableHead className="w-[160px] min-w-[160px] font-semibold text-slate-700 text-xs text-center">Presentación</TableHead>
+                                        <TableHead className="w-[70px] min-w-[70px] font-semibold text-slate-700 text-xs text-center">Cajas<br />Sol.</TableHead>
+                                        <TableHead className="w-[70px] min-w-[70px] font-semibold text-slate-700 text-xs text-center">Peso<br />Caja</TableHead>
+                                        <TableHead className="w-[80px] min-w-[80px] font-semibold text-slate-700 text-xs text-center">Kilos<br />Netos</TableHead>
+                                        <TableHead className="w-[70px] min-w-[70px] font-semibold text-slate-700 text-xs text-center">Cajas<br />Env.</TableHead>
+                                        <TableHead className="w-[80px] min-w-[80px] font-semibold text-slate-700 text-xs text-center">Kilos<br />Env.</TableHead>
+                                        <TableHead className="w-[80px] min-w-[80px] font-semibold text-slate-700 text-xs text-center">Dife-<br />rencia</TableHead>
+                                        <TableHead className="w-[120px] min-w-[120px] font-semibold text-slate-700 text-xs text-center">Marca Caja</TableHead>
+                                        <TableHead className="w-[150px] min-w-[150px] font-semibold text-slate-700 text-xs text-center">Referencia</TableHead>
+                                        <TableHead className="w-[120px] min-w-[120px] font-semibold text-slate-700 text-xs text-center">Stickers</TableHead>
+                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center">Contenedor</TableHead>
+                                        <TableHead className="w-[70px] min-w-[70px] font-semibold text-slate-700 text-xs text-center">No.<br />Cont.</TableHead>
+                                        <TableHead className="w-[90px] min-w-[90px] font-semibold text-slate-700 text-xs text-center text-emerald-600">Utilidad<br />($)</TableHead>
+                                        <TableHead className="w-[90px] min-w-[90px] font-semibold text-slate-700 text-xs text-center text-blue-600">Recup.<br />($)</TableHead>
+                                        <TableHead className="w-[90px] min-w-[90px] font-semibold text-slate-700 text-xs text-center">Costo<br />($)</TableHead>
+                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center">Valor<br />Prod.</TableHead>
+                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center">Precio<br />Prof.</TableHead>
+                                        <TableHead className="w-[80px] min-w-[80px] font-semibold text-slate-700 text-xs text-center text-orange-600">NC<br />Cajas</TableHead>
+                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center text-orange-600">Valor<br />NC</TableHead>
+                                        <TableHead className="w-[80px] min-w-[80px] font-semibold text-slate-700 text-xs text-center text-orange-600">Afecta<br />Util?</TableHead>
+                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center text-emerald-600">Total<br />Util.</TableHead>
+                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center text-blue-600">Total<br />Recup.</TableHead>
+                                        <TableHead className="w-[150px] min-w-[150px] font-semibold text-slate-700 text-xs text-center">Observaciones</TableHead>
+                                        <TableHead className="w-[80px] min-w-[80px] sticky right-0 bg-slate-100 shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)] z-20 font-semibold text-slate-700 text-xs text-center align-middle">Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -526,7 +526,7 @@ export function OrderDetailsDrawer({
 }
 
 // Fixed InputCell and SelectCell moved OUTSIDE to prevent focus loss during re-renders
-const InputCell = ({ isEditing, data, field, onChange, type = "text", disabled = false, width = "w-full", formatMoney, formatNumber }: any) => (
+const InputCell = ({ isEditing, data, field, onChange, type = "text", disabled = false, width = "w-full", formatMoney, formatNumber, align = "left" }: any) => (
     isEditing ? (
         <Input
             type={type === 'number' ? 'text' : type}
@@ -543,12 +543,13 @@ const InputCell = ({ isEditing, data, field, onChange, type = "text", disabled =
             }}
             className={cn(
                 "h-6 px-1.5 text-xs bg-white border-slate-200 focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-blue-500 rounded-sm hover:border-slate-300 transition-colors",
-                width
+                width,
+                align === "center" && "text-center"
             )}
             disabled={disabled}
         />
     ) : (
-        <span className={cn("truncate block text-xs", width)} title={data[field]?.toString()}>
+        <span className={cn("truncate block text-xs", width, align === "center" && "text-center")} title={data[field]?.toString()}>
             {type === 'number'
                 ? (field.includes('valor') || field.includes('tarifa') || field.includes('precio')
                     ? formatMoney(data[field])
@@ -558,7 +559,7 @@ const InputCell = ({ isEditing, data, field, onChange, type = "text", disabled =
     )
 );
 
-const SelectCell = ({ isEditing, data, field, onChange, options, disabled = false, labelField = "nombre", renderLabel, width = "min-w-[120px]", renderReadOnly }: any) => {
+const SelectCell = ({ isEditing, data, field, onChange, options, disabled = false, labelField = "nombre", renderLabel, width = "min-w-[120px]", renderReadOnly, align = "left" }: any) => {
     if (isEditing) {
         return (
             <div className={width}>
@@ -567,7 +568,7 @@ const SelectCell = ({ isEditing, data, field, onChange, options, disabled = fals
                     value={data[field]?.toString()}
                     onValueChange={(val) => onChange(field, parseInt(val))}
                 >
-                    <SelectTrigger className="h-6 text-xs px-2 border-slate-200 hover:border-slate-300 focus:ring-1 focus:ring-blue-500 rounded-sm">
+                    <SelectTrigger className={cn("h-6 text-xs px-2 border-slate-200 hover:border-slate-300 focus:ring-1 focus:ring-blue-500 rounded-sm", align === "center" && "text-center")}>
                         <SelectValue placeholder="Sel." className="line-clamp-1" />
                     </SelectTrigger>
                     <SelectContent>
@@ -582,7 +583,7 @@ const SelectCell = ({ isEditing, data, field, onChange, options, disabled = fals
         );
     }
     const displayValue = renderReadOnly ? renderReadOnly(data) : data[field + '_nombre'];
-    return <span className={cn("truncate block text-xs", width)} title={displayValue}>{displayValue || '-'}</span>;
+    return <span className={cn("truncate block text-xs", width, align === "center" && "text-center")} title={displayValue}>{displayValue || '-'}</span>;
 };
 
 // Row Component
@@ -599,12 +600,12 @@ function DataRow({
 
     return (
         <TableRow className={cn("hover:bg-slate-50 border-b border-slate-100", isEditing && "bg-blue-50/30")}>
-            <TableCell className="text-center text-xs text-slate-400">{index + 1}</TableCell>
+            <TableCell className="w-[40px] text-center text-xs text-slate-400">{index + 1}</TableCell>
 
-            <TableCell>
-                <SelectCell {...cellProps} field="fruta" options={frutas} disabled={!canEditGeneral} width="min-w-[100px] w-[100px]" />
+            <TableCell className="w-[120px]">
+                <SelectCell {...cellProps} field="fruta" options={frutas} disabled={!canEditGeneral} width="w-[120px]" align="center" />
             </TableCell>
-            <TableCell>
+            <TableCell className="w-[160px]">
                 <SelectCell
                     {...cellProps}
                     field="presentacion"
@@ -612,47 +613,48 @@ function DataRow({
                     disabled={!canEditGeneral}
                     renderLabel={(opt: any) => `${opt.nombre} ${parseFloat(opt.kilos).toFixed(2)} kg`}
                     renderReadOnly={(d: any) => d.presentacion_nombre ? `${d.presentacion_nombre} ${parseFloat(d.presentacion_kilos || 0).toFixed(2)} kg` : '-'}
-                    width="min-w-[130px] w-[130px]"
+                    width="w-[160px]"
+                    align="center"
                 />
             </TableCell>
 
-            <TableCell>
-                <InputCell {...cellProps} field="cajas_solicitadas" type="number" disabled={!canEditGeneral} width="w-[70px]" />
+            <TableCell className="w-[70px]">
+                <InputCell {...cellProps} field="cajas_solicitadas" type="number" disabled={!canEditGeneral} width="w-[70px]" align="center" />
             </TableCell>
-            <TableCell>
-                <span className="text-slate-500 text-xs block w-[60px]" title="Calculado">{formatNumber(data.presentacion_peso) || '-'}</span>
+            <TableCell className="w-[70px]">
+                <span className="text-slate-500 text-xs block w-[70px] text-center" title="Calculado">{formatNumber(data.presentacion_peso) || '-'}</span>
             </TableCell>
-            <TableCell>
-                <span className="text-slate-500 text-xs block w-[70px]" title="Calculado">{formatNumber(data.kilos) || '-'}</span>
+            <TableCell className="w-[80px]">
+                <span className="text-slate-500 text-xs block w-[80px] text-center" title="Calculado">{formatNumber(data.kilos) || '-'}</span>
             </TableCell>
-            <TableCell>
-                <InputCell {...cellProps} field="cajas_enviadas" type="number" disabled={!canEditGeneral} width="w-[70px]" />
+            <TableCell className="w-[70px]">
+                <InputCell {...cellProps} field="cajas_enviadas" type="number" disabled={!canEditGeneral} width="w-[70px]" align="center" />
             </TableCell>
-            <TableCell>
-                <span className="text-slate-500 text-xs block w-[60px]" title="Calculado">{formatNumber(data.kilos_enviados) || '-'}</span>
+            <TableCell className="w-[80px]">
+                <span className="text-slate-500 text-xs block w-[80px] text-center" title="Calculado">{formatNumber(data.kilos_enviados) || '-'}</span>
             </TableCell>
-            <TableCell>
-                <span className="text-slate-500 text-xs block w-[60px]" title="Calculado">{formatNumber(data.diferencia) || '-'}</span>
+            <TableCell className="w-[80px]">
+                <span className="text-slate-500 text-xs block w-[80px] text-center" title="Calculado">{formatNumber(data.diferencia) || '-'}</span>
             </TableCell>
 
-            <TableCell>
-                <SelectCell {...cellProps} field="tipo_caja" options={tiposCaja} disabled={!canEditGeneral} width="min-w-[110px] w-[110px]" />
+            <TableCell className="w-[120px]">
+                <SelectCell {...cellProps} field="tipo_caja" options={tiposCaja} disabled={!canEditGeneral} width="w-[120px]" align="center" />
             </TableCell>
-            <TableCell>
-                <SelectCell {...cellProps} field="referencia" options={referencias} disabled={!canEditGeneral} width="min-w-[150px] w-[150px]" />
+            <TableCell className="w-[150px]">
+                <SelectCell {...cellProps} field="referencia" options={referencias} disabled={!canEditGeneral} width="w-[150px]" align="center" />
             </TableCell>
-            <TableCell>
-                <span className="text-slate-400 text-xs truncate block max-w-[110px]" title={data.stickers}>{data.stickers || '-'}</span>
+            <TableCell className="w-[120px]">
+                <span className="text-slate-400 text-xs truncate block w-[120px] text-center" title={data.stickers}>{data.stickers || '-'}</span>
             </TableCell>
-            <TableCell className="min-w-[80px]">
+            <TableCell className="w-[100px]">
                 {isEditing ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center w-[100px]">
                         <Select
                             disabled={!canEditGeneral}
                             value={data.lleva_contenedor ? "true" : "false"}
                             onValueChange={(v) => onChange("lleva_contenedor", v === "true")}
                         >
-                            <SelectTrigger className="h-8 w-[70px]">
+                            <SelectTrigger className="h-6 w-[80px] text-xs">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -662,76 +664,78 @@ function DataRow({
                         </Select>
                     </div>
                 ) : (
-                    <div className="flex flex-col text-xs max-w-[80px]">
+                    <div className="flex flex-col items-center text-xs w-[100px]">
                         <span>{data.lleva_contenedor ? "Sí" : "No"}</span>
                         {data.referencia_contenedor && (
-                            <span className="text-slate-400 truncate block w-full text-[10px]" title={data.referencia_contenedor}>
+                            <span className="text-slate-400 truncate block w-full text-[10px] text-center" title={data.referencia_contenedor}>
                                 {data.referencia_contenedor}
                             </span>
                         )}
                     </div>
                 )}
             </TableCell>
-            <TableCell>
-                <span className="text-slate-500 text-xs" title="Calculado">{data.cantidad_contenedores || '-'}</span>
+            <TableCell className="w-[70px]">
+                <span className="text-slate-500 text-xs block w-[70px] text-center" title="Calculado">{data.cantidad_contenedores || '-'}</span>
             </TableCell>
 
-            <TableCell>
-                <InputCell {...cellProps} field="tarifa_utilidad" type="number" disabled={!canEditGeneral} width="w-[70px]" />
+            <TableCell className="w-[90px]">
+                <InputCell {...cellProps} field="tarifa_utilidad" type="number" disabled={!canEditGeneral} width="w-[90px]" align="center" />
             </TableCell>
-            <TableCell>
-                <InputCell {...cellProps} field="tarifa_recuperacion" type="number" disabled={!canEditGeneral} width="w-[70px]" />
+            <TableCell className="w-[90px]">
+                <InputCell {...cellProps} field="tarifa_recuperacion" type="number" disabled={!canEditGeneral} width="w-[90px]" align="center" />
             </TableCell>
-            <TableCell>
-                <InputCell {...cellProps} field="valor_x_caja_usd" type="number" disabled={!canEditGeneral} width="w-[70px]" />
+            <TableCell className="w-[90px]">
+                <InputCell {...cellProps} field="valor_x_caja_usd" type="number" disabled={!canEditGeneral} width="w-[90px]" align="center" />
             </TableCell>
-            <TableCell>
-                <span className="text-slate-500 text-xs block w-[80px]" title="Calculado">{formatMoney(data.valor_x_producto)}</span>
+            <TableCell className="w-[100px]">
+                <span className="text-slate-500 text-xs block w-[100px] text-center" title="Calculado">{formatMoney(data.valor_x_producto)}</span>
             </TableCell>
-            <TableCell>
-                <InputCell {...cellProps} field="precio_proforma" type="number" disabled={!canEditGeneral} width="w-[70px]" />
+            <TableCell className="w-[100px]">
+                <InputCell {...cellProps} field="precio_proforma" type="number" disabled={!canEditGeneral} width="w-[100px]" align="center" />
             </TableCell>
 
-            <TableCell>
-                <InputCell {...cellProps} field="no_cajas_nc" type="number" disabled={!canEditFinancial} width="w-[70px]" />
+            <TableCell className="w-[80px]">
+                <InputCell {...cellProps} field="no_cajas_nc" type="number" disabled={!canEditFinancial} width="w-[80px]" align="center" />
             </TableCell>
-            <TableCell>
-                <span className="text-slate-500 text-xs block w-[80px]" title="Calculado">{formatMoney(data.valor_nota_credito_usd)}</span>
+            <TableCell className="w-[100px]">
+                <span className="text-slate-500 text-xs block w-[100px] text-center" title="Calculado">{formatMoney(data.valor_nota_credito_usd)}</span>
             </TableCell>
-            <TableCell>
+            <TableCell className="w-[80px]">
                 {isEditing ? (
-                    <Select
-                        disabled={!canEditFinancial}
-                        value={data.afecta_utilidad === true ? "true" : data.afecta_utilidad === false ? "false" : "null"}
-                        onValueChange={(v) => onChange("afecta_utilidad", v === "true" ? true : v === "false" ? false : null)}
-                    >
-                        <SelectTrigger className="h-6 w-[70px] text-xs border-slate-200 hover:border-slate-300 focus:ring-1 focus:ring-blue-500 rounded-sm">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="true">Sí</SelectItem>
-                            <SelectItem value="false">No</SelectItem>
-                            <SelectItem value="null">Desc.</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <div className="w-[80px] flex justify-center">
+                        <Select
+                            disabled={!canEditFinancial}
+                            value={data.afecta_utilidad === true ? "true" : data.afecta_utilidad === false ? "false" : "null"}
+                            onValueChange={(v) => onChange("afecta_utilidad", v === "true" ? true : v === "false" ? false : null)}
+                        >
+                            <SelectTrigger className="h-6 w-[70px] text-xs border-slate-200 hover:border-slate-300 focus:ring-1 focus:ring-blue-500 rounded-sm">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="true">Sí</SelectItem>
+                                <SelectItem value="false">No</SelectItem>
+                                <SelectItem value="null">Desc.</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 ) : (
-                    <span className="text-xs block w-[70px]">
+                    <span className="text-xs block w-[80px] text-center">
                         {data.afecta_utilidad === true ? "Sí" : data.afecta_utilidad === false ? "No" : "Desc."}
                     </span>
                 )}
             </TableCell>
-            <TableCell>
-                <span className="text-slate-500 text-xs text-emerald-700 font-medium block w-[90px]" title="Calculado">{formatMoney(data.valor_total_utilidad_x_producto)}</span>
+            <TableCell className="w-[100px]">
+                <span className="text-slate-500 text-xs text-emerald-700 font-medium block w-[100px] text-center" title="Calculado">{formatMoney(data.valor_total_utilidad_x_producto)}</span>
             </TableCell>
-            <TableCell>
-                <span className="text-slate-500 text-xs text-blue-700 font-medium block w-[90px]" title="Calculado">{formatMoney(data.valor_total_recuperacion_x_producto)}</span>
-            </TableCell>
-
-            <TableCell>
-                <InputCell {...cellProps} field="observaciones" type="text" disabled={!canEditGeneral} width="min-w-[150px] w-full" />
+            <TableCell className="w-[100px]">
+                <span className="text-slate-500 text-xs text-blue-700 font-medium block w-[100px] text-center" title="Calculado">{formatMoney(data.valor_total_recuperacion_x_producto)}</span>
             </TableCell>
 
-            <TableCell className="sticky right-0 bg-white/95 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] text-center p-2">
+            <TableCell className="w-[150px]">
+                <InputCell {...cellProps} field="observaciones" type="text" disabled={!canEditGeneral} width="w-[150px]" />
+            </TableCell>
+
+            <TableCell className="w-[80px] min-w-[80px] sticky right-0 bg-white/95 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] text-center p-2">
                 <div className="flex items-center justify-center gap-1">
                     {isEditing ? (
                         <>

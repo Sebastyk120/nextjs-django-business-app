@@ -1,12 +1,13 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
-import useEmblaCarousel from "embla-carousel-react";
-import { Search, ChevronLeft, ChevronRight, Leaf } from "lucide-react";
+import { ArrowRight, Leaf, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Fruit } from "@/types/fruit";
 import ProductModal from "./ProductModal";
+import AllProductsModal from "./AllProductsModal";
 import axiosClient from "@/lib/axios";
 
 import { useLanguage } from "@/context/LanguageContext";
@@ -14,28 +15,25 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function Products() {
     const { lang } = useLanguage();
     const [fruits, setFruits] = useState<Fruit[]>([]);
-    const [filteredFruits, setFilteredFruits] = useState<Fruit[]>([]);
-    const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(true);
     const [selectedFruit, setSelectedFruit] = useState<Fruit | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start" });
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
     const t = {
         es: {
-            title: "Descubre Nuestra Selección Exótica",
-            desc: "Frutas frescas de calidad superior, cultivadas con esmero y listas para exportar.",
-            placeholder: "Buscar por nombre de fruta...",
-            noResults: "No se encontraron frutas con ese nombre.",
-            viewDetails: "Ver Detalles"
+            sub: "Nuestra Selección",
+            title: "Frutas Exóticas de Calidad Mundial",
+            desc: "Descubre el sabor auténtico de Colombia. Contamos con un portafolio de más de 23 frutas exóticas listas para exportar.",
+            viewAll: "Ver Catálogo Completo (23+ Frutas)",
+            featured: "Destacados"
         },
         en: {
-            title: "Discover Our Exotic Selection",
-            desc: "Superior quality fresh fruits, carefully grown and ready for export.",
-            placeholder: "Search by fruit name...",
-            noResults: "No fruits found with that name.",
-            viewDetails: "View Details"
+            sub: "Our Selection",
+            title: "World Class Exotic Fruits",
+            desc: "Discover the authentic taste of Colombia. We have a portfolio of over 23 exotic fruits ready for export.",
+            viewAll: "View Full Catalog (23+ Fruits)",
+            featured: "Featured"
         }
     }[lang];
 
@@ -44,7 +42,6 @@ export default function Products() {
             try {
                 const response = await axiosClient.get<Fruit[]>('/autenticacion/api/fruits/');
                 setFruits(response.data);
-                setFilteredFruits(response.data);
             } catch (error) {
                 console.error("Failed to fetch fruits", error);
             } finally {
@@ -55,115 +52,124 @@ export default function Products() {
         fetchFruits();
     }, []);
 
-    useEffect(() => {
-        const filtered = fruits.filter(fruit =>
-            fruit.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (fruit.nombre_en && fruit.nombre_en.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-        setFilteredFruits(filtered);
-    }, [searchTerm, fruits]);
-
-    const scrollPrev = () => emblaApi && emblaApi.scrollPrev();
-    const scrollNext = () => emblaApi && emblaApi.scrollNext();
-
-    const openModal = (fruit: Fruit) => {
+    const openDetailModal = (fruit: Fruit) => {
         setSelectedFruit(fruit);
-        setIsModalOpen(true);
+        setIsDetailModalOpen(true);
     };
 
-    return (
-        <section id="productos" className="py-20 bg-[--color-background-alt]">
-            <div className="container mx-auto px-4 md:px-6">
-                <div className="text-center mb-12" data-aos="fade-up">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4">{t.title}</h2>
-                    <p className="text-[--color-text-light] max-w-2xl mx-auto mb-8">
-                        {t.desc}
-                    </p>
+    // Show only first 6 fruits for the teaser
+    const featuredFruits = fruits.slice(0, 6);
 
-                    <div className="relative max-w-md mx-auto">
-                        <input
-                            type="text"
-                            placeholder={t.placeholder}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 rounded-full border border-gray-200 focus:border-[--color-primary] focus:ring-2 focus:ring-[--color-primary] focus:ring-opacity-20 transition-all outline-none"
-                        />
-                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[--color-primary]" size={20} />
+    return (
+        <section id="productos" className="py-24 bg-[--color-background-alt]">
+            <div className="container mx-auto px-4 md:px-6">
+
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                    <div className="max-w-2xl" data-aos="fade-right">
+                        <span className="text-[--color-primary] font-bold tracking-wider uppercase text-sm mb-2 block">{t.sub}</span>
+                        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{t.title}</h2>
+                        <p className="text-lg text-gray-600 leading-relaxed">
+                            {t.desc}
+                        </p>
                     </div>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setIsCatalogOpen(true)}
+                        className="hidden md:flex items-center gap-2 bg-[--color-primary] text-white px-8 py-4 rounded-full font-bold shadow-lg hover:shadow-xl hover:bg-[--color-secondary] transition-all"
+                    >
+                        {t.viewAll} <ArrowRight size={20} />
+                    </motion.button>
                 </div>
 
+                {/* Featured Grid */}
                 {loading ? (
                     <div className="flex justify-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[--color-primary]"></div>
                     </div>
-                ) : filteredFruits.length === 0 ? (
-                    <div className="text-center py-12">
-                        <p className="text-xl text-[--color-text-light]">{t.noResults}</p>
-                    </div>
                 ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                        {featuredFruits.map((fruit, index) => (
+                            <motion.div
+                                key={fruit.id}
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.1 }}
+                                onClick={() => openDetailModal(fruit)}
+                                className="group relative h-[400px] rounded-3xl overflow-hidden cursor-pointer shadow-md hover:shadow-2xl transition-all duration-500"
+                            >
+                                {/* Background Image */}
+                                {fruit.imagen ? (
+                                    <Image
+                                        src={fruit.imagen}
+                                        alt={fruit.nombre}
+                                        fill
+                                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                    />
+                                ) : (
+                                    <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+                                        <Leaf size={48} className="text-gray-400" />
+                                    </div>
+                                )}
 
-                    <div className="relative group">
-                        <div className="overflow-hidden" ref={emblaRef}>
-                            <div className="flex gap-6 py-4">
-                                {filteredFruits.map((fruit) => (
-                                    <div key={fruit.id} className="flex-[0_0_100%] md:flex-[0_0_50%] lg:flex-[0_0_33.33%] min-w-0 pl-4">
-                                        <div
-                                            className="product-card h-full flex flex-col cursor-pointer"
-                                            onClick={() => openModal(fruit)}
-                                        >
-                                            <div className="relative h-64 overflow-hidden bg-gray-100">
-                                                {fruit.imagen ? (
-                                                    <Image
-                                                        src={fruit.imagen}
-                                                        alt={fruit.nombre}
-                                                        fill
-                                                        className="object-cover transition-transform duration-500 hover:scale-110"
-                                                    />
-                                                ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center text-gray-300">
-                                                        <Leaf size={48} />
-                                                    </div>
-                                                )}
-                                                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-[--color-primary] shadow-sm">
-                                                    Premium
-                                                </div>
-                                            </div>
-                                            <div className="p-6 flex-grow flex flex-col items-center text-center">
-                                                <h3 className="text-xl font-bold mb-2">{fruit.nombre}</h3>
-                                                {fruit.nombre_en && (
-                                                    <p className="text-sm text-[--color-text-light] italic mb-4">{fruit.nombre_en}</p>
-                                                )}
-                                                <button className="mt-auto text-[--color-primary] font-semibold text-sm hover:underline">
-                                                    {t.viewDetails}
-                                                </button>
-                                            </div>
+                                {/* Overlay Gradient */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 transition-opacity duration-300"></div>
+
+                                {/* Content */}
+                                <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h3 className="text-2xl font-bold text-white group-hover:text-[--color-accent] transition-colors">{fruit.nombre}</h3>
+                                        <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity delay-100">
+                                            <ArrowRight className="text-white" size={20} />
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
+                                    {fruit.nombre_en && (
+                                        <p className="text-white/80 italic mb-4 text-sm font-light">{fruit.nombre_en}</p>
+                                    )}
+                                    <p className="text-white/70 line-clamp-2 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-75">
+                                        {lang === 'en' && fruit.descripcion_en ? fruit.descripcion_en : fruit.descripcion}
+                                    </p>
+                                </div>
 
-                        {/* Navigation Buttons */}
-                        <button
-                            onClick={scrollPrev}
-                            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 bg-white text-[--color-primary] p-3 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hidden md:block hover:bg-[--color-primary] hover:text-white"
-                        >
-                            <ChevronLeft size={24} />
-                        </button>
-                        <button
-                            onClick={scrollNext}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-white text-[--color-primary] p-3 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hidden md:block hover:bg-[--color-primary] hover:text-white"
-                        >
-                            <ChevronRight size={24} />
-                        </button>
+                                {/* Floating Badge */}
+                                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[--color-primary] shadow-sm flex items-center gap-1">
+                                    <Star size={12} fill="currentColor" /> Premium
+                                </div>
+                            </motion.div>
+                        ))}
                     </div>
                 )}
+
+                {/* Mobile Button */}
+                <div className="md:hidden text-center">
+                    <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setIsCatalogOpen(true)}
+                        className="flex w-full justify-center items-center gap-2 bg-[--color-primary] text-white px-8 py-4 rounded-full font-bold shadow-lg hover:bg-[--color-secondary] transition-colors"
+                    >
+                        {t.viewAll} <ArrowRight size={20} />
+                    </motion.button>
+                </div>
             </div>
 
+            {/* Modals */}
             <ProductModal
                 fruit={selectedFruit}
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+            />
+
+            <AllProductsModal
+                isOpen={isCatalogOpen}
+                onClose={() => setIsCatalogOpen(false)}
+                fruits={fruits}
+                onSelectFruit={(fruit) => {
+                    setIsCatalogOpen(false); // Close catalog
+                    // Short timeout to allow catalog close animation to start/finish smoothly if needed
+                    setTimeout(() => openDetailModal(fruit), 100);
+                }}
             />
         </section>
     );

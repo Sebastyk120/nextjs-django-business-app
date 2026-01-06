@@ -10,7 +10,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, ArrowRight, X } from "lucide-react";
+import { AlertCircle, ArrowRight } from "lucide-react";
 import axiosClient from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,14 +57,8 @@ export function CancellationNotifications() {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-[550px] border-none shadow-2xl p-0 overflow-hidden bg-white/95 backdrop-blur-md">
+            <DialogContent className="sm:max-w-[550px] border-none shadow-2xl p-0 overflow-hidden bg-white/95 backdrop-blur-md [&>button]:!text-white [&>button]:opacity-80 [&>button:hover]:opacity-100 [&>button:hover]:bg-white/10 [&>button]:transition-all">
                 <div className="bg-gradient-to-r from-red-600 to-rose-500 p-6 text-white relative">
-                    <button
-                        onClick={() => setOpen(false)}
-                        className="absolute right-4 top-4 p-1 rounded-full hover:bg-white/20 transition-colors"
-                    >
-                        <X className="h-5 w-5" />
-                    </button>
                     <div className="flex items-center gap-4 mb-2">
                         <div className="p-3 bg-white/20 rounded-xl">
                             <AlertCircle className="h-8 w-8 text-white" />

@@ -13,6 +13,8 @@ export default function Footer() {
             navLinks: [
                 { name: "Inicio", href: "#inicio" },
                 { name: "Nuestros Productos", href: "#productos" },
+                { name: "Trayectoria", href: "#trayectoria" },
+                { name: "Nuestra Historia", href: "#historia" },
                 { name: "Quiénes Somos", href: "#nosotros" },
                 { name: "Servicios", href: "#servicios" },
             ],
@@ -31,6 +33,8 @@ export default function Footer() {
             navLinks: [
                 { name: "Home", href: "#inicio" },
                 { name: "Our Products", href: "#productos" },
+                { name: "Trajectory", href: "#trayectoria" },
+                { name: "Our History", href: "#historia" },
                 { name: "About Us", href: "#nosotros" },
                 { name: "Services", href: "#servicios" },
             ],

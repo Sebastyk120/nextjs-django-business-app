@@ -51,8 +51,7 @@ def fruits_api(request):
 def get_captcha_api(request):
     try:
         hashkey = CaptchaStore.generate_key()
-        image_url = captcha_image_url(hashkey)
-        # Ensure image_url includes domain if needed, but relative is usually fine for proxy
+        image_url = request.build_absolute_uri(captcha_image_url(hashkey))
         return JsonResponse({'key': hashkey, 'image_url': image_url})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
