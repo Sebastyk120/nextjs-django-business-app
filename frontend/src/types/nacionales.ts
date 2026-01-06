@@ -154,7 +154,7 @@ export interface ResumenReportesResponse {
     reportes_sin_factura: ResumenReporteProveedor[];
     compras_proceso: CompraProceso[];
     transferencias: TransferenciaProveedor[];
-    
+
     total_pendientes: number;
     monto_pendiente_total: number;
     total_sin_factura: number;
@@ -247,7 +247,34 @@ export interface ReporteIndividualResponse {
     today: string;
 }
 
+
 export interface GuiaAutocompleteItem {
     value: string;
     label: string;
+}
+
+export interface Exportador {
+    id: number;
+    nombre: string;
+}
+
+export interface ReporteVencido {
+    id: number;
+    numero_guia: string;
+    fecha_llegada: string;
+    fecha_vencimiento: string;
+    fruta: string;
+    origen: string;
+    peso_bruto_recibido: number;
+    peso_neto_recibido: number;
+    cantidad_empaque_recibida: number;
+    tipo_empaque: string;
+    dias_vencidos: number;
+}
+
+export interface ReportesVencidosResponse {
+    exportador: Exportador;
+    reportes_vencidos: ReporteVencido[];
+    total_reportes: number;
+    fecha_actual: string;
 }

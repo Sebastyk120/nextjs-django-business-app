@@ -139,7 +139,7 @@ const MENU_ITEMS: { section?: string; items: MenuItem[] }[] = [
                 title: "Operaciones Exportador",
                 icon: Briefcase,
                 submenu: [
-                    { title: "Ingresos Vencidos", href: "/nacionales/ingresos-vencidos" },
+                    { title: "Relación Reportes Vencidos", href: "/nacionales/reportes-vencidos" },
                     { title: "Reportes Asociados", href: "/nacionales/reportes-asociados" },
                 ],
             },

@@ -1,5 +1,5 @@
 import axiosClient from "@/lib/axios";
-import { ResumenReportesResponse, EstadoCuentaProveedorResponse, ProveedorNacional, ReporteIndividualResponse, GuiaAutocompleteItem } from "@/types/nacionales";
+import { ResumenReportesResponse, EstadoCuentaProveedorResponse, ProveedorNacional, ReporteIndividualResponse, GuiaAutocompleteItem, ReportesVencidosResponse } from "@/types/nacionales";
 
 export const getNacionalesResumenReportes = async (proveedorId: number): Promise<ResumenReportesResponse> => {
     const { data } = await axiosClient.get<ResumenReportesResponse>(`/nacionales/api/proveedores/${proveedorId}/resumen_reportes/`);
@@ -42,4 +42,23 @@ export const getGuiasAutocomplete = async (query: string): Promise<GuiaAutocompl
         { params: { q: query } }
     );
     return data.guias;
+};
+
+
+export interface ExportadorListItem {
+    id: number;
+    nombre: string;
+}
+
+export const getExportadores = async (): Promise<ExportadorListItem[]> => {
+    const { data } = await axiosClient.get<ExportadorListItem[]>('/comercial/api/exportadores/');
+    return data;
+};
+
+export const getReportesVencidos = async (exportadorId: number): Promise<ReportesVencidosResponse> => {
+    const { data } = await axiosClient.get<ReportesVencidosResponse>(
+        '/nacionales/api/reportes-vencidos/',
+        { params: { exportador: exportadorId } }
+    );
+    return data;
 };

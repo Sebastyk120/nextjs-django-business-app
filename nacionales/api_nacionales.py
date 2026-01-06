@@ -756,3 +756,65 @@ def guias_autocomplete_api(request):
     
     return Response({'guias': guias})
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsHeavensGroup])
+def reportes_vencidos_api(request):
+    """
+    API endpoint para obtener reporte de ventas nacionales vencidas.
+    GET /nacionales/api/reportes-vencidos/?exportador=ID
+    """
+    exportador_id = request.query_params.get('exportador')
+    
+    if not exportador_id:
+         return Response({'error': 'El parámetro exportador es requerido'}, status=400)
+
+    try:
+        exportador = Exportador.objects.get(pk=exportador_id)
+    except Exportador.DoesNotExist:
+        return Response({'error': 'Exportador no encontrado'}, status=404)
+        
+    today = datetime.date.today()
+    
+    # Obtener ventas nacionales con reportes vencidos (fecha vencimiento < hoy)
+    reportes = VentaNacional.objects.filter(
+        fecha_vencimiento__lt=today, # Estrictamente menor a hoy
+        exportador=exportador,
+        estado_venta="Vencido"
+    ).select_related(
+        'compra_nacional',
+        'compra_nacional__fruta',
+        'compra_nacional__proveedor',
+        'compra_nacional__tipo_empaque'
+    ).order_by('fecha_vencimiento')
+    
+    reportes_vencidos = []
+    
+    for reporte in reportes:
+        # Calcular días de vencimiento usando today
+        dias_vencidos = (today - reporte.fecha_vencimiento).days
+        
+        reportes_vencidos.append({
+            'id': reporte.pk,
+            'numero_guia': reporte.compra_nacional.numero_guia,
+            'fecha_llegada': reporte.fecha_llegada,
+            'fecha_vencimiento': reporte.fecha_vencimiento,
+            'fruta': reporte.compra_nacional.fruta.nombre if reporte.compra_nacional.fruta else '',
+            'origen': reporte.compra_nacional.origen_compra,
+            'peso_bruto_recibido': float(reporte.peso_bruto_recibido) if reporte.peso_bruto_recibido else 0,
+            'peso_neto_recibido': float(reporte.peso_neto_recibido) if reporte.peso_neto_recibido else 0,
+            'cantidad_empaque_recibida': reporte.cantidad_empaque_recibida,
+            'tipo_empaque': reporte.compra_nacional.tipo_empaque.nombre if reporte.compra_nacional.tipo_empaque else '',
+            'dias_vencidos': dias_vencidos,
+        })
+        
+    return Response({
+        'exportador': {
+            'id': exportador.id,
+            'nombre': exportador.nombre
+        },
+        'reportes_vencidos': reportes_vencidos,
+        'total_reportes': len(reportes_vencidos),
+        'fecha_actual': today
+    })
+

@@ -55,4 +55,5 @@ urlpatterns = [
     path('api/get-reporte-detalle/', views_analisis_calidad.get_reporte_detalle, name='get_reporte_detalle'),
     path('api/reporte-individual/', api_nacionales.reporte_individual_api, name='api_reporte_individual'),
     path('api/guias/autocomplete/', api_nacionales.guias_autocomplete_api, name='api_guias_autocomplete'),
+    path('api/reportes-vencidos/', api_nacionales.reportes_vencidos_api, name='api_reportes_vencidos'),
 ]

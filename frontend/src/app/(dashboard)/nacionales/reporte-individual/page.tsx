@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { ReporteIndividualSearch, ReporteIndividualDocument } from '@/components/nacionales/reporte-individual';
 import { getReporteIndividual } from '@/services/nacionalesService';
 import type { ReporteIndividualResponse } from '@/types/nacionales';
@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 
 export default function ReporteIndividualPage() {
     const router = useRouter();
-    const documentRef = useRef<HTMLDivElement>(null);
     const [data, setData] = useState<ReporteIndividualResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [exporting, setExporting] = useState(false);
@@ -42,7 +41,7 @@ export default function ReporteIndividualPage() {
     };
 
     const handleExportPdf = async () => {
-        if (!documentRef.current || !data) return;
+        if (!data) return;
 
         setExporting(true);
         toast.info('Generando PDF...', {
@@ -50,31 +49,23 @@ export default function ReporteIndividualPage() {
         });
 
         try {
-            const html2pdf = (await import('html2pdf.js')).default;
+            const { pdf } = await import('@react-pdf/renderer');
+            const { default: ReporteIndividualPdf } = await import('@/components/nacionales/reporte-individual/ReporteIndividualPdf');
 
-            const element = documentRef.current;
+            const blob = await pdf(<ReporteIndividualPdf data={data} />).toBlob();
+            
             const proveedorNombre = data.proveedor.nombre.replace(/\s+/g, '_');
             const numeroGuia = data.compra.numero_guia.replace(/\s+/g, '_');
+            const fileName = `reporte_${proveedorNombre}_${numeroGuia}.pdf`;
 
-            const pdfOptions = {
-                margin: [0, 0, 0, 0] as [number, number, number, number],
-                filename: `reporte_${proveedorNombre}_${numeroGuia}.pdf`,
-                image: { type: 'jpeg', quality: 0.95 },
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    letterRendering: true,
-                },
-                jsPDF: {
-                    unit: 'mm',
-                    format: 'tabloid',
-                    orientation: 'portrait',
-                    compress: true,
-                },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            };
-
-            await html2pdf().from(element).set(pdfOptions).save();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
 
             toast.success('PDF Generado', {
                 description: 'El documento se ha exportado correctamente.'
@@ -115,7 +106,7 @@ export default function ReporteIndividualPage() {
                     )}
                 </div>
             ) : (
-                <div className="max-w-[900px] mx-auto my-8 bg-gray-50 rounded-xl shadow-lg overflow-hidden">
+                <div className="w-full max-w-7xl mx-auto my-8 bg-gray-50 rounded-xl shadow-lg overflow-hidden px-4">
                     {/* Actions Bar */}
                     <div className="flex justify-center gap-4 p-6 bg-gray-50 border-b border-gray-200">
                         <Button
@@ -126,7 +117,7 @@ export default function ReporteIndividualPage() {
                             {exporting ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Exportando...
+                                    Generando...
                                 </>
                             ) : (
                                 <>
@@ -153,9 +144,9 @@ export default function ReporteIndividualPage() {
                         </Button>
                     </div>
 
-                    {/* Document */}
-                    <div className="overflow-auto">
-                        <ReporteIndividualDocument ref={documentRef} data={data} />
+                    {/* Document Preview */}
+                    <div className="py-6">
+                        <ReporteIndividualDocument data={data} />
                     </div>
                 </div>
             )}
