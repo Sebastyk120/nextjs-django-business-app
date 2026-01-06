@@ -1,5 +1,5 @@
 from django.urls import path, include
-from . import views, views2, views_report_prov, views_api, views_estado_cuenta_proveedor, views_analisis_calidad, api_nacionales
+from . import views, views2, views_report_prov, views_api, views_estado_cuenta_proveedor, views_analisis_calidad, api_nacionales, api_dashboard
 from .api_nacionales import DashboardNacionalesAPIView
 from rest_framework.routers import DefaultRouter
 
@@ -51,9 +51,14 @@ urlpatterns = [
 
     # API endpoints
     path('api/dashboard/', DashboardNacionalesAPIView.as_view(), name='api_dashboard_nacionales'),
+    path('api/dashboard/calidad/', api_dashboard.DashboardCalidadView.as_view(), name='api_dashboard_calidad'),
+    path('api/dashboard/options/', api_dashboard.DashboardOptionsView.as_view(), name='api_dashboard_options'),
     path('api/balance-proveedores/', views_api.api_balance_proveedores, name='api_balance_proveedores'),
     path('api/get-reporte-detalle/', views_analisis_calidad.get_reporte_detalle, name='get_reporte_detalle'),
     path('api/reporte-individual/', api_nacionales.reporte_individual_api, name='api_reporte_individual'),
     path('api/guias/autocomplete/', api_nacionales.guias_autocomplete_api, name='api_guias_autocomplete'),
     path('api/reportes-vencidos/', api_nacionales.reportes_vencidos_api, name='api_reportes_vencidos'),
+    path('api/reportes-asociados/', api_nacionales.reportes_asociados_api, name='api_reportes_asociados'),
+    path('api/facturas/autocomplete/', api_nacionales.facturas_autocomplete_api, name='api_facturas_autocomplete'),
+    path('api/remisiones/autocomplete/', api_nacionales.remisiones_autocomplete_api, name='api_remisiones_autocomplete'),
 ]

@@ -9,8 +9,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- jQuery UI CSS para autocompletado -->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <!-- Add html2pdf.js library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <div class="container my-3">
         <div class="facturas-vencidas-wrapper">            <!-- Header Section -->
@@ -160,43 +158,6 @@
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     
     <script>
-        function generarPDF() {
-            // Definir elemento a convertir
-            const element = document.querySelector('.facturas-vencidas-wrapper');
-            
-            // Configuración para html2pdf
-            const opt = {
-                margin: [5, 10], // Reducir margen superior a 5mm
-                filename: 'reportes_asociados.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { 
-                    scale: 2, 
-                    useCORS: true,
-                    letterRendering: true, // Mejora la renderización
-                    scrollY: 0 // Forzar posición inicial
-                },
-                jsPDF: { 
-                    unit: 'mm', 
-                    format: 'tabloid',
-                    orientation: 'portrait'
-                }
-            };
-
-            // Ocultar temporalmente los elementos que no deben imprimirse
-            const noImprimir = document.querySelectorAll('.no-imprimir');
-            noImprimir.forEach(item => {
-                item.classList.add('d-none');
-            });
-
-            // Generar el PDF
-            html2pdf().set(opt).from(element).save().then(() => {
-                // Restaurar visibilidad después de generar el PDF
-                noImprimir.forEach(item => {
-                    item.classList.remove('d-none');
-                });
-            });
-        }
-
         // Configuración de autocompletado para campos
         jQuery(document).ready(function($) {
             // Verificar si jQuery UI se ha cargado correctamente

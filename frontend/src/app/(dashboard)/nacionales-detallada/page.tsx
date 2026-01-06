@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import axiosClient from "@/lib/axios";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { CompraNacional, VentaNacional, ReporteCalidadExportador } from "@/types/nacionales";
 import { NacionalesFilters, NacionalesFilterState } from "@/components/nacionales/NacionalesFilters";
@@ -26,12 +27,18 @@ const initialFilterState: NacionalesFilterState = {
     estadoReporteProv: null,
 };
 
-export default function NacionalesPage() {
+function NacionalesPageContent() {
     const { user } = useAuth({ middleware: 'auth' });
+    const searchParams = useSearchParams();
+    const querySearch = searchParams.get("search");
+
     const [incompletas, setIncompletas] = useState<CompraNacional[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState<NacionalesFilterState>(initialFilterState);
-    const [searchTerm, setSearchTerm] = useState("");
+    const [filters, setFilters] = useState<NacionalesFilterState>(() => ({
+        ...initialFilterState,
+        search: querySearch || ""
+    }));
+    const [searchTerm, setSearchTerm] = useState(querySearch || "");
     const [searchResult, setSearchResult] = useState<CompraNacional | null>(null);
 
     // Modal States
@@ -289,5 +296,13 @@ export default function NacionalesPage() {
                 </>
             )}
         </div>
+    );
+}
+
+export default function NacionalesPage() {
+    return (
+        <Suspense fallback={<div className="p-8">Cargando...</div>}>
+            <NacionalesPageContent />
+        </Suspense>
     );
 }

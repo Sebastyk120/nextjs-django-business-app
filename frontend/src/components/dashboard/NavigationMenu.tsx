@@ -127,12 +127,16 @@ const MENU_ITEMS: { section?: string; items: MenuItem[] }[] = [
                 href: "/dashboard-nacionales",
             },
             {
+                title: "Análisis de Calidad",
+                icon: BarChart3,
+                href: "/nacionales/analisis-calidad",
+            },
+            {
                 title: "Operaciones Generales",
                 icon: Settings,
                 submenu: [
                     { title: "Listado General", href: "/nacionales/general" },
                     { title: "Nacionales Detallada", href: "/nacionales-detallada" },
-                    { title: "Analisis Calidad", href: "/nacionales/calidad" },
                 ],
             },
             {

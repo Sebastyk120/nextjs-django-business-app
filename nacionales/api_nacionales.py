@@ -35,13 +35,23 @@ class CompraNacionalViewSet(viewsets.ModelViewSet):
     search_fields = ['numero_guia', 'proveedor__nombre', 'remision']
 
     def get_queryset(self):
-        return CompraNacional.objects.all().select_related(
+        queryset = CompraNacional.objects.all().select_related(
             'proveedor', 'fruta', 'tipo_empaque'
         ).prefetch_related(
             'ventanacional', 
             'ventanacional__reportecalidadexportador', 
             'ventanacional__reportecalidadexportador__reportecalidadproveedor'
         ).order_by('-fecha_compra', '-id')
+
+        # Filter by 'completed' status
+        completed = self.request.query_params.get('completed')
+        if completed == 'true':
+            queryset = queryset.filter(
+                ventanacional__reportecalidadexportador__reportecalidadproveedor__completado=True
+            )
+        
+        return queryset
+
 
     @action(detail=False, methods=['get'])
     def incompletas(self, request):
@@ -745,14 +755,20 @@ def guias_autocomplete_api(request):
     
     compras = CompraNacional.objects.filter(
         numero_guia__icontains=query
-    ).select_related('proveedor')[:15]
+    ).select_related('proveedor')[:30] # Fetch more to allow for filtering duplicates
     
+    guias_seen = set()
     guias = []
     for compra in compras:
-        guias.append({
-            'value': compra.numero_guia,
-            'label': f"{compra.numero_guia} - {compra.proveedor.nombre if compra.proveedor else 'Sin proveedor'}"
-        })
+        label = f"{compra.numero_guia} - {compra.proveedor.nombre if compra.proveedor else 'Sin proveedor'}"
+        if label not in guias_seen:
+            guias.append({
+                'value': compra.numero_guia,
+                'label': label
+            })
+            guias_seen.add(label)
+            if len(guias) >= 15:
+                break
     
     return Response({'guias': guias})
 
@@ -817,4 +833,174 @@ def reportes_vencidos_api(request):
         'total_reportes': len(reportes_vencidos),
         'fecha_actual': today
     })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsHeavensGroup])
+def reportes_asociados_api(request):
+    """
+    API endpoint para obtener reportes asociados por factura, guía o remisión.
+    GET /nacionales/api/reportes-asociados/?factura=XXX&numero_guia=XXX&remision=XXX
+    Al menos uno de los parámetros es requerido.
+    """
+    from decimal import Decimal
+    
+    factura = request.query_params.get('factura', '').strip()
+    numero_guia = request.query_params.get('numero_guia', '').strip()
+    remision = request.query_params.get('remision', '').strip()
+    
+    # Validar que al menos un criterio esté presente
+    if not factura and not numero_guia and not remision:
+        return Response({
+            'error': 'Debe proporcionar al menos un criterio de búsqueda (factura, numero_guia o remision)'
+        }, status=400)
+    
+    today = datetime.date.today()
+    
+    # Base query
+    reportes = ReporteCalidadExportador.objects.all().select_related(
+        'venta_nacional__compra_nacional__fruta',
+        'venta_nacional__compra_nacional__proveedor',
+        'venta_nacional__exportador'
+    )
+    
+    # Lista para almacenar facturas encontradas
+    facturas_encontradas = set()
+    criterio_busqueda = None
+    
+    # Aplicar filtros según los criterios proporcionados
+    if factura:
+        reportes = reportes.filter(factura=factura)
+        criterio_busqueda = f"Factura: {factura}"
+        facturas_encontradas.add(factura)
+        
+    if numero_guia:
+        # Primero buscamos los reportes que cumplen este criterio
+        reportes_guia = reportes.filter(venta_nacional__compra_nacional__numero_guia=numero_guia)
+        criterio_busqueda = f"Guía: {numero_guia}"
+        
+        # Si alguno de estos reportes tiene factura, incluimos todas las entradas con esa factura
+        for reporte in reportes_guia:
+            if reporte.factura:
+                facturas_encontradas.add(reporte.factura)
+        
+        # Si encontramos facturas asociadas, actualizamos la búsqueda
+        if facturas_encontradas:
+            reportes = reportes.filter(factura__in=facturas_encontradas)
+        else:
+            reportes = reportes_guia
+        
+    if remision:
+        # Similar al número de guía
+        reportes_remision = reportes.filter(remision_exp=remision)
+        criterio_busqueda = f"Remisión/Reporte: {remision}"
+        
+        # Si alguno de estos reportes tiene factura, incluimos todas las entradas con esa factura
+        for reporte in reportes_remision:
+            if reporte.factura:
+                facturas_encontradas.add(reporte.factura)
+        
+        # Si encontramos facturas asociadas, actualizamos la búsqueda
+        if facturas_encontradas and not numero_guia:
+            reportes = reportes.filter(factura__in=facturas_encontradas)
+        elif not facturas_encontradas and not numero_guia:
+            reportes = reportes_remision
+    
+    # Agrupar por factura
+    facturas_agrupadas = {}
+    total_a_pagar = Decimal('0.00')
+    
+    for reporte in reportes:
+        # Calcular valores requeridos
+        valor_exp = float(reporte.precio_venta_kg_exp * reporte.kg_exportacion) if reporte.precio_venta_kg_exp and reporte.kg_exportacion else 0
+        valor_nal = float(reporte.precio_venta_kg_nal * reporte.kg_nacional) if reporte.precio_venta_kg_nal and reporte.kg_nacional else 0
+        
+        factura_key = reporte.factura or 'Sin Factura'
+        
+        if factura_key not in facturas_agrupadas:
+            facturas_agrupadas[factura_key] = {
+                'factura': factura_key,
+                'fecha_factura': reporte.fecha_factura.strftime('%Y-%m-%d') if reporte.fecha_factura else None,
+                'vencimiento_factura': reporte.vencimiento_factura.strftime('%Y-%m-%d') if reporte.vencimiento_factura else None,
+                'exportador': reporte.venta_nacional.exportador.nombre if reporte.venta_nacional.exportador else '',
+                'items': [],
+                'subtotal': Decimal('0.00')
+            }
+            
+        facturas_agrupadas[factura_key]['items'].append({
+            'id': reporte.pk,
+            'remision_exp': reporte.remision_exp or '',
+            'numero_guia': reporte.venta_nacional.compra_nacional.numero_guia if reporte.venta_nacional.compra_nacional else '',
+            'fecha_reporte': reporte.fecha_reporte.strftime('%Y-%m-%d') if reporte.fecha_reporte else None,
+            'fruta': reporte.venta_nacional.compra_nacional.fruta.nombre if reporte.venta_nacional.compra_nacional and reporte.venta_nacional.compra_nacional.fruta else '',
+            'valor_exp': valor_exp,
+            'valor_nal': valor_nal,
+            'precio_total': float(reporte.precio_total) if reporte.precio_total else 0
+        })
+        
+        facturas_agrupadas[factura_key]['subtotal'] += reporte.precio_total or Decimal('0.00')
+        total_a_pagar += reporte.precio_total or Decimal('0.00')
+    
+    # Convertir subtotales a float para JSON serialization
+    facturas_list = []
+    for factura_data in facturas_agrupadas.values():
+        factura_data['subtotal'] = float(factura_data['subtotal'])
+        facturas_list.append(factura_data)
+        
+    return Response({
+        'facturas': facturas_list,
+        'total_a_pagar': float(total_a_pagar),
+        'criterio_busqueda': criterio_busqueda,
+        'fecha_actual': today.strftime('%Y-%m-%d')
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsHeavensGroup])
+def facturas_autocomplete_api(request):
+    """
+    API endpoint para autocompletado de números de factura.
+    GET /nacionales/api/facturas/autocomplete/?q=XXX
+    """
+    query = request.query_params.get('q', '').strip()
+    
+    if len(query) < 1:
+        return Response({'facturas': []})
+    
+    facturas = ReporteCalidadExportador.objects.filter(
+        factura__icontains=query
+    ).exclude(
+        factura__isnull=True
+    ).exclude(
+        factura=''
+    ).values_list('factura', flat=True).distinct()[:15]
+    
+    facturas_list = [{'value': f, 'label': f} for f in facturas]
+    
+    return Response({'facturas': facturas_list})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsHeavensGroup])
+def remisiones_autocomplete_api(request):
+    """
+    API endpoint para autocompletado de números de remisión.
+    GET /nacionales/api/remisiones/autocomplete/?q=XXX
+    """
+    query = request.query_params.get('q', '').strip()
+    
+    if len(query) < 1:
+        return Response({'remisiones': []})
+    
+    remisiones = ReporteCalidadExportador.objects.filter(
+        remision_exp__icontains=query
+    ).exclude(
+        remision_exp__isnull=True
+    ).exclude(
+        remision_exp=''
+    ).values_list('remision_exp', flat=True).distinct()[:15]
+    
+    remisiones_list = [{'value': r, 'label': r} for r in remisiones]
+    
+    return Response({'remisiones': remisiones_list})
 
