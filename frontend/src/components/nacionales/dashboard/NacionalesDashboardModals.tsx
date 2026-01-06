@@ -28,6 +28,7 @@ import axiosClient from "@/lib/axios";
 import { FileText, Send, Scale, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface NacionalesDashboardModalsProps {
     proveedores: FilterOption[];
@@ -48,6 +49,7 @@ export function NacionalesDashboardModals({
     balanceOpen,
     setBalanceOpen
 }: NacionalesDashboardModalsProps) {
+    const router = useRouter();
     const [selectedProveedorEC, setSelectedProveedorEC] = useState<string>("");
     const [selectedProveedorRR, setSelectedProveedorRR] = useState<string>("");
     const [balanceFilter, setBalanceFilter] = useState<string>("todos");
@@ -91,7 +93,7 @@ export function NacionalesDashboardModals({
             toast.error("Seleccione un proveedor");
             return;
         }
-        window.open(`/nacionales/estado-cuenta/${selectedProveedorEC}/`, '_blank');
+        router.push(`/nacionales/estado-cuenta-proveedor/${selectedProveedorEC}`);
         setEstadoCuentaOpen(false);
     };
 
@@ -100,7 +102,7 @@ export function NacionalesDashboardModals({
             toast.error("Seleccione un proveedor");
             return;
         }
-        window.open(`/nacionales/reporte_estado_cuenta_proveedor/${selectedProveedorRR}/`, '_blank');
+        window.open(`/nacionales/resumen-reportes/${selectedProveedorRR}/`, '_blank');
         setResumenReportesOpen(false);
     };
 

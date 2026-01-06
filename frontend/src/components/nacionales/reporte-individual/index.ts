@@ -1,0 +1,2 @@
+export { default as ReporteIndividualDocument } from './ReporteIndividualDocument';
+export { default as ReporteIndividualSearch } from './ReporteIndividualSearch';

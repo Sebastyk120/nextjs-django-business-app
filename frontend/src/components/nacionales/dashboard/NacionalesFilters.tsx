@@ -10,7 +10,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Calendar as CalendarIcon, RefreshCw, FilterX } from "lucide-react";
+import { Calendar as CalendarIcon, RefreshCw, FilterX, FileText } from "lucide-react";
+import Link from "next/link";
 import { FilterOption, DashboardNacionalesFilters } from "@/types/nacionales-dashboard";
 
 interface NacionalesFiltersProps {
@@ -40,6 +41,18 @@ export function NacionalesFilters({
                     Filtros de Análisis
                 </h3>
                 <div className="flex gap-2">
+                    {filters.proveedor_id && (
+                        <Link href={`/nacionales/resumen-reportes/${filters.proveedor_id}`}>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                            >
+                                <FileText className="h-3 w-3 mr-1" />
+                                Ver Resumen Reportes
+                            </Button>
+                        </Link>
+                    )}
                     <Button
                         variant="ghost"
                         size="sm"

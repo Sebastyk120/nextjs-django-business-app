@@ -21,6 +21,14 @@ class ReporteCalidadProveedorSerializer(serializers.ModelSerializer):
         model = ReporteCalidadProveedor
         fields = '__all__'
 
+class ResumenReporteProveedorSerializer(ReporteCalidadProveedorSerializer):
+    compra_guia = serializers.ReadOnlyField(source='rep_cal_exp.venta_nacional.compra_nacional.numero_guia')
+    compra_fecha = serializers.ReadOnlyField(source='rep_cal_exp.venta_nacional.compra_nacional.fecha_compra')
+    peso_recibido = serializers.ReadOnlyField(source='rep_cal_exp.venta_nacional.peso_neto_recibido')
+    
+    class Meta(ReporteCalidadProveedorSerializer.Meta):
+        fields = '__all__'
+
 class ReporteCalidadExportadorSerializer(serializers.ModelSerializer):
     reportecalidadproveedor = ReporteCalidadProveedorSerializer(read_only=True)
     

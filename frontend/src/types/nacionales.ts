@@ -120,3 +120,134 @@ export interface CompraNacional {
 export interface CompraNacionalListItem extends CompraNacional {
     // Specifically for list view if needed, but CompraNacional covers it based on serializer
 }
+
+export interface ResumenReporteProveedor extends ReporteCalidadProveedor {
+    compra_guia: string;
+    compra_fecha: string;
+    peso_recibido?: number;
+}
+
+export interface CompraProceso {
+    numero_guia: string;
+    fecha_compra: string;
+    peso_recibido?: number;
+    fecha_reporte?: string;
+    estado: string;
+}
+
+export interface TransferenciaProveedor {
+    id: number;
+    proveedor: number;
+    proveedor_nombre: string;
+    fecha_transferencia: string;
+    valor_transferencia: number;
+    banco_origen: string;
+    origen_transferencia?: string;
+    referencia?: string;
+    observaciones?: string;
+}
+
+export interface ResumenReportesResponse {
+    proveedor: ProveedorNacional;
+    reportes_pendientes: ResumenReporteProveedor[];
+    reportes_pagados: ResumenReporteProveedor[];
+    reportes_sin_factura: ResumenReporteProveedor[];
+    compras_proceso: CompraProceso[];
+    transferencias: TransferenciaProveedor[];
+    
+    total_pendientes: number;
+    monto_pendiente_total: number;
+    total_sin_factura: number;
+    saldo_disponible: number;
+    saldo_actual: number;
+    total_por_pagar: number;
+    total_pagado: number;
+    total_utilidad: number;
+    valor_consignar: number;
+}
+
+export interface EstadoCuentaProveedorFilters {
+    fecha_inicio: string | null;
+    fecha_fin: string | null;
+    fruta_id: string | null;
+}
+
+export interface EstadoCuentaCompra {
+    id: number;
+    fecha_compra: string;
+    numero_guia: string;
+    fruta_nombre: string;
+    peso_compra: number;
+    precio_compra_exp: number | null;
+    precio_compra_nal: number | null;
+    porcentaje_completitud: number;
+    total_pagar: number | null;
+    utilidad: number | null;
+    utilidad_sin_ajuste: number | null;
+    diferencia_utilidad: number | null;
+}
+
+export interface EstadoCuentaTransferencia {
+    id: number;
+    fecha_transferencia: string;
+    valor_transferencia: number;
+    origen_transferencia: string | null;
+}
+
+export interface EstadoCuentaProveedorResponse {
+    proveedor: ProveedorNacional;
+    proveedores: ProveedorNacional[];
+    total_compras_valor: number;
+    total_kilos: number;
+    total_transferido: number;
+    saldo_pendiente: number;
+    total_utilidad: number;
+    compras: EstadoCuentaCompra[];
+    transferencias: EstadoCuentaTransferencia[];
+    fecha_inicio: string | null;
+    fecha_fin: string | null;
+    es_primera_carga: boolean;
+}
+
+export interface ReporteIndividualProveedor {
+    pk: number;
+    p_kg_totales: number;
+    p_kg_exportacion: number;
+    p_porcentaje_exportacion: number;
+    p_precio_kg_exp: number;
+    p_kg_nacional: number;
+    p_porcentaje_nacional: number;
+    p_precio_kg_nal: number;
+    p_kg_merma: number;
+    p_porcentaje_merma: number;
+    p_total_facturar: number;
+    asohofrucol: number;
+    rte_fte: number;
+    rte_ica: number;
+    p_total_pagar: number;
+}
+
+export interface ReporteIndividualResponse {
+    proveedor: {
+        id: number;
+        nombre: string;
+        nit: string;
+        ciudad: string;
+    };
+    compra: {
+        id: number;
+        numero_guia: string;
+        fruta_nombre: string;
+        fecha_compra: string;
+    };
+    venta: {
+        fecha_llegada: string;
+    };
+    reporte_proveedor: ReporteIndividualProveedor;
+    today: string;
+}
+
+export interface GuiaAutocompleteItem {
+    value: string;
+    label: string;
+}

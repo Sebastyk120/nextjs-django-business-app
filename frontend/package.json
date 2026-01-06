@@ -43,6 +43,7 @@
     "zod": "^4.3.4"
   },
   "devDependencies": {
+    "@types/html2pdf.js": "^0.10.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

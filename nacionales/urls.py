@@ -53,4 +53,6 @@ urlpatterns = [
     path('api/dashboard/', DashboardNacionalesAPIView.as_view(), name='api_dashboard_nacionales'),
     path('api/balance-proveedores/', views_api.api_balance_proveedores, name='api_balance_proveedores'),
     path('api/get-reporte-detalle/', views_analisis_calidad.get_reporte_detalle, name='get_reporte_detalle'),
+    path('api/reporte-individual/', api_nacionales.reporte_individual_api, name='api_reporte_individual'),
+    path('api/guias/autocomplete/', api_nacionales.guias_autocomplete_api, name='api_guias_autocomplete'),
 ]
