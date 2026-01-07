@@ -10,7 +10,6 @@ import {
     SheetFooter,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
     Loader2,
     Trash2,
@@ -380,107 +379,89 @@ export function OrderDetailsDrawer({
                     </div>
                 </SheetHeader>
 
-                {/* Main Content - Table */}
-                <div className="flex-1 overflow-hidden relative">
-                    <ScrollArea className="h-full w-full">
-                        <div className="min-w-[max-content]"> {/* Ensures horizontal scroll triggers */}
-                            <Table>
-                                <TableHeader className="bg-slate-100 sticky top-0 z-10 shadow-sm">
-                                    <TableRow className="hover:bg-transparent [&>th]:align-bottom [&>th]:pb-3">
-                                        <TableHead className="w-[40px] font-semibold text-slate-700 text-xs px-2 text-center">#</TableHead>
-                                        <TableHead className="w-[120px] min-w-[120px] font-semibold text-slate-700 text-xs text-center">Fruta</TableHead>
-                                        <TableHead className="w-[160px] min-w-[160px] font-semibold text-slate-700 text-xs text-center">Presentación</TableHead>
-                                        <TableHead className="w-[70px] min-w-[70px] font-semibold text-slate-700 text-xs text-center">Cajas<br />Sol.</TableHead>
-                                        <TableHead className="w-[70px] min-w-[70px] font-semibold text-slate-700 text-xs text-center">Peso<br />Caja</TableHead>
-                                        <TableHead className="w-[80px] min-w-[80px] font-semibold text-slate-700 text-xs text-center">Kilos<br />Netos</TableHead>
-                                        <TableHead className="w-[70px] min-w-[70px] font-semibold text-slate-700 text-xs text-center">Cajas<br />Env.</TableHead>
-                                        <TableHead className="w-[80px] min-w-[80px] font-semibold text-slate-700 text-xs text-center">Kilos<br />Env.</TableHead>
-                                        <TableHead className="w-[80px] min-w-[80px] font-semibold text-slate-700 text-xs text-center">Dife-<br />rencia</TableHead>
-                                        <TableHead className="w-[120px] min-w-[120px] font-semibold text-slate-700 text-xs text-center">Marca Caja</TableHead>
-                                        <TableHead className="w-[150px] min-w-[150px] font-semibold text-slate-700 text-xs text-center">Referencia</TableHead>
-                                        <TableHead className="w-[120px] min-w-[120px] font-semibold text-slate-700 text-xs text-center">Stickers</TableHead>
-                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center">Contenedor</TableHead>
-                                        <TableHead className="w-[70px] min-w-[70px] font-semibold text-slate-700 text-xs text-center">No.<br />Cont.</TableHead>
-                                        <TableHead className="w-[90px] min-w-[90px] font-semibold text-slate-700 text-xs text-center text-emerald-600">Utilidad<br />($)</TableHead>
-                                        <TableHead className="w-[90px] min-w-[90px] font-semibold text-slate-700 text-xs text-center text-blue-600">Recup.<br />($)</TableHead>
-                                        <TableHead className="w-[90px] min-w-[90px] font-semibold text-slate-700 text-xs text-center">Costo<br />($)</TableHead>
-                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center">Valor<br />Prod.</TableHead>
-                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center">Precio<br />Prof.</TableHead>
-                                        <TableHead className="w-[80px] min-w-[80px] font-semibold text-slate-700 text-xs text-center text-orange-600">NC<br />Cajas</TableHead>
-                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center text-orange-600">Valor<br />NC</TableHead>
-                                        <TableHead className="w-[80px] min-w-[80px] font-semibold text-slate-700 text-xs text-center text-orange-600">Afecta<br />Util?</TableHead>
-                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center text-emerald-600">Total<br />Util.</TableHead>
-                                        <TableHead className="w-[100px] min-w-[100px] font-semibold text-slate-700 text-xs text-center text-blue-600">Total<br />Recup.</TableHead>
-                                        <TableHead className="w-[150px] min-w-[150px] font-semibold text-slate-700 text-xs text-center">Observaciones</TableHead>
-                                        <TableHead className="w-[80px] min-w-[80px] sticky right-0 bg-slate-100 shadow-[-5px_0_10px_-5px_rgba(0,0,0,0.1)] z-20 font-semibold text-slate-700 text-xs text-center align-middle">Acciones</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {loading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={17} className="h-32 text-center">
-                                                <div className="flex justify-center items-center">
-                                                    <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        <>
-                                            {details.map((detail, index) => (
-                                                <DataRow
-                                                    key={detail.id}
-                                                    detail={detail}
-                                                    index={index}
-                                                    editingId={editingId}
-                                                    editForm={editForm}
-                                                    frutas={frutas}
-                                                    presentaciones={presentaciones}
-                                                    tiposCaja={tiposCaja}
-                                                    referencias={referencias}
-                                                    onEdit={() => handleEdit(detail)}
-                                                    onDelete={() => handleDelete(detail.id)}
-                                                    onSave={handleSave}
-                                                    onCancel={handleCancelEdit}
-                                                    onChange={handleChange}
-                                                    canEditGeneral={isEditableGeneral(detail)}
-                                                    canEditFinancial={isEditableFinancial(detail)}
-                                                    saving={saving}
-                                                    formatMoney={formatMoney}
-                                                    formatNumber={formatNumber}
-                                                />
-                                            ))}
-                                            {/* New Row Creation */}
-                                            {editingId === 'new' && (
-                                                <DataRow
-                                                    key="new"
-                                                    detail={{} as DetallePedido} // Dummy
-                                                    index={details.length}
-                                                    editingId="new"
-                                                    editForm={editForm}
-                                                    frutas={frutas}
-                                                    presentaciones={presentaciones}
-                                                    tiposCaja={tiposCaja}
-                                                    referencias={referencias}
-                                                    onEdit={() => { }}
-                                                    onDelete={() => onCancelNew()}
-                                                    onSave={handleSave}
-                                                    onCancel={onCancelNew}
-                                                    onChange={handleChange}
-                                                    canEditGeneral={true}
-                                                    canEditFinancial={true}
-                                                    saving={saving}
-                                                    formatMoney={formatMoney}
-                                                    formatNumber={formatNumber}
-                                                    isNew
-                                                />
-                                            )}
-                                        </>
+                {/* Main Content - Table with sticky header */}
+                <div className="flex-1 min-h-0 overflow-auto">
+                    <Table disableWrapper>
+                        <TableHeader className="sticky top-0 z-20 bg-slate-100 shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
+                            <TableRow className="hover:bg-transparent [&>th]:align-middle border-b-2 border-slate-300 [&>th]:bg-slate-100">
+                                <TableHead className="w-[35px] font-semibold text-slate-700 text-xs px-2 text-center">#</TableHead>
+                                <TableHead className="w-[90px] font-semibold text-slate-700 text-xs text-center">Fruta</TableHead>
+                                <TableHead className="w-[140px] font-semibold text-slate-700 text-xs text-center">Presentacion</TableHead>
+                                <TableHead className="w-[55px] font-semibold text-slate-700 text-xs text-center">Cajas Sol.</TableHead>
+                                <TableHead className="w-[55px] font-semibold text-slate-700 text-xs text-center">Peso Caja</TableHead>
+                                <TableHead className="w-[60px] font-semibold text-slate-700 text-xs text-center">Kilos Netos</TableHead>
+                                <TableHead className="w-[55px] font-semibold text-slate-700 text-xs text-center">Cajas Env.</TableHead>
+                                <TableHead className="w-[60px] font-semibold text-slate-700 text-xs text-center">Kilos Env.</TableHead>
+                                <TableHead className="w-[55px] font-semibold text-slate-700 text-xs text-center">Dif.</TableHead>
+                                <TableHead className="w-[90px] font-semibold text-slate-700 text-xs text-center">Marca Caja</TableHead>
+                                <TableHead className="w-[160px] font-semibold text-slate-700 text-xs text-center">Referencia</TableHead>
+                                <TableHead className="w-[120px] font-semibold text-slate-700 text-xs text-center">Contenedor</TableHead>
+                                <TableHead className="w-[70px] font-semibold text-slate-700 text-xs text-center">Acciones</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={13} className="h-32 text-center">
+                                        <div className="flex justify-center items-center">
+                                            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                <>
+                                    {details.map((detail, index) => (
+                                        <DataRow
+                                            key={detail.id}
+                                            detail={detail}
+                                            index={index}
+                                            editingId={editingId}
+                                            editForm={editForm}
+                                            frutas={frutas}
+                                            presentaciones={presentaciones}
+                                            tiposCaja={tiposCaja}
+                                            referencias={referencias}
+                                            onEdit={() => handleEdit(detail)}
+                                            onDelete={() => handleDelete(detail.id)}
+                                            onSave={handleSave}
+                                            onCancel={handleCancelEdit}
+                                            onChange={handleChange}
+                                            canEditGeneral={isEditableGeneral(detail)}
+                                            canEditFinancial={isEditableFinancial(detail)}
+                                            saving={saving}
+                                            formatMoney={formatMoney}
+                                            formatNumber={formatNumber}
+                                        />
+                                    ))}
+                                    {/* New Row Creation */}
+                                    {editingId === 'new' && (
+                                        <DataRow
+                                            key="new"
+                                            detail={{} as DetallePedido} // Dummy
+                                            index={details.length}
+                                            editingId="new"
+                                            editForm={editForm}
+                                            frutas={frutas}
+                                            presentaciones={presentaciones}
+                                            tiposCaja={tiposCaja}
+                                            referencias={referencias}
+                                            onEdit={() => { }}
+                                            onDelete={() => onCancelNew()}
+                                            onSave={handleSave}
+                                            onCancel={onCancelNew}
+                                            onChange={handleChange}
+                                            canEditGeneral={true}
+                                            canEditFinancial={true}
+                                            saving={saving}
+                                            formatMoney={formatMoney}
+                                            formatNumber={formatNumber}
+                                            isNew
+                                        />
                                     )}
-                                </TableBody>
-                            </Table>
-                        </div>
-                        <ScrollBar orientation="horizontal" />
-                    </ScrollArea>
+                                </>
+                            )}
+                        </TableBody>
+                    </Table>
                 </div>
             </SheetContent>
 
@@ -542,9 +523,12 @@ const InputCell = ({ isEditing, data, field, onChange, type = "text", disabled =
                 }
             }}
             className={cn(
-                "h-6 px-1.5 text-xs bg-white border-slate-200 focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-blue-500 rounded-sm hover:border-slate-300 transition-colors",
+                "h-6 px-1.5 text-xs rounded-sm transition-all duration-200",
                 width,
-                align === "center" && "text-center"
+                align === "center" && "text-center",
+                disabled
+                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                    : "bg-blue-50 border-blue-300 text-slate-800 shadow-sm shadow-blue-100 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-0 hover:border-blue-400 animate-in fade-in-50 duration-300"
             )}
             disabled={disabled}
         />
@@ -562,13 +546,19 @@ const InputCell = ({ isEditing, data, field, onChange, type = "text", disabled =
 const SelectCell = ({ isEditing, data, field, onChange, options, disabled = false, labelField = "nombre", renderLabel, width = "min-w-[120px]", renderReadOnly, align = "left" }: any) => {
     if (isEditing) {
         return (
-            <div className={width}>
+            <div className={cn(width, !disabled && "animate-in fade-in-50 duration-300")}>
                 <Select
                     disabled={disabled}
                     value={data[field]?.toString()}
                     onValueChange={(val) => onChange(field, parseInt(val))}
                 >
-                    <SelectTrigger className={cn("h-6 text-xs px-2 border-slate-200 hover:border-slate-300 focus:ring-1 focus:ring-blue-500 rounded-sm", align === "center" && "text-center")}>
+                    <SelectTrigger className={cn(
+                        "h-6 text-xs px-2 rounded-sm transition-all duration-200",
+                        align === "center" && "text-center",
+                        disabled
+                            ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                            : "bg-blue-50 border-blue-300 text-slate-800 shadow-sm shadow-blue-100 focus:ring-2 focus:ring-blue-400 hover:border-blue-400"
+                    )}>
                         <SelectValue placeholder="Sel." className="line-clamp-1" />
                     </SelectTrigger>
                     <SelectContent>
@@ -586,7 +576,7 @@ const SelectCell = ({ isEditing, data, field, onChange, options, disabled = fals
     return <span className={cn("truncate block text-xs", width, align === "center" && "text-center")} title={displayValue}>{displayValue || '-'}</span>;
 };
 
-// Row Component
+// Row Component - Two rows per product
 function DataRow({
     detail, index, editingId, editForm,
     frutas, presentaciones, tiposCaja, referencias,
@@ -599,187 +589,360 @@ function DataRow({
     const cellProps = { isEditing, data, onChange, formatMoney, formatNumber };
 
     return (
-        <TableRow className={cn("hover:bg-slate-50 border-b border-slate-100", isEditing && "bg-blue-50/30")}>
-            <TableCell className="w-[40px] text-center text-xs text-slate-400">{index + 1}</TableCell>
+        <>
+            {/* Row 1: Product Info */}
+            <TableRow className={cn(
+                "hover:bg-slate-50 border-b border-slate-100",
+                isEditing && "bg-blue-50/30",
+                "border-l-4",
+                isEditing ? "border-l-blue-400" : "border-l-slate-200"
+            )}>
+                <TableCell className="w-[35px] text-center text-xs font-medium text-slate-600 align-top py-2">{index + 1}</TableCell>
 
-            <TableCell className="w-[120px]">
-                <SelectCell {...cellProps} field="fruta" options={frutas} disabled={!canEditGeneral} width="w-[120px]" align="center" />
-            </TableCell>
-            <TableCell className="w-[160px]">
-                <SelectCell
-                    {...cellProps}
-                    field="presentacion"
-                    options={presentaciones}
-                    disabled={!canEditGeneral}
-                    renderLabel={(opt: any) => `${opt.nombre} ${parseFloat(opt.kilos).toFixed(2)} kg`}
-                    renderReadOnly={(d: any) => d.presentacion_nombre ? `${d.presentacion_nombre} ${parseFloat(d.presentacion_kilos || 0).toFixed(2)} kg` : '-'}
-                    width="w-[160px]"
-                    align="center"
-                />
-            </TableCell>
-
-            <TableCell className="w-[70px]">
-                <InputCell {...cellProps} field="cajas_solicitadas" type="number" disabled={!canEditGeneral} width="w-[70px]" align="center" />
-            </TableCell>
-            <TableCell className="w-[70px]">
-                <span className="text-slate-500 text-xs block w-[70px] text-center" title="Calculado">{formatNumber(data.presentacion_peso) || '-'}</span>
-            </TableCell>
-            <TableCell className="w-[80px]">
-                <span className="text-slate-500 text-xs block w-[80px] text-center" title="Calculado">{formatNumber(data.kilos) || '-'}</span>
-            </TableCell>
-            <TableCell className="w-[70px]">
-                <InputCell {...cellProps} field="cajas_enviadas" type="number" disabled={!canEditGeneral} width="w-[70px]" align="center" />
-            </TableCell>
-            <TableCell className="w-[80px]">
-                <span className="text-slate-500 text-xs block w-[80px] text-center" title="Calculado">{formatNumber(data.kilos_enviados) || '-'}</span>
-            </TableCell>
-            <TableCell className="w-[80px]">
-                <span className="text-slate-500 text-xs block w-[80px] text-center" title="Calculado">{formatNumber(data.diferencia) || '-'}</span>
-            </TableCell>
-
-            <TableCell className="w-[120px]">
-                <SelectCell {...cellProps} field="tipo_caja" options={tiposCaja} disabled={!canEditGeneral} width="w-[120px]" align="center" />
-            </TableCell>
-            <TableCell className="w-[150px]">
-                <SelectCell {...cellProps} field="referencia" options={referencias} disabled={!canEditGeneral} width="w-[150px]" align="center" />
-            </TableCell>
-            <TableCell className="w-[120px]">
-                <span className="text-slate-400 text-xs truncate block w-[120px] text-center" title={data.stickers}>{data.stickers || '-'}</span>
-            </TableCell>
-            <TableCell className="w-[100px]">
-                {isEditing ? (
-                    <div className="flex items-center justify-center w-[100px]">
-                        <Select
+                <TableCell className="w-[90px] align-top py-2">
+                    <SelectCell {...cellProps} field="fruta" options={frutas} disabled={!canEditGeneral} width="w-full" align="center" />
+                </TableCell>
+                <TableCell className="w-[140px] align-top py-2">
+                    {isEditing ? (
+                        <SelectCell
+                            {...cellProps}
+                            field="presentacion"
+                            options={presentaciones}
                             disabled={!canEditGeneral}
-                            value={data.lleva_contenedor ? "true" : "false"}
-                            onValueChange={(v) => onChange("lleva_contenedor", v === "true")}
-                        >
-                            <SelectTrigger className="h-6 w-[80px] text-xs">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="true">Sí</SelectItem>
-                                <SelectItem value="false">No</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center text-xs w-[100px]">
-                        <span>{data.lleva_contenedor ? "Sí" : "No"}</span>
-                        {data.referencia_contenedor && (
-                            <span className="text-slate-400 truncate block w-full text-[10px] text-center" title={data.referencia_contenedor}>
-                                {data.referencia_contenedor}
-                            </span>
+                            renderLabel={(opt: any) => `${opt.nombre} ${parseFloat(opt.kilos).toFixed(2)} kg`}
+                            renderReadOnly={(d: any) => d.presentacion_nombre ? `${d.presentacion_nombre} ${parseFloat(d.presentacion_kilos || 0).toFixed(2)} kg` : '-'}
+                            width="w-full"
+                            align="center"
+                        />
+                    ) : (
+                        <span className="text-xs text-center block leading-tight">
+                            {data.presentacion_nombre ? `${data.presentacion_nombre} ${parseFloat(data.presentacion_kilos || 0).toFixed(2)} kg` : '-'}
+                        </span>
+                    )}
+                </TableCell>
+
+                <TableCell className="w-[55px] align-top py-2">
+                    <InputCell {...cellProps} field="cajas_solicitadas" type="number" disabled={!canEditGeneral} width="w-full" align="center" />
+                </TableCell>
+                <TableCell className="w-[55px] align-top py-2">
+                    <span className="text-slate-500 text-xs block text-center">{formatNumber(data.presentacion_peso) || '-'}</span>
+                </TableCell>
+                <TableCell className="w-[60px] align-top py-2">
+                    <span className="text-slate-500 text-xs block text-center">{formatNumber(data.kilos) || '-'}</span>
+                </TableCell>
+                <TableCell className="w-[55px] align-top py-2">
+                    <InputCell {...cellProps} field="cajas_enviadas" type="number" disabled={!canEditGeneral} width="w-full" align="center" />
+                </TableCell>
+                <TableCell className="w-[60px] align-top py-2">
+                    <span className="text-slate-500 text-xs block text-center">{formatNumber(data.kilos_enviados) || '-'}</span>
+                </TableCell>
+                <TableCell className="w-[55px] align-top py-2">
+                    <span className="text-slate-500 text-xs block text-center">{formatNumber(data.diferencia) || '-'}</span>
+                </TableCell>
+
+                <TableCell className="w-[90px] align-top py-2">
+                    <SelectCell {...cellProps} field="tipo_caja" options={tiposCaja} disabled={!canEditGeneral} width="w-full" align="center" />
+                </TableCell>
+                <TableCell className="w-[160px] align-top py-2">
+                    {isEditing ? (
+                        <SelectCell {...cellProps} field="referencia" options={referencias} disabled={!canEditGeneral} width="w-full" align="center" />
+                    ) : (
+                        <span className="text-xs text-center block leading-tight">
+                            {data.referencia_nombre || '-'}
+                        </span>
+                    )}
+                </TableCell>
+                <TableCell className="w-[120px] align-top py-2">
+                    {isEditing ? (
+                        <div className="flex items-center justify-center">
+                            <Select
+                                disabled={!canEditGeneral}
+                                value={data.lleva_contenedor ? "true" : "false"}
+                                onValueChange={(v) => onChange("lleva_contenedor", v === "true")}
+                            >
+                                <SelectTrigger className={cn(
+                                    "h-6 w-[70px] text-xs rounded-sm transition-all duration-200",
+                                    !canEditGeneral
+                                        ? "bg-slate-50 border-slate-200 text-slate-400"
+                                        : "bg-blue-50 border-blue-300 shadow-sm shadow-blue-100 focus:ring-2 focus:ring-blue-400 animate-in fade-in-50 duration-300"
+                                )}>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="true">Si</SelectItem>
+                                    <SelectItem value="false">No</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center text-xs leading-tight">
+                            <span className="font-medium">{data.lleva_contenedor ? "Si" : "No"}</span>
+                            {data.referencia_contenedor && (
+                                <span className="text-slate-500 text-[10px] text-center leading-tight">
+                                    {data.referencia_contenedor}
+                                </span>
+                            )}
+                            {data.cantidad_contenedores && (
+                                <span className="text-slate-400 text-[10px]">#{data.cantidad_contenedores}</span>
+                            )}
+                        </div>
+                    )}
+                </TableCell>
+
+                <TableCell className="w-[70px] sticky right-0 bg-white/95 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] text-center p-2 align-top">
+                    <div className="flex items-center justify-center gap-1">
+                        {isEditing ? (
+                            <>
+                                <Button size="icon" className="h-7 w-7 bg-emerald-600 hover:bg-emerald-700" onClick={onSave} disabled={saving}>
+                                    {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:bg-red-50" onClick={onCancel}>
+                                    <X className="h-3 w-3" />
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                {!canEditGeneral && !canEditFinancial ? (
+                                    <div className="h-7 w-7 flex items-center justify-center text-slate-300" title="Registro bloqueado">
+                                        <Lock className="h-3.5 w-3.5" />
+                                    </div>
+                                ) : (
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className={cn(
+                                            "h-7 w-7 transition-colors disabled:opacity-30",
+                                            canEditGeneral ? "text-blue-500 hover:bg-blue-50 hover:text-blue-600" : "text-amber-500 hover:bg-amber-50"
+                                        )}
+                                        onClick={onEdit}
+                                        title={canEditGeneral ? "Editar producto" : "Editar ajustes financieros"}
+                                    >
+                                        {canEditGeneral ? (
+                                            <Pencil className="h-3.5 w-3.5" />
+                                        ) : (
+                                            <ShieldCheck className="h-3.5 w-3.5" />
+                                        )}
+                                    </Button>
+                                )}
+
+                                {canEditGeneral && (
+                                    <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50" onClick={onDelete}>
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                )}
+                            </>
                         )}
                     </div>
-                )}
-            </TableCell>
-            <TableCell className="w-[70px]">
-                <span className="text-slate-500 text-xs block w-[70px] text-center" title="Calculado">{data.cantidad_contenedores || '-'}</span>
-            </TableCell>
+                </TableCell>
+            </TableRow>
 
-            <TableCell className="w-[90px]">
-                <InputCell {...cellProps} field="tarifa_utilidad" type="number" disabled={!canEditGeneral} width="w-[90px]" align="center" />
-            </TableCell>
-            <TableCell className="w-[90px]">
-                <InputCell {...cellProps} field="tarifa_recuperacion" type="number" disabled={!canEditGeneral} width="w-[90px]" align="center" />
-            </TableCell>
-            <TableCell className="w-[90px]">
-                <InputCell {...cellProps} field="valor_x_caja_usd" type="number" disabled={!canEditGeneral} width="w-[90px]" align="center" />
-            </TableCell>
-            <TableCell className="w-[100px]">
-                <span className="text-slate-500 text-xs block w-[100px] text-center" title="Calculado">{formatMoney(data.valor_x_producto)}</span>
-            </TableCell>
-            <TableCell className="w-[100px]">
-                <InputCell {...cellProps} field="precio_proforma" type="number" disabled={!canEditGeneral} width="w-[100px]" align="center" />
-            </TableCell>
+            {/* Row 2: Financial Info - Colspan with inline labels */}
+            <TableRow className={cn(
+                "hover:bg-slate-50/50 border-b-2 border-slate-300",
+                isEditing && "bg-amber-50/20",
+                "border-l-4",
+                isEditing ? "border-l-blue-400" : "border-l-slate-200"
+            )}>
+                <TableCell colSpan={13} className="py-2 px-3">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                        <div className="flex items-center gap-1">
+                            <span className="text-slate-400 font-medium">Stickers:</span>
+                            <span className="text-slate-600">{data.stickers || '-'}</span>
+                        </div>
+                        <div className="h-4 w-px bg-slate-200" />
 
-            <TableCell className="w-[80px]">
-                <InputCell {...cellProps} field="no_cajas_nc" type="number" disabled={!canEditFinancial} width="w-[80px]" align="center" />
-            </TableCell>
-            <TableCell className="w-[100px]">
-                <span className="text-slate-500 text-xs block w-[100px] text-center" title="Calculado">{formatMoney(data.valor_nota_credito_usd)}</span>
-            </TableCell>
-            <TableCell className="w-[80px]">
-                {isEditing ? (
-                    <div className="w-[80px] flex justify-center">
-                        <Select
-                            disabled={!canEditFinancial}
-                            value={data.afecta_utilidad === true ? "true" : data.afecta_utilidad === false ? "false" : "null"}
-                            onValueChange={(v) => onChange("afecta_utilidad", v === "true" ? true : v === "false" ? false : null)}
-                        >
-                            <SelectTrigger className="h-6 w-[70px] text-xs border-slate-200 hover:border-slate-300 focus:ring-1 focus:ring-blue-500 rounded-sm">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="true">Sí</SelectItem>
-                                <SelectItem value="false">No</SelectItem>
-                                <SelectItem value="null">Desc.</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                ) : (
-                    <span className="text-xs block w-[80px] text-center">
-                        {data.afecta_utilidad === true ? "Sí" : data.afecta_utilidad === false ? "No" : "Desc."}
-                    </span>
-                )}
-            </TableCell>
-            <TableCell className="w-[100px]">
-                <span className="text-slate-500 text-xs text-emerald-700 font-medium block w-[100px] text-center" title="Calculado">{formatMoney(data.valor_total_utilidad_x_producto)}</span>
-            </TableCell>
-            <TableCell className="w-[100px]">
-                <span className="text-slate-500 text-xs text-blue-700 font-medium block w-[100px] text-center" title="Calculado">{formatMoney(data.valor_total_recuperacion_x_producto)}</span>
-            </TableCell>
-
-            <TableCell className="w-[150px]">
-                <InputCell {...cellProps} field="observaciones" type="text" disabled={!canEditGeneral} width="w-[150px]" />
-            </TableCell>
-
-            <TableCell className="w-[80px] min-w-[80px] sticky right-0 bg-white/95 border-l shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] text-center p-2">
-                <div className="flex items-center justify-center gap-1">
-                    {isEditing ? (
-                        <>
-                            <Button size="icon" className="h-7 w-7 bg-emerald-600 hover:bg-emerald-700" onClick={onSave} disabled={saving}>
-                                {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:bg-red-50" onClick={onCancel}>
-                                <X className="h-3 w-3" />
-                            </Button>
-                        </>
-                    ) : (
-                        <>
-                            {!canEditGeneral && !canEditFinancial ? (
-                                <div className="h-7 w-7 flex items-center justify-center text-slate-300" title="Registro bloqueado">
-                                    <Lock className="h-3.5 w-3.5" />
-                                </div>
-                            ) : (
-                                <Button
-                                    size="icon"
-                                    variant="ghost"
+                        <div className="flex items-center gap-1">
+                            <span className="text-emerald-600 font-medium">Utilidad:</span>
+                            {isEditing ? (
+                                <Input
+                                    type="text"
+                                    value={data.tarifa_utilidad ?? ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === '' || /^-?\d*\.?\d*$/.test(val)) onChange('tarifa_utilidad', val);
+                                    }}
                                     className={cn(
-                                        "h-7 w-7 transition-colors disabled:opacity-30",
-                                        canEditGeneral ? "text-blue-500 hover:bg-blue-50 hover:text-blue-600" : "text-amber-500 hover:bg-amber-50"
+                                        "h-6 w-16 px-1.5 text-xs rounded-sm transition-all duration-200",
+                                        !canEditGeneral
+                                            ? "bg-slate-50 border-slate-200 text-slate-400"
+                                            : "bg-emerald-50 border-emerald-300 shadow-sm shadow-emerald-100 focus-visible:ring-2 focus-visible:ring-emerald-400 animate-in fade-in-50 duration-300"
                                     )}
-                                    onClick={onEdit}
-                                    title={canEditGeneral ? "Editar producto" : "Editar ajustes financieros"}
-                                >
-                                    {canEditGeneral ? (
-                                        <Pencil className="h-3.5 w-3.5" />
-                                    ) : (
-                                        <ShieldCheck className="h-3.5 w-3.5" />
-                                    )}
-                                </Button>
+                                    disabled={!canEditGeneral}
+                                />
+                            ) : (
+                                <span className="text-emerald-700">{formatMoney(data.tarifa_utilidad)}</span>
                             )}
+                        </div>
 
-                            {canEditGeneral && (
-                                <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50" onClick={onDelete}>
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
+                        <div className="flex items-center gap-1">
+                            <span className="text-blue-600 font-medium">Recup:</span>
+                            {isEditing ? (
+                                <Input
+                                    type="text"
+                                    value={data.tarifa_recuperacion ?? ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === '' || /^-?\d*\.?\d*$/.test(val)) onChange('tarifa_recuperacion', val);
+                                    }}
+                                    className={cn(
+                                        "h-6 w-16 px-1.5 text-xs rounded-sm transition-all duration-200",
+                                        !canEditGeneral
+                                            ? "bg-slate-50 border-slate-200 text-slate-400"
+                                            : "bg-blue-50 border-blue-300 shadow-sm shadow-blue-100 focus-visible:ring-2 focus-visible:ring-blue-400 animate-in fade-in-50 duration-300"
+                                    )}
+                                    disabled={!canEditGeneral}
+                                />
+                            ) : (
+                                <span className="text-blue-700">{formatMoney(data.tarifa_recuperacion)}</span>
                             )}
-                        </>
-                    )}
-                </div>
-            </TableCell>
-        </TableRow>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            <span className="text-slate-400 font-medium">Costo:</span>
+                            {isEditing ? (
+                                <Input
+                                    type="text"
+                                    value={data.valor_x_caja_usd ?? ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === '' || /^-?\d*\.?\d*$/.test(val)) onChange('valor_x_caja_usd', val);
+                                    }}
+                                    className={cn(
+                                        "h-6 w-16 px-1.5 text-xs rounded-sm transition-all duration-200",
+                                        !canEditGeneral
+                                            ? "bg-slate-50 border-slate-200 text-slate-400"
+                                            : "bg-blue-50 border-blue-300 shadow-sm shadow-blue-100 focus-visible:ring-2 focus-visible:ring-blue-400 animate-in fade-in-50 duration-300"
+                                    )}
+                                    disabled={!canEditGeneral}
+                                />
+                            ) : (
+                                <span className="text-slate-600">{formatMoney(data.valor_x_caja_usd)}</span>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            <span className="text-slate-400 font-medium">Valor Prod:</span>
+                            <span className="text-slate-600">{formatMoney(data.valor_x_producto)}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            <span className="text-slate-400 font-medium">Precio Prof:</span>
+                            {isEditing ? (
+                                <Input
+                                    type="text"
+                                    value={data.precio_proforma ?? ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === '' || /^-?\d*\.?\d*$/.test(val)) onChange('precio_proforma', val);
+                                    }}
+                                    className={cn(
+                                        "h-6 w-16 px-1.5 text-xs rounded-sm transition-all duration-200",
+                                        !canEditGeneral
+                                            ? "bg-slate-50 border-slate-200 text-slate-400"
+                                            : "bg-blue-50 border-blue-300 shadow-sm shadow-blue-100 focus-visible:ring-2 focus-visible:ring-blue-400 animate-in fade-in-50 duration-300"
+                                    )}
+                                    disabled={!canEditGeneral}
+                                />
+                            ) : (
+                                <span className="text-slate-600">{formatMoney(data.precio_proforma)}</span>
+                            )}
+                        </div>
+
+                        <div className="h-4 w-px bg-slate-200" />
+
+                        <div className="flex items-center gap-1">
+                            <span className="text-orange-600 font-medium">NC Cajas:</span>
+                            {isEditing ? (
+                                <Input
+                                    type="text"
+                                    value={data.no_cajas_nc ?? ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === '' || /^-?\d*\.?\d*$/.test(val)) onChange('no_cajas_nc', val);
+                                    }}
+                                    className={cn(
+                                        "h-6 w-14 px-1.5 text-xs rounded-sm transition-all duration-200",
+                                        !canEditFinancial
+                                            ? "bg-slate-50 border-slate-200 text-slate-400"
+                                            : "bg-orange-50 border-orange-300 shadow-sm shadow-orange-100 focus-visible:ring-2 focus-visible:ring-orange-400 animate-in fade-in-50 duration-300"
+                                    )}
+                                    disabled={!canEditFinancial}
+                                />
+                            ) : (
+                                <span className="text-orange-700">{data.no_cajas_nc ?? '-'}</span>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            <span className="text-orange-600 font-medium">Valor NC:</span>
+                            <span className="text-orange-700">{formatMoney(data.valor_nota_credito_usd)}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            <span className="text-orange-600 font-medium">Afecta Util?:</span>
+                            {isEditing ? (
+                                <Select
+                                    disabled={!canEditFinancial}
+                                    value={data.afecta_utilidad === true ? "true" : data.afecta_utilidad === false ? "false" : "null"}
+                                    onValueChange={(v) => onChange("afecta_utilidad", v === "true" ? true : v === "false" ? false : null)}
+                                >
+                                    <SelectTrigger className={cn(
+                                        "h-6 w-16 text-xs rounded-sm transition-all duration-200",
+                                        !canEditFinancial
+                                            ? "bg-slate-50 border-slate-200 text-slate-400"
+                                            : "bg-orange-50 border-orange-300 shadow-sm shadow-orange-100 focus:ring-2 focus:ring-orange-400 animate-in fade-in-50 duration-300"
+                                    )}>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="true">Si</SelectItem>
+                                        <SelectItem value="false">No</SelectItem>
+                                        <SelectItem value="null">Desc.</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            ) : (
+                                <span className="text-orange-700">
+                                    {data.afecta_utilidad === true ? "Si" : data.afecta_utilidad === false ? "No" : "Desc."}
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="h-4 w-px bg-slate-200" />
+
+                        <div className="flex items-center gap-1">
+                            <span className="text-emerald-600 font-medium">Total Util:</span>
+                            <span className="text-emerald-700 font-semibold">{formatMoney(data.valor_total_utilidad_x_producto)}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            <span className="text-blue-600 font-medium">Total Recup:</span>
+                            <span className="text-blue-700 font-semibold">{formatMoney(data.valor_total_recuperacion_x_producto)}</span>
+                        </div>
+
+                        <div className="h-4 w-px bg-slate-200" />
+
+                        <div className="flex items-center gap-1 flex-1 min-w-[150px]">
+                            <span className="text-slate-400 font-medium">Obs:</span>
+                            {isEditing ? (
+                                <Input
+                                    type="text"
+                                    value={data.observaciones ?? ''}
+                                    onChange={(e) => onChange('observaciones', e.target.value)}
+                                    className={cn(
+                                        "h-6 flex-1 px-1.5 text-xs rounded-sm transition-all duration-200",
+                                        !canEditGeneral
+                                            ? "bg-slate-50 border-slate-200 text-slate-400"
+                                            : "bg-blue-50 border-blue-300 shadow-sm shadow-blue-100 focus-visible:ring-2 focus-visible:ring-blue-400 animate-in fade-in-50 duration-300"
+                                    )}
+                                    disabled={!canEditGeneral}
+                                />
+                            ) : (
+                                <span className="text-slate-600 truncate" title={data.observaciones}>{data.observaciones || '-'}</span>
+                            )}
+                        </div>
+                    </div>
+                </TableCell>
+            </TableRow>
+        </>
     );
 }
