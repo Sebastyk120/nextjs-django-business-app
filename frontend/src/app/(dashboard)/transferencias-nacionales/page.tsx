@@ -37,11 +37,11 @@ export default function TransferenciasPage() {
         <div className="min-h-screen bg-slate-50/50 p-6 md:p-8 space-y-8 font-outfit animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
                         <ArrowRightLeft className="h-8 w-8 text-blue-600" />
                         Transferencias a Proveedores
                     </h1>
-                    <p className="text-slate-500 mt-1">
+                    <p className="text-muted-foreground text-sm mt-1">
                         Gestione los pagos y anticipos realizados a proveedores nacionales.
                     </p>
                 </div>

@@ -47,11 +47,11 @@ export default function ResumenReportesProveedoresPage() {
     <div className="min-h-screen bg-slate-50/50 p-6 md:p-8 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
           <FileText className="h-8 w-8 text-emerald-600" />
           Resumen de Reportes por Proveedor
         </h1>
-        <p className="text-slate-500 mt-1">
+        <p className="text-muted-foreground text-sm mt-1">
           Seleccione un proveedor para ver su estado de cuenta y resumen de reportes.
         </p>
       </div>

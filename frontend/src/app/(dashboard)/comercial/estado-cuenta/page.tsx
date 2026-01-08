@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { DateTimePicker } from "@/components/comercial/DateTimePicker";
 
 // Helper for currency formatting
 const formatCurrency = (value: number) => {
@@ -128,11 +129,11 @@ export default function EstadoCuentaPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-2">
                         <LayoutDashboard className="h-8 w-8 text-indigo-600" />
-                        Estado de Cuenta
+                        Estado de Cuenta Clientes
                     </h1>
-                    <p className="text-slate-500 mt-1">Gestión y seguimiento de cartera por cliente</p>
+                    <p className="text-muted-foreground text-sm mt-1">Gestión y seguimiento de cartera por cliente</p>
                 </div>
 
                 {data && (
@@ -169,21 +170,19 @@ export default function EstadoCuentaPage() {
 
                         <div className="w-full lg:w-40 space-y-2">
                             <label className="text-sm font-medium text-slate-700">Desde</label>
-                            <Input
-                                type="date"
+                            <DateTimePicker
                                 value={startDate}
-                                onChange={e => setStartDate(e.target.value)}
-                                className="bg-white"
+                                onChange={setStartDate}
+                                showTime={false}
                             />
                         </div>
 
                         <div className="w-full lg:w-40 space-y-2">
                             <label className="text-sm font-medium text-slate-700">Hasta</label>
-                            <Input
-                                type="date"
+                            <DateTimePicker
                                 value={endDate}
-                                onChange={e => setEndDate(e.target.value)}
-                                className="bg-white"
+                                onChange={setEndDate}
+                                showTime={false}
                             />
                         </div>
 
@@ -323,7 +322,7 @@ export default function EstadoCuentaPage() {
                                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                                     ))}
                                                 </Pie>
-                                                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                                                <Tooltip formatter={(value: any) => formatCurrency(value)} />
                                             </PieChart>
                                         </ResponsiveContainer>
                                         {/* Center Text */}
@@ -432,7 +431,7 @@ export default function EstadoCuentaPage() {
                                                 label={{ value: 'Días', angle: -90, position: 'insideLeft', fill: '#94a3b8' }}
                                             />
                                             <Tooltip
-                                                formatter={(value: any, name: string) => {
+                                                formatter={(value: any, name: any) => {
                                                     if (name === 'monto_tooltip') return [formatCurrency(value), 'Monto Pagado'];
                                                     return [value, name === 'dias_pago' ? 'Días Real' : 'Días Acordados'];
                                                 }}

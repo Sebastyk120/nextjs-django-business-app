@@ -103,6 +103,37 @@ class ExportadorViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ExportadorSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Exportador.objects.all().order_by('nombre')
+        
+        # Heavens and Superusers see all
+        if user.is_superuser or user.groups.filter(name='Heavens').exists():
+            return queryset
+        
+        # Determine current user group
+        user_group_names = user.groups.values_list('name', flat=True)
+        exportadora_names = ['Etnico', 'Fieldex', 'Juan Matas', 'CI Dorado']
+        # Map group names if necessary
+        mapped_names = {
+            'Juan_Matas': 'Juan Matas',
+            'CI_Dorado': 'CI Dorado'
+        }
+        
+        active_exportadora = None
+        for group_name in user_group_names:
+            if group_name in exportadora_names:
+                active_exportadora = group_name
+                break
+            elif group_name in mapped_names:
+                active_exportadora = mapped_names[group_name]
+                break
+        
+        if active_exportadora:
+            return queryset.filter(nombre=active_exportadora)
+            
+        return queryset.none()
+
 
 class SubExportadoraViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SubExportadora.objects.all().order_by('nombre')

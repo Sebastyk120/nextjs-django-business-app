@@ -71,21 +71,13 @@ export default function HistoricoPage() {
         <div className="flex flex-col gap-6 p-4 md:p-8 bg-slate-50/50 min-h-screen font-outfit">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.back()}
-                        className="rounded-full hover:bg-white shadow-sm"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
+                <div>
                     <div>
                         <div className="flex items-center gap-2">
                             <History className="h-5 w-5 text-indigo-600" />
-                            <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-plus-jakarta">Histórico de Movimientos</h1>
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta">Histórico de Movimientos</h1>
                         </div>
-                        <p className="text-sm text-slate-500">Registro general de auditoría de inventario</p>
+                        <p className="text-muted-foreground text-sm mt-1">Registro general de auditoría de inventario</p>
                     </div>
                 </div>
 
@@ -114,7 +106,7 @@ export default function HistoricoPage() {
                             className="pl-10 h-10 bg-slate-50 border-transparent focus:bg-white transition-all rounded-xl"
                         />
                     </div>
-                    <Button type="submit" className="h-10 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider">
+                    <Button type="submit" className="h-10 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs tracking-wider">
                         Filtrar
                     </Button>
                 </form>

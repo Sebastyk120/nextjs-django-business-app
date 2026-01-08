@@ -63,7 +63,7 @@ export default function ImpactStory() {
                         <span className="text-[--color-secondary] font-bold tracking-widest uppercase text-sm mb-4 block">
                             {t.eyebrow}
                         </span>
-                        <h2 className="text-4xl md:text-5xl font-bold mb-8 leading-tight">
+                        <h2 className="text-4xl md:text-5xl font-bold mb-8 leading-tight !text-white">
                             {t.title}
                         </h2>
 
@@ -77,21 +77,21 @@ export default function ImpactStory() {
                                     VG
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-lg">{t.author}</h4>
+                                    <h4 className="font-bold text-lg !text-white">{t.author}</h4>
                                     <p className="text-sm text-[--color-secondary]">{t.role}</p>
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <h3 className="text-2xl font-bold mb-4 text-[--color-secondary] flex items-center gap-2">
+                            <h3 className="text-2xl font-bold mb-4 !text-[--color-secondary] flex items-center gap-2">
                                 <Heart size={24} /> {t.impactTitle}
                             </h3>
                             <p className="text-gray-300 leading-relaxed text-lg mb-6">
                                 {t.impactDesc}
                             </p>
                             <div className="p-4 bg-white/5 rounded-xl border-l-4 border-[--color-secondary]">
-                                <h4 className="font-bold mb-1">{t.collab}</h4>
+                                <h4 className="font-bold mb-1 !text-white">{t.collab}</h4>
                                 <p className="text-sm text-gray-400">{t.collabDesc}</p>
                             </div>
                         </div>

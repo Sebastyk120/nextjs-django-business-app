@@ -774,19 +774,59 @@ def guias_autocomplete_api(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated, IsHeavensGroup])
+@permission_classes([IsAuthenticated])
 def reportes_vencidos_api(request):
     """
     API endpoint para obtener reporte de ventas nacionales vencidas.
     GET /nacionales/api/reportes-vencidos/?exportador=ID
     """
-    exportador_id = request.query_params.get('exportador')
+    user = request.user
+    requested_exportador_id = request.query_params.get('exportador')
     
-    if not exportador_id:
-         return Response({'error': 'El parámetro exportador es requerido'}, status=400)
+    # Determine if user is superuser or in Heavens group
+    is_privileged = user.is_superuser or user.groups.filter(name='Heavens').exists()
+    
+    target_exportador_id = None
+    
+    if is_privileged:
+        if not requested_exportador_id:
+             return Response({'error': 'El parámetro exportador es requerido'}, status=400)
+        target_exportador_id = requested_exportador_id
+    else:
+        # User is restricted, find their allowed exporter
+        user_group_names = user.groups.values_list('name', flat=True)
+        exportadora_names = ['Etnico', 'Fieldex', 'Juan Matas', 'CI Dorado']
+        mapped_names = {
+            'Juan_Matas': 'Juan Matas',
+            'CI_Dorado': 'CI Dorado'
+        }
+        
+        active_exportadora_name = None
+        for group_name in user_group_names:
+            if group_name in exportadora_names:
+                active_exportadora_name = group_name
+                break
+            elif group_name in mapped_names:
+                active_exportadora_name = mapped_names[group_name]
+                break
+        
+        if not active_exportadora_name:
+            return Response({'error': 'No tienes permisos para ver reportes de ningún exportador.'}, status=403)
+            
+        # Find the ID of their exporter
+        try:
+            target_exportador = Exportador.objects.get(nombre=active_exportadora_name)
+            target_exportador_id = target_exportador.id
+        except Exportador.DoesNotExist:
+             return Response({'error': f'Configuración inválida: El exportador {active_exportadora_name} no existe.'}, status=500)
+             
+        # If they requested a different ID, we could warn, but "filtering default" implies we just give them theirs.
+        # But if they requested specific ID different from theirs, it's technically unauthorized access to that ID.
+        # However, for simplicity and UX, we can just ignore their param and use the forced one, OR check it.
+        # Let's just USE the target_exportador_id.
 
     try:
-        exportador = Exportador.objects.get(pk=exportador_id)
+        exportador = Exportador.objects.get(pk=target_exportador_id)
     except Exportador.DoesNotExist:
         return Response({'error': 'Exportador no encontrado'}, status=404)
         

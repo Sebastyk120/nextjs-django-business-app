@@ -65,23 +65,44 @@ export default function Services() {
     return (
         <section id="servicios" className="py-24 bg-[--color-background-alt]">
             <div className="container mx-auto px-4 md:px-6">
-                <div className="text-center mb-16" data-aos="fade-up">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    className="text-center mb-16"
+                >
                     <h2 className="text-3xl md:text-4xl font-bold mb-4">{t.title}</h2>
                     <p className="text-[--color-text-light] max-w-2xl mx-auto text-lg">
                         {t.desc}
                     </p>
-                </div>
+                </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <motion.div
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-100px" }}
+                    variants={{
+                        hidden: { opacity: 0 },
+                        visible: {
+                            opacity: 1,
+                            transition: { staggerChildren: 0.15 }
+                        }
+                    }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+                >
                     {t.services.map((service, index) => (
                         <motion.div
                             key={index}
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: index * 0.1, duration: 0.5 }}
-                            whileHover={{ y: -10 }}
-                            className="service-card text-center h-full flex flex-col items-center"
+                            variants={{
+                                hidden: { opacity: 0, y: 50 },
+                                visible: {
+                                    opacity: 1,
+                                    y: 0,
+                                    transition: { type: "spring", stiffness: 60, damping: 15 }
+                                }
+                            }}
+                            whileHover={{ y: -10, boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.1)" }}
+                            className="service-card text-center h-full flex flex-col items-center border border-transparent hover:border-[--color-primary-light]/20 transition-all duration-300"
                         >
                             <div className="service-icon-wrapper">
                                 <service.icon size={32} />
@@ -92,7 +113,7 @@ export default function Services() {
                             </p>
                         </motion.div>
                     ))}
-                </div>
+                </motion.div>
             </div>
         </section>
     );

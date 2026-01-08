@@ -62,6 +62,7 @@ interface OrderDetailsDrawerProps {
     onOpenChange: (open: boolean) => void;
     orderId: number | null;
     orderNumber?: string | null;
+    userGroups?: any[];
 }
 
 export function OrderDetailsDrawer({

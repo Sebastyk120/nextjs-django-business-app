@@ -14,6 +14,7 @@ import {
     DropdownMenuCheckboxItem
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
+import { DateTimePicker } from "@/components/comercial/DateTimePicker";
 
 interface OrdersFiltersProps {
     filters: PedidoFilters;
@@ -68,22 +69,20 @@ export function OrdersFilters({
                 {/* Rango de Fechas */}
                 <div className="flex items-center gap-2 col-span-1 md:col-span-2">
                     <div className="flex-1">
-                        <Input
-                            type="date"
-                            value={filters.fecha_desde || ""}
-                            onChange={(e) => handleChange("fecha_desde", e.target.value)}
-                            className="bg-white"
-                            placeholder="Desde entrega"
+                        <DateTimePicker
+                            value={filters.fecha_desde}
+                            onChange={(val) => handleChange("fecha_desde", val)}
+                            showTime={false}
+                            label="Desde entrega"
                         />
                     </div>
                     <span className="text-muted-foreground text-xs uppercase font-bold">A</span>
                     <div className="flex-1">
-                        <Input
-                            type="date"
-                            value={filters.fecha_hasta || ""}
-                            onChange={(e) => handleChange("fecha_hasta", e.target.value)}
-                            className="bg-white"
-                            placeholder="Hasta entrega"
+                        <DateTimePicker
+                            value={filters.fecha_hasta}
+                            onChange={(val) => handleChange("fecha_hasta", val)}
+                            showTime={false}
+                            label="Hasta entrega"
                         />
                     </div>
                 </div>

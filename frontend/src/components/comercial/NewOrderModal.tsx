@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import axiosClient from "@/lib/axios";
 import { toast } from "sonner";
+import { DateTimePicker } from "@/components/comercial/DateTimePicker";
 
 interface Option {
     id: number;
@@ -174,13 +175,10 @@ export function NewOrderModal({ onOrderCreated }: NewOrderModalProps) {
 
                         <div className="space-y-2">
                             <Label htmlFor="fecha_entrega">Fecha de Entrega *</Label>
-                            <Input
-                                id="fecha_entrega"
-                                name="fecha_entrega"
-                                type="date"
-                                required
+                            <DateTimePicker
                                 value={formData.fecha_entrega}
-                                onChange={handleChange}
+                                onChange={(val) => setFormData(prev => ({ ...prev, fecha_entrega: val }))}
+                                showTime={false}
                             />
                         </div>
 

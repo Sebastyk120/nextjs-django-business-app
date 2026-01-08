@@ -15,16 +15,22 @@ import { Label } from "@/components/ui/label";
 import { FileSpreadsheet, Loader2, Info } from "lucide-react";
 import axiosClient from "@/lib/axios";
 import { toast } from "sonner";
+import { DateTimePicker } from "@/components/comercial/DateTimePicker";
 
 interface ExportCarteraModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    initialFechaInicial?: string;
+    initialFechaFinal?: string;
 }
 
-export function ExportCarteraModal({ open, onOpenChange }: ExportCarteraModalProps) {
+export function ExportCarteraModal({ open, onOpenChange, initialFechaInicial = "", initialFechaFinal = "" }: ExportCarteraModalProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const [fechaInicial, setFechaInicial] = useState("");
-    const [fechaFinal, setFechaFinal] = useState("");
+    const [fechaInicial, setFechaInicial] = useState(initialFechaInicial);
+    const [fechaFinal, setFechaFinal] = useState(initialFechaFinal);
+
+    if (open && fechaInicial !== initialFechaInicial && fechaInicial === "") setFechaInicial(initialFechaInicial);
+    if (open && fechaFinal !== initialFechaFinal && fechaFinal === "") setFechaFinal(initialFechaFinal);
 
     const handleExport = async () => {
         setIsLoading(true);
@@ -87,20 +93,18 @@ export function ExportCarteraModal({ open, onOpenChange }: ExportCarteraModalPro
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="cartera_fecha_inicial">Fecha Inicial</Label>
-                            <Input
-                                id="cartera_fecha_inicial"
-                                type="date"
+                            <DateTimePicker
                                 value={fechaInicial}
-                                onChange={(e) => setFechaInicial(e.target.value)}
+                                onChange={setFechaInicial}
+                                showTime={false}
                             />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="cartera_fecha_final">Fecha Final</Label>
-                            <Input
-                                id="cartera_fecha_final"
-                                type="date"
+                            <DateTimePicker
                                 value={fechaFinal}
-                                onChange={(e) => setFechaFinal(e.target.value)}
+                                onChange={setFechaFinal}
+                                showTime={false}
                             />
                         </div>
                     </div>

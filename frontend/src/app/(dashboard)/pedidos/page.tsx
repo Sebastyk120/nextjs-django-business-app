@@ -23,6 +23,7 @@ import { ExportResumenModal } from "@/components/comercial/ExportResumenModal";
 import { OrderEditSheet } from "@/components/comercial/OrderEditSheet";
 import { VIEW_PRESETS } from "@/components/comercial/ViewPresets";
 import { cn } from "@/lib/utils";
+import { ShoppingCart } from "lucide-react";
 import {
     Briefcase,
     TrendingUp,
@@ -31,6 +32,7 @@ import {
     Send,
     ClipboardList
 } from "lucide-react";
+import { toast } from "sonner";
 
 const formatCurrency = (value: number | null | undefined) => {
     if (value === null || value === undefined) return '-';
@@ -371,7 +373,10 @@ function OrdersPageContent() {
         <div className="flex flex-col gap-6 p-4 md:p-8 max-w-[100vw] overflow-x-hidden">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta">Gestión de Pedidos</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
+                        <ShoppingCart className="h-8 w-8 text-emerald-600" />
+                        Gestión de Pedidos
+                    </h1>
                     <p className="text-muted-foreground text-sm">Visualiza y administra todos los pedidos de exportación.</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -573,6 +578,8 @@ function OrdersPageContent() {
             <ExportOrdersModal
                 open={isExportOrdersModalOpen}
                 onOpenChange={setIsExportOrdersModalOpen}
+                initialFechaInicial={filters.fecha_desde || ""}
+                initialFechaFinal={filters.fecha_hasta || ""}
             />
 
             <ExportDetailsModal
@@ -583,11 +590,15 @@ function OrdersPageContent() {
             <ExportUtilitiesModal
                 open={isExportUtilitiesModalOpen}
                 onOpenChange={setIsExportUtilitiesModalOpen}
+                initialFechaInicial={filters.fecha_desde || ""}
+                initialFechaFinal={filters.fecha_hasta || ""}
             />
 
             <ExportCarteraModal
                 open={isExportCarteraModalOpen}
                 onOpenChange={setIsExportCarteraModalOpen}
+                initialFechaInicial={filters.fecha_desde || ""}
+                initialFechaFinal={filters.fecha_hasta || ""}
             />
 
             <ExportCarteraEnviarModal
@@ -595,6 +606,8 @@ function OrdersPageContent() {
                 onOpenChange={setIsExportCarteraEnviarModalOpen}
                 clients={clients}
                 intermediaries={intermediaries}
+                initialFechaInicial={filters.fecha_desde || ""}
+                initialFechaFinal={filters.fecha_hasta || ""}
             />
 
             <ExportSeguimientoModal
@@ -602,6 +615,8 @@ function OrdersPageContent() {
                 onOpenChange={setIsExportSeguimientoModalOpen}
                 clients={clients}
                 intermediaries={intermediaries}
+                initialFechaInicial={filters.fecha_desde || ""}
+                initialFechaFinal={filters.fecha_hasta || ""}
             />
 
             <ExportResumenModal

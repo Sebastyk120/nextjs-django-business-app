@@ -65,13 +65,14 @@ def numero_a_letras(numero):
 
 def generate_resumen_reportes_pdf(data):
     buffer = io.BytesIO()
+    # Change to A4 Portrait with minimal margins
     doc = SimpleDocTemplate(
         buffer,
-        pagesize=landscape(A4),
-        rightMargin=1*cm,
-        leftMargin=1*cm,
-        topMargin=1*cm,
-        bottomMargin=1*cm
+        pagesize=A4,
+        rightMargin=0.5*cm,
+        leftMargin=0.5*cm,
+        topMargin=0.5*cm,
+        bottomMargin=0.5*cm
     )
     
     styles = getSampleStyleSheet()
@@ -131,6 +132,9 @@ def generate_resumen_reportes_pdf(data):
     
     elements = []
     
+    # Available width approx 20cm (21cm - 1cm margins)
+    full_width = 20*cm
+    
     # Header
     proveedor = data.get('proveedor', {})
     proveedor_nombre = proveedor.get('nombre', 'N/A')
@@ -145,7 +149,8 @@ def generate_resumen_reportes_pdf(data):
                      ParagraphStyle('RightHeader', parent=header_style, alignment=TA_RIGHT))
         ]
     ]
-    header_table = Table(header_data, colWidths=[8*cm, 10*cm, 8*cm])
+    # Adjusted for portrait
+    header_table = Table(header_data, colWidths=[6*cm, 8*cm, 6*cm])
     header_table.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
     ]))
@@ -164,7 +169,8 @@ def generate_resumen_reportes_pdf(data):
     saldo_data = [[Paragraph(f"<b>{saldo_text}</b>", 
                              ParagraphStyle('SaldoStyle', fontSize=12, alignment=TA_CENTER, textColor=saldo_color))],
                   [Paragraph(saldo_words, ParagraphStyle('SaldoWords', fontSize=8, alignment=TA_CENTER))]]
-    saldo_table = Table(saldo_data, colWidths=[26*cm])
+    # Adjusted for portrait
+    saldo_table = Table(saldo_data, colWidths=[full_width])
     saldo_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.Color(0.95, 1, 0.95) if is_positive else colors.Color(1, 0.95, 0.95)),
         ('BOX', (0, 0), (-1, -1), 1, saldo_color),
@@ -220,8 +226,9 @@ def generate_resumen_reportes_pdf(data):
             Paragraph("<b>TOTAL PENDIENTE:</b>", right_style), '', '', '', '', '', '',
             Paragraph(f"<b>{format_currency(monto_pendiente_total)}</b>", right_style)
         ])
+        # Adjusted cols for ~20cm
         elements.extend(create_section_table("Reportes Pendientes de Pago", headers, rows, 
-                        [2.5*cm, 2*cm, 2*cm, 1.8*cm, 1.5*cm, 1.5*cm, 2.5*cm, 2.5*cm]))
+                        [3*cm, 2.5*cm, 2.5*cm, 2*cm, 1.75*cm, 1.75*cm, 3*cm, 3*cm]))
     
     # Últimos Reportes Pagados
     reportes_pagados = data.get('reportes_pagados', [])[:20]
@@ -238,8 +245,9 @@ def generate_resumen_reportes_pdf(data):
                 Paragraph(f"<font color='orange'>{format_percent(r.get('p_porcentaje_nacional'))}</font>", center_style),
                 Paragraph(format_currency(r.get('p_total_pagar')), right_style),
             ])
+        # Adjusted cols for ~20cm
         elements.extend(create_section_table("Últimos Reportes Pagados", headers, rows,
-                        [3*cm, 2.2*cm, 2.2*cm, 2*cm, 1.8*cm, 1.8*cm, 3*cm]))
+                        [3.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2*cm, 2*cm, 4.5*cm]))
     
     # Compras en Proceso
     compras_proceso = data.get('compras_proceso', [])
@@ -254,8 +262,9 @@ def generate_resumen_reportes_pdf(data):
                 Paragraph(f"{format_number(c.get('peso_recibido'))} kg" if c.get('peso_recibido') else 'N/A', center_style),
                 Paragraph(str(c.get('estado', '-')), center_style),
             ])
+        # Adjusted cols for ~20cm
         elements.extend(create_section_table("Compras en Proceso", headers, rows,
-                        [3.5*cm, 2.5*cm, 2.5*cm, 3*cm, 4.5*cm]))
+                        [4.5*cm, 3*cm, 3*cm, 4*cm, 5*cm]))
     
     # Transferencias
     transferencias = data.get('transferencias', [])[:15]
@@ -269,8 +278,9 @@ def generate_resumen_reportes_pdf(data):
                 Paragraph(str(t.get('origen_transferencia') or t.get('banco_origen', '-')), normal_style),
                 Paragraph(f"<font color='green'>{format_currency(t.get('valor_transferencia'))}</font>", right_style),
             ])
+        # Adjusted cols for ~20cm
         elements.extend(create_section_table("Últimas Transferencias Realizadas", headers, rows,
-                        [3*cm, 4*cm, 5*cm, 4*cm]))
+                        [3.5*cm, 5*cm, 6*cm, 5*cm]))
     
     # Detalle del Saldo
     elements.append(Paragraph("<b>Detalle del Saldo</b>", section_title_style))
@@ -290,7 +300,8 @@ def generate_resumen_reportes_pdf(data):
         Paragraph(f"<b><font color='{'green' if valor_consignar >= 0 else 'red'}'>{format_currency(valor_consignar)}</font></b>", right_style)
     ])
     
-    detalle_table = Table(detalle_data, colWidths=[10*cm, 6*cm])
+    # Adjusted cols for ~20cm
+    detalle_table = Table(detalle_data, colWidths=[12*cm, 7.5*cm])
     detalle_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.2, 0.2, 0.2)),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
@@ -311,7 +322,8 @@ def generate_resumen_reportes_pdf(data):
         [Paragraph(f"<b>{format_currency(abs(valor_consignar))}</b>", ParagraphStyle('FinalValue', fontSize=14, alignment=TA_CENTER, textColor=final_color))],
         [Paragraph(f"({numero_a_letras(abs(valor_consignar))})", ParagraphStyle('FinalWords', fontSize=8, alignment=TA_CENTER))]
     ]
-    final_table = Table(final_data, colWidths=[26*cm])
+    # Adjusted cols for ~20cm
+    final_table = Table(final_data, colWidths=[full_width])
     final_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.Color(0.95, 1, 0.95) if valor_consignar >= 0 else colors.Color(1, 0.95, 0.95)),
         ('BOX', (0, 0), (-1, -1), 2, final_color),

@@ -22,34 +22,39 @@ import {
 import { Plane, Loader2, Info, AlertCircle, FileSpreadsheet } from "lucide-react";
 import axiosClient from "@/lib/axios";
 import { toast } from "sonner";
+import { DateTimePicker } from "@/components/comercial/DateTimePicker";
 
 interface ExportSeguimientoModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     clients: { id: number; nombre: string }[];
     intermediaries: { id: number; nombre: string }[];
+    initialFechaInicial?: string;
+    initialFechaFinal?: string;
 }
 
 export function ExportSeguimientoModal({
     open,
     onOpenChange,
     clients,
-    intermediaries
+    intermediaries,
+    initialFechaInicial = "",
+    initialFechaFinal = ""
 }: ExportSeguimientoModalProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const [fechaInicial, setFechaInicial] = useState("");
-    const [fechaFinal, setFechaFinal] = useState("");
+    const [fechaInicial, setFechaInicial] = useState(initialFechaInicial);
+    const [fechaFinal, setFechaFinal] = useState(initialFechaFinal);
     const [clienteId, setClienteId] = useState<string>("");
     const [intermediarioId, setIntermediarioId] = useState<string>("");
 
     useEffect(() => {
         if (open) {
-            setFechaInicial("");
-            setFechaFinal("");
+            setFechaInicial(initialFechaInicial);
+            setFechaFinal(initialFechaFinal);
             setClienteId("");
             setIntermediarioId("");
         }
-    }, [open]);
+    }, [open, initialFechaInicial, initialFechaFinal]);
 
     const handleExport = async () => {
         setIsLoading(true);
@@ -171,18 +176,18 @@ export function ExportSeguimientoModal({
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Fecha Inicial</Label>
-                            <Input
-                                type="date"
+                            <DateTimePicker
                                 value={fechaInicial}
-                                onChange={(e) => setFechaInicial(e.target.value)}
+                                onChange={setFechaInicial}
+                                showTime={false}
                             />
                         </div>
                         <div className="space-y-2">
                             <Label>Fecha Final</Label>
-                            <Input
-                                type="date"
+                            <DateTimePicker
                                 value={fechaFinal}
-                                onChange={(e) => setFechaFinal(e.target.value)}
+                                onChange={setFechaFinal}
+                                showTime={false}
                             />
                         </div>
                     </div>

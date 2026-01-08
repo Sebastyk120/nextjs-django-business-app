@@ -19,9 +19,11 @@ interface DateTimePickerProps {
     onChange: (value: string) => void
     label?: string
     showTime?: boolean
+    fromYear?: number
+    toYear?: number
 }
 
-export function DateTimePicker({ value, onChange, label, showTime = true }: DateTimePickerProps) {
+export function DateTimePicker({ value, onChange, label, showTime = true, fromYear = 2015, toYear = new Date().getFullYear() }: DateTimePickerProps) {
     const dateValue = value ? new Date(value) : undefined
 
     const handleDateSelect = (date: Date | undefined) => {
@@ -77,6 +79,9 @@ export function DateTimePicker({ value, onChange, label, showTime = true }: Date
                             selected={dateValue}
                             onSelect={handleDateSelect}
                             initialFocus
+                            captionLayout="dropdown"
+                            fromYear={fromYear}
+                            toYear={toYear}
                         />
                     </div>
                     {showTime && (

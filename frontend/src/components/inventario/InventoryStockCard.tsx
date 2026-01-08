@@ -30,7 +30,7 @@ export function InventoryStockCard({
                             <Boxes className="h-6 w-6" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Referencias</p>
+                            <p className="text-xs font-bold tracking-wider text-slate-400">Total Referencias</p>
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-3xl font-black text-slate-900 leading-none">
                                     {loading ? "..." : referenciasCount}
@@ -56,7 +56,7 @@ export function InventoryStockCard({
                             <AlertTriangle className="h-6 w-6" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Bajo Stock</p>
+                            <p className="text-xs font-bold tracking-wider text-slate-400">Bajo Stock</p>
                             <div className="flex items-baseline gap-2">
                                 <h3 className={cn(
                                     "text-3xl font-black leading-none",
@@ -85,7 +85,7 @@ export function InventoryStockCard({
                             <XCircle className="h-6 w-6" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Sin Stock</p>
+                            <p className="text-xs font-bold tracking-wider text-slate-400">Sin Stock</p>
                             <div className="flex items-baseline gap-2">
                                 <h3 className={cn(
                                     "text-3xl font-black leading-none",

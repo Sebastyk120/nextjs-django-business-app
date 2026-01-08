@@ -46,6 +46,13 @@ export default function ReportesVencidosPage() {
         fetchExportadores();
     }, []);
 
+    // Auto-select if only one exporter is available (e.g. restricted user)
+    useEffect(() => {
+        if (!loadingExportadores && exportadores.length === 1) {
+            setSelectedExportadorId(exportadores[0].id.toString());
+        }
+    }, [loadingExportadores, exportadores]);
+
     const handleFilter = async () => {
         if (!selectedExportadorId) return;
 
@@ -120,11 +127,11 @@ export default function ReportesVencidosPage() {
         <div className="min-h-screen bg-slate-50/50 p-6 space-y-6 font-outfit">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-plus-jakarta flex items-center gap-3">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
                         <ClipboardX className="h-8 w-8 text-emerald-600" />
                         Ingresos Vencidos Pendientes por Reporte
                     </h1>
-                    <p className="text-slate-500 mt-1">
+                    <p className="text-muted-foreground text-sm mt-1">
                         Consulta de ingresos vencidos pendientes por reporte
                     </p>
                 </div>

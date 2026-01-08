@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import axiosClient from "@/lib/axios";
 import { Inventario, InventarioFilters } from "@/types/inventario";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, RefreshCw } from "lucide-react";
+import { Plus, Download, RefreshCw, Warehouse } from "lucide-react";
 import { InventoryTable } from "@/components/inventario/InventoryTable";
 import { InventoryFilters as FiltersComponent } from "@/components/inventario/InventoryFilters";
 import { InventoryStockCard } from "@/components/inventario/InventoryStockCard";
@@ -102,7 +102,8 @@ function InventariosContent() {
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
+                        <Warehouse className="h-8 w-8 text-indigo-600" />
                         Inventarios
                     </h1>
                     <p className="text-muted-foreground text-sm">

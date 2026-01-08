@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, Download } from 'lucide-react';
+import { Loader2, ArrowLeft, Download, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import axiosClient from '@/lib/axios';
 
@@ -59,19 +59,19 @@ const numberToWords = (num: number): string => {
   const convertLessThanThousand = (n: number): string => {
     if (n === 0) return '';
     if (n === 100) return 'CIEN';
-    
+
     let result = '';
     const hundred = Math.floor(n / 100);
     const remainder = n % 100;
-    
+
     if (hundred > 0) result += hundreds[hundred];
-    
+
     if (remainder >= 10 && remainder < 20) {
       result += (result ? ' ' : '') + teens[remainder - 10];
     } else {
       const ten = Math.floor(remainder / 10);
       const unit = remainder % 10;
-      
+
       if (ten > 0) result += (result ? ' ' : '') + tens[ten];
       if (unit > 0) {
         if (ten > 2) result += ' Y ' + units[unit];
@@ -84,7 +84,7 @@ const numberToWords = (num: number): string => {
 
   let result = '';
   const absNum = Math.abs(num);
-  
+
   const billions = Math.floor(absNum / 1000000000);
   const millions = Math.floor((absNum % 1000000000) / 1000000);
   const thousands = Math.floor((absNum % 1000000) / 1000);
@@ -181,7 +181,10 @@ export default function ResumenReportesPage() {
             <Button variant="outline" onClick={() => router.back()} className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" /> Volver
             </Button>
-            <h1 className="text-2xl font-bold">Estado de Cuenta - Proveedor</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
+              <FileText className="h-8 w-8 text-emerald-600" />
+              Estado de Cuenta - Proveedor
+            </h1>
           </div>
           <Button onClick={handleExportPdf} disabled={exportingPdf} className="flex items-center gap-2">
             {exportingPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -221,7 +224,7 @@ export default function ResumenReportesPage() {
 
         {/* Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          
+
           {/* LEFT COLUMN */}
           <div className="space-y-4">
             {/* Reportes Pendientes de Pago */}

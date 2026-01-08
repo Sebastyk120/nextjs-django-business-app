@@ -65,8 +65,13 @@ export default function Products() {
             <div className="container mx-auto px-4 md:px-6">
 
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-                    <div className="max-w-2xl" data-aos="fade-right">
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6"
+                >
+                    <div className="max-w-2xl">
                         <span className="text-[--color-primary] font-bold tracking-wider uppercase text-sm mb-2 block">{t.sub}</span>
                         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{t.title}</h2>
                         <p className="text-lg text-gray-600 leading-relaxed">
@@ -81,7 +86,7 @@ export default function Products() {
                     >
                         {t.viewAll} <ArrowRight size={20} />
                     </motion.button>
-                </div>
+                </motion.div>
 
                 {/* Featured Grid */}
                 {loading ? (
@@ -89,14 +94,32 @@ export default function Products() {
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[--color-primary]"></div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                    <motion.div
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true, margin: "-100px" }}
+                        variants={{
+                            hidden: { opacity: 0 },
+                            visible: {
+                                opacity: 1,
+                                transition: {
+                                    staggerChildren: 0.1
+                                }
+                            }
+                        }}
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"
+                    >
                         {featuredFruits.map((fruit, index) => (
                             <motion.div
                                 key={fruit.id}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: index * 0.1 }}
+                                variants={{
+                                    hidden: { opacity: 0, y: 50 },
+                                    visible: {
+                                        opacity: 1,
+                                        y: 0,
+                                        transition: { type: "spring", stiffness: 50, damping: 20 }
+                                    }
+                                }}
                                 onClick={() => openDetailModal(fruit)}
                                 className="group relative h-[400px] rounded-3xl overflow-hidden cursor-pointer shadow-md hover:shadow-2xl transition-all duration-500"
                             >
@@ -139,7 +162,7 @@ export default function Products() {
                                 </div>
                             </motion.div>
                         ))}
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* Mobile Button */}

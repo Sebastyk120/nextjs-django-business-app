@@ -15,7 +15,7 @@ import { ReporteExportadorModal } from "@/components/nacionales/ReporteExportado
 import { ReporteProveedorModal } from "@/components/nacionales/ReporteProveedorModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowLeft, Search, X } from "lucide-react";
+import { Plus, ArrowLeft, Search, X, List } from "lucide-react";
 import { toast } from "sonner";
 
 const initialFilterState: NacionalesFilterState = {
@@ -157,7 +157,10 @@ function NacionalesPageContent() {
         <div className="flex flex-col gap-6 p-4 md:p-8 max-w-[100vw] overflow-x-hidden bg-slate-50/30 min-h-screen">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta">Nacionales Detallada</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
+                        <List className="h-8 w-8 text-blue-600" />
+                        Nacionales Detallada
+                    </h1>
                     <p className="text-muted-foreground text-sm">Gestión de compras, ventas y reportes de calidad nacionales.</p>
                 </div>
                 <div className="flex items-center gap-2">

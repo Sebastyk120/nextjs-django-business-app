@@ -155,11 +155,11 @@ export default function DashboardNacionalesPage() {
         <div className="min-h-screen bg-slate-50/50 p-6 md:p-8 space-y-8 font-outfit">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
                         <Truck className="h-8 w-8 text-emerald-600" />
                         Dashboard Compras Nacionales
                     </h1>
-                    <p className="text-slate-500 mt-1">
+                    <p className="text-muted-foreground text-sm mt-1">
                         Estado general de compras, utilidades y calidad de proveedores nacionales.
                     </p>
                 </div>

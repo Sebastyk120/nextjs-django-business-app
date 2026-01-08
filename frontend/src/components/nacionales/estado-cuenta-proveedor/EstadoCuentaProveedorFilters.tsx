@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Calendar as CalendarIcon, RefreshCw, FilterX } from "lucide-react";
 import { ProveedorNacional, EstadoCuentaProveedorFilters as FiltersType } from "@/types/nacionales";
+import { DateTimePicker } from "@/components/comercial/DateTimePicker";
 
 interface EstadoCuentaProveedorFiltersProps {
     filters: FiltersType;
@@ -86,23 +87,19 @@ export function EstadoCuentaProveedorFilters({
 
                 <div className="space-y-1">
                     <Label htmlFor="fecha_inicio" className="text-xs text-slate-500">Fecha Inicio</Label>
-                    <Input
-                        id="fecha_inicio"
-                        type="date"
+                    <DateTimePicker
                         value={filters.fecha_inicio || ""}
-                        onChange={(e) => onFilterChange("fecha_inicio", e.target.value)}
-                        className="h-9 text-sm bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20"
+                        onChange={(val) => onFilterChange("fecha_inicio", val)}
+                        showTime={false}
                     />
                 </div>
 
                 <div className="space-y-1">
                     <Label htmlFor="fecha_fin" className="text-xs text-slate-500">Fecha Fin</Label>
-                    <Input
-                        id="fecha_fin"
-                        type="date"
+                    <DateTimePicker
                         value={filters.fecha_fin || ""}
-                        onChange={(e) => onFilterChange("fecha_fin", e.target.value)}
-                        className="h-9 text-sm bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20"
+                        onChange={(val) => onFilterChange("fecha_fin", val)}
+                        showTime={false}
                     />
                 </div>
             </div>

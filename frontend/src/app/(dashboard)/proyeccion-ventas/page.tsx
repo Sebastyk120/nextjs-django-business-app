@@ -115,7 +115,7 @@ export default function ProyeccionVentasPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-2">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-2">
                         Proyección de Ventas
                         {data?.model_metadata?.algorithm === 'weighted_seasonal_growth' && (
                             <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center gap-1">
@@ -124,7 +124,7 @@ export default function ProyeccionVentasPage() {
                             </span>
                         )}
                     </h1>
-                    <p className="text-slate-500 mt-1">
+                    <p className="text-muted-foreground text-sm mt-1">
                         Análisis predictivo con detección de estacionalidad y tendencias de crecimiento.
                     </p>
                 </div>

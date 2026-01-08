@@ -19,7 +19,8 @@ import {
     DollarSign,
     RefreshCcw,
     FileWarning,
-    XCircle
+    XCircle,
+    BarChart3
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -177,10 +178,11 @@ export default function DashboardComercialPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 font-plus-jakarta">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
+                        <BarChart3 className="h-8 w-8 text-blue-600" />
                         Dashboard Comercial
                     </h1>
-                    <p className="text-slate-500 mt-1">
+                    <p className="text-muted-foreground text-sm mt-1">
                         Análisis detallado de rendimiento comercial y exportaciones.
                     </p>
                 </div>

@@ -79,7 +79,8 @@ export default function ReporteIndividualSearch({ onSearch, loading }: ReporteIn
     return (
         <div className="w-full max-w-md mx-auto">
             <div className="bg-white rounded-xl shadow-lg p-8">
-                <h2 className="text-center text-blue-800 mb-6 text-2xl font-bold">
+                <h2 className="flex items-center justify-center gap-3 text-center text-slate-900 mb-6 text-2xl font-bold tracking-tight font-plus-jakarta">
+                    <Search className="h-8 w-8 text-blue-600" />
                     Buscar Reporte Individual
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-5">

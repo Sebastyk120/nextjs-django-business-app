@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { DateTimePicker } from "@/components/comercial/DateTimePicker";
 
 interface ProyeccionFiltersProps {
     filters: ProyeccionFilters;
@@ -63,21 +64,19 @@ export function ProyeccionFiltersPanel({
                 {/* Date Controls - Simple Native Inputs for reliability in this version */}
                 <div className="space-y-1.5">
                     <Label className="text-xs text-slate-500">Fecha Inicio</Label>
-                    <input
-                        type="date"
-                        className="flex h-9 w-full rounded-md border border-slate-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600"
+                    <DateTimePicker
                         value={filters.fecha_inicio}
-                        onChange={(e) => onFilterChange("fecha_inicio", e.target.value)}
+                        onChange={(val) => onFilterChange("fecha_inicio", val)}
+                        showTime={false}
                     />
                 </div>
 
                 <div className="space-y-1.5">
                     <Label className="text-xs text-slate-500">Fecha Fin (Base)</Label>
-                    <input
-                        type="date"
-                        className="flex h-9 w-full rounded-md border border-slate-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-600"
+                    <DateTimePicker
                         value={filters.fecha_fin}
-                        onChange={(e) => onFilterChange("fecha_fin", e.target.value)}
+                        onChange={(val) => onFilterChange("fecha_fin", val)}
+                        showTime={false}
                     />
                 </div>
 

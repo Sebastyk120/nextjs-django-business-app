@@ -6,7 +6,7 @@ import { NacionalesFilters } from "@/components/nacionales/general/NacionalesFil
 import nacionalesService from "@/services/nacionalesService";
 import { CompraNacional } from "@/types/nacionales";
 import { useSearchParams } from "next/navigation";
-import { BarChart3, Package, CheckCircle2, AlertCircle } from "lucide-react";
+import { BarChart3, Package, CheckCircle2, AlertCircle, Activity } from "lucide-react";
 
 export default function NacionalesGeneralPage() {
     const searchParams = useSearchParams();
@@ -49,8 +49,11 @@ export default function NacionalesGeneralPage() {
     return (
         <div className="min-h-screen bg-slate-50/10 p-4 md:p-8 space-y-8">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">Vista General Nacionales</h1>
-                <p className="text-slate-500 text-lg">Seguimiento centralizado de operaciones, compras y reportes.</p>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
+                    <Activity className="h-8 w-8 text-blue-600" />
+                    Vista General Nacionales
+                </h1>
+                <p className="text-muted-foreground text-sm">Seguimiento centralizado de operaciones, compras y reportes.</p>
             </div>
 
             {/* Stats Cards */}

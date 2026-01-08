@@ -14,6 +14,7 @@ import {
 import { Proveedor, ORIGEN_OPTIONS } from "./types";
 import { X } from "lucide-react";
 import axiosClient from "@/lib/axios";
+import { DateTimePicker } from "@/components/comercial/DateTimePicker";
 
 interface TransferenciasFiltersProps {
     filters: any;
@@ -85,21 +86,19 @@ export function TransferenciasFilters({ filters, onFilterChange }: Transferencia
 
                 <div className="space-y-1.5 w-full md:w-[150px]">
                     <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Desde</Label>
-                    <Input
-                        type="date"
+                    <DateTimePicker
                         value={filters.fecha_inicio}
-                        onChange={(e) => handleChange("fecha_inicio", e.target.value)}
-                        className="h-9 border-slate-200 bg-slate-50/50"
+                        onChange={(val) => handleChange("fecha_inicio", val)}
+                        showTime={false}
                     />
                 </div>
 
                 <div className="space-y-1.5 w-full md:w-[150px]">
                     <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Hasta</Label>
-                    <Input
-                        type="date"
+                    <DateTimePicker
                         value={filters.fecha_fin}
-                        onChange={(e) => handleChange("fecha_fin", e.target.value)}
-                        className="h-9 border-slate-200 bg-slate-50/50"
+                        onChange={(val) => handleChange("fecha_fin", val)}
+                        showTime={false}
                     />
                 </div>
 

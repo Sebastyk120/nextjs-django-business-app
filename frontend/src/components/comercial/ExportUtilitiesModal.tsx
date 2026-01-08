@@ -15,16 +15,22 @@ import { Label } from "@/components/ui/label";
 import { TrendingUp, Loader2, Info, FileSpreadsheet } from "lucide-react";
 import axiosClient from "@/lib/axios";
 import { toast } from "sonner";
+import { DateTimePicker } from "@/components/comercial/DateTimePicker";
 
 interface ExportUtilitiesModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    initialFechaInicial?: string;
+    initialFechaFinal?: string;
 }
 
-export function ExportUtilitiesModal({ open, onOpenChange }: ExportUtilitiesModalProps) {
+export function ExportUtilitiesModal({ open, onOpenChange, initialFechaInicial = "", initialFechaFinal = "" }: ExportUtilitiesModalProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const [fechaInicial, setFechaInicial] = useState("");
-    const [fechaFinal, setFechaFinal] = useState("");
+    const [fechaInicial, setFechaInicial] = useState(initialFechaInicial);
+    const [fechaFinal, setFechaFinal] = useState(initialFechaFinal);
+
+    if (open && fechaInicial !== initialFechaInicial && fechaInicial === "") setFechaInicial(initialFechaInicial);
+    if (open && fechaFinal !== initialFechaFinal && fechaFinal === "") setFechaFinal(initialFechaFinal);
 
     const handleExport = async () => {
         setIsLoading(true);
@@ -89,20 +95,18 @@ export function ExportUtilitiesModal({ open, onOpenChange }: ExportUtilitiesModa
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="fecha_inicial_util">Fecha Inicial</Label>
-                            <Input
-                                id="fecha_inicial_util"
-                                type="date"
+                            <DateTimePicker
                                 value={fechaInicial}
-                                onChange={(e) => setFechaInicial(e.target.value)}
+                                onChange={setFechaInicial}
+                                showTime={false}
                             />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="fecha_final_util">Fecha Final</Label>
-                            <Input
-                                id="fecha_final_util"
-                                type="date"
+                            <DateTimePicker
                                 value={fechaFinal}
-                                onChange={(e) => setFechaFinal(e.target.value)}
+                                onChange={setFechaFinal}
+                                showTime={false}
                             />
                         </div>
                     </div>

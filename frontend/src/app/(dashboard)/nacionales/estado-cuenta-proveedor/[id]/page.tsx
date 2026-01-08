@@ -137,11 +137,11 @@ export default function EstadoCuentaProveedorPage() {
                             Proveedores
                         </Button>
                     </div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
                         <Wallet className="h-8 w-8 text-indigo-600" />
                         Estado de Cuenta - {data.proveedor.nombre}
                     </h1>
-                    <p className="text-slate-500 mt-1">
+                    <p className="text-muted-foreground text-sm mt-1">
                         {dateRangeText}
                     </p>
                 </div>
@@ -149,7 +149,7 @@ export default function EstadoCuentaProveedorPage() {
 
             <EstadoCuentaProveedorFilters
                 filters={filters}
-                proveedores={data.proveedores}
+                proveedores={data.proveedores.map(p => ({ ...p, nit: p.nit || undefined }))}
                 currentProveedorId={proveedorId}
                 onFilterChange={handleFilterChange}
                 onProveedorChange={handleProveedorChange}
