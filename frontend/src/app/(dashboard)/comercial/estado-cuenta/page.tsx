@@ -168,7 +168,7 @@ export default function EstadoCuentaPage() {
                             </Select>
                         </div>
 
-                        <div className="w-full lg:w-40 space-y-2">
+                        <div className="w-full lg:w-56 space-y-2">
                             <label className="text-sm font-medium text-slate-700">Desde</label>
                             <DateTimePicker
                                 value={startDate}
@@ -177,7 +177,7 @@ export default function EstadoCuentaPage() {
                             />
                         </div>
 
-                        <div className="w-full lg:w-40 space-y-2">
+                        <div className="w-full lg:w-56 space-y-2">
                             <label className="text-sm font-medium text-slate-700">Hasta</label>
                             <DateTimePicker
                                 value={endDate}

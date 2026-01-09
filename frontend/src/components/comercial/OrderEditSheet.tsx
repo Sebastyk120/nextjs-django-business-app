@@ -83,14 +83,20 @@ export function OrderEditSheet({
     const showExportadorView = !isHeavens || (isHeavens && !!activeExportadora);
 
     // Select the schema based on mode
-    let schema = orderSchemas.base;
-    if (showExportadorView) {
-        schema = orderSchemas.exportador;
-    } else if (mode) {
-        schema = orderSchemas[mode];
-    }
+    const getSchema = () => {
+        if (showExportadorView) {
+            return orderSchemas.exportador;
+        }
+        if (mode && mode !== 'base') {
+            return orderSchemas[mode];
+        }
+        return orderSchemas.base;
+    };
+    const schema = getSchema();
 
-    const form = useForm({
+    // Use any to allow dynamic field names across different schemas
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const form = useForm<any>({
         resolver: zodResolver(schema),
         defaultValues: {},
     });
@@ -101,6 +107,7 @@ export function OrderEditSheet({
             if (isHeavens) {
                 if (mode === 'seguimiento') {
                     fetchAgencias();
+                    fetchExportadores();
                 }
                 if (!mode || mode === 'base') {
                     fetchAllAuxData();
@@ -152,6 +159,15 @@ export function OrderEditSheet({
             setAgencias(res.data);
         } catch (e) {
             console.error("Error loading aux data", e);
+        }
+    }
+
+    const fetchExportadores = async () => {
+        try {
+            const res = await axiosClient.get('/comercial/api/exportadores/');
+            setExportadores(res.data);
+        } catch (e) {
+            console.error("Error loading exportadores", e);
         }
     }
 
@@ -627,9 +643,18 @@ export function OrderEditSheet({
                 <FormField control={form.control} name="responsable_reserva" render={({ field }: { field: any }) => (
                     <FormItem>
                         <FormLabel>Responsable Reserva</FormLabel>
-                        <FormControl>
-                            <Input {...field} value={field.value || ''} />
-                        </FormControl>
+                        <Select onValueChange={(val) => field.onChange(parseInt(val))} value={field.value?.toString() || ''}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccione..." />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {exportadores.map(exp => (
+                                    <SelectItem key={exp.id} value={exp.id.toString()}>{exp.nombre}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                     </FormItem>
                 )} />

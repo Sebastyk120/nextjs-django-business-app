@@ -72,14 +72,16 @@ export function OrdersTable({ data, visibleColumns, columnsConfig, onEdit, onVie
                         <th className="h-10 px-4 text-left align-middle font-medium text-slate-500 min-w-[100px] border-r border-slate-100 bg-slate-50 border-t-2 border-t-slate-200">
                             Acciones
                         </th>
-                        {columnsConfig.filter(col => visibleColumns.includes(col.key)).map((col) => {
+                        {columnsConfig.filter(col => visibleColumns.includes(col.key)).map((col, index) => {
                             const styles = col.group ? GROUP_STYLES[col.group] : GROUP_STYLES["General"];
+                            const isFirstColumn = index === 0;
                             return (
                                 <th
                                     key={col.key}
                                     className={cn(
                                         "h-12 px-2 py-1 text-left align-middle font-semibold text-slate-600 text-[11px] tracking-tight border-r border-slate-100 leading-[1.1] min-w-[70px] max-w-[100px] whitespace-normal break-words",
-                                        styles?.header || "bg-slate-50"
+                                        styles?.header || "bg-slate-50",
+                                        isFirstColumn && "sticky left-[140px] z-10 shadow-[4px_0_5px_-3px_rgba(0,0,0,0.1)]"
                                     )}
                                 >
                                     {col.label}
@@ -253,14 +255,16 @@ export function OrdersTable({ data, visibleColumns, columnsConfig, onEdit, onVie
                                         })()}
                                     </div>
                                 </td>
-                                {columnsConfig.filter(col => visibleColumns.includes(col.key)).map((col) => {
+                                {columnsConfig.filter(col => visibleColumns.includes(col.key)).map((col, index) => {
                                     const styles = col.group ? GROUP_STYLES[col.group] : GROUP_STYLES["General"];
+                                    const isFirstColumn = index === 0;
                                     return (
                                         <td
                                             key={col.key}
                                             className={cn(
                                                 "p-2 align-middle whitespace-nowrap border-r border-slate-100/50 text-xs",
-                                                styles?.cell
+                                                styles?.cell,
+                                                isFirstColumn && "sticky left-[140px] bg-inherit z-10 shadow-[4px_0_5px_-3px_rgba(0,0,0,0.1)]"
                                             )}
                                         >
                                             {col.format ? col.format(pedido[col.key], pedido) : pedido[col.key] as React.ReactNode}

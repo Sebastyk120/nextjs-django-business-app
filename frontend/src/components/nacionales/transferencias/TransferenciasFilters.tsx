@@ -84,7 +84,7 @@ export function TransferenciasFilters({ filters, onFilterChange }: Transferencia
                     </Select>
                 </div>
 
-                <div className="space-y-1.5 w-full md:w-[150px]">
+                <div className="space-y-1.5 w-full md:w-[220px]">
                     <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Desde</Label>
                     <DateTimePicker
                         value={filters.fecha_inicio}
@@ -93,7 +93,7 @@ export function TransferenciasFilters({ filters, onFilterChange }: Transferencia
                     />
                 </div>
 
-                <div className="space-y-1.5 w-full md:w-[150px]">
+                <div className="space-y-1.5 w-full md:w-[220px]">
                     <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Hasta</Label>
                     <DateTimePicker
                         value={filters.fecha_fin}

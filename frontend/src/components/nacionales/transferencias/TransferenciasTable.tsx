@@ -37,7 +37,7 @@ interface TransferenciasTableProps {
 export function TransferenciasTable({ filters, refreshTrigger, onEdit }: TransferenciasTableProps) {
     const [data, setData] = useState<Transferencia[]>([]);
     const [loading, setLoading] = useState(true);
-    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [transferToDelete, setTransferToDelete] = useState<Transferencia | null>(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -63,15 +63,15 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
     }, [filters, refreshTrigger]);
 
     const handleDelete = async () => {
-        if (!deleteId) return;
+        if (!transferToDelete) return;
         try {
-            await axiosClient.delete(`/nacionales/api/transferencias/${deleteId}/`);
+            await axiosClient.delete(`/nacionales/api/transferencias/${transferToDelete.id}/`);
             toast.success("Transferencia eliminada");
             fetchData();
         } catch (error) {
             toast.error("Error al eliminar");
         } finally {
-            setDeleteId(null);
+            setTransferToDelete(null);
         }
     };
 
@@ -142,7 +142,7 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
                                                 variant="ghost"
                                                 size="icon"
                                                 className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
-                                                onClick={() => setDeleteId(item.id)}
+                                                onClick={() => setTransferToDelete(item)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -166,18 +166,34 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
                 </div>
             </div>
 
-            <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+            <AlertDialog open={!!transferToDelete} onOpenChange={() => setTransferToDelete(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción eliminará permanentemente la transferencia. Esto afectará el balance y los pagos del proveedor.
+                        <AlertDialogTitle>¿Está seguro de eliminar esta transferencia?</AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-3 text-sm text-slate-500">
+                                <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-900 mt-2">
+                                    <p className="text-xs font-semibold uppercase tracking-wider opacity-60">Detalles del registro:</p>
+                                    <div className="mt-1 font-bold">
+                                        {transferToDelete?.proveedor_nombre}
+                                    </div>
+                                    <div className="text-lg font-bold text-red-600">
+                                        $ {Number(transferToDelete?.valor_transferencia || 0).toLocaleString('es-CO')}
+                                    </div>
+                                    <p className="text-xs mt-1 italic">
+                                        {transferToDelete?.fecha_transferencia && format(new Date(transferToDelete.fecha_transferencia), "dd 'de' MMMM, yyyy", { locale: es })}
+                                    </p>
+                                </div>
+                                <p className="pt-2">
+                                    Esta acción eliminará permanentemente la transferencia. Esto afectará el balance y los pagos del proveedor.
+                                </p>
+                            </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                            Eliminar
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white">
+                            Sí, eliminar registro
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

@@ -44,6 +44,22 @@ const formatNumber = (value: number | null | undefined) => {
     return new Intl.NumberFormat('en-US').format(value);
 };
 
+const formatDateTime = (value: string | null | undefined) => {
+    if (!value) return '-';
+    try {
+        const date = new Date(value);
+        // Format as YYYY-MM-DD HH:mm
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
+    } catch {
+        return '-';
+    }
+};
+
 // Initial Columns Configuration based on user request
 const INITIAL_COLUMNS: GroupedColumn[] = [
     // General
@@ -51,6 +67,7 @@ const INITIAL_COLUMNS: GroupedColumn[] = [
     { key: "cliente", label: "Cliente", group: "General" },
     { key: "intermediario", label: "Intermediario", group: "General" },
     { key: "semana", label: "Semana", group: "General" },
+    { key: "observaciones", label: "Observaciones", group: "General" },
 
     // Fechas
     { key: "fecha_solicitud", label: "Fecha Solicitud", group: "Fechas" },
@@ -68,7 +85,18 @@ const INITIAL_COLUMNS: GroupedColumn[] = [
     { key: "variedades", label: "Variedades", group: "Tracking" },
     { key: "estado_pedido", label: "Estado Pedido", group: "Tracking" },
     { key: "estado_cancelacion", label: "Cancelación", group: "Tracking" },
-    { key: "observaciones", label: "Observaciones", group: "Tracking" },
+    { key: "aerolinea", label: "Aerolínea", group: "Tracking" },
+    { key: "agencia_carga", label: "Agencia de Carga", group: "Tracking" },
+    { key: "responsable_reserva", label: "Responsable Reserva", group: "Tracking" },
+    { key: "estatus_reserva", label: "Estatus Reserva", group: "Tracking" },
+    { key: "estado_documentos", label: "Estado Documentos", group: "Tracking" },
+    { key: "observaciones_tracking", label: "Observaciones Tracking", group: "Tracking" },
+    { key: "termo", label: "# Termo", group: "Tracking" },
+    { key: "eta", label: "ETA", group: "Tracking" },
+    { key: "etd", label: "ETD", group: "Tracking" },
+    { key: "peso_awb", label: "Peso AWB", group: "Tracking" },
+    { key: "eta_real", label: "ETA Real", group: "Tracking" },
+    { key: "diferencia_peso_factura_awb", label: "Dif. Peso Fact/AWB", group: "Tracking" },
 
     // Facturación
     { key: "numero_factura", label: "N° Factura", group: "Facturación" },
@@ -290,7 +318,7 @@ function OrdersPageContent() {
         }
 
         // Apply formatters based on key
-        if (['total_peso_bruto_solicitado', 'total_peso_bruto_enviado', 'total_piezas_solicitadas', 'total_piezas_enviadas'].includes(col.key)) {
+        if (['total_peso_bruto_solicitado', 'total_peso_bruto_enviado', 'total_piezas_solicitadas', 'total_piezas_enviadas', 'peso_awb', 'diferencia_peso_factura_awb'].includes(col.key)) {
             formatter = formatNumber;
         } else if (['descuento', 'valor_total_nota_credito_usd', 'utilidad_bancaria_usd', 'valor_pagado_cliente_usd', 'trm_monetizacion', 'tasa_representativa_usd_diaria', 'trm_cotizacion', 'diferencia_por_abono', 'valor_total_factura_usd', 'valor_total_utilidad_usd', 'valor_total_recuperacion_usd'].includes(col.key)) {
             formatter = formatCurrency;
@@ -335,6 +363,32 @@ function OrdersPageContent() {
                     {val}
                 </span>
             );
+        } else if (['observaciones_tracking', 'observaciones'].includes(col.key)) {
+            formatter = (val: string | null | undefined) => (
+                <div className="max-w-[200px] truncate text-slate-600" title={val || ''}>
+                    {val || '-'}
+                </div>
+            );
+        } else if (col.key === 'estado_documentos') {
+            formatter = (val: any) => (
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${val === 'Completos' ? 'bg-green-50 text-green-700 ring-green-600/20' :
+                    val === 'Incompletos' ? 'bg-red-50 text-red-700 ring-red-600/20' :
+                        'bg-yellow-50 text-yellow-800 ring-yellow-600/20'
+                    }`}>
+                    {val || '-'}
+                </span>
+            );
+        } else if (col.key === 'estatus_reserva') {
+            formatter = (val: any) => (
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${val === 'Confirmada' ? 'bg-green-50 text-green-700 ring-green-600/20' :
+                    val === 'Pendiente' ? 'bg-yellow-50 text-yellow-800 ring-yellow-600/20' :
+                        'bg-slate-50 text-slate-700 ring-slate-600/20'
+                    }`}>
+                    {val || '-'}
+                </span>
+            );
+        } else if (['eta', 'etd', 'eta_real'].includes(col.key)) {
+            formatter = formatDateTime;
         }
 
         return { ...col, label, format: formatter };

@@ -77,16 +77,16 @@ export function GroupedColumnSelector({
                     Vista de Columnas
                 </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-[1000px] p-0">
+            <PopoverContent align="end" className="w-[1200px] p-0">
                 <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                     <h4 className="font-semibold text-sm text-slate-900 mb-1">Configuración de Visualización</h4>
                     <p className="text-xs text-slate-500">Selecciona las columnas que deseas ver en la tabla, organizadas por grupos.</p>
                 </div>
                 <ScrollArea className="h-[550px] p-4">
-                    <div className="grid grid-cols-4 gap-x-8 gap-y-10">
-                        {/* Column 1: General & Tracking */}
+                    <div className="grid grid-cols-5 gap-x-5 gap-y-10">
+                        {/* Column 1: General & Fechas */}
                         <div className="space-y-10">
-                            {["General", "Tracking"].map(g => (
+                            {["General", "Fechas"].map(g => (
                                 <GroupSection
                                     key={g}
                                     group={g as ColumnGroup}
@@ -98,9 +98,22 @@ export function GroupedColumnSelector({
                             ))}
                         </div>
 
-                        {/* Column 2: Fechas & Facturación */}
+                        {/* Column 2: Logística */}
+                        <div>
+                            {groupedColumns["Logística"] && (
+                                <GroupSection
+                                    group="Logística"
+                                    columns={groupedColumns["Logística"]}
+                                    visibleColumns={visibleColumns}
+                                    onToggleColumn={onToggleColumn}
+                                    onToggleGroup={onToggleGroup}
+                                />
+                            )}
+                        </div>
+
+                        {/* Column 3: Facturación & Cantidades */}
                         <div className="space-y-10">
-                            {["Fechas", "Facturación"].map(g => (
+                            {["Facturación", "Cantidades"].map(g => (
                                 <GroupSection
                                     key={g}
                                     group={g as ColumnGroup}
@@ -112,26 +125,25 @@ export function GroupedColumnSelector({
                             ))}
                         </div>
 
-                        {/* Column 3: Logística & Cantidades */}
-                        <div className="space-y-10">
-                            {["Logística", "Cantidades"].map(g => (
-                                <GroupSection
-                                    key={g}
-                                    group={g as ColumnGroup}
-                                    columns={groupedColumns[g as ColumnGroup] || []}
-                                    visibleColumns={visibleColumns}
-                                    onToggleColumn={onToggleColumn}
-                                    onToggleGroup={onToggleGroup}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Column 4: Financiero (Long Section) */}
-                        <div className="border-l border-slate-100 pl-8">
+                        {/* Column 4: Financiero (muchos campos) */}
+                        <div className="border-l border-slate-200 pl-5">
                             {groupedColumns["Financiero"] && (
                                 <GroupSection
                                     group="Financiero"
                                     columns={groupedColumns["Financiero"]}
+                                    visibleColumns={visibleColumns}
+                                    onToggleColumn={onToggleColumn}
+                                    onToggleGroup={onToggleGroup}
+                                />
+                            )}
+                        </div>
+
+                        {/* Column 5: Tracking (muchos campos) */}
+                        <div className="border-l border-slate-200 pl-5">
+                            {groupedColumns["Tracking"] && (
+                                <GroupSection
+                                    group="Tracking"
+                                    columns={groupedColumns["Tracking"]}
                                     visibleColumns={visibleColumns}
                                     onToggleColumn={onToggleColumn}
                                     onToggleGroup={onToggleGroup}

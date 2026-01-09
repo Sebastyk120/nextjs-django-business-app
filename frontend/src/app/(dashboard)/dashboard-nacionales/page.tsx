@@ -40,13 +40,12 @@ export default function DashboardNacionalesPage() {
     const [data, setData] = useState<DashboardNacionalesData | null>(null);
 
     const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const startOfPrevYear = new Date(today.getFullYear() - 1, 0, 1);
 
     const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
     const [filters, setFilters] = useState<DashboardNacionalesFilters>({
-        fecha_inicio: formatDate(thirtyDaysAgo),
+        fecha_inicio: formatDate(startOfPrevYear),
         fecha_fin: formatDate(today),
         proveedor_id: null,
         fruta_id: null
@@ -113,11 +112,10 @@ export default function DashboardNacionalesPage() {
 
     const handleReset = () => {
         const resetToday = new Date();
-        const resetThirtyDaysAgo = new Date(resetToday);
-        resetThirtyDaysAgo.setDate(resetThirtyDaysAgo.getDate() - 30);
+        const resetPrevYear = new Date(resetToday.getFullYear() - 1, 0, 1);
 
         const defaultFilters: DashboardNacionalesFilters = {
-            fecha_inicio: formatDate(resetThirtyDaysAgo),
+            fecha_inicio: formatDate(resetPrevYear),
             fecha_fin: formatDate(resetToday),
             proveedor_id: null,
             fruta_id: null

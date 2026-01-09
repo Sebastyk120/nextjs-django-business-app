@@ -32,18 +32,16 @@ export default function DashboardComercialPage() {
 
     // Calculate default dates
     const today = new Date();
-    const oneYearAgo = new Date(today);
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-    const twoYearsAgo = new Date(today);
-    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+    const startOfPrevYear = new Date(today.getFullYear() - 1, 0, 1);
+    const startOfTwoYearsAgo = new Date(today.getFullYear() - 2, 0, 1);
 
     const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
     const [filters, setFilters] = useState<DashboardFilters>({
-        fecha_inicio: formatDate(oneYearAgo),
+        fecha_inicio: formatDate(startOfPrevYear),
         fecha_fin: formatDate(today),
-        fecha_inicio_anterior: formatDate(twoYearsAgo),
-        fecha_fin_anterior: formatDate(oneYearAgo),
+        fecha_inicio_anterior: formatDate(startOfTwoYearsAgo),
+        fecha_fin_anterior: formatDate(startOfPrevYear),
         cliente_id: "",
         intermediario_id: "",
         fruta_id: "",
@@ -106,18 +104,16 @@ export default function DashboardComercialPage() {
     };
 
     const handleReset = () => {
-        // Reset to default date ranges (1 year back for current, 2 years for comparative)
+        // Reset to default date ranges
         const resetToday = new Date();
-        const resetOneYearAgo = new Date(resetToday);
-        resetOneYearAgo.setFullYear(resetOneYearAgo.getFullYear() - 1);
-        const resetTwoYearsAgo = new Date(resetToday);
-        resetTwoYearsAgo.setFullYear(resetTwoYearsAgo.getFullYear() - 2);
+        const resetStartOfPrevYear = new Date(resetToday.getFullYear() - 1, 0, 1);
+        const resetStartOfTwoYearsAgo = new Date(resetToday.getFullYear() - 2, 0, 1);
 
         const defaultFilters: DashboardFilters = {
-            fecha_inicio: formatDate(resetOneYearAgo),
+            fecha_inicio: formatDate(resetStartOfPrevYear),
             fecha_fin: formatDate(resetToday),
-            fecha_inicio_anterior: formatDate(resetTwoYearsAgo),
-            fecha_fin_anterior: formatDate(resetOneYearAgo),
+            fecha_inicio_anterior: formatDate(resetStartOfTwoYearsAgo),
+            fecha_fin_anterior: formatDate(resetStartOfPrevYear),
             cliente_id: "",
             intermediario_id: "",
             fruta_id: "",

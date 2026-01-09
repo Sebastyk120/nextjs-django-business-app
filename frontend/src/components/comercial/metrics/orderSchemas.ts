@@ -39,7 +39,7 @@ export const orderSchemas = {
     seguimiento: z.object({
         // Although fecha_llegada is editable in form, it might need date validation
         fecha_llegada: z.string().nullable().optional(),
-        responsable_reserva: z.string().nullable().optional(),
+        responsable_reserva: z.coerce.number().nullable().optional(),
         estatus_reserva: z.string().nullable().optional(),
         agencia_carga: z.string().nullable().optional(), // ID
         etd: z.string().nullable().optional(), // DateTime

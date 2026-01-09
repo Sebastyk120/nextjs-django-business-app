@@ -60,6 +60,9 @@ class PedidoListSerializer(serializers.ModelSerializer):
     exportadora = serializers.SerializerMethodField()
     subexportadora = serializers.SerializerMethodField()
     destino = serializers.SerializerMethodField()
+    aerolinea = serializers.SerializerMethodField()
+    agencia_carga = serializers.SerializerMethodField()
+    responsable_reserva = serializers.SerializerMethodField()
 
     class Meta:
         model = Pedido
@@ -81,7 +84,12 @@ class PedidoListSerializer(serializers.ModelSerializer):
             'valor_utilidad_pesos', 'valor_total_recuperacion_usd',
             'documento_cobro_utilidad', 'fecha_pago_utilidad',
             'estado_utilidad', 'variedades', 'estado_pedido',
-            'estado_cancelacion', 'observaciones'
+            'estado_cancelacion', 'observaciones',
+            # Tracking/Seguimiento fields
+            'responsable_reserva', 'estatus_reserva', 'aerolinea',
+            'agencia_carga', 'estado_documentos', 'observaciones_tracking',
+            'etd', 'eta', 'peso_awb', 'eta_real', 
+            'diferencia_peso_factura_awb', 'termo'
         ]
 
     def get_cliente(self, obj):
@@ -98,6 +106,23 @@ class PedidoListSerializer(serializers.ModelSerializer):
 
     def get_destino(self, obj):
         return obj.destino.codigo if obj.destino else None
+
+    def get_aerolinea(self, obj):
+        return obj.aerolinea.nombre if obj.aerolinea else None
+
+    def get_agencia_carga(self, obj):
+        return obj.agencia_carga.nombre if obj.agencia_carga else None
+
+    def get_responsable_reserva(self, obj):
+        # responsable_reserva puede ser CharField, User, o ForeignKey
+        if not obj.responsable_reserva:
+            return None
+        if hasattr(obj.responsable_reserva, 'username'):
+            return obj.responsable_reserva.username
+        if hasattr(obj.responsable_reserva, 'get_full_name'):
+            full_name = obj.responsable_reserva.get_full_name()
+            return full_name if full_name else str(obj.responsable_reserva)
+        return str(obj.responsable_reserva)
 
 
 class PedidoDetailSerializer(serializers.ModelSerializer):
