@@ -12,6 +12,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
+from django.db import transaction
+from datetime import datetime, timedelta, date
 from .serializers import (
     PedidoListSerializer, PedidoDetailSerializer, PedidoCreateSerializer,
     ClienteSerializer, IntermediarioSerializer, ExportadorSerializer,
@@ -335,6 +337,62 @@ class PedidoViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, viewsets.R
         pedido.save()
         
         return Response({'status': 'actualizado', 'estado_cancelacion': pedido.estado_cancelacion})
+
+    @action(detail=False, methods=['post'], url_path='update-expiration-days')
+    def update_expiration_days(self, request):
+        if not (request.user.groups.filter(name='Heavens').exists() or request.user.groups.filter(name='Autorizadores').exists()):
+             return Response({'error': 'No tienes permisos'}, status=status.HTTP_403_FORBIDDEN)
+
+        batch_size = 150
+        pedidos = Pedido.objects.all().iterator(chunk_size=batch_size)
+        pedidos_para_actualizar = []
+        hoy = timezone.now().date()
+
+        for pedido in pedidos:
+            if pedido.fecha_pago is not None:
+                pedido.dias_de_vencimiento = 0
+            else:
+                if isinstance(pedido.fecha_entrega, datetime):
+                    fecha_entrega = pedido.fecha_entrega.date()
+                elif isinstance(pedido.fecha_entrega, date):
+                    fecha_entrega = pedido.fecha_entrega
+                else:
+                    pedido.dias_de_vencimiento = None
+                    pedidos_para_actualizar.append(pedido)
+                    continue
+
+                fecha_entrega += timedelta(days=pedido.dias_cartera)
+                pedido.dias_de_vencimiento = (hoy - fecha_entrega).days
+
+            pedidos_para_actualizar.append(pedido)
+
+            if len(pedidos_para_actualizar) >= batch_size:
+                with transaction.atomic():
+                    Pedido.objects.bulk_update(
+                        pedidos_para_actualizar,
+                        ['dias_de_vencimiento']
+                    )
+                pedidos_para_actualizar = []
+
+        if pedidos_para_actualizar:
+            with transaction.atomic():
+                Pedido.objects.bulk_update(
+                    pedidos_para_actualizar,
+                    ['dias_de_vencimiento']
+                )
+
+        return Response({'status': 'success', 'message': 'Todos los pedidos se han actualizado correctamente.'})
+
+    @action(detail=False, methods=['post'], url_path='update-trm')
+    def update_trm(self, request):
+        if not (request.user.groups.filter(name='Heavens').exists() or request.user.groups.filter(name='Autorizadores').exists()):
+             return Response({'error': 'No tienes permisos'}, status=status.HTTP_403_FORBIDDEN)
+             
+        pedidos = Pedido.objects.order_by('-id')[:60]
+        for pedido in pedidos:
+            pedido.actualizar_tasa_representativa()
+            
+        return Response({'status': 'success', 'message': 'Se Actualizaron Las Tasas Con Banco De La Republica Correctamente'})
 
     def get_serializer_class(self):
         """Use different serializers for list and detail views"""

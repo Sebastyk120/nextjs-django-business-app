@@ -30,7 +30,9 @@ import {
     Plane,
     FileText,
     Send,
-    ClipboardList
+    ClipboardList,
+    RefreshCw,
+    Banknote
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -423,6 +425,36 @@ function OrdersPageContent() {
 
     const isHeavens = user?.groups?.includes("Heavens") || user?.groups?.includes("Autorizadores");
 
+    const handleUpdateExpiration = async () => {
+        const promise = axiosClient.post('/comercial/api/pedidos/update-expiration-days/');
+        toast.promise(promise, {
+            loading: 'Actualizando días de vencimiento...',
+            success: 'Días de vencimiento actualizados',
+            error: 'Error al actualizar días de vencimiento'
+        });
+        try {
+            await promise;
+            setRefreshTrigger(prev => prev + 1);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleUpdateTRM = async () => {
+        const promise = axiosClient.post('/comercial/api/pedidos/update-trm/');
+        toast.promise(promise, {
+            loading: 'Actualizando TRM...',
+            success: 'TRM actualizada correctamente',
+            error: 'Error al actualizar TRM'
+        });
+        try {
+            await promise;
+            setRefreshTrigger(prev => prev + 1);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     return (
         <div className="flex flex-col gap-6 p-4 md:p-8 max-w-[100vw] overflow-x-hidden">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -435,7 +467,25 @@ function OrdersPageContent() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     {isHeavens && (
-                        <NewOrderModal onOrderCreated={() => setRefreshTrigger(prev => prev + 1)} />
+                        <>
+                            <NewOrderModal onOrderCreated={() => setRefreshTrigger(prev => prev + 1)} />
+                            <Button
+                                variant="outline"
+                                onClick={handleUpdateExpiration}
+                                className="text-slate-600 border-slate-200 hover:bg-slate-50"
+                            >
+                                <RefreshCw className="mr-2 h-4 w-4 text-orange-600" />
+                                Actualizar Vencimiento
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={handleUpdateTRM}
+                                className="text-slate-600 border-slate-200 hover:bg-slate-50"
+                            >
+                                <Banknote className="mr-2 h-4 w-4 text-green-600" />
+                                Actualizar TRM
+                            </Button>
+                        </>
                     )}
 
                     {activePreset === 'utilidades' && (

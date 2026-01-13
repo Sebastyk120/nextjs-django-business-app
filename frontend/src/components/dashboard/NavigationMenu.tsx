@@ -78,14 +78,7 @@ const MENU_ITEMS: { section?: string; items: MenuItem[] }[] = [
                     { title: "Cliente Presentación", href: "/admin/comercial/clientepresentacion/" },
                 ],
             },
-            {
-                title: "Seguimiento Exp.",
-                icon: FileText,
-                submenu: [
-                    { title: "Seguimiento Pedidos", href: "/seguimiento/pedidos" },
-                    { title: "Resumen Semanal", href: "/seguimiento/resumen" },
-                ],
-            },
+
             {
                 title: "Proyección Ventas (Todas las Exp.)",
                 icon: BarChart3,
