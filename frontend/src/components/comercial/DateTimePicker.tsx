@@ -77,6 +77,7 @@ export function DateTimePicker({ value, onChange, label, showTime = true, fromYe
                         <Calendar
                             mode="single"
                             selected={dateValue}
+                            defaultMonth={dateValue}
                             onSelect={handleDateSelect}
                             initialFocus
                             captionLayout="dropdown"

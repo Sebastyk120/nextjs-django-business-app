@@ -46,8 +46,8 @@ export default function EstadoCuentaPage() {
 
     // Initial Params
     const [selectedClient, setSelectedClient] = useState(searchParams.get('cliente') || '');
-    const [startDate, setStartDate] = useState(searchParams.get('fecha_inicial') || '');
-    const [endDate, setEndDate] = useState(searchParams.get('fecha_final') || '');
+    const [startDate, setStartDate] = useState(searchParams.get('fecha_inicial') || '2024-01-01');
+    const [endDate, setEndDate] = useState(searchParams.get('fecha_final') || format(new Date(), 'yyyy-MM-dd'));
     const [selectedGroup, setSelectedGroup] = useState(searchParams.get('grupo') || '');
 
     // Colors for charts
@@ -354,11 +354,11 @@ export default function EstadoCuentaPage() {
                             </Card>
 
                             {/* Upcoming Invoices (Condensed) */}
-                            <Card className="border-slate-200">
+                            <Card className={`border-slate-200 ${data.facturas_proximas.some(f => f.dias_restantes < 0) ? 'border-red-100' : ''}`}>
                                 <CardHeader>
-                                    <CardTitle className="text-base font-semibold flex items-center text-amber-700">
+                                    <CardTitle className={`text-base font-semibold flex items-center ${data.facturas_proximas.some(f => f.dias_restantes < 0) ? 'text-red-700' : 'text-amber-700'}`}>
                                         <AlertCircle className="h-4 w-4 mr-2" />
-                                        Facturas Próximas a vencer
+                                        Facturas Vencidas / Por Vencer
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-0">
@@ -369,7 +369,7 @@ export default function EstadoCuentaPage() {
                                                     <tr>
                                                         <th className="px-4 py-2">Factura</th>
                                                         <th className="px-4 py-2 text-right">Saldo</th>
-                                                        <th className="px-4 py-2 text-right">Días</th>
+                                                        <th className="px-4 py-2 text-right">Estado</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100">
@@ -379,10 +379,12 @@ export default function EstadoCuentaPage() {
                                                             <td className="px-4 py-2 text-right">{formatCurrency(f.saldo)}</td>
                                                             <td className="px-4 py-2 text-right">
                                                                 <span className={`
-                                                                px-2 py-0.5 rounded-full text-xs font-medium
-                                                                ${f.dias_restantes < 0 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}
+                                                                px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
+                                                                ${f.dias_restantes < 0 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}
                                                             `}>
-                                                                    {f.dias_restantes}
+                                                                    {f.dias_restantes < 0
+                                                                        ? `Vencida ${Math.abs(f.dias_restantes)} d`
+                                                                        : `En ${f.dias_restantes} d`}
                                                                 </span>
                                                             </td>
                                                         </tr>

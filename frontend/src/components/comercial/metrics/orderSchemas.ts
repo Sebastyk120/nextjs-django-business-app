@@ -41,7 +41,7 @@ export const orderSchemas = {
         fecha_llegada: z.string().nullable().optional(),
         responsable_reserva: z.coerce.number().nullable().optional(),
         estatus_reserva: z.string().nullable().optional(),
-        agencia_carga: z.string().nullable().optional(), // ID
+        agencia_carga: z.coerce.number().nullable().optional(), // ID
         etd: z.string().nullable().optional(), // DateTime
         eta: z.string().nullable().optional(), // DateTime
         peso_awb: z.coerce.number().nullable().optional(),

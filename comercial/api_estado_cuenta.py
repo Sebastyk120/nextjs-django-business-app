@@ -141,8 +141,8 @@ def estado_cuenta_api(request):
                         
                         dias_restantes = (fecha_esperada - hoy).days
                         
-                        # logic for upcoming invoices (vencidas up to 5 days ago, or due in next 20)
-                        if -5 <= dias_restantes <= 20 and saldo_factura > 0:
+                        # logic for upcoming invoices (all overdue, or due in next 20 days)
+                        if dias_restantes <= 20 and saldo_factura > 0.01:
                             facturas_proximas.append({
                                 'numero_factura': p['numero_factura'],
                                 'valor_total_factura_usd': float(val_factura),
