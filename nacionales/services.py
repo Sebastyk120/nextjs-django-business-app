@@ -71,6 +71,7 @@ class DashboardNacionalesService:
             tiene_venta = hasattr(compra, 'ventanacional')
             tiene_reporte_exp = False
             tiene_reporte_prov = False
+            reporte_prov_completado = False
 
             if tiene_venta:
                 venta = compra.ventanacional
@@ -78,8 +79,11 @@ class DashboardNacionalesService:
                 if tiene_reporte_exp:
                     reporte_exp = venta.reportecalidadexportador
                     tiene_reporte_prov = hasattr(reporte_exp, 'reportecalidadproveedor')
+                    if tiene_reporte_prov:
+                        reporte_prov = reporte_exp.reportecalidadproveedor
+                        reporte_prov_completado = reporte_prov.completado
 
-            if not (tiene_venta and tiene_reporte_exp and tiene_reporte_prov):
+            if not (tiene_venta and tiene_reporte_exp and tiene_reporte_prov and reporte_prov_completado):
                 count += 1
         return count
 
@@ -191,6 +195,7 @@ class DashboardNacionalesService:
                 tiene_venta = hasattr(compra, 'ventanacional')
                 tiene_reporte_exp = False
                 tiene_reporte_prov = False
+                reporte_prov_completado = False
 
                 if tiene_venta:
                     venta = compra.ventanacional
@@ -198,8 +203,11 @@ class DashboardNacionalesService:
                     if tiene_reporte_exp:
                         reporte_exp = venta.reportecalidadexportador
                         tiene_reporte_prov = hasattr(reporte_exp, 'reportecalidadproveedor')
+                        if tiene_reporte_prov:
+                            reporte_prov = reporte_exp.reportecalidadproveedor
+                            reporte_prov_completado = reporte_prov.completado
 
-                if not (tiene_venta and tiene_reporte_exp and tiene_reporte_prov):
+                if not (tiene_venta and tiene_reporte_exp and tiene_reporte_prov and reporte_prov_completado):
                     reportes_pendientes += 1
 
             valor_compras = ReporteCalidadProveedor.objects.filter(

@@ -22,22 +22,27 @@ interface NacionalesFiltersProps {
     onClear: () => void;
 }
 
-const estadosReporteExp = [
+// Estados de VentaNacional.estado_venta
+const estadosVentaExp = [
     { value: "Pendiente", label: "Pendiente" },
     { value: "Vencido", label: "Vencido" },
     { value: "Completado", label: "Completado" },
 ];
 
-const estadosFacturacionExp = [
+// Estados de ReporteCalidadExportador.estado_reporte_exp (o null si no existe)
+const estadosReporteExp = [
+    { value: "Sin reporte Exportador", label: "Sin reporte Exportador" },
     { value: "Pendiente", label: "Pendiente" },
     { value: "Facturado", label: "Facturado" },
 ];
 
+// Estados de ReporteCalidadProveedor.estado_reporte_prov
 const estadosReporteProv = [
     { value: "En Proceso", label: "En Proceso" },
     { value: "Reporte Enviado", label: "Reporte Enviado" },
     { value: "Facturado", label: "Facturado" },
     { value: "Pagado", label: "Pagado" },
+    { value: "Completado", label: "Completado" },
 ];
 
 export function NacionalesFilters({ filters, onFiltersChange, onClear }: NacionalesFiltersProps) {
@@ -85,11 +90,11 @@ export function NacionalesFilters({ filters, onFiltersChange, onClear }: Naciona
 
             {/* Toggle Filters */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Estado Reporte (Exportador) */}
+                {/* Estado Venta (Exportador) - VentaNacional.estado_venta */}
                 <div className="space-y-2">
-                    <Label className="text-xs font-medium text-slate-500">Estado Reporte (Exportador):</Label>
+                    <Label className="text-xs font-medium text-slate-500">Estado Venta (Exportador):</Label>
                     <div className="flex flex-wrap gap-1.5">
-                        {estadosReporteExp.map((estado) => (
+                        {estadosVentaExp.map((estado) => (
                             <button
                                 key={estado.value}
                                 onClick={() => updateFilter("estadoReporteExp", filters.estadoReporteExp === estado.value ? null : estado.value)}
@@ -106,11 +111,11 @@ export function NacionalesFilters({ filters, onFiltersChange, onClear }: Naciona
                     </div>
                 </div>
 
-                {/* Estado Facturación Reporte (Exportador) */}
+                {/* Estado Reporte (Exportador) - ReporteCalidadExportador.estado_reporte_exp */}
                 <div className="space-y-2">
-                    <Label className="text-xs font-medium text-slate-500">Estado Facturación Reporte (Exportador):</Label>
+                    <Label className="text-xs font-medium text-slate-500">Estado Reporte (Exportador):</Label>
                     <div className="flex flex-wrap gap-1.5">
-                        {estadosFacturacionExp.map((estado) => (
+                        {estadosReporteExp.map((estado) => (
                             <button
                                 key={estado.value}
                                 onClick={() => updateFilter("estadoFacturacionExp", filters.estadoFacturacionExp === estado.value ? null : estado.value)}

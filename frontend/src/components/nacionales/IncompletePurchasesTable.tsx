@@ -47,17 +47,27 @@ export function IncompletePurchasesTable({ data, filters, onSelect }: Incomplete
                 }
             }
 
-            // Estado Reporte Exportador
-            if (filters.estadoReporteExp && compra.estado_reporte_exp !== filters.estadoReporteExp) {
+            // Estado Venta (Exportador) - VentaNacional.estado_venta
+            if (filters.estadoReporteExp && compra.estado_venta !== filters.estadoReporteExp) {
                 return false;
             }
 
-            // Estado Facturación Exportador
-            if (filters.estadoFacturacionExp && compra.estado_facturacion_exp !== filters.estadoFacturacionExp) {
-                return false;
+            // Estado Reporte (Exportador) - ReporteCalidadExportador.estado_reporte_exp
+            if (filters.estadoFacturacionExp) {
+                if (filters.estadoFacturacionExp === "Sin reporte Exportador") {
+                    // Filtrar por los que NO tienen reporte de exportador
+                    if (compra.estado_reporte_exp) {
+                        return false;
+                    }
+                } else {
+                    // Comparación normal para otros estados
+                    if (compra.estado_reporte_exp !== filters.estadoFacturacionExp) {
+                        return false;
+                    }
+                }
             }
 
-            // Estado Reporte Proveedor
+            // Estado Reporte Proveedor - ReporteCalidadProveedor.estado_reporte_prov
             if (filters.estadoReporteProv && compra.estado_reporte_prov !== filters.estadoReporteProv) {
                 return false;
             }
@@ -73,7 +83,8 @@ export function IncompletePurchasesTable({ data, filters, onSelect }: Incomplete
         return "bg-red-500";
     };
 
-    const getEstadoExpBadgeClass = (estado: string | null | undefined) => {
+    // Badge class para VentaNacional.estado_venta (Pendiente, Vencido, Completado)
+    const getEstadoVentaBadgeClass = (estado: string | null | undefined) => {
         if (!estado) return "bg-slate-100 text-slate-500";
         switch (estado) {
             case "Completado": return "bg-emerald-100 text-emerald-700 border-emerald-200";
@@ -83,11 +94,13 @@ export function IncompletePurchasesTable({ data, filters, onSelect }: Incomplete
         }
     };
 
-    const getEstadoFacturacionBadgeClass = (estado: string | null | undefined) => {
+    // Badge class para ReporteCalidadExportador.estado_reporte_exp (Sin reporte, Pendiente, Facturado)
+    const getEstadoReporteExpBadgeClass = (estado: string | null | undefined) => {
         if (!estado) return "bg-slate-100 text-slate-500";
         switch (estado) {
             case "Facturado": return "bg-blue-100 text-blue-700 border-blue-200";
             case "Pendiente": return "bg-amber-100 text-amber-700 border-amber-200";
+            case "Sin reporte Exportador": return "bg-slate-100 text-slate-500 border-slate-200";
             default: return "bg-slate-100 text-slate-600";
         }
     };
@@ -95,7 +108,8 @@ export function IncompletePurchasesTable({ data, filters, onSelect }: Incomplete
     const getEstadoProvBadgeClass = (estado: string | null | undefined) => {
         if (!estado) return "bg-slate-100 text-slate-500";
         switch (estado) {
-            case "Pagado": return "bg-emerald-100 text-emerald-700 border-emerald-200";
+            case "Completado": return "bg-emerald-100 text-emerald-700 border-emerald-200";
+            case "Pagado": return "bg-teal-100 text-teal-700 border-teal-200";
             case "Facturado": return "bg-blue-100 text-blue-700 border-blue-200";
             case "Reporte Enviado": return "bg-purple-100 text-purple-700 border-purple-200";
             case "En Proceso": return "bg-orange-100 text-orange-700 border-orange-200";
@@ -125,8 +139,8 @@ export function IncompletePurchasesTable({ data, filters, onSelect }: Incomplete
                             <TableHead className="font-semibold text-slate-700">Fecha Compra</TableHead>
                             <TableHead className="font-semibold text-slate-700">Fruta</TableHead>
                             <TableHead className="font-semibold text-slate-700 text-right">Peso Bruto Guia/Compra</TableHead>
+                            <TableHead className="font-semibold text-slate-700 text-center">Estado Venta (Exportador)</TableHead>
                             <TableHead className="font-semibold text-slate-700 text-center">Estado Reporte (Exportador)</TableHead>
-                            <TableHead className="font-semibold text-slate-700 text-center italic">Estado Facturación Reporte (Exportador)</TableHead>
                             <TableHead className="font-semibold text-slate-700 text-center">Estado Reporte (Proveedor)</TableHead>
                             <TableHead className="w-[130px] font-semibold text-slate-700 text-center">Progreso</TableHead>
                         </TableRow>
@@ -168,17 +182,17 @@ export function IncompletePurchasesTable({ data, filters, onSelect }: Incomplete
                                     <TableCell className="text-center">
                                         <Badge
                                             variant="outline"
-                                            className={cn("text-xs", getEstadoExpBadgeClass(compra.estado_reporte_exp))}
+                                            className={cn("text-xs", getEstadoVentaBadgeClass(compra.estado_venta))}
                                         >
-                                            {compra.estado_reporte_exp || "Sin Reporte"}
+                                            {compra.estado_venta || "Sin Venta"}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <Badge
                                             variant="outline"
-                                            className={cn("text-xs italic", getEstadoFacturacionBadgeClass(compra.estado_facturacion_exp))}
+                                            className={cn("text-xs", getEstadoReporteExpBadgeClass(compra.estado_reporte_exp))}
                                         >
-                                            {compra.estado_facturacion_exp || "Pendiente"}
+                                            {compra.estado_reporte_exp || "Sin reporte Exportador"}
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-center">

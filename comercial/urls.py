@@ -7,6 +7,8 @@ from .api_pedidos import (
     FrutaViewSet, PresentacionViewSet, TipoCajaViewSet, ReferenciasViewSet,
     AgenciaCargaViewSet
 )
+from .api_home_dashboard import HomeDashboardView
+
 
 # DRF Router for API endpoints
 router = DefaultRouter()
@@ -27,6 +29,10 @@ router.register(r'api/referencias', ReferenciasViewSet, basename='referencia')
 urlpatterns = [
     # Include DRF router URLs
     path('', include(router.urls)),
+    
+    # HOME DASHBOARD
+    path('api/home-dashboard/', HomeDashboardView.as_view(), name='home-dashboard'),
+
     
     # Existing URLs
     path('redirect_based_on_group', views.redirect_based_on_group_pedidos, name='redirect_based_on_group'),
