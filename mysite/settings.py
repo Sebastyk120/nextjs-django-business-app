@@ -276,14 +276,25 @@ CORS_ALLOW_CREDENTIALS = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = False  # No guardar sesión en cada request
 SESSION_COOKIE_HTTPONLY = True
-# Para desarrollo local (localhost), SESSION_COOKIE_SECURE debe ser False
-# En producción con HTTPS, cambiar a True
-SESSION_COOKIE_SECURE = False
-# SameSite 'Lax' permite cookies en navegación normal pero no en requests AJAX cross-origin
-# Para permitir AJAX cross-origin en desarrollo, usar 'None' (requiere Secure=True) o mantener 'Lax'
-# Como estamos en HTTP local, usamos 'Lax' y confiamos en CORS_ALLOW_CREDENTIALS
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_DOMAIN = None  # None permite localhost
+
+# Configuración de cookies para producción (cross-origin con HTTPS)
+# En producción con dominios diferentes, necesitamos:
+# - Secure=True (requiere HTTPS)
+# - SameSite='None' (permite cookies cross-origin)
+if DEBUG:
+    # Desarrollo local
+    SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_DOMAIN = None
+    CSRF_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = 'Lax'
+else:
+    # Producción con HTTPS y dominios cross-origin
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_DOMAIN = None  # Permite que la cookie se use en cualquier dominio
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'None'
 
 # CONFIGURACIÓN MAIL:
 DEFAULT_FROM_EMAIL = "subgerencia@heavensfruit.com"
