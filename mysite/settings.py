@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'import_export',
     'rest_framework',
+    'django_filters',  # Required for DRF filtering
     'django_extensions',
     'simple_history',
     'widget_tweaks',
@@ -62,6 +63,7 @@ INSTALLED_APPS = [
     'inventarios.apps.InventariosConfig',
     'nacionales.apps.NacionalesConfig',
     'captcha',
+    'corsheaders',
 ]
 
 SITE_ID = 1  # Added for sitemaps
@@ -69,6 +71,7 @@ SITE_ID = 1  # Added for sitemaps
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -117,10 +120,10 @@ DATABASE_CONFIG.update({
         'options': '-c statement_timeout=300000'  # 5 minutos timeout para queries
     }
 })
-
+""""
 DATABASES = {
     'default': DATABASE_CONFIG
-}
+}"""
 
 # Configuración de cache para optimizar memoria
 CACHES = {
@@ -174,7 +177,7 @@ LOGGING = {
     },
 }
 
-""""
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -184,7 +187,7 @@ DATABASES = {
         'HOST': 'localhost',  # Deja esto como 'localhost' si estás ejecutando PostgreSQL localmente
         'PORT': '5432',  # Puerto de PostgreSQL (por defecto es 5432)
     }
-}"""
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -245,21 +248,40 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 ALLOWED_HOSTS = [
-    'heavens-server-private.up.railway.app', 'localhost',
+    'heavens-server-private.up.railway.app', 'localhost', '127.0.0.1',
     'heavensfruit.com', 'www.heavensfruit.com',
 ]
-CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app", "https://*.heavensfruit.com"]
+CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app", "https://*.heavensfruit.com", "http://localhost:3000", "http://127.0.0.1:3000"]
+
+CORS_ALLOWED_ORIGINS = [
+    "https://heavens-server-private.up.railway.app",
+    "https://heavensfruit.com",
+    "https://www.heavensfruit.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 CORS_ORIGINS_WHITELIST = ["https://heavens-server-private.up.railway.app",
                           "https://heavensfruit.com",
-                          "https://www.heavensfruit.com",]
+                          "https://www.heavensfruit.com",
+                          "http://localhost:3000",
+                          "http://127.0.0.1:3000",]
+
+# Allow credentials (cookies, authorization headers) in CORS requests
+CORS_ALLOW_CREDENTIALS = True
 
 # Configuración adicional de sesiones para optimizar memoria
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = False  # No guardar sesión en cada request
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = True  # Solo HTTPS en producción
+# Para desarrollo local (localhost), SESSION_COOKIE_SECURE debe ser False
+# En producción con HTTPS, cambiar a True
+SESSION_COOKIE_SECURE = False
+# SameSite 'Lax' permite cookies en navegación normal pero no en requests AJAX cross-origin
+# Para permitir AJAX cross-origin en desarrollo, usar 'None' (requiere Secure=True) o mantener 'Lax'
+# Como estamos en HTTP local, usamos 'Lax' y confiamos en CORS_ALLOW_CREDENTIALS
 SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_DOMAIN = None  # None permite localhost
 
 # CONFIGURACIÓN MAIL:
 DEFAULT_FROM_EMAIL = "subgerencia@heavensfruit.com"

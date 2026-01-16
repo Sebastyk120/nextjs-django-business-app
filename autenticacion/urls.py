@@ -1,13 +1,10 @@
-from django.contrib import admin
-from django.shortcuts import render
-from django.conf.urls import handler404
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 from .views import LandingPageView, EnglishLandingPageView
+from .api_views import LoginAPIView, LogoutAPIView, CheckAuthAPIView, PasswordResetAPIView
 from django.contrib.auth.decorators import login_required
 
-# Crear clases personalizadas para las vistas de restablecimiento de contraseña
 class CustomPasswordResetDoneView(auth_views.PasswordResetDoneView):
     template_name = 'registration/password_reset_done.html'
     
@@ -31,10 +28,18 @@ urlpatterns = [
     # Landing page (pública)
     path('', LandingPageView.as_view(), name='landing_page'),
     path('en/', EnglishLandingPageView.as_view(), name='landing_page_en'),
+    path('api/fruits/', views.fruits_api, name='fruits_api'),
+    path('api/get_captcha/', views.get_captcha_api, name='get_captcha_api'),
+    path('api/contact_submit/', views.contact_api_submit, name='contact_api_submit'),
+    
+    # DRF API endpoints for authentication
+    path('api/login/', LoginAPIView.as_view(), name='api_login'),
+    path('api/logout/', LogoutAPIView.as_view(), name='api_logout'),
+    path('api/password-reset/', PasswordResetAPIView.as_view(), name='api_password_reset'),
+    path('api/check-auth/', CheckAuthAPIView.as_view(), name='api_check_auth'),
     
     # Rutas de autenticación
     path('login/', views.login1, name='login'),
-    path('signup/', views.signup, name='signup'),
     path('logout/', views.salir, name='logout'),
     
     # Home (protegido)
@@ -68,10 +73,6 @@ urlpatterns = [
             template_name='registration/password_reset_complete.html'
         ), 
         name='password_reset_complete'),
-    
-    # Rutas de administración
-    path('backup/', views.backup_database, name='backup_database'),
-    path('restore/', views.RestoreDataView.as_view(), name='restore_data'),
 ]
 
 

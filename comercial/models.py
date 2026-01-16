@@ -1408,6 +1408,13 @@ class Pedido(models.Model):
         super().save(*args, **kwargs)
 
     def actualizar_tasa_representativa(self):
+        """
+        Actualiza la tasa representativa USD desde la API de datos.gov.co.
+        Este método maneja errores de forma silenciosa para no bloquear la edición de pedidos.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # Usar fecha_pago si fecha_monetizacion es None
         fecha_base = self.fecha_monetizacion or self.fecha_pago
 
@@ -1416,23 +1423,33 @@ class Pedido(models.Model):
             Pedido.objects.filter(pk=self.pk).update(tasa_representativa_usd_diaria=0)
             return
 
-        url = "https://www.datos.gov.co/resource/mcec-87by.json"
-        response = requests.get(url)
+        try:
+            url = "https://www.datos.gov.co/resource/mcec-87by.json"
+            # Timeout de 5 segundos para evitar bloqueos prolongados
+            response = requests.get(url, timeout=5)
 
-        if response.status_code == 200:
-            data = response.json()
-            df = pd.DataFrame(data)
-            df.loc[:, 'vigenciadesde'] = pd.to_datetime(df['vigenciadesde'])
-            df = df.sort_values('vigenciadesde')
-            fecha_base = pd.to_datetime(fecha_base)
-            df_filtrado = df[df['vigenciadesde'] <= fecha_base]
+            if response.status_code == 200:
+                data = response.json()
+                df = pd.DataFrame(data)
+                df.loc[:, 'vigenciadesde'] = pd.to_datetime(df['vigenciadesde'])
+                df = df.sort_values('vigenciadesde')
+                fecha_base = pd.to_datetime(fecha_base)
+                df_filtrado = df[df['vigenciadesde'] <= fecha_base]
 
-            if not df_filtrado.empty:
-                tasa_valor = df_filtrado.iloc[-1]['valor']
-                self.tasa_representativa_usd_diaria = tasa_valor
-                Pedido.objects.filter(pk=self.pk).update(tasa_representativa_usd_diaria=tasa_valor)
-        else:
-            print("Error al acceder al banco de la republica")
+                if not df_filtrado.empty:
+                    tasa_valor = df_filtrado.iloc[-1]['valor']
+                    self.tasa_representativa_usd_diaria = tasa_valor
+                    Pedido.objects.filter(pk=self.pk).update(tasa_representativa_usd_diaria=tasa_valor)
+            else:
+                logger.warning(f"Error al acceder al banco de la republica: HTTP {response.status_code}")
+        except requests.exceptions.Timeout:
+            logger.warning(f"Timeout al conectar con datos.gov.co para pedido {self.pk}")
+        except requests.exceptions.ConnectionError:
+            logger.warning(f"Error de conexión con datos.gov.co para pedido {self.pk}")
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Error de red al actualizar TRM para pedido {self.pk}: {str(e)}")
+        except Exception as e:
+            logger.error(f"Error inesperado al actualizar TRM para pedido {self.pk}: {str(e)}")
 
     class Meta:
         ordering = ['-id']

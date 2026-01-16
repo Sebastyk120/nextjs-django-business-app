@@ -344,7 +344,6 @@ class ReporteCalidadProveedor(models.Model):
         self.p_precio_kg_nal = self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_nal
         self.p_total_facturar = (self.p_kg_exportacion * self.p_precio_kg_exp) + (self.p_kg_nacional * self.p_precio_kg_nal)
         self.p_utilidad_sin_ajuste = self.rep_cal_exp.precio_total - ((self.rep_cal_exp.kg_exportacion * self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_exp) + (self.rep_cal_exp.kg_nacional * self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_nal))
-        self.diferencia_utilidad = self.p_utilidad - self.p_utilidad_sin_ajuste
         # Cálculos de retenciones
         proveedor = self.rep_cal_exp.venta_nacional.compra_nacional.proveedor
         if proveedor.asohofrucol:
@@ -365,6 +364,7 @@ class ReporteCalidadProveedor(models.Model):
         # Total a pagar y utilidad
         self.p_total_pagar = self.p_total_facturar - self.asohofrucol - self.rte_fte - self.rte_ica
         self.p_utilidad = self.rep_cal_exp.precio_total - self.p_total_facturar
+        self.diferencia_utilidad = self.p_utilidad - self.p_utilidad_sin_ajuste
         self.p_porcentaje_utilidad = (self.p_utilidad / self.rep_cal_exp.precio_total) * Decimal("100.00")
 
         # Automatizar el campo completado basado en condiciones necesarias
