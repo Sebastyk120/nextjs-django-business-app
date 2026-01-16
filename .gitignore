@@ -129,3 +129,5 @@ outputs/
 *.swp
 !frontend/src/lib/
 !frontend/src/lib/
+!frontend/src/lib/
+!frontend/src/lib/

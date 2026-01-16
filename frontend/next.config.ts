@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+// Backend API URL - defaults to localhost for development
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+// Parse the URL to extract hostname and protocol
+const apiUrlParts = new URL(API_URL);
+
 const nextConfig: NextConfig = {
   images: {
     qualities: [75, 100],
@@ -16,6 +22,11 @@ const nextConfig: NextConfig = {
         port: '8000',
         pathname: '/media/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'heavens-server-private.up.railway.app',
+        pathname: '/media/**',
+      },
     ],
     unoptimized: true,
   },
@@ -24,15 +35,16 @@ const nextConfig: NextConfig = {
       {
         // Rewrite with trailing slash
         source: '/django-api/:path*/',
-        destination: 'http://localhost:8000/:path*/',
+        destination: `${API_URL}/:path*/`,
       },
       {
         // Rewrite without trailing slash
         source: '/django-api/:path*',
-        destination: 'http://localhost:8000/:path*',
+        destination: `${API_URL}/:path*`,
       },
     ];
   },
 };
 
 export default nextConfig;
+

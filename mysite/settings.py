@@ -120,10 +120,10 @@ DATABASE_CONFIG.update({
         'options': '-c statement_timeout=300000'  # 5 minutos timeout para queries
     }
 })
-""""
+
 DATABASES = {
     'default': DATABASE_CONFIG
-}"""
+}
 
 # Configuración de cache para optimizar memoria
 CACHES = {
@@ -177,7 +177,7 @@ LOGGING = {
     },
 }
 
-
+"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -187,7 +187,7 @@ DATABASES = {
         'HOST': 'localhost',  # Deja esto como 'localhost' si estás ejecutando PostgreSQL localmente
         'PORT': '5432',  # Puerto de PostgreSQL (por defecto es 5432)
     }
-}
+}"""
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
@@ -255,6 +255,7 @@ CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app", "https://*.heavensfruit.com"
 
 CORS_ALLOWED_ORIGINS = [
     "https://heavens-server-private.up.railway.app",
+    "https://heavens-frontend-production.up.railway.app",
     "https://heavensfruit.com",
     "https://www.heavensfruit.com",
     "http://localhost:3000",
@@ -262,6 +263,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ORIGINS_WHITELIST = ["https://heavens-server-private.up.railway.app",
+                          "https://heavens-frontend-production.up.railway.app",
                           "https://heavensfruit.com",
                           "https://www.heavensfruit.com",
                           "http://localhost:3000",
