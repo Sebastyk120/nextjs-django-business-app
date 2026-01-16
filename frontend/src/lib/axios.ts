@@ -57,8 +57,8 @@ axiosClient.interceptors.response.use(
                     // Optionally redirect to login
                     if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
                         // Clear auth state
-                        localStorage.removeItem('isAuthenticated');
-                        localStorage.removeItem('user');
+                        sessionStorage.removeItem('isAuthenticated');
+                        sessionStorage.removeItem('user');
                     }
                     break;
                 case 403:

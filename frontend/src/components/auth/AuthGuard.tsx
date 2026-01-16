@@ -12,27 +12,29 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const verifyAuth = async () => {
-            // Quick check using localStorage for improved UX
-            const localAuth = typeof window !== 'undefined' && localStorage.getItem('isAuthenticated') === 'true';
-
-            if (!localAuth) {
-                // Not authenticated locally, try to verify with server just in case
-                // (e.g. if user cleared storage but still has cookie)
-                const authStatus = await auth.checkAuth();
-                if (!authStatus.authenticated) {
-                    router.push("/login");
-                    return;
-                }
-            } else {
-                // Authenticated locally, trust it for now but verify in background
-                // Or just proceed. For now let's trust it to avoid delays.
-                // We'll trust checkAuth within the components to handle deeper validation if needed
-
-                // Actually, let's verify if the server session is still valid
-                // But don't block render if we have local flag
+            // Clean up old localStorage data (migration)
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('isAuthenticated');
+                localStorage.removeItem('user');
             }
 
-            // If we are here, we are either locally authenticated or server authenticated
+            // Quick check using sessionStorage for improved UX
+            const localAuth = typeof window !== 'undefined' && sessionStorage.getItem('isAuthenticated') === 'true';
+
+            // Always verify with server to ensure session is still valid
+            const authStatus = await auth.checkAuth();
+
+            if (!authStatus.authenticated) {
+                // Clear local state if server says not authenticated
+                if (typeof window !== 'undefined') {
+                    sessionStorage.removeItem('isAuthenticated');
+                    sessionStorage.removeItem('user');
+                }
+                router.push("/login");
+                return;
+            }
+
+            // If we are here, server confirmed authentication
             setIsAuthorized(true);
             setIsLoading(false);
         };

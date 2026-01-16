@@ -71,8 +71,8 @@ const MENU_ITEMS: { section?: string; items: MenuItem[] }[] = [
                 submenu: [
                     { title: "Cotización Conjunta", href: "/costos/cotizacion-conjunta" },
                     { title: "Historial Cotizaciones", href: "/costos/historial" },
-                    { title: "Tarifas Aéreas", href: "/costos/tarifas-aereas" },
-                    { title: "Gestión Precios Fruta", href: "/costos/precios-fruta" },
+                    { title: "Tarifas Aéreas", href: "/comercial/tarifas-aereas" },
+                    { title: "Gestión Precios Fruta", href: "/comercial/tarifas-frutas" },
                     { title: "Costos Estibado", href: "/admin/comercial/costosestibado/" },
                     { title: "Insumos", href: "/admin/comercial/insumo/" },
                     { title: "Cliente Presentación", href: "/admin/comercial/clientepresentacion/" },

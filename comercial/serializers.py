@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import (
     Pedido, Cliente, Intermediario, Exportador, SubExportadora, Iata, DetallePedido,
-    Fruta, Presentacion, TipoCaja, Referencias, AgenciaCarga, Aerolinea
+    Fruta, Presentacion, TipoCaja, Referencias, AgenciaCarga, Aerolinea, TarifaAerea,
+    ListaPreciosFrutaExportador
 )
 
 
@@ -239,4 +240,64 @@ class ReferenciasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Referencias
         fields = ['id', 'nombre']
+
+
+class AerolineaSerializer(serializers.ModelSerializer):
+    """Serializer for Aerolinea (read operations)"""
+    class Meta:
+        model = Aerolinea
+        fields = ['id', 'codigo', 'nombre']
+
+
+class TarifaAereaListSerializer(serializers.ModelSerializer):
+    """Serializer for TarifaAerea list view with nested aerolinea/destino names"""
+    aerolinea = serializers.CharField(source='aerolinea.nombre', read_only=True)
+    aerolinea_id = serializers.IntegerField(source='aerolinea.id', read_only=True)
+    destino = serializers.CharField(source='destino.codigo', read_only=True)
+    destino_ciudad = serializers.CharField(source='destino.ciudad', read_only=True)
+    destino_id = serializers.IntegerField(source='destino.id', read_only=True)
+    tarifa_por_kilo = serializers.DecimalField(max_digits=10, decimal_places=2)
+    fecha = serializers.DateField(format='%Y-%m-%d')
+    
+    class Meta:
+        model = TarifaAerea
+        fields = [
+            'id', 'aerolinea', 'aerolinea_id', 'destino', 'destino_ciudad',
+            'destino_id', 'tarifa_por_kilo', 'fecha', 'es_activa'
+        ]
+
+
+class TarifaAereaWriteSerializer(serializers.ModelSerializer):
+    """Serializer for TarifaAerea create/update operations"""
+    class Meta:
+        model = TarifaAerea
+        fields = ['aerolinea', 'destino', 'tarifa_por_kilo', 'es_activa']
+
+
+class TarifaFrutaListSerializer(serializers.ModelSerializer):
+    """Serializer for Tarifa Fruta list view with nested names"""
+    fruta = serializers.CharField(source='fruta.nombre', read_only=True)
+    fruta_id = serializers.IntegerField(source='fruta.id', read_only=True)
+    exportadora = serializers.CharField(source='exportadora.nombre', read_only=True)
+    exportadora_id = serializers.IntegerField(source='exportadora.id', read_only=True)
+    precio_kilo = serializers.DecimalField(max_digits=10, decimal_places=2)
+    # Use fecha (from auto_now) if available, or fallback
+    fecha = serializers.DateField(format='%Y-%m-%d', read_only=True)
+    
+    class Meta:
+        model = ListaPreciosFrutaExportador
+        fields = [
+            'id', 'fruta', 'fruta_id', 'exportadora', 'exportadora_id',
+            'precio_kilo', 'fecha', 'precio_anterior'
+        ]
+
+
+class TarifaFrutaWriteSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Tarifa Fruta create/update operations
+    """
+    class Meta:
+        model = ListaPreciosFrutaExportador
+        fields = ['fruta', 'exportadora', 'precio_kilo']
+
 

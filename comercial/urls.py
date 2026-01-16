@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from . import views, views2, views_proyec_vent, views4_dash_comer, views_export, views_cotizacion_conjunta, views_tarifas, views_tarifa_fruta, views_historial_cotizacion_pdf, api_dashboard_comercial, api_proyeccion_ventas, api_estado_cuenta
+from . import views, views2, views_proyec_vent, views4_dash_comer, views_export, views_cotizacion_conjunta, views_tarifas, views_tarifa_fruta, views_historial_cotizacion_pdf, api_dashboard_comercial, api_proyeccion_ventas, api_estado_cuenta, api_tarifas_aereas, api_tarifas_frutas
 from .api_pedidos import (
     PedidoViewSet, ClienteViewSet, IntermediarioViewSet,
     ExportadorViewSet, SubExportadoraViewSet, IataViewSet, DetallePedidoViewSet,
@@ -25,6 +25,13 @@ router.register(r'api/frutas', FrutaViewSet, basename='fruta')
 router.register(r'api/presentaciones', PresentacionViewSet, basename='presentacion')
 router.register(r'api/tipos-caja', TipoCajaViewSet, basename='tipo-caja')
 router.register(r'api/referencias', ReferenciasViewSet, basename='referencia')
+
+# Tarifas Aéreas API
+router.register(r'api/tarifas-aereas', api_tarifas_aereas.TarifaAereaViewSet, basename='tarifa-aerea')
+router.register(r'api/aerolineas', api_tarifas_aereas.AerolineaViewSet, basename='aerolinea')
+
+# Tarifas Frutas API
+router.register(r'api/tarifas-frutas', api_tarifas_frutas.TarifaFrutaViewSet, basename='tarifa-fruta')
 
 urlpatterns = [
     # Include DRF router URLs

@@ -346,6 +346,7 @@ export function OrderDetailsDrawer({
             <SheetContent
                 side="bottom"
                 className="h-[95vh] p-0 flex flex-col bg-white"
+                hideCloseButton
             >
                 {/* Header */}
                 <SheetHeader className="px-6 py-4 border-b flex flex-row justify-between items-center bg-slate-50">

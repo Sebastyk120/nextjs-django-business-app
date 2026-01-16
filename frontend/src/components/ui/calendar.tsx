@@ -41,9 +41,10 @@ function Calendar({
                 weekdays: "flex w-full mb-2",
                 weekday: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] text-center",
                 week: "flex w-full mt-1",
-                day: cn(
+                day: "h-9 w-9 p-0 relative",
+                day_button: cn(
                     buttonVariants({ variant: "ghost" }),
-                    "h-9 w-9 p-0 font-normal aria-selected:opacity-100 flex items-center justify-center"
+                    "h-full w-full p-0 font-normal hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
                 ),
                 range_end: "day-range-end",
                 selected:

@@ -32,9 +32,9 @@ export const auth = {
             if (data.success) {
                 // Save auth state
                 if (typeof window !== 'undefined') {
-                    localStorage.setItem('isAuthenticated', 'true');
+                    sessionStorage.setItem('isAuthenticated', 'true');
                     if (data.user) {
-                        localStorage.setItem('user', JSON.stringify(data.user));
+                        sessionStorage.setItem('user', JSON.stringify(data.user));
                     }
                 }
             }
@@ -55,8 +55,8 @@ export const auth = {
         try {
             // Clear local storage first
             if (typeof window !== 'undefined') {
-                localStorage.removeItem('isAuthenticated');
-                localStorage.removeItem('user');
+                sessionStorage.removeItem('isAuthenticated');
+                sessionStorage.removeItem('user');
             }
 
             const response = await axiosClient.post<AuthResponse>(
@@ -70,8 +70,8 @@ export const auth = {
 
             // Even if server request fails, clear local state
             if (typeof window !== 'undefined') {
-                localStorage.removeItem('isAuthenticated');
-                localStorage.removeItem('user');
+                sessionStorage.removeItem('isAuthenticated');
+                sessionStorage.removeItem('user');
             }
 
             return {
@@ -107,19 +107,8 @@ export const auth = {
         }
     },
 
-    // Check if user is authenticated
+    // Check if user is authenticated (always validates with server)
     async checkAuth(): Promise<{ authenticated: boolean; user?: any }> {
-        // First check local storage for immediate feedback
-        if (typeof window !== 'undefined') {
-            const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-            if (isAuth) {
-                const userStr = localStorage.getItem('user');
-                const user = userStr ? JSON.parse(userStr) : null;
-                return { authenticated: true, user };
-            }
-        }
-
-        // Fallback to server check (call Django directly, not Next.js API route)
         try {
             const response = await axiosClient.get<{ authenticated: boolean; user?: any }>(
                 '/autenticacion/api/check-auth/'
@@ -127,17 +116,28 @@ export const auth = {
 
             const data = response.data;
 
-            // Sync local storage if server says authenticated
-            if (data.authenticated && typeof window !== 'undefined') {
-                localStorage.setItem('isAuthenticated', 'true');
-                if (data.user) {
-                    localStorage.setItem('user', JSON.stringify(data.user));
+            // Sync session storage based on server response
+            if (typeof window !== 'undefined') {
+                if (data.authenticated) {
+                    sessionStorage.setItem('isAuthenticated', 'true');
+                    if (data.user) {
+                        sessionStorage.setItem('user', JSON.stringify(data.user));
+                    }
+                } else {
+                    // Server says not authenticated, clear local state
+                    sessionStorage.removeItem('isAuthenticated');
+                    sessionStorage.removeItem('user');
                 }
             }
 
             return data;
         } catch (error) {
             console.error('Auth check error:', error);
+            // On error, clear local state to be safe
+            if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('isAuthenticated');
+                sessionStorage.removeItem('user');
+            }
             return { authenticated: false };
         }
     },
