@@ -8,7 +8,7 @@ import Contact from "../_components/Contact";
 export default function MarketingPageEn() {
     return (
         <div className="flex flex-col">
-            <Hero lang="en" />
+            <Hero />
             <Quote />
             <Products />
             <AboutUs />

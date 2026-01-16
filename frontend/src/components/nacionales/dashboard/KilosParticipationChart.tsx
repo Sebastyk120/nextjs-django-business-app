@@ -101,6 +101,7 @@ export function KilosParticipationChart({ data, loading }: KilosParticipationCha
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
+                                            // @ts-expect-error activeIndex and activeShape work at runtime but are not typed
                                             activeIndex={activeIndex}
                                             activeShape={renderActiveShape}
                                             data={chartData}
