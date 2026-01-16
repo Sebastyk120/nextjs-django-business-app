@@ -101,13 +101,16 @@ class ProyeccionVentasAPIView(APIView):
             'Fieldex': 'Fieldex',
             'Etnico': 'Etnico',
             'Juan_Matas': 'Juan Matas',
-            'CI_Dorado': 'CI Dorado'
+            'Juan Matas': 'Juan Matas',
+            'CI_Dorado': 'CI_Dorado',
+            'CI Dorado': 'CI_Dorado'
         }
         
         user_group_names = user.groups.values_list('name', flat=True)
         
-        for group_name, exportadora_name in group_to_exportadora.items():
-            if group_name in user_group_names:
+        for group_name in user_group_names:
+            if group_name in group_to_exportadora:
+                exportadora_name = group_to_exportadora[group_name]
                 return Q(pedido__exportadora__nombre=exportadora_name)
         
         # User has no recognized group - return empty filter (will result in no data)

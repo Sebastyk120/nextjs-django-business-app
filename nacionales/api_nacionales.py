@@ -795,10 +795,12 @@ def reportes_vencidos_api(request):
     else:
         # User is restricted, find their allowed exporter
         user_group_names = user.groups.values_list('name', flat=True)
-        exportadora_names = ['Etnico', 'Fieldex', 'Juan Matas', 'CI Dorado']
+        exportadora_names = ['Etnico', 'Fieldex', 'Juan Matas', 'CI_Dorado']
         mapped_names = {
             'Juan_Matas': 'Juan Matas',
-            'CI_Dorado': 'CI Dorado'
+            'Juan Matas': 'Juan Matas',
+            'CI_Dorado': 'CI_Dorado',
+            'CI Dorado': 'CI_Dorado'
         }
         
         active_exportadora_name = None

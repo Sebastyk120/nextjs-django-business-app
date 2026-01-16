@@ -1,15 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { QualityFilters } from "./QualityFilters";
 import { QualityCharts } from "./QualityCharts";
 import nacionalesService from "@/services/nacionalesService";
 import { QualityFiltersState, QualityChartData, QualityKPIs } from "@/types/quality-dashboard";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Download } from "lucide-react";
+import { RefreshCw, Download, ShieldAlert } from "lucide-react";
+import { auth } from "@/lib/auth";
 
 export function QualityDashboard() {
+    const router = useRouter();
+
+    // Auth State
+    const [checkingAuth, setCheckingAuth] = useState(true);
+    const [authorized, setAuthorized] = useState(false);
+
     // State
     const [filters, setFilters] = useState<QualityFiltersState>({});
     const [chartData, setChartData] = useState<QualityChartData[]>([]);
@@ -29,8 +37,39 @@ export function QualityDashboard() {
         frutas: { id: number, nombre: string }[];
     }>({ proveedores: [], exportadores: [], frutas: [] });
 
+    // Check Permissions
+    useEffect(() => {
+        const checkAccess = async () => {
+            try {
+                const { authenticated, user } = await auth.checkAuth();
+
+                if (!authenticated) {
+                    router.push('/login');
+                    return;
+                }
+
+                const groups = user?.groups || [];
+                const hasAccess = groups.includes("Heavens") ||
+                    groups.includes("Administradores") ||
+                    groups.includes("Superuser");
+
+                if (hasAccess) {
+                    setAuthorized(true);
+                }
+            } catch (error) {
+                console.error("Auth check failed", error);
+            } finally {
+                setCheckingAuth(false);
+            }
+        };
+
+        checkAccess();
+    }, [router]);
+
     // Load Options
     useEffect(() => {
+        if (!authorized) return;
+
         const loadOptions = async () => {
             try {
                 const data = await nacionalesService.getQualityOptions();
@@ -41,10 +80,12 @@ export function QualityDashboard() {
             }
         };
         loadOptions();
-    }, []);
+    }, [authorized]);
 
     // Load Data
     const loadDashboardData = async () => {
+        if (!authorized) return;
+
         setLoading(true);
         try {
             const data = await nacionalesService.getQualityDashboardData(filters);
@@ -59,8 +100,12 @@ export function QualityDashboard() {
     };
 
     useEffect(() => {
-        loadDashboardData();
-    }, [filters]);
+        if (authorized) {
+            loadDashboardData();
+        } else {
+            setLoading(false);
+        }
+    }, [filters, authorized]);
 
     // Handle Export
     const [exporting, setExporting] = useState(false);
@@ -90,6 +135,17 @@ export function QualityDashboard() {
             setExporting(false);
         }
     };
+
+    if (checkingAuth) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+                <RefreshCw className="h-10 w-10 text-emerald-600 animate-spin" />
+                <p className="text-slate-500 font-medium">Verificando permisos...</p>
+            </div>
+        );
+    }
+
+
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">

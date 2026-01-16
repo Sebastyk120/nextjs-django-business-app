@@ -3,6 +3,7 @@ import { StatCard } from "./StatCard";
 import { ActivityFeed } from "./ActivityFeed";
 import { QuickActions } from "./QuickActions";
 import { TrendBarChart } from "./TrendBarChart";
+import { TrendPieChart } from "./TrendPieChart";
 import { OverdueClientsTable } from "./OverdueClientsTable";
 import {
     ShoppingCart,
@@ -62,7 +63,7 @@ export function HeavensHomeView({ data }: { data: HomeDashboardData }) {
         { label: "Nuevo Pedido", icon: ShoppingCart, href: "/pedidos?action=new", color: "bg-blue-600" },
         { label: "Proyección de Ventas", icon: TrendingUp, href: "/comercial/proyeccion-ventas", color: "bg-indigo-600" },
         { label: "Dash. Nacionales", icon: Truck, href: "/dashboard-nacionales", color: "bg-emerald-600" },
-        { label: "Estado Cuentas", icon: Wallet, href: "/comercial/estado-cuenta", color: "bg-amber-600" },
+        { label: "Estados De Cuenta Clientes", icon: Wallet, href: "/comercial/estado-cuenta", color: "bg-amber-600" },
     ];
 
     const trendIsPositive = (metrics.orders_trend || 0) >= 0;
@@ -160,7 +161,7 @@ export function HeavensHomeView({ data }: { data: HomeDashboardData }) {
                             dataKey="orders"
                             unit="pedidos"
                         />
-                        <TrendBarChart
+                        <TrendPieChart
                             data={trendsFruits}
                             title="Top Frutas por Kilos (últimos 15 días)"
                             dataKey="kilos"
@@ -203,10 +204,10 @@ export function HeavensHomeView({ data }: { data: HomeDashboardData }) {
                                                     {format(new Date(delivery.date), "EEE d MMM", { locale: es })}
                                                 </p>
                                                 <span className={`text-xs px-2 py-0.5 rounded-full ${delivery.status === 'Despachado'
-                                                        ? 'bg-indigo-100 text-indigo-700'
-                                                        : delivery.status === 'Reprogramado'
-                                                            ? 'bg-amber-100 text-amber-700'
-                                                            : 'bg-slate-100 text-slate-700'
+                                                    ? 'bg-indigo-100 text-indigo-700'
+                                                    : delivery.status === 'Reprogramado'
+                                                        ? 'bg-amber-100 text-amber-700'
+                                                        : 'bg-slate-100 text-slate-700'
                                                     }`}>
                                                     {delivery.status}
                                                 </span>

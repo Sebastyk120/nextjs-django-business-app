@@ -58,17 +58,34 @@ class HomeDashboardView(APIView):
 
     def _get_exportador_from_groups(self, groups):
         # Mapeo simple de grupos a exportadores
-        # Ajustar según los nombres reales en BD
         mapping = {
             'Etnico': 'Etnico',
             'Fieldex': 'Fieldex', 
             'Juan Matas': 'Juan Matas',
-            'CI Dorado': 'CI Dorado'
+            'Juan_Matas': 'Juan Matas',
+            'CI Dorado': 'CI_Dorado',
+            'CI_Dorado': 'CI_Dorado'
         }
         for g in groups:
             if g in mapping:
                 return mapping[g]
         return None
+
+    def _get_logo_url(self, company_name):
+        """Returns the static path for the company logo based on name"""
+        normalized = company_name.lower().replace('.', '').replace(' ', '_')
+        
+        # Mapping specific cases if normalization isn't enough
+        logos = {
+            'heavens_fruit': '/img/heavens.webp',
+            'heavens': '/img/heavens.webp',
+            'etnico': '/img/etnico.webp',
+            'fieldex': '/img/fieldex.webp',
+            'juan_matas': '/img/juan_matas.webp',
+            'ci_dorado': '/img/ci_dorado.webp',
+        }
+        
+        return logos.get(normalized, '/img/heavens.webp') # Default fallback
 
     def _get_heavens_data(self, user):
         today = timezone.now().date()
@@ -232,7 +249,9 @@ class HomeDashboardView(APIView):
             "trends_clients": trends_clients,
             "trends_fruits": trends_fruits,
             "overdue_clients": overdue_clients,
-            "role": "Administrator"
+            "role": "Administrator",
+            "company_name": "Heaven's Fruit",
+            "logo": self._get_logo_url("Heavens Fruit")
         }
 
 
@@ -364,12 +383,32 @@ class HomeDashboardView(APIView):
                 "orders": client['orders_count']
             })
 
+        # --- 9. Upcoming Deliveries (next 7 days) ---
+        upcoming_deliveries = Pedido.objects.filter(
+            exportadora=exportador,
+            fecha_entrega__gte=today,
+            fecha_entrega__lte=today + timedelta(days=7),
+            estado_pedido__in=['En Proceso', 'Despachado', 'Reprogramado']
+        ).select_related('cliente', 'exportadora').order_by('fecha_entrega')[:5]
+        
+        upcoming = []
+        for order in upcoming_deliveries:
+            upcoming.append({
+                "id": order.id,
+                "client": order.cliente.nombre,
+                "exporter": order.exportadora.nombre,
+                "date": order.fecha_entrega,
+                "status": order.estado_pedido
+            })
+
         return {
             "metrics": metrics,
             "activity": activity,
             "overdue_clients": overdue_clients,
             "trends_clients": trends_clients,
             "trends_fruits": trends_fruits,
+            "upcoming_deliveries": upcoming,
             "role": "Partner",
-            "company_name": exportador.nombre
+            "company_name": exportador.nombre,
+            "logo": self._get_logo_url(exportador.nombre)
         }

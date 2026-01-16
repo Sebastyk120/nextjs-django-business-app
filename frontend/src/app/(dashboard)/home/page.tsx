@@ -46,12 +46,13 @@ export default function HomePage() {
         <div className="min-h-screen bg-slate-50/50 p-6 md:p-10 font-outfit">
             <CancellationNotifications />
 
-            <div className="max-w-7xl mx-auto space-y-10">
+            <div className="max-w-[1800px] mx-auto space-y-10">
                 <DashboardHeader
                     userName={data.user_name}
                     greeting={data.greeting}
                     role={data.role}
                     companyName={data.company_name}
+                    logoUrl={data.logo}
                 />
 
                 {data.is_heavens ? (

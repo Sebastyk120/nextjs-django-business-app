@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 interface TrendChartProps {
     data: { name: string; orders?: number; kilos?: number }[];
@@ -9,9 +9,9 @@ interface TrendChartProps {
     unit?: string;
 }
 
-const COLORS = ['#F8C8DC', '#FFDAB9', '#B2DFDB', '#DCEDC8', '#FFF9C4']; // Soft Pastel palette (Rose, Peach, Mint, Sage, Lemon)
+const COLORS = ['#F8C8DC', '#FFDAB9', '#B2DFDB', '#DCEDC8', '#FFF9C4']; // Soft Pastel palette
 
-export function TrendBarChart({ data, title, dataKey = 'orders', unit = 'pedidos' }: TrendChartProps) {
+export function TrendPieChart({ data, title, dataKey = 'orders', unit = 'pedidos' }: TrendChartProps) {
     if (!data || data.length === 0) {
         return (
             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
@@ -30,20 +30,24 @@ export function TrendBarChart({ data, title, dataKey = 'orders', unit = 'pedidos
     };
 
     return (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col">
             <h3 className="text-sm font-semibold text-slate-700 mb-4">{title}</h3>
-            <div className="h-48">
+            <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data} layout="vertical" margin={{ left: 0, right: 20 }}>
-                        <XAxis type="number" hide />
-                        <YAxis
-                            type="category"
-                            dataKey="name"
-                            width={100}
-                            tick={{ fontSize: 12, fill: '#64748b' }}
-                            tickLine={false}
-                            axisLine={false}
-                        />
+                    <PieChart>
+                        <Pie
+                            data={data}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey={dataKey}
+                        >
+                            {data.map((_, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                            ))}
+                        </Pie>
                         <Tooltip
                             formatter={(value: number | undefined) => [formatValue(value), dataKey === 'kilos' ? 'Kilos' : 'Cantidad']}
                             contentStyle={{
@@ -53,12 +57,16 @@ export function TrendBarChart({ data, title, dataKey = 'orders', unit = 'pedidos
                                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                             }}
                         />
-                        <Bar dataKey={dataKey} radius={[0, 4, 4, 0]}>
-                            {data.map((_, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                        </Bar>
-                    </BarChart>
+                        <Legend
+                            verticalAlign="middle"
+                            align="right"
+                            layout="vertical"
+                            iconType="circle"
+                            formatter={(value) => (
+                                <span className="text-slate-700 font-medium ml-1 text-xs">{value}</span>
+                            )}
+                        />
+                    </PieChart>
                 </ResponsiveContainer>
             </div>
         </div>

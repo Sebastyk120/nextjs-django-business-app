@@ -56,8 +56,8 @@ export function NewItemModal({ open, onOpenChange, onItemCreated, userGroups = [
     // Permission Checks
     const isHeavens = userGroups.includes("Heavens") || userGroups.includes("Autorizadores") || userGroups.includes("Superuser");
 
-    // Detect user's exporter group (Etnico, Fieldex, Juan Matas, CI Dorado)
-    const exporterGroupNames = ["Etnico", "Fieldex", "Juan Matas", "CI Dorado"];
+    // Detect user's exporter group
+    const exporterGroupNames = ["Etnico", "Fieldex", "Juan Matas", "Juan_Matas", "CI Dorado", "CI_Dorado"];
     const userExporterGroup = userGroups.find(g => exporterGroupNames.includes(g)) || null;
 
     useEffect(() => {

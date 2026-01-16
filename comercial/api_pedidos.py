@@ -38,11 +38,12 @@ class ClienteViewSet(viewsets.ReadOnlyModelViewSet):
         
         # Determine current user group
         user_group_names = user.groups.values_list('name', flat=True)
-        exportadora_names = ['Etnico', 'Fieldex', 'Juan Matas', 'CI Dorado']
+        exportadora_names = ['Etnico', 'Fieldex', 'Juan Matas', 'CI_Dorado']
         # Map group names if necessary
         mapped_names = {
             'Juan_Matas': 'Juan Matas',
-            'CI_Dorado': 'CI Dorado'
+            'CI Dorado': 'CI_Dorado',
+            'CI_Dorado': 'CI_Dorado'
         }
         
         active_exportadora = None
@@ -76,10 +77,11 @@ class IntermediarioViewSet(viewsets.ReadOnlyModelViewSet):
             return queryset
             
         user_group_names = user.groups.values_list('name', flat=True)
-        exportadora_names = ['Etnico', 'Fieldex', 'Juan Matas', 'CI Dorado']
+        exportadora_names = ['Etnico', 'Fieldex', 'Juan Matas', 'CI_Dorado']
         mapped_names = {
             'Juan_Matas': 'Juan Matas',
-            'CI_Dorado': 'CI Dorado'
+            'CI Dorado': 'CI_Dorado',
+            'CI_Dorado': 'CI_Dorado'
         }
         
         active_exportadora = None
@@ -115,11 +117,13 @@ class ExportadorViewSet(viewsets.ReadOnlyModelViewSet):
         
         # Determine current user group
         user_group_names = user.groups.values_list('name', flat=True)
-        exportadora_names = ['Etnico', 'Fieldex', 'Juan Matas', 'CI Dorado']
+        exportadora_names = ['Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado']
         # Map group names if necessary
         mapped_names = {
-            'Juan_Matas': 'Juan Matas',
-            'CI_Dorado': 'CI Dorado'
+            'Juan Matas': 'Juan_Matas',
+            'Juan_Matas': 'Juan_Matas',
+            'CI Dorado': 'CI_Dorado',
+            'CI_Dorado': 'CI_Dorado'
         }
         
         active_exportadora = None
@@ -206,6 +210,24 @@ class PedidoViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, viewsets.R
     ordering_fields = ['id', 'fecha_solicitud', 'fecha_entrega']
     ordering = ['-id']
 
+    def _get_active_exportadora(self, user):
+        """Helper to get the active exportadora name based on user groups"""
+        user_group_names = user.groups.values_list('name', flat=True)
+        exportadora_names = ['Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado']
+        mapped_names = {
+            'Juan Matas': 'Juan_Matas',
+            'Juan_Matas': 'Juan_Matas',
+            'CI Dorado': 'CI_Dorado',
+            'CI_Dorado': 'CI_Dorado'
+        }
+        
+        for group_name in user_group_names:
+            if group_name in exportadora_names:
+                return group_name
+            if group_name in mapped_names:
+                return mapped_names[group_name]
+        return None
+
     def get_queryset(self):
         """
         Filter queryset based on user's group permissions
@@ -215,21 +237,15 @@ class PedidoViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, viewsets.R
             'cliente', 'intermediario', 'exportadora', 'subexportadora', 'destino'
         )
 
-        # Filter by User Group Permissions
-        if user.groups.filter(name='Heavens').exists():
-            # Heavens group sees all pedidos
+        # Heavens group sees all pedidos
+        if user.groups.filter(name__in=['Heavens', 'Autorizadores', 'Superuser']).exists() or user.is_superuser:
             return queryset
-        elif user.groups.filter(name='Fieldex').exists():
-            return queryset.filter(exportadora__nombre='Fieldex')
-        elif user.groups.filter(name='Etnico').exists():
-            return queryset.filter(exportadora__nombre='Etnico')
-        elif user.groups.filter(name='Juan_Matas').exists():
-            return queryset.filter(exportadora__nombre='Juan Matas')
-        elif user.groups.filter(name='CI_Dorado').exists():
-            return queryset.filter(exportadora__nombre='CI Dorado')
-        else:
-            # No permission - return empty queryset
-            return queryset.none()
+        
+        active_exportadora = self._get_active_exportadora(user)
+        if active_exportadora:
+            return queryset.filter(exportadora__nombre=active_exportadora)
+        
+        return queryset.none()
 
     def perform_update(self, serializer):
         user = self.request.user
@@ -424,18 +440,30 @@ class DetallePedidoViewSet(viewsets.ModelViewSet):
         )
 
         # Apply strict filtering based on parent Order permissions
-        if user.groups.filter(name='Heavens').exists():
+        if user.groups.filter(name__in=['Heavens', 'Autorizadores', 'Superuser']).exists() or user.is_superuser:
             pass # All access
-        elif user.groups.filter(name='Fieldex').exists():
-            queryset = queryset.filter(pedido__exportadora__nombre='Fieldex')
-        elif user.groups.filter(name='Etnico').exists():
-             queryset = queryset.filter(pedido__exportadora__nombre='Etnico')
-        elif user.groups.filter(name='Juan_Matas').exists():
-             queryset = queryset.filter(pedido__exportadora__nombre='Juan Matas')
-        elif user.groups.filter(name='CI_Dorado').exists():
-             queryset = queryset.filter(pedido__exportadora__nombre='CI Dorado')
         else:
-             return queryset.none()
+            exportadora_names = ['Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado']
+            mapped_names = {
+                'Juan Matas': 'Juan_Matas',
+                'Juan_Matas': 'Juan_Matas',
+                'CI Dorado': 'CI_Dorado',
+                'CI_Dorado': 'CI_Dorado'
+            }
+            active_exportadora = None
+            user_group_names = user.groups.values_list('name', flat=True)
+            for group_name in user_group_names:
+                if group_name in exportadora_names:
+                    active_exportadora = group_name
+                    break
+                if group_name in mapped_names:
+                    active_exportadora = mapped_names[group_name]
+                    break
+            
+            if active_exportadora:
+                queryset = queryset.filter(pedido__exportadora__nombre=active_exportadora)
+            else:
+                return queryset.none()
         
         # Filter by pedido_id if provided in query params
         pedido_id = self.request.query_params.get('pedido_id')

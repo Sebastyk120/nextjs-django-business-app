@@ -7,6 +7,7 @@ export interface HomeDashboardData {
     alerts: AlertItem[];
     role?: string;
     company_name?: string;
+    logo?: string;
     error?: string;
 }
 

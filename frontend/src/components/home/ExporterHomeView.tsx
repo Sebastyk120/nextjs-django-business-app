@@ -1,4 +1,5 @@
 import { HomeDashboardData } from "@/types/home-dashboard";
+import { TrendPieChart } from "./TrendPieChart";
 import { StatCard } from "./StatCard";
 import { ActivityFeed } from "./ActivityFeed";
 import { QuickActions } from "./QuickActions";
@@ -14,9 +15,12 @@ import {
     Plane,
     PackageCheck,
     Wallet,
-    LineChart
+    LineChart,
+    CalendarDays
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface OverdueClient {
     name: string;
@@ -31,10 +35,19 @@ interface TrendItem {
     kilos?: number;
 }
 
+interface UpcomingDelivery {
+    id: number;
+    client: string;
+    exporter: string;
+    date: string;
+    status: string;
+}
+
 interface ExtendedDashboardData extends HomeDashboardData {
     overdue_clients?: OverdueClient[];
     trends_clients?: TrendItem[];
     trends_fruits?: TrendItem[];
+    upcoming_deliveries?: UpcomingDelivery[];
 }
 
 export function ExporterHomeView({ data }: { data: HomeDashboardData }) {
@@ -44,11 +57,12 @@ export function ExporterHomeView({ data }: { data: HomeDashboardData }) {
     const overdueClients = extendedData.overdue_clients || [];
     const trendsClients = extendedData.trends_clients || [];
     const trendsFruits = extendedData.trends_fruits || [];
+    const upcomingDeliveries = extendedData.upcoming_deliveries || [];
 
     const navActions = [
         { label: "Mis Pedidos", icon: ShoppingCart, href: "/pedidos", color: "bg-blue-600" },
         { label: "Inventario", icon: Store, href: "/inventarios", color: "bg-indigo-600" },
-        { label: "Estado Cuenta", icon: Wallet, href: "/comercial/estado-cuenta", color: "bg-emerald-600" },
+        { label: "Estados De Cuenta Clientes", icon: Wallet, href: "/comercial/estado-cuenta", color: "bg-emerald-600" },
         { label: "Dash. Comercial", icon: LineChart, href: "/dashboard-comercial", color: "bg-amber-600" },
         { label: "Proy. Ventas", icon: TrendingUp, href: "/comercial/proyeccion-ventas", color: "bg-cyan-600" },
     ];
@@ -128,7 +142,7 @@ export function ExporterHomeView({ data }: { data: HomeDashboardData }) {
                             dataKey="orders"
                             unit="pedidos"
                         />
-                        <TrendBarChart
+                        <TrendPieChart
                             data={trendsFruits}
                             title="Top Frutas por Kilos (últimos 15 días)"
                             dataKey="kilos"
@@ -139,6 +153,47 @@ export function ExporterHomeView({ data }: { data: HomeDashboardData }) {
                     {/* Overdue Clients */}
                     {(overdueClients.length > 0) && (
                         <OverdueClientsTable clients={overdueClients} />
+                    )}
+
+                    {/* Upcoming Deliveries */}
+                    {upcomingDeliveries.length > 0 && (
+                        <section>
+                            <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                <CalendarDays className="h-5 w-5 text-blue-600" />
+                                Próximas Entregas
+                            </h2>
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div className="divide-y divide-slate-100">
+                                    {upcomingDeliveries.map((delivery) => (
+                                        <div
+                                            key={delivery.id}
+                                            className="p-4 hover:bg-slate-50 cursor-pointer transition-colors flex items-center justify-between"
+                                            onClick={() => router.push(`/pedidos?search=${delivery.id}`)}
+                                        >
+                                            <div>
+                                                <p className="font-semibold text-slate-800">
+                                                    #{delivery.id} - {delivery.client}
+                                                </p>
+                                                <p className="text-sm text-slate-500">{delivery.exporter}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm font-medium text-slate-700">
+                                                    {format(new Date(delivery.date), "EEE d MMM", { locale: es })}
+                                                </p>
+                                                <span className={`text-xs px-2 py-0.5 rounded-full ${delivery.status === 'Despachado'
+                                                        ? 'bg-indigo-100 text-indigo-700'
+                                                        : delivery.status === 'Reprogramado'
+                                                            ? 'bg-amber-100 text-amber-700'
+                                                            : 'bg-slate-100 text-slate-700'
+                                                    }`}>
+                                                    {delivery.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
                     )}
 
                     {/* Quick Actions at bottom of left column */}

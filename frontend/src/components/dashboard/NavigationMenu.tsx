@@ -53,8 +53,8 @@ const MENU_ITEMS: { section?: string; items: MenuItem[] }[] = [
                     { title: "General (Heavens)", href: "/pedidos" },
                     { title: "Etnico", href: "/pedidos?exportadora=Etnico" },
                     { title: "Fieldex", href: "/pedidos?exportadora=Fieldex" },
-                    { title: "Juan Matas", href: "/pedidos?exportadora=Juan%20Matas" }, // Encode space
-                    { title: "CI Dorado", href: "/pedidos?exportadora=CI%20Dorado" },
+                    { title: "Juan Matas", href: "/pedidos?exportadora=Juan_Matas" },
+                    { title: "CI Dorado", href: "/pedidos?exportadora=CI_Dorado" },
                 ],
             },
 
