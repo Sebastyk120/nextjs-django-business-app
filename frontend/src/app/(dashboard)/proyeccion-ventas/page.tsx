@@ -28,9 +28,9 @@ export default function ProyeccionVentasPage() {
 
     // Initial Filters
     const [filters, setFilters] = useState<ProyeccionFilters>({
-        fecha_inicio: format(subYears(new Date(), 1), 'yyyy-MM-dd'),
+        fecha_inicio: "2023-01-01",
         fecha_fin: format(new Date(), 'yyyy-MM-dd'),
-        forecast_months: 3,
+        forecast_months: 12,
         cliente_id: "",
         fruta_id: "",
         exportador_id: ""
@@ -80,9 +80,9 @@ export default function ProyeccionVentasPage() {
 
     const handleReset = () => {
         setFilters({
-            fecha_inicio: format(subYears(new Date(), 1), 'yyyy-MM-dd'),
+            fecha_inicio: "2023-01-01",
             fecha_fin: format(new Date(), 'yyyy-MM-dd'),
-            forecast_months: 3,
+            forecast_months: 12,
             cliente_id: "",
             fruta_id: "",
             exportador_id: ""
