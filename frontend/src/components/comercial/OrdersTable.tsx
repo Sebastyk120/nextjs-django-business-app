@@ -185,13 +185,20 @@ export function OrdersTable({ data, visibleColumns, columnsConfig, onEdit, onVie
                                                         responseType: 'blob'
                                                     });
                                                     const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-                                                    window.open(url, '_blank');
+                                                    // Create a download link with the correct filename
+                                                    const link = document.createElement('a');
+                                                    link.href = url;
+                                                    link.download = `resumen_pedido_${pedido.id}.pdf`;
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    document.body.removeChild(link);
+                                                    window.URL.revokeObjectURL(url);
                                                 } catch (error) {
                                                     console.error("Error fetching PDF:", error);
                                                 }
                                             }}
                                             className="h-7 w-7 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-orange-100 hover:text-orange-700 focus-visible:outline-none disabled:opacity-50 text-slate-500"
-                                            title="Ver PDF"
+                                            title="Descargar PDF"
                                         >
                                             <FileText className="h-3.5 w-3.5" />
                                         </button>

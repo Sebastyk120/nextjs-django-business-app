@@ -7,6 +7,7 @@ from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+from babel.dates import format_date
 
 def crear_pdf_resumen_pedido_new(pedido, detalles, total_cajas, total_peso, total_piezas):
     """
@@ -107,7 +108,7 @@ def crear_pdf_resumen_pedido_new(pedido, detalles, total_cajas, total_peso, tota
     # =========================================================================
     # TITLE BAR - Emerald green header
     # =========================================================================
-    fecha_solicitud = pedido.fecha_solicitud.strftime('%d de %B de %Y') if pedido.fecha_solicitud else "-"
+    fecha_solicitud = format_date(pedido.fecha_solicitud, format='long', locale='es') if pedido.fecha_solicitud else "-"
     title_text = f"Resumen Para El Pedido: #{pedido.id} Fecha de Solicitud: {fecha_solicitud}"
     
     title_data = [[Paragraph(title_text, title_bar_style)]]
@@ -135,7 +136,7 @@ def crear_pdf_resumen_pedido_new(pedido, detalles, total_cajas, total_peso, tota
         info_card("Exportador", pedido.exportadora.nombre if pedido.exportadora else "-"),
         info_card("Cliente", pedido.cliente.nombre if pedido.cliente else "-"),
         info_card("Intermediario", pedido.intermediario.nombre if pedido.intermediario else "--"),
-        info_card("Fecha de Entrega Final", pedido.fecha_entrega.strftime('%d de %B de %Y') if pedido.fecha_entrega else "-"),
+        info_card("Fecha de Entrega Final", format_date(pedido.fecha_entrega, format='long', locale='es') if pedido.fecha_entrega else "-"),
     ]]
     
     row1_table = Table(row1_data, colWidths=[2.875*inch, 2.875*inch, 2.875*inch, 2.875*inch])
