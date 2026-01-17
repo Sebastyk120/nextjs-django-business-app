@@ -59,7 +59,8 @@ function NacionalesPageContent() {
     const fetchIncompletas = async () => {
         setLoading(true);
         try {
-            const response = await axiosClient.get('/nacionales/api/compra/incompletas/');
+            const timestamp = new Date().getTime();
+            const response = await axiosClient.get(`/nacionales/api/compra/incompletas/?t=${timestamp}`);
             setIncompletas(response.data.results || response.data);
         } catch (error) {
             console.error("Error fetching incompletas:", error);
@@ -87,7 +88,9 @@ function NacionalesPageContent() {
         setIsSearching(true);
         try {
             // 1. Try exact guide search for detail view
-            const exactResponse = await axiosClient.get(`/nacionales/api/compra/search_guia/?guia=${term}`);
+            // Add timestamp to prevent caching
+            const timestamp = new Date().getTime();
+            const exactResponse = await axiosClient.get(`/nacionales/api/compra/search_guia/?guia=${term}&t=${timestamp}`);
 
             if (exactResponse.data && exactResponse.data.id) {
                 setSearchResult(exactResponse.data);
@@ -97,7 +100,7 @@ function NacionalesPageContent() {
 
             // 2. If no exact match (or message is 'Not found'), do a global search to update the table results
             // This allows finding "Complete" guides too
-            const searchResponse = await axiosClient.get(`/nacionales/api/compra/?search=${term}`);
+            const searchResponse = await axiosClient.get(`/nacionales/api/compra/?search=${term}&t=${timestamp}`);
             const results = searchResponse.data.results || searchResponse.data;
 
             if (results && results.length > 0) {
@@ -260,7 +263,11 @@ function NacionalesPageContent() {
                 onOpenChange={setOpenCompraModal}
                 initialData={searchResult}
                 onSuccess={(data) => {
-                    handleSearch(data.numero_guia);
+                    if (searchTerm === data.numero_guia) {
+                        refreshCurrentView();
+                    } else {
+                        handleSearch(data.numero_guia);
+                    }
                     fetchIncompletas();
                 }}
             />
