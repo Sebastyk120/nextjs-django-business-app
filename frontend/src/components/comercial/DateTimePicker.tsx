@@ -24,7 +24,26 @@ interface DateTimePickerProps {
 }
 
 export function DateTimePicker({ value, onChange, label, showTime = true, fromYear = 2015, toYear = new Date().getFullYear() }: DateTimePickerProps) {
-    const dateValue = value ? new Date(value) : undefined
+    // Parse date correctly to avoid timezone issues
+    // When value is a string like "2026-01-22", JavaScript's new Date() interprets it as UTC midnight
+    // which can shift the day backward in timezones behind UTC (e.g., Colombia UTC-5)
+    const parseDate = (val: string | Date | null | undefined): Date | undefined => {
+        if (!val) return undefined
+
+        if (val instanceof Date) return val
+
+        // Check if it's a date-only string (YYYY-MM-DD format)
+        if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+            // Parse as local date by splitting the components
+            const [year, month, day] = val.split('-').map(Number)
+            return new Date(year, month - 1, day, 12, 0, 0) // Use noon to avoid edge cases
+        }
+
+        // For ISO strings with time or other formats, use standard parsing
+        return new Date(val)
+    }
+
+    const dateValue = parseDate(value)
 
     const handleDateSelect = (date: Date | undefined) => {
         if (!date) return
