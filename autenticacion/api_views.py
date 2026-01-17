@@ -46,10 +46,15 @@ class LogoutAPIView(APIView):
 
     def post(self, request):
         logout(request)
-        return Response({
+        response = Response({
             'success': True,
             'message': 'Logout successful'
         }, status=status.HTTP_200_OK)
+        
+        # Explicitly delete cookies to prevent auto-login loop
+        response.delete_cookie('sessionid')
+        response.delete_cookie('csrftoken')
+        return response
 
 
 class CheckAuthAPIView(APIView):

@@ -480,18 +480,56 @@ class DetallePedidoViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        if not self.request.user.groups.filter(name='Heavens').exists():
-            raise PermissionDenied("No tienes permisos para agregar detalles.")
+        """Allow creation if user has access to the parent order"""
+        user = self.request.user
+        pedido = serializer.validated_data.get('pedido')
+        
+        # Superusers and Heavens/Autorizadores can always create
+        if user.is_superuser or user.groups.filter(name__in=['Heavens', 'Autorizadores']).exists():
+            serializer.save()
+            return
+
+        # Check if user has access to this exportadora
+        exportadora_names = ['Etnico', 'Fieldex', 'Juan_Matas', 'CI_Dorado']
+        user_group_names = user.groups.values_list('name', flat=True)
+        
+        has_permission = False
+        for group_name in user_group_names:
+            if group_name in exportadora_names or group_name == pedido.exportadora.nombre:
+                has_permission = True
+                break
+                
+        if not has_permission:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("No tienes permisos para agregar detalles a este pedido.")
+            
         serializer.save()
 
     def perform_update(self, serializer):
-        if not self.request.user.groups.filter(name='Heavens').exists():
-            raise PermissionDenied("No tienes permisos para editar detalles.")
+        """Allow update if user has permission"""
+        user = self.request.user
+        # Superusers and Heavens/Autorizadores can always update
+        if user.is_superuser or user.groups.filter(name__in=['Heavens', 'Autorizadores']).exists():
+            serializer.save()
+            return
+            
+        # For others, get_queryset already filters access, so if they found it, they can edit it
+        # unless we want to restrict editing finalized orders like in PedidoViewSet
+        instance = serializer.instance
+        if instance.pedido.estado_pedido == 'Finalizado':
+             from rest_framework.exceptions import PermissionDenied
+             raise PermissionDenied("No puedes editar detalles de pedidos finalizados.")
+             
         serializer.save()
 
     def perform_destroy(self, instance):
-        if not self.request.user.groups.filter(name='Heavens').exists():
-             raise PermissionDenied("No tienes permisos para eliminar detalles.")
+        """Allow destroy if user has permission"""
+        user = self.request.user
+        # Superusers and Heavens/Autorizadores can always destroy
+        if user.is_superuser or user.groups.filter(name__in=['Heavens', 'Autorizadores']).exists():
+            instance.delete()
+            return
+            
         instance.delete()
 
 
