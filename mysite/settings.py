@@ -271,9 +271,9 @@ CORS_ALLOWED_ORIGINS = [
     "https://heavens-frontend-production.up.railway.app",
     "https://heavensfruit.com",
     "https://www.heavensfruit.com",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
     "https://api.heavensfruit.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",    
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -281,9 +281,9 @@ CSRF_TRUSTED_ORIGINS = [
     "https://heavens-frontend-production.up.railway.app",
     "https://heavensfruit.com",
     "https://www.heavensfruit.com",
+    "https://api.heavensfruit.com",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://api.heavensfruit.com",
 ]
 
 
@@ -305,12 +305,12 @@ if IS_PRODUCTION:
     # Session Cookies
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_SAMESITE = 'None'
-    SESSION_COOKIE_DOMAIN = None
+    SESSION_COOKIE_DOMAIN = '.heavensfruit.com'
     
     # CSRF Cookies
     CSRF_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = 'None'
-    CSRF_COOKIE_DOMAIN = None
+    CSRF_COOKIE_DOMAIN = '.heavensfruit.com'
     
 else:
     # --- CONFIGURACIÓN LOCAL (HTTP) ---
