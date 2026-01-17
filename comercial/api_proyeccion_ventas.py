@@ -71,8 +71,8 @@ class ProyeccionVentasAPIView(APIView):
     def _parse_parameters(self, request):
         today = datetime.now().date()
         
-        # Default lookback 1 year unless specified
-        default_start = today - timedelta(days=365)
+        # Default start date fixed to January 1, 2023
+        default_start = datetime(2023, 1, 1).date()
         
         fecha_inicio_str = request.GET.get('fecha_inicio')
         fecha_fin_str = request.GET.get('fecha_fin')
@@ -83,7 +83,7 @@ class ProyeccionVentasAPIView(APIView):
             'cliente_id': request.GET.get('cliente_id') or request.GET.get('cliente'),
             'fruta_id': request.GET.get('fruta_id') or request.GET.get('fruta'),
             'exportador_id': request.GET.get('exportador_id') or request.GET.get('exportador'),
-            'forecast_months': int(request.GET.get('forecast_months', 3)),
+            'forecast_months': int(request.GET.get('forecast_months', 12)),
             'user': request.user  # Pass user for group filtering
         }
 
