@@ -65,8 +65,39 @@ axiosClient.interceptors.response.use(
     (response: AxiosResponse) => {
         return response;
     },
-    (error: AxiosError) => {
-        // Handle specific error cases
+    async (error: AxiosError) => {
+        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+        // Handle CSRF token errors with automatic retry
+        if (error.response?.status === 403) {
+            const responseData = error.response.data as { detail?: string };
+            const errorDetail = responseData?.detail || '';
+
+            // Check if it's a CSRF error and we haven't already retried
+            if (errorDetail.toLowerCase().includes('csrf') && !originalRequest._retry) {
+                originalRequest._retry = true;
+
+                try {
+                    // Refresh CSRF token
+                    await axiosClient.get('/autenticacion/api/csrf/');
+
+                    // Get the new token from cookie
+                    const newCsrfToken = getCookie('csrftoken');
+                    if (newCsrfToken && originalRequest.headers) {
+                        originalRequest.headers['X-CSRFToken'] = newCsrfToken;
+                    }
+
+                    // Retry the original request
+                    return axiosClient(originalRequest);
+                } catch (csrfError) {
+                    console.error('Failed to refresh CSRF token:', csrfError);
+                }
+            } else {
+                console.error('Forbidden - You do not have permission');
+            }
+        }
+
+        // Handle other specific error cases
         if (error.response) {
             switch (error.response.status) {
                 case 401:
@@ -77,9 +108,6 @@ axiosClient.interceptors.response.use(
                         sessionStorage.removeItem('isAuthenticated');
                         sessionStorage.removeItem('user');
                     }
-                    break;
-                case 403:
-                    console.error('Forbidden - You do not have permission');
                     break;
                 case 404:
                     console.error('Not Found - Resource does not exist');

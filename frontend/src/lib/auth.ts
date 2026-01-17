@@ -120,11 +120,9 @@ export const auth = {
     },
 
     // Check if user is authenticated (always validates with server)
+    // The /check-auth/ endpoint now also ensures the CSRF cookie is set
     async checkAuth(): Promise<{ authenticated: boolean; user?: any }> {
         try {
-            // Ensure CSRF cookie is set first
-            await this.ensureCsrf();
-
             const response = await axiosClient.get<{ authenticated: boolean; user?: any }>(
                 '/autenticacion/api/check-auth/'
             );
