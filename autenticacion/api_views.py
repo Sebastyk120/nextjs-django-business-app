@@ -67,16 +67,18 @@ class CheckAuthAPIView(APIView):
 
     def get(self, request):
         # Ensure CSRF cookie is set for subsequent POST/PUT/DELETE requests
-        get_token(request)
+        csrf_token = get_token(request)
         
         if request.user.is_authenticated:
             return Response({
                 'authenticated': True,
-                'user': UserSerializer(request.user).data
+                'user': UserSerializer(request.user).data,
+                'csrfToken': csrf_token  # Return token in body as JS cannot read cross-domain cookies
             }, status=status.HTTP_200_OK)
         
         return Response({
-            'authenticated': False
+            'authenticated': False,
+            'csrfToken': csrf_token
         }, status=status.HTTP_200_OK)
 
 
@@ -89,13 +91,9 @@ class CSRFTokenAPIView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # The ensure_csrf_cookie decorator would be ideal here, but for class-based views
-        # we need to use the method decorator. However, for simplicity, we can manually
-        # ensure the cookie is rotated by calling get_token which forces Django to set it.
-        # The key is that Django will set the cookie in the response automatically.
-        get_token(request)  # This ensures the CSRF cookie is set/refreshed
+        csrf_token = get_token(request)  # This ensures the CSRF cookie is set/refreshed
         return Response({
-            'detail': 'CSRF cookie set'
+            'csrfToken': csrf_token
         }, status=status.HTTP_200_OK)
 
 

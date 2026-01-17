@@ -260,6 +260,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 ALLOWED_HOSTS = [
     'heavens-server-private.up.railway.app', 'localhost', '127.0.0.1',
     'heavensfruit.com', 'www.heavensfruit.com', 'api.heavensfruit.com', 
+    'heavens-frontend-production.up.railway.app',
 ]
 # Configuración de Seguridad para Proxy (Railway)
 # Esto es CRÍTICO para que Django sepa que está sirviendo sobre HTTPS
@@ -284,10 +285,6 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://api.heavensfruit.com",
 ]
-
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
-    ALLOWED_HOSTS = ["*"]
 
 
 # Allow credentials (cookies, authorization headers) in CORS requests

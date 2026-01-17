@@ -2,11 +2,13 @@ import axiosClient from './axios';
 import { AxiosError } from 'axios';
 
 // API Response interfaces
+// API Response interfaces
 interface AuthResponse {
     success: boolean;
     message?: string;
     user?: any;
     errors?: any;
+    csrfToken?: string;
 }
 
 interface LoginResponse extends AuthResponse {
@@ -17,7 +19,10 @@ export const auth = {
     // Ensure CSRF cookie is set (needed for cross-origin in production)
     async ensureCsrf(): Promise<void> {
         try {
-            await axiosClient.get('/autenticacion/api/csrf/');
+            const response = await axiosClient.get<{ csrfToken?: string }>('/autenticacion/api/csrf/');
+            if (response.data?.csrfToken && typeof window !== 'undefined') {
+                localStorage.setItem('csrfToken', response.data.csrfToken);
+            }
         } catch (error) {
             console.warn('Could not ensure CSRF token:', error);
         }
@@ -48,6 +53,9 @@ export const auth = {
                     if (data.user) {
                         sessionStorage.setItem('user', JSON.stringify(data.user));
                     }
+                    if (data.csrfToken) {
+                        localStorage.setItem('csrfToken', data.csrfToken);
+                    }
                 }
             }
 
@@ -69,6 +77,7 @@ export const auth = {
             if (typeof window !== 'undefined') {
                 sessionStorage.removeItem('isAuthenticated');
                 sessionStorage.removeItem('user');
+                localStorage.removeItem('csrfToken');
             }
 
             const response = await axiosClient.post<AuthResponse>(
@@ -84,6 +93,7 @@ export const auth = {
             if (typeof window !== 'undefined') {
                 sessionStorage.removeItem('isAuthenticated');
                 sessionStorage.removeItem('user');
+                localStorage.removeItem('csrfToken');
             }
 
             return {
@@ -121,9 +131,9 @@ export const auth = {
 
     // Check if user is authenticated (always validates with server)
     // The /check-auth/ endpoint now also ensures the CSRF cookie is set
-    async checkAuth(): Promise<{ authenticated: boolean; user?: any }> {
+    async checkAuth(): Promise<{ authenticated: boolean; user?: any; csrfToken?: string }> {
         try {
-            const response = await axiosClient.get<{ authenticated: boolean; user?: any }>(
+            const response = await axiosClient.get<{ authenticated: boolean; user?: any; csrfToken?: string }>(
                 '/autenticacion/api/check-auth/'
             );
 
@@ -135,6 +145,9 @@ export const auth = {
                     sessionStorage.setItem('isAuthenticated', 'true');
                     if (data.user) {
                         sessionStorage.setItem('user', JSON.stringify(data.user));
+                    }
+                    if (data.csrfToken) {
+                        localStorage.setItem('csrfToken', data.csrfToken);
                     }
                 } else {
                     // Server says not authenticated, clear local state

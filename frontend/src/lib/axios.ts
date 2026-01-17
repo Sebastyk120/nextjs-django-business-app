@@ -48,7 +48,14 @@ axiosClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         // Add CSRF token for non-GET requests
         if (config.method !== 'get') {
-            const csrftoken = getCookie('csrftoken');
+            // Prioritize token from localStorage (needed for cross-origin)
+            let csrftoken = typeof window !== 'undefined' ? localStorage.getItem('csrfToken') : null;
+
+            // Fallback to cookie
+            if (!csrftoken) {
+                csrftoken = getCookie('csrftoken');
+            }
+
             if (csrftoken) {
                 config.headers['X-CSRFToken'] = csrftoken;
             }
@@ -78,13 +85,24 @@ axiosClient.interceptors.response.use(
                 originalRequest._retry = true;
 
                 try {
-                    // Refresh CSRF token
-                    await axiosClient.get('/autenticacion/api/csrf/');
+                    // Refresh CSRF token - get from JSON response
+                    const response = await axiosClient.get<{ csrfToken?: string }>('/autenticacion/api/csrf/');
+                    const newCsrfToken = response.data.csrfToken;
 
-                    // Get the new token from cookie
-                    const newCsrfToken = getCookie('csrftoken');
-                    if (newCsrfToken && originalRequest.headers) {
-                        originalRequest.headers['X-CSRFToken'] = newCsrfToken;
+                    if (newCsrfToken) {
+                        // Update storage and header
+                        if (typeof window !== 'undefined') {
+                            localStorage.setItem('csrfToken', newCsrfToken);
+                        }
+                        if (originalRequest.headers) {
+                            originalRequest.headers['X-CSRFToken'] = newCsrfToken;
+                        }
+                    } else {
+                        // Fallback to cookie reading if JSON token missing
+                        const cookieToken = getCookie('csrftoken');
+                        if (cookieToken && originalRequest.headers) {
+                            originalRequest.headers['X-CSRFToken'] = cookieToken;
+                        }
                     }
 
                     // Retry the original request
@@ -93,7 +111,7 @@ axiosClient.interceptors.response.use(
                     console.error('Failed to refresh CSRF token:', csrfError);
                 }
             } else {
-                console.error('Forbidden - You do not have permission');
+                console.error('Forbidden - You do not have permission', errorDetail);
             }
         }
 
