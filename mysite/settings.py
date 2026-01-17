@@ -251,7 +251,9 @@ ALLOWED_HOSTS = [
     'heavens-server-private.up.railway.app', 'localhost', '127.0.0.1',
     'heavensfruit.com', 'www.heavensfruit.com',
 ]
-CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app", "https://*.heavensfruit.com", "http://localhost:3000", "http://127.0.0.1:3000"]
+# Configuración de Seguridad para Proxy (Railway)
+# Esto es CRÍTICO para que Django sepa que está sirviendo sobre HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 CORS_ALLOWED_ORIGINS = [
     "https://heavens-server-private.up.railway.app",
@@ -262,12 +264,14 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
-CORS_ORIGINS_WHITELIST = ["https://heavens-server-private.up.railway.app",
-                          "https://heavens-frontend-production.up.railway.app",
-                          "https://heavensfruit.com",
-                          "https://www.heavensfruit.com",
-                          "http://localhost:3000",
-                          "http://127.0.0.1:3000",]
+CSRF_TRUSTED_ORIGINS = [
+    "https://heavens-server-private.up.railway.app",
+    "https://heavens-frontend-production.up.railway.app",
+    "https://heavensfruit.com",
+    "https://www.heavensfruit.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]
 
 # Allow credentials (cookies, authorization headers) in CORS requests
 CORS_ALLOW_CREDENTIALS = True

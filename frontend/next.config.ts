@@ -38,6 +38,10 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        source: '/media/:path*',
+        destination: `${API_URL}/media/:path*`,
+      },
+      {
         // Rewrite with trailing slash
         source: '/django-api/:path*/',
         destination: `${API_URL}/:path*/`,
