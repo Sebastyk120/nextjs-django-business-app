@@ -34,15 +34,16 @@ export function TrendBarChart({ data, title, dataKey = 'orders', unit = 'pedidos
             <h3 className="text-sm font-semibold text-slate-700 mb-4">{title}</h3>
             <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data} layout="vertical" margin={{ left: 0, right: 20 }}>
+                    <BarChart data={data} layout="vertical" margin={{ left: 10, right: 30, top: 0, bottom: 0 }}>
                         <XAxis type="number" hide />
                         <YAxis
                             type="category"
                             dataKey="name"
-                            width={100}
-                            tick={{ fontSize: 12, fill: '#64748b' }}
+                            width={130}
+                            tick={{ fontSize: 11, fill: '#64748b' }}
                             tickLine={false}
                             axisLine={false}
+                            tickFormatter={(value) => value.length > 20 ? `${value.substring(0, 17)}...` : value}
                         />
                         <Tooltip
                             formatter={(value: number | undefined) => [formatValue(value), dataKey === 'kilos' ? 'Kilos' : 'Cantidad']}

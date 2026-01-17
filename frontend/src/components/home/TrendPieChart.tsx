@@ -63,7 +63,9 @@ export function TrendPieChart({ data, title, dataKey = 'orders', unit = 'pedidos
                             layout="vertical"
                             iconType="circle"
                             formatter={(value) => (
-                                <span className="text-slate-700 font-medium ml-1 text-xs">{value}</span>
+                                <span className="text-slate-700 font-medium ml-1 text-xs" title={value}>
+                                    {value.length > 15 ? `${value.substring(0, 12)}...` : value}
+                                </span>
                             )}
                         />
                     </PieChart>

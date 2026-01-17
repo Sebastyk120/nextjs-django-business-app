@@ -1,8 +1,25 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
+// Helper to determine API URL dynamically
+const getBaseUrl = () => {
+    let url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+    // Auto-detect LAN IP for mobile testing
+    if (typeof window !== 'undefined') {
+        const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const apiIsLocal = url.includes('localhost') || url.includes('127.0.0.1');
+
+        if (!isLocalHost && apiIsLocal) {
+            // Assume backend is running on the same machine, standard Django port 8000
+            url = `${window.location.protocol}//${window.location.hostname}:8000`;
+        }
+    }
+    return url;
+};
+
 // Create axios instance with default config
 const axiosClient = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+    baseURL: getBaseUrl(),
     withCredentials: true, // Important for session-based auth
     headers: {
         'Content-Type': 'application/json',

@@ -275,6 +275,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://api.heavensfruit.com",
 ]
 
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+    ALLOWED_HOSTS = ["*"]
+
+
 # Allow credentials (cookies, authorization headers) in CORS requests
 CORS_ALLOW_CREDENTIALS = True
 
