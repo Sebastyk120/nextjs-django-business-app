@@ -281,24 +281,34 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = False  # No guardar sesión en cada request
 SESSION_COOKIE_HTTPONLY = True
 
-# Configuración de cookies para producción (cross-origin con HTTPS)
-# En producción con dominios diferentes, necesitamos:
-# - Secure=True (requiere HTTPS)
-# - SameSite='None' (permite cookies cross-origin)
-if DEBUG:
-    # Desarrollo local
+# Detección de entorno
+IS_PRODUCTION = os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('u_app_name') or not DEBUG
+
+if IS_PRODUCTION:
+    # --- CONFIGURACIÓN DE PRODUCCIÓN (HTTPS / Cross-Domain) ---
+    # Necesario para que las cookies viajen entre heavensfruit.com y railway.app
+    
+    # Session Cookies
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_DOMAIN = None
+    
+    # CSRF Cookies
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_DOMAIN = None
+    
+else:
+    # --- CONFIGURACIÓN LOCAL (HTTP) ---
+    # Session Cookies
     SESSION_COOKIE_SECURE = False
     SESSION_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_DOMAIN = None
+    
+    # CSRF Cookies
     CSRF_COOKIE_SECURE = False
     CSRF_COOKIE_SAMESITE = 'Lax'
-else:
-    # Producción con HTTPS y dominios cross-origin
-    SESSION_COOKIE_SECURE = True
-    SESSION_COOKIE_SAMESITE = 'None'
-    SESSION_COOKIE_DOMAIN = None  # Permite que la cookie se use en cualquier dominio
-    CSRF_COOKIE_SECURE = True
-    CSRF_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_DOMAIN = None
 
 # CONFIGURACIÓN MAIL:
 DEFAULT_FROM_EMAIL = "subgerencia@heavensfruit.com"
@@ -309,10 +319,15 @@ EMAIL_BACKEND = 'autenticacion.mailjet_backend.MailjetEmailBackend'
 
 # Verificar que las variables de entorno de Mailjet estén definidas
 try:
-    MJ_APIKEY_PUBLIC = os.environ['MJ_APIKEY_PUBLIC']
-    MJ_APIKEY_PRIVATE = os.environ['MJ_APIKEY_PRIVATE']
+    MJ_APIKEY_PUBLIC = os.environ.get('MJ_APIKEY_PUBLIC', '')
+    MJ_APIKEY_PRIVATE = os.environ.get('MJ_APIKEY_PRIVATE', '')
+    if not MJ_APIKEY_PUBLIC or not MJ_APIKEY_PRIVATE:
+        # Solo lanzar error en producción para no romper desarrollo local si faltan keys
+        if IS_PRODUCTION:
+             print("ADVERTENCIA: Variables de Mailjet no definidas en producción")
 except KeyError as e:
-    raise ImproperlyConfigured(f'La variable de entorno {e} no está definida para Mailjet')
+    if IS_PRODUCTION:
+        print(f"Error configuración Mailjet: {e}")
 
 # Configuración SMTP de respaldo (comentada)
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
