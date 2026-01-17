@@ -247,6 +247,13 @@ class PedidoViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, viewsets.R
         
         return queryset.none()
 
+    def perform_create(self, serializer):
+        """Only allow Heavens and Autorizadores to create orders"""
+        user = self.request.user
+        if not user.groups.filter(name__in=['Heavens', 'Autorizadores']).exists():
+            raise PermissionDenied("No tienes permisos para crear pedidos.")
+        serializer.save()
+
     def perform_update(self, serializer):
         user = self.request.user
         instance = serializer.instance

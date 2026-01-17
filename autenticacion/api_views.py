@@ -6,6 +6,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
+from django.middleware.csrf import get_token
 from .serializers import LoginSerializer, UserSerializer, PasswordResetSerializer
 
 
@@ -67,6 +68,21 @@ class CheckAuthAPIView(APIView):
         
         return Response({
             'authenticated': False
+        }, status=status.HTTP_200_OK)
+
+
+class CSRFTokenAPIView(APIView):
+    """
+    API endpoint to get CSRF token
+    GET: Returns CSRF token and ensures the cookie is set
+    Needed for cross-origin requests in production
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        csrf_token = get_token(request)
+        return Response({
+            'csrfToken': csrf_token
         }, status=status.HTTP_200_OK)
 
 

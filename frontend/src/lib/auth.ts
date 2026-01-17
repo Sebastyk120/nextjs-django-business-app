@@ -14,9 +14,21 @@ interface LoginResponse extends AuthResponse {
 }
 
 export const auth = {
+    // Ensure CSRF cookie is set (needed for cross-origin in production)
+    async ensureCsrf(): Promise<void> {
+        try {
+            await axiosClient.get('/autenticacion/api/csrf/');
+        } catch (error) {
+            console.warn('Could not ensure CSRF token:', error);
+        }
+    },
+
     // Login to Django
     async login(formData: FormData): Promise<LoginResponse> {
         try {
+            // Ensure CSRF cookie is set before login attempt
+            await this.ensureCsrf();
+
             const response = await axiosClient.post<LoginResponse>(
                 '/autenticacion/api/login/',
                 formData,
@@ -110,6 +122,9 @@ export const auth = {
     // Check if user is authenticated (always validates with server)
     async checkAuth(): Promise<{ authenticated: boolean; user?: any }> {
         try {
+            // Ensure CSRF cookie is set first
+            await this.ensureCsrf();
+
             const response = await axiosClient.get<{ authenticated: boolean; user?: any }>(
                 '/autenticacion/api/check-auth/'
             );

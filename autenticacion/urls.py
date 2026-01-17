@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 from .views import LandingPageView, EnglishLandingPageView
-from .api_views import LoginAPIView, LogoutAPIView, CheckAuthAPIView, PasswordResetAPIView
+from .api_views import LoginAPIView, LogoutAPIView, CheckAuthAPIView, PasswordResetAPIView, CSRFTokenAPIView
 from django.contrib.auth.decorators import login_required
 
 class CustomPasswordResetDoneView(auth_views.PasswordResetDoneView):
@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/logout/', LogoutAPIView.as_view(), name='api_logout'),
     path('api/password-reset/', PasswordResetAPIView.as_view(), name='api_password_reset'),
     path('api/check-auth/', CheckAuthAPIView.as_view(), name='api_check_auth'),
+    path('api/csrf/', CSRFTokenAPIView.as_view(), name='api_csrf'),
     
     # Rutas de autenticación
     path('login/', views.login1, name='login'),
