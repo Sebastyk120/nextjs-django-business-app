@@ -181,6 +181,13 @@ class ContactForm(forms.Form):
 
 class LandingPageView(TemplateView):
     template_name = 'index.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        # Redireccionar tráfico directo al dominio API hacia el sitio principal
+        host = request.get_host()
+        if host.startswith('api.') or host == 'api.heavensfruit.com':
+            return redirect('https://www.heavensfruit.com')
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

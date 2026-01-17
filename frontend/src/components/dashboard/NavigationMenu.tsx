@@ -73,9 +73,9 @@ const MENU_ITEMS: { section?: string; items: MenuItem[] }[] = [
                     { title: "Historial Cotizaciones", href: "/costos/historial" },
                     { title: "Tarifas Aéreas", href: "/comercial/tarifas-aereas" },
                     { title: "Gestión Precios Fruta", href: "/comercial/tarifas-frutas" },
-                    { title: "Costos Estibado", href: "/admin/comercial/costosestibado/" },
-                    { title: "Insumos", href: "/admin/comercial/insumo/" },
-                    { title: "Cliente Presentación", href: "/admin/comercial/clientepresentacion/" },
+                    { title: "Costos Estibado", href: "https://api.heavensfruit.com/admin/comercial/costosestibado/" },
+                    { title: "Insumos", href: "https://api.heavensfruit.com/admin/comercial/insumo/" },
+                    { title: "Cliente Presentación", href: "https://api.heavensfruit.com/admin/comercial/clientepresentacion/" },
                 ],
             },
 
@@ -279,7 +279,7 @@ export function NavigationMenu() {
                         <div className="space-y-3 pt-6 border-t">
                             <div className="space-y-1">
                                 <Link
-                                    href="/admin"
+                                    href="https://api.heavensfruit.com/admin"
                                     onClick={closeMenu}
                                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground text-muted-foreground"
                                 >

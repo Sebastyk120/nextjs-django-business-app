@@ -7,7 +7,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from autenticacion.views import LandingPageView, EnglishLandingPageView
 from django.contrib.sitemaps.views import sitemap # Import sitemap view
-from django.views.generic.base import TemplateView # Import TemplateView
+from django.views.generic.base import TemplateView, RedirectView # Import TemplateView and RedirectView
 
 sitemaps = {
     'landing': LandingPageSitemap,
@@ -25,6 +25,7 @@ urlpatterns = [
     path('captcha/', include('captcha.urls')),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'), # Sitemap URL
     path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")), # robots.txt URL
+    path('home', RedirectView.as_view(url='https://www.heavensfruit.com/home', permanent=False)),
 ]
 
 # Agregar estas líneas para servir archivos de medios tanto en desarrollo como en producción
