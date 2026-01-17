@@ -29,17 +29,28 @@ export function DateTimePicker({ value, onChange, label, showTime = true, fromYe
     const handleDateSelect = (date: Date | undefined) => {
         if (!date) return
 
-        const newDate = new Date(date)
+        // Create a new date using local time components to avoid timezone issues
+        // react-day-picker returns dates at midnight UTC which can shift days
+        const year = date.getFullYear()
+        const month = date.getMonth()
+        const day = date.getDate()
+
+        let newDate: Date
+
         if (dateValue && showTime) {
-            newDate.setHours(dateValue.getHours())
-            newDate.setMinutes(dateValue.getMinutes())
+            // Preserve existing time when selecting a new date
+            newDate = new Date(year, month, day, dateValue.getHours(), dateValue.getMinutes())
+        } else {
+            // Create date at noon to avoid any edge cases with midnight
+            newDate = new Date(year, month, day, 12, 0, 0)
         }
 
         if (showTime) {
             onChange(newDate.toISOString())
         } else {
-            // YYYY-MM-DD
-            onChange(format(newDate, "yyyy-MM-dd"))
+            // YYYY-MM-DD format using local date components
+            const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+            onChange(formattedDate)
         }
     }
 
