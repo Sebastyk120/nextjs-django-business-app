@@ -47,7 +47,7 @@ const MENU_ITEMS: { section?: string; items: MenuItem[] }[] = [
         section: "COMERCIAL",
         items: [
             {
-                title: "Pedidos",
+                title: "Pedidos (Todas las Exp.)",
                 icon: ShoppingBag,
                 submenu: [
                     { title: "General (Heavens)", href: "/pedidos" },
@@ -59,7 +59,7 @@ const MENU_ITEMS: { section?: string; items: MenuItem[] }[] = [
             },
 
             {
-                title: "Cartera",
+                title: "Cartera (Todas las Exp.)",
                 icon: Wallet,
                 submenu: [
                     { title: "Estado de Cuenta Clientes", href: "/comercial/estado-cuenta" },
@@ -136,7 +136,7 @@ const MENU_ITEMS: { section?: string; items: MenuItem[] }[] = [
                 title: "Operaciones Exportador",
                 icon: Briefcase,
                 submenu: [
-                    { title: "Relación Reportes Vencidos", href: "/nacionales/reportes-vencidos" },
+                    { title: "Relación Reportes Vencidos (Todas las Exp.)", href: "/nacionales/reportes-vencidos" },
                     { title: "Reportes Asociados", href: "/nacionales/reportes-asociados" },
                 ],
             },
