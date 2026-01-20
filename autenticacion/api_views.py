@@ -115,14 +115,23 @@ class PasswordResetAPIView(APIView):
             form = PasswordResetForm(form_data)
             
             if form.is_valid():
+                # Determinar el dominio correcto para el enlace de reset
+                # El formulario de confirmación está en el backend Django
+                if settings.DEBUG:
+                    domain = request.get_host()
+                else:
+                    # En producción, usar el dominio del API donde Django sirve el formulario
+                    domain = 'api.heavensfruit.com'
+                
                 opts = {
-                    'use_https': request.is_secure(),
+                    'use_https': not settings.DEBUG,  # HTTPS en producción
                     'token_generator': default_token_generator,
                     'from_email': settings.DEFAULT_FROM_EMAIL,
                     'email_template_name': 'registration/password_reset_email.html',
                     'subject_template_name': 'registration/password_reset_subject.txt',
                     'request': request,
                     'html_email_template_name': None,
+                    'domain_override': domain,
                 }
                 form.save(**opts)
                 

@@ -146,6 +146,26 @@ class CustomPasswordResetView(PasswordResetView):
     # Asegurarse de que use la plantilla correcta
     def get_template_names(self):
         return [self.template_name]
+    
+    def form_valid(self, form):
+        """Override to set the correct domain for password reset links in production."""
+        opts = {
+            'use_https': not settings.DEBUG,
+            'token_generator': self.token_generator,
+            'from_email': self.from_email,
+            'email_template_name': self.email_template_name,
+            'subject_template_name': self.subject_template_name,
+            'request': self.request,
+            'html_email_template_name': self.html_email_template_name,
+            'extra_email_context': self.extra_email_context,
+        }
+        
+        # En producción, usar el dominio del API donde Django sirve el formulario
+        if not settings.DEBUG:
+            opts['domain_override'] = 'api.heavensfruit.com'
+        
+        form.save(**opts)
+        return super(PasswordResetView, self).form_valid(form)
 
 
 class ContactForm(forms.Form):
