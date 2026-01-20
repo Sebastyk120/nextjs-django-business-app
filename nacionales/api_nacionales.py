@@ -29,9 +29,15 @@ class IsHeavensGroup(permissions.BasePermission):
             return True
         return request.user.groups.filter(name='Heavens').exists()
 
+class CompraPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class CompraNacionalViewSet(viewsets.ModelViewSet):
     serializer_class = CompraNacionalSerializer
     permission_classes = [permissions.IsAuthenticated, IsHeavensGroup]
+    pagination_class = CompraPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['numero_guia', 'proveedor__nombre', 'remision']
 

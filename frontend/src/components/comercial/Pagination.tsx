@@ -14,6 +14,7 @@ interface PaginationProps {
     totalPages: number;
     totalItems: number;
     itemsPerPage: number;
+    onPageChange: (page: number) => void;
     onPageSizeChange: (size: number) => void;
     itemLabel?: string;
 }

@@ -3,6 +3,7 @@ import { CompraNacional, CompraNacionalResponse } from "@/types/nacionales";
 
 interface CompraParams {
     page?: number;
+    pageSize?: number;
     search?: string;
     completed?: boolean;
 }
@@ -13,6 +14,9 @@ const nacionalesService = {
 
         if (params?.page) {
             queryParams.append("page", params.page.toString());
+        }
+        if (params?.pageSize) {
+            queryParams.append("page_size", params.pageSize.toString());
         }
         if (params?.search) {
             queryParams.append("search", params.search);
