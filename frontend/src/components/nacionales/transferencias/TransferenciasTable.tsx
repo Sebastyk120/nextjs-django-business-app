@@ -28,6 +28,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
+
+
+import { Pagination } from "@/components/comercial/Pagination";
+
 interface TransferenciasTableProps {
     filters: any;
     refreshTrigger: number;
@@ -39,20 +43,51 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
     const [loading, setLoading] = useState(true);
     const [transferToDelete, setTransferToDelete] = useState<Transferencia | null>(null);
 
+    // Pagination State
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
+    const [totalItems, setTotalItems] = useState(0);
+    const [totalValue, setTotalValue] = useState(0);
+
     const fetchData = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
+            params.append('page', page.toString());
+            params.append('page_size', pageSize.toString());
+
             if (filters.proveedor) params.append("proveedor", filters.proveedor);
             if (filters.fecha_inicio) params.append("fecha_inicio", filters.fecha_inicio);
             if (filters.fecha_fin) params.append("fecha_fin", filters.fecha_fin);
             if (filters.origen) params.append("origen", filters.origen);
 
             const response = await axiosClient.get(`/nacionales/api/transferencias/?${params.toString()}`);
-            setData(response.data);
+
+            // Handle Paginated Response
+            if (response.data.results) {
+                setData(response.data.results);
+                setTotalItems(response.data.count);
+                // If backend provides total value (custom pagination), use it. 
+                // Otherwise we might need another way, but we implemented custom pagination.
+                if (response.data.total_valor !== undefined) {
+                    setTotalValue(response.data.total_valor);
+                } else {
+                    // Fallback if backend update is not yet effective (should not happen if deployed correctly)
+                    const currentSum = response.data.results.reduce((sum: number, item: any) => sum + Number(item.valor_transferencia), 0);
+                    setTotalValue(currentSum);
+                }
+            } else {
+                // Fallback for non-paginated (legacy)
+                setData(response.data);
+                setTotalItems(response.data.length);
+                const sum = response.data.reduce((acc: number, item: any) => acc + Number(item.valor_transferencia), 0);
+                setTotalValue(sum);
+            }
         } catch (error) {
             console.error("Error fetching transfers:", error);
             toast.error("Error al cargar las transferencias");
+            setData([]);
+            setTotalItems(0);
         } finally {
             setLoading(false);
         }
@@ -60,7 +95,12 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
 
     useEffect(() => {
         fetchData();
-    }, [filters, refreshTrigger]);
+    }, [filters, refreshTrigger, page, pageSize]);
+
+    // Reset to page 1 when filters change (except just pagination)
+    useEffect(() => {
+        setPage(1);
+    }, [filters]);
 
     const handleDelete = async () => {
         if (!transferToDelete) return;
@@ -74,9 +114,6 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
             setTransferToDelete(null);
         }
     };
-
-    // Calculate total
-    const totalValue = data.reduce((sum, item) => sum + Number(item.valor_transferencia), 0);
 
     return (
         <>
@@ -155,14 +192,29 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
                 </Table>
 
                 {/* Footer with totals */}
-                <div className="bg-slate-50 p-4 border-t border-slate-200 flex justify-between items-center px-8">
-                    <span className="text-slate-500 font-medium text-sm">Total Registros: {data.length}</span>
-                    <div className="flex items-center gap-4">
-                        <span className="text-slate-600 font-semibold">Total Transferido:</span>
-                        <span className="text-xl font-bold text-emerald-600">
-                            $ {totalValue.toLocaleString('es-CO')}
-                        </span>
+                <div className="bg-slate-50 p-4 border-t border-slate-200 flex flex-col gap-4">
+                    <div className="flex justify-between items-center px-4">
+                        <span className="text-slate-500 font-medium text-sm"></span>
+                        <div className="flex items-center gap-4">
+                            <span className="text-slate-600 font-semibold">Total (Filtro Actual):</span>
+                            <span className="text-xl font-bold text-emerald-600">
+                                $ {totalValue.toLocaleString('es-CO')}
+                            </span>
+                        </div>
                     </div>
+
+                    <Pagination
+                        currentPage={page}
+                        totalItems={totalItems}
+                        totalPages={Math.ceil(totalItems / pageSize)}
+                        itemsPerPage={pageSize}
+                        onPageChange={setPage}
+                        onPageSizeChange={(size) => {
+                            setPageSize(size);
+                            setPage(1);
+                        }}
+                        itemLabel="transferencias"
+                    />
                 </div>
             </div>
 

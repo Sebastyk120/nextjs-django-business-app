@@ -1,5 +1,6 @@
 import datetime
 from rest_framework import viewsets, filters, permissions
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -631,9 +632,31 @@ class DashboardNacionalesAPIView(APIView):
         return Response(data)
 
 
+
+class TransferenciasPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+    def get_paginated_response(self, data):
+        # Calculate total value of the filtered queryset
+        total_valor = self.page.paginator.object_list.aggregate(
+            total=Sum('valor_transferencia')
+        )['total'] or 0
+
+        return Response({
+            'count': self.page.paginator.count,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'total_valor': total_valor,
+            'results': data
+        })
+
+
 class TransferenciasProveedorViewSet(viewsets.ModelViewSet):
     serializer_class = TransferenciasProveedorSerializer
     permission_classes = [permissions.IsAuthenticated, IsHeavensGroup]
+    pagination_class = TransferenciasPagination
 
     def get_queryset(self):
         queryset = TransferenciasProveedor.objects.all().select_related('proveedor').order_by('-fecha_transferencia')

@@ -14,8 +14,8 @@ interface PaginationProps {
     totalPages: number;
     totalItems: number;
     itemsPerPage: number;
-    onPageChange: (page: number) => void;
     onPageSizeChange: (size: number) => void;
+    itemLabel?: string;
 }
 
 export function Pagination({
@@ -25,11 +25,12 @@ export function Pagination({
     itemsPerPage,
     onPageChange,
     onPageSizeChange,
+    itemLabel = "pedidos",
 }: PaginationProps) {
     return (
         <div className="flex items-center justify-between px-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-                Total: {totalItems} pedidos
+                Total: {totalItems} {itemLabel}
             </div>
             <div className="flex items-center space-x-6 lg:space-x-8">
                 <div className="flex items-center space-x-2">
