@@ -119,12 +119,16 @@ ASGI_APPLICATION = 'mysite.asgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 
-# Configuración optimizada de base de datos para prevenir timeouts
+# Configuración optimizada de base de datos para prevenir timeouts y connection leaks
 DATABASE_CONFIG = dj_database_url.config(default=os.getenv('DATABASE_PRIVATE_URL'))
 
-# Añadir configuraciones de optimización
+# Añadir configuraciones de optimización para ASGI/Uvicorn
+# CONN_MAX_AGE=0: Cierra conexiones después de cada request (evita "too many clients" con ASGI)
+# CONN_HEALTH_CHECKS: Verifica que las conexiones estén activas antes de reutilizarlas
+# statement_timeout: 5 minutos para operaciones largas (exportaciones, reportes, etc.)
 DATABASE_CONFIG.update({
-    'CONN_MAX_AGE': 60,   # Reducido a 1 minuto para liberar conexiones más rápido
+    'CONN_MAX_AGE': 0,  # Cerrar conexiones después de cada request (crítico para ASGI/uvicorn)
+    'CONN_HEALTH_CHECKS': True,  # Verificar salud de conexiones antes de usarlas
     'OPTIONS': {
         'connect_timeout': 30,
         'options': '-c statement_timeout=300000'  # 5 minutos timeout para queries
