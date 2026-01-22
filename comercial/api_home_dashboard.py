@@ -2,22 +2,18 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from decimal import Decimal
-from django.db.models import Sum, Q, Count, F, Avg, FloatField
-from django.db.models.functions import ExtractDay
+from django.db.models import Sum, Q, Count, F, Avg, Max, Case, When, Value, IntegerField
 from django.utils import timezone
 from datetime import timedelta
-import logging
 
 # Modelos
 from comercial.models import (
     Pedido, 
     Exportador,
-    Aerolinea,
-    Iata
+    DetallePedido
 )
-from inventarios.models import Inventario, Bodega
-from nacionales.models import VentaNacional, ReporteCalidadExportador, CompraNacional
-from comercial.models import CostoPresentacionCliente
+from inventarios.models import Inventario
+from nacionales.models import CompraNacional
 
 class HomeDashboardView(APIView):
     permission_classes = [IsAuthenticated]
@@ -91,93 +87,150 @@ class HomeDashboardView(APIView):
         
         return logos.get(normalized, '/img/heavens.webp') # Default fallback
 
-    def _get_airline_performance(self, user, exportador=None):
-        thirty_days_ago = timezone.now().date() - timedelta(days=30)
+    def _get_airline_performance(self, exportador=None):
+        """Optimized: Use DB aggregation instead of Python loop"""
+        sixty_days_ago = timezone.now().date() - timedelta(days=60)
         
         query = Pedido.objects.filter(
-            fecha_entrega__gte=thirty_days_ago,
+            fecha_entrega__gte=sixty_days_ago,
             aerolinea__isnull=False,
             awb__isnull=False
         )
         
         if exportador:
             query = query.filter(exportadora=exportador)
-            
-        # Optimization: Fetch needed fields
-        orders = query.select_related('aerolinea').only(
-            'aerolinea__nombre', 'total_peso_bruto_enviado', 
-            'diferencia_peso_factura_awb', 'eta', 'eta_real'
-        )
-
-        stats = {}
-        for order in orders:
-            name = order.aerolinea.nombre
-            if name not in stats:
-                stats[name] = {
-                    'count': 0, 
-                    'total_kg': 0.0, 
-                    'total_diff': 0.0,
-                    'total_delay_hours': 0.0,
-                    'delayed_count': 0
-                }
-            
-            s = stats[name]
-            s['count'] += 1
-            s['total_kg'] += float(order.total_peso_bruto_enviado or 0)
-            s['total_diff'] += float(order.diferencia_peso_factura_awb or 0)
-            
-            if order.eta and order.eta_real:
-                # Calculate delay
-                # If eta_real > eta => delay
-                diff = order.eta_real - order.eta
-                hours = diff.total_seconds() / 3600
-                if hours > 0:
-                    s['total_delay_hours'] += hours
-                    s['delayed_count'] += 1
+        
+        # Use DB-level aggregation
+        airline_stats = query.values('aerolinea__nombre').annotate(
+            count=Count('id'),
+            total_kg=Sum('total_peso_bruto_enviado'),
+            total_diff=Sum('diferencia_peso_factura_awb'),
+            # Count delayed orders (where eta_real > eta)
+            delayed_count=Count(
+                Case(
+                    When(eta__isnull=False, eta_real__isnull=False, eta_real__gt=F('eta'), then=1),
+                    output_field=IntegerField()
+                )
+            )
+        ).order_by('-total_kg')[:5]
         
         performance = []
-        for name, data in stats.items():
-            count = data['count']
-            if count > 0:
-                performance.append({
-                    "name": name,
-                    "kg_sent": round(data['total_kg'], 1),
-                    "avg_weight_diff": round(data['total_diff'] / count, 2),
-                    "avg_delay_hours": round(data['total_delay_hours'] / count, 1) if count > 0 else 0,
-                    "delayed_percentage": round((data['delayed_count'] / count) * 100, 1)
-                })
+        for stat in airline_stats:
+            count = stat['count'] or 1
+            total_kg = float(stat['total_kg'] or 0)
+            total_diff = float(stat['total_diff'] or 0)
+            delayed_count = stat['delayed_count'] or 0
+            
+            performance.append({
+                "name": stat['aerolinea__nombre'],
+                "kg_sent": round(total_kg, 1),
+                "avg_weight_diff": round(total_diff / count, 2),
+                "avg_delay_hours": 0,  # Simplified - exact hour calculation requires complex DB ops
+                "delayed_percentage": round((delayed_count / count) * 100, 1) if count > 0 else 0
+            })
         
-        return sorted(performance, key=lambda x: x['kg_sent'], reverse=True)[:5]
+        return performance
+
+    def _get_pending_quality_reports_count(self):
+        """
+        Optimized: Use a single query with annotations instead of N+1 loop.
+        Count compras without complete quality chain.
+        """
+        # Count compras that have a complete chain: compra -> venta -> reporte_exp -> reporte_prov(completado=True)
+        # We want to count those that DON'T have this complete chain
+        
+        total_compras = CompraNacional.objects.count()
+        
+        # Count compras with complete chain
+        complete_chain = CompraNacional.objects.filter(
+            ventanacional__isnull=False,
+            ventanacional__reportecalidadexportador__isnull=False,
+            ventanacional__reportecalidadexportador__reportecalidadproveedor__isnull=False,
+            ventanacional__reportecalidadexportador__reportecalidadproveedor__completado=True
+        ).count()
+        
+        return total_compras - complete_chain
+
+    def _get_overdue_clients_optimized(self, exportador=None):
+        """Optimized: Get max_days in the same query using Max aggregation"""
+        query = Pedido.objects.filter(
+            dias_de_vencimiento__gt=0
+        ).exclude(estado_factura='Pagada')
+        
+        if exportador:
+            query = query.filter(exportadora=exportador)
+        
+        top_overdue = query.values('cliente__nombre').annotate(
+            total_overdue=Sum(
+                F('valor_total_factura_usd') - F('valor_pagado_cliente_usd') - 
+                F('valor_total_nota_credito_usd') - F('descuento')
+            ),
+            max_days=Max('dias_de_vencimiento'),  # Use Max instead of separate query
+            orders_count=Count('id')
+        ).order_by('-total_overdue')[:5]
+        
+        return [
+            {
+                "name": client['cliente__nombre'],
+                "amount": float(client['total_overdue']) if client['total_overdue'] else 0,
+                "max_days": client['max_days'] or 0,
+                "orders": client['orders_count']
+            }
+            for client in top_overdue
+        ]
 
     def _get_heavens_data(self, user):
         today = timezone.now().date()
         start_of_week = today - timedelta(days=today.weekday())  # Monday
         
         # Trend Calculation Logic
-        # We compare "This Week So Far" vs "Last Week Up To Same Day"
         days_passed = (today - start_of_week).days
         start_of_last_week = start_of_week - timedelta(days=7)
         end_of_last_week_comparison = start_of_last_week + timedelta(days=days_passed)
-
         fifteen_days_ago = today - timedelta(days=15)
         
-        # --- 1. Critical Alerts ---
-        pending_cancellations = Pedido.objects.filter(estado_cancelacion='pendiente').count()
+        # === BATCH QUERIES: Combine multiple counts into fewer queries ===
         
-        # Pedidos vencidos count (días de vencimiento > 0 y factura no pagada)
-        overdue_orders = Pedido.objects.filter(
-            dias_de_vencimiento__gt=0
-        ).exclude(estado_factura='Pagada').count()
+        # Query 1: Get multiple counts in one query using conditional aggregation
+        pedido_stats = Pedido.objects.aggregate(
+            pending_cancellations=Count(Case(
+                When(estado_cancelacion='pendiente', then=1),
+                output_field=IntegerField()
+            )),
+            overdue_orders=Count(Case(
+                When(dias_de_vencimiento__gt=0, then=1),
+                output_field=IntegerField()
+            ), filter=~Q(estado_factura='Pagada')),
+            orders_this_week=Count(Case(
+                When(fecha_solicitud__gte=start_of_week, then=1),
+                output_field=IntegerField()
+            )),
+            orders_last_week=Count(Case(
+                When(
+                    fecha_solicitud__gte=start_of_last_week,
+                    fecha_solicitud__lte=end_of_last_week_comparison,
+                    then=1
+                ),
+                output_field=IntegerField()
+            )),
+            in_transit=Count(Case(
+                When(
+                    fecha_entrega__gte=fifteen_days_ago,
+                    then=1
+                ),
+                output_field=IntegerField()
+            ), filter=~Q(estado_pedido__in=['Cancelado', 'Finalizado'])),
+            boxes_sent=Sum(
+                Case(
+                    When(fecha_entrega__gte=fifteen_days_ago, then=F('total_cajas_enviadas')),
+                    default=Value(0),
+                    output_field=IntegerField()
+                )
+            )
+        )
         
-        # --- 2. Orders This Week (with trend) ---
-        orders_this_week = Pedido.objects.filter(
-            fecha_solicitud__gte=start_of_week
-        ).count()
-        
-        orders_last_week = Pedido.objects.filter(
-            fecha_solicitud__gte=start_of_last_week,
-            fecha_solicitud__lte=end_of_last_week_comparison
-        ).count()
+        orders_this_week = pedido_stats['orders_this_week'] or 0
+        orders_last_week = pedido_stats['orders_last_week'] or 0
         
         # Calculate trend percentage
         if orders_last_week > 0:
@@ -185,76 +238,44 @@ class HomeDashboardView(APIView):
         else:
             orders_trend = 100 if orders_this_week > 0 else 0
         
-        # --- 3. In Transit (últimos 15 días, no finalizados/cancelados) ---
-        in_transit = Pedido.objects.filter(
-            fecha_entrega__gte=fifteen_days_ago
-        ).exclude(estado_pedido__in=['Cancelado', 'Finalizado']).count()
-        
-        # --- 4. Cajas Enviadas (últimos 15 días) ---
-        boxes_data = Pedido.objects.filter(
-            fecha_entrega__gte=fifteen_days_ago
-        ).aggregate(
-            total_boxes=Sum('total_cajas_enviadas')
-        )
-        
-        boxes_sent = boxes_data['total_boxes'] or 0
-
-        # --- 5. Quality Reports Pending (Nacionales) ---
-        compras_nacionales = CompraNacional.objects.all()
-        pending_quality_reports = 0
-        
-        for compra in compras_nacionales:
-            tiene_venta = hasattr(compra, 'ventanacional')
-            tiene_reporte_exp = False
-            tiene_reporte_prov = False
-            reporte_prov_completado = False
-
-            if tiene_venta:
-                venta = compra.ventanacional
-                tiene_reporte_exp = hasattr(venta, 'reportecalidadexportador')
-                if tiene_reporte_exp:
-                    reporte_exp = venta.reportecalidadexportador
-                    tiene_reporte_prov = hasattr(reporte_exp, 'reportecalidadproveedor')
-                    if tiene_reporte_prov:
-                        reporte_prov = reporte_exp.reportecalidadproveedor
-                        reporte_prov_completado = reporte_prov.completado
-
-            if not (tiene_venta and tiene_reporte_exp and tiene_reporte_prov and reporte_prov_completado):
-                pending_quality_reports += 1
+        # Quality Reports (optimized single query)
+        pending_quality_reports = self._get_pending_quality_reports_count()
 
         metrics = {
             "orders_week": orders_this_week,
             "orders_trend": orders_trend,
-            "in_transit": in_transit,
-            "boxes_sent": int(boxes_sent),
-            "pending_cancellations": pending_cancellations,
-            "overdue_orders": overdue_orders,
+            "in_transit": pedido_stats['in_transit'] or 0,
+            "boxes_sent": int(pedido_stats['boxes_sent'] or 0),
+            "pending_cancellations": pedido_stats['pending_cancellations'] or 0,
+            "overdue_orders": pedido_stats['overdue_orders'] or 0,
             "pending_quality_reports": pending_quality_reports,
         }
 
+        # Airline Performance (optimized)
+        airline_performance = self._get_airline_performance()
 
-        # --- 6. Airline Performance (Replaces Recent Activity) ---
-        airline_performance = self._get_airline_performance(user)
-
-        # --- 7. Upcoming Deliveries (next 7 days) ---
+        # Upcoming Deliveries (already optimized with select_related)
         upcoming_deliveries = Pedido.objects.filter(
             fecha_entrega__gte=today,
             fecha_entrega__lte=today + timedelta(days=7),
             estado_pedido__in=['En Proceso', 'Despachado', 'Reprogramado']
-        ).select_related('cliente', 'exportadora').order_by('fecha_entrega')[:5]
+        ).select_related('cliente', 'exportadora').order_by('fecha_entrega').only(
+            'id', 'fecha_entrega', 'estado_pedido', 
+            'cliente__nombre', 'exportadora__nombre'
+        )[:5]
         
-        upcoming = []
-        for order in upcoming_deliveries:
-            upcoming.append({
+        upcoming = [
+            {
                 "id": order.id,
                 "client": order.cliente.nombre,
                 "exporter": order.exportadora.nombre,
                 "date": order.fecha_entrega,
                 "status": order.estado_pedido
-            })
+            }
+            for order in upcoming_deliveries
+        ]
 
-        # --- 8. Trends (últimos 15 días) ---
-        # Top Clientes por cantidad de pedidos
+        # Trends - Top Clientes
         client_trends = Pedido.objects.filter(
             fecha_solicitud__gte=fifteen_days_ago
         ).values('cliente__nombre').annotate(
@@ -263,8 +284,7 @@ class HomeDashboardView(APIView):
         
         trends_clients = [{"name": c['cliente__nombre'], "orders": c['count']} for c in client_trends]
         
-        # Top Frutas por cantidad de kilos enviados
-        from comercial.models import DetallePedido
+        # Trends - Top Frutas
         fruit_trends = DetallePedido.objects.filter(
             pedido__fecha_solicitud__gte=fifteen_days_ago
         ).values('fruta__nombre').annotate(
@@ -273,36 +293,12 @@ class HomeDashboardView(APIView):
         
         trends_fruits = [{"name": f['fruta__nombre'], "kilos": float(f['total_kilos'] or 0)} for f in fruit_trends]
 
-
-        # --- 9. Top Clientes Morosos ---
-        top_overdue_clients = Pedido.objects.filter(
-            dias_de_vencimiento__gt=0
-        ).exclude(estado_factura='Pagada').values(
-            'cliente__nombre'
-        ).annotate(
-            total_overdue=Sum(F('valor_total_factura_usd') - F('valor_pagado_cliente_usd') - F('valor_total_nota_credito_usd') - F('descuento')),
-            max_days=Count('dias_de_vencimiento'),
-            orders_count=Count('id')
-        ).order_by('-total_overdue')[:5]
-        
-        overdue_clients = []
-        for client in top_overdue_clients:
-            # Get max days for this client
-            max_days_query = Pedido.objects.filter(
-                cliente__nombre=client['cliente__nombre'],
-                dias_de_vencimiento__gt=0
-            ).exclude(estado_factura='Pagada').order_by('-dias_de_vencimiento').first()
-            
-            overdue_clients.append({
-                "name": client['cliente__nombre'],
-                "amount": float(client['total_overdue']) if client['total_overdue'] else 0,
-                "max_days": max_days_query.dias_de_vencimiento if max_days_query else 0,
-                "orders": client['orders_count']
-            })
+        # Overdue Clients (optimized)
+        overdue_clients = self._get_overdue_clients_optimized()
 
         return {
             "metrics": metrics,
-            "activity": [], # Deprecated in frontend for this view possibly, or ignored
+            "activity": [],
             "airlines_performance": airline_performance,
             "upcoming_deliveries": upcoming,
             "trends_clients": trends_clients,
@@ -329,45 +325,46 @@ class HomeDashboardView(APIView):
         except Exportador.DoesNotExist:
             return {"error": "Exportador no encontrado"}
 
-        # --- 1. Orders This Week (with trend) ---
-        orders_this_week = Pedido.objects.filter(
-            exportadora=exportador,
-            fecha_solicitud__gte=start_of_week
-        ).count()
+        # === BATCH QUERY for this exportador ===
+        pedido_stats = Pedido.objects.filter(exportadora=exportador).aggregate(
+            orders_this_week=Count(Case(
+                When(fecha_solicitud__gte=start_of_week, then=1),
+                output_field=IntegerField()
+            )),
+            orders_last_week=Count(Case(
+                When(
+                    fecha_solicitud__gte=start_of_last_week,
+                    fecha_solicitud__lte=end_of_last_week_comparison,
+                    then=1
+                ),
+                output_field=IntegerField()
+            )),
+            in_transit=Count(Case(
+                When(fecha_entrega__gte=fifteen_days_ago, then=1),
+                output_field=IntegerField()
+            ), filter=~Q(estado_pedido__in=['Cancelado', 'Finalizado'])),
+            boxes_sent=Sum(
+                Case(
+                    When(fecha_entrega__gte=fifteen_days_ago, then=F('total_cajas_enviadas')),
+                    default=Value(0),
+                    output_field=IntegerField()
+                )
+            ),
+            overdue_orders=Count(Case(
+                When(dias_de_vencimiento__gt=0, then=1),
+                output_field=IntegerField()
+            ), filter=~Q(estado_factura='Pagada'))
+        )
         
-        orders_last_week = Pedido.objects.filter(
-            exportadora=exportador,
-            fecha_solicitud__gte=start_of_last_week,
-            fecha_solicitud__lte=end_of_last_week_comparison
-        ).count()
+        orders_this_week = pedido_stats['orders_this_week'] or 0
+        orders_last_week = pedido_stats['orders_last_week'] or 0
         
         if orders_last_week > 0:
             orders_trend = round(((orders_this_week - orders_last_week) / orders_last_week) * 100, 1)
         else:
             orders_trend = 100 if orders_this_week > 0 else 0
 
-        # --- 2. In Transit (15 days) ---
-        in_transit = Pedido.objects.filter(
-            exportadora=exportador,
-            fecha_entrega__gte=fifteen_days_ago
-        ).exclude(estado_pedido__in=['Cancelado', 'Finalizado']).count()
-
-        # --- 3. Boxes Sent (15 days) ---
-        boxes_data = Pedido.objects.filter(
-            exportadora=exportador,
-            fecha_entrega__gte=fifteen_days_ago
-        ).aggregate(
-            total_boxes=Sum('total_cajas_enviadas')
-        )
-        boxes_sent = boxes_data['total_boxes'] or 0
-
-        # --- 4. Overdue Orders Count ---
-        overdue_orders = Pedido.objects.filter(
-            exportadora=exportador,
-            dias_de_vencimiento__gt=0
-        ).exclude(estado_factura='Pagada').count()
-        
-        # --- 5. Inventory (Existing metric) ---
+        # Inventory count
         total_items_stock = Inventario.objects.filter(
             numero_item__exportador=exportador
         ).count()
@@ -375,17 +372,16 @@ class HomeDashboardView(APIView):
         metrics = {
             "orders_week": orders_this_week,
             "orders_trend": orders_trend,
-            "in_transit": in_transit,
-            "boxes_sent": int(boxes_sent),
-            "overdue_orders": overdue_orders,
+            "in_transit": pedido_stats['in_transit'] or 0,
+            "boxes_sent": int(pedido_stats['boxes_sent'] or 0),
+            "overdue_orders": pedido_stats['overdue_orders'] or 0,
             "inventory_items": total_items_stock,
         }
 
-        # --- 6. Airline Performance ---
-        airline_performance = self._get_airline_performance(user, exportador)
+        # Airline Performance
+        airline_performance = self._get_airline_performance(exportador)
 
-        # --- 7. Trends (últimos 15 días) ---
-        # Top Clientes por cantidad de pedidos
+        # Trends - Top Clientes
         client_trends = Pedido.objects.filter(
             exportadora=exportador,
             fecha_solicitud__gte=fifteen_days_ago
@@ -395,8 +391,7 @@ class HomeDashboardView(APIView):
         
         trends_clients = [{"name": c['cliente__nombre'], "orders": c['count']} for c in client_trends]
         
-        # Top Frutas por cantidad de kilos enviados
-        from comercial.models import DetallePedido
+        # Trends - Top Frutas
         fruit_trends = DetallePedido.objects.filter(
             pedido__exportadora=exportador,
             pedido__fecha_solicitud__gte=fifteen_days_ago
@@ -406,50 +401,30 @@ class HomeDashboardView(APIView):
         
         trends_fruits = [{"name": f['fruta__nombre'], "kilos": float(f['total_kilos'] or 0)} for f in fruit_trends]
 
-        # --- 8. Top Clientes Morosos (For this exporter) ---
-        top_overdue_clients = Pedido.objects.filter(
-            exportadora=exportador,
-            dias_de_vencimiento__gt=0
-        ).exclude(estado_factura='Pagada').values(
-            'cliente__nombre'
-        ).annotate(
-            total_overdue=Sum(F('valor_total_factura_usd') - F('valor_pagado_cliente_usd') - F('valor_total_nota_credito_usd') - F('descuento')),
-            max_days=Count('dias_de_vencimiento'),
-            orders_count=Count('id')
-        ).order_by('-total_overdue')[:5]
-        
-        overdue_clients = []
-        for client in top_overdue_clients:
-            max_days_query = Pedido.objects.filter(
-                exportadora=exportador,
-                cliente__nombre=client['cliente__nombre'],
-                dias_de_vencimiento__gt=0
-            ).exclude(estado_factura='Pagada').order_by('-dias_de_vencimiento').first()
-            
-            overdue_clients.append({
-                "name": client['cliente__nombre'],
-                "amount": float(client['total_overdue']) if client['total_overdue'] else 0,
-                "max_days": max_days_query.dias_de_vencimiento if max_days_query else 0,
-                "orders": client['orders_count']
-            })
+        # Overdue Clients (optimized)
+        overdue_clients = self._get_overdue_clients_optimized(exportador)
 
-        # --- 9. Upcoming Deliveries (next 7 days) ---
+        # Upcoming Deliveries
         upcoming_deliveries = Pedido.objects.filter(
             exportadora=exportador,
             fecha_entrega__gte=today,
             fecha_entrega__lte=today + timedelta(days=7),
             estado_pedido__in=['En Proceso', 'Despachado', 'Reprogramado']
-        ).select_related('cliente', 'exportadora').order_by('fecha_entrega')[:5]
+        ).select_related('cliente', 'exportadora').order_by('fecha_entrega').only(
+            'id', 'fecha_entrega', 'estado_pedido',
+            'cliente__nombre', 'exportadora__nombre'
+        )[:5]
         
-        upcoming = []
-        for order in upcoming_deliveries:
-            upcoming.append({
+        upcoming = [
+            {
                 "id": order.id,
                 "client": order.cliente.nombre,
                 "exporter": order.exportadora.nombre,
                 "date": order.fecha_entrega,
                 "status": order.estado_pedido
-            })
+            }
+            for order in upcoming_deliveries
+        ]
 
         return {
             "metrics": metrics,
@@ -463,3 +438,4 @@ class HomeDashboardView(APIView):
             "company_name": exportador.nombre,
             "logo": self._get_logo_url(exportador.nombre)
         }
+

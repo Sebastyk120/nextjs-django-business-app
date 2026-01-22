@@ -30,7 +30,7 @@ export function AirlinePerformanceCard({ data }: AirlinePerformanceCardProps) {
             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between shrink-0">
                 <h3 className="font-bold text-slate-800 font-plus-jakarta flex items-center gap-2">
                     <Plane className="h-5 w-5 text-indigo-600" />
-                    Aerolíneas Performance
+                    Aerolíneas Performance (últimos 60 días)
                 </h3>
             </div>
             <ScrollArea className="flex-1">
