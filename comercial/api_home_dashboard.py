@@ -88,7 +88,7 @@ class HomeDashboardView(APIView):
         return logos.get(normalized, '/img/heavens.webp') # Default fallback
 
     def _get_airline_performance(self, exportador=None):
-        """Optimized: Use DB aggregation instead of Python loop"""
+        """Optimized: Use DB aggregation for counts, Python for delay hours (limited dataset)"""
         sixty_days_ago = timezone.now().date() - timedelta(days=60)
         
         query = Pedido.objects.filter(
@@ -100,12 +100,11 @@ class HomeDashboardView(APIView):
         if exportador:
             query = query.filter(exportadora=exportador)
         
-        # Use DB-level aggregation
+        # Step 1: Get base stats using DB aggregation (fast)
         airline_stats = query.values('aerolinea__nombre').annotate(
             count=Count('id'),
             total_kg=Sum('total_peso_bruto_enviado'),
             total_diff=Sum('diferencia_peso_factura_awb'),
-            # Count delayed orders (where eta_real > eta)
             delayed_count=Count(
                 Case(
                     When(eta__isnull=False, eta_real__isnull=False, eta_real__gt=F('eta'), then=1),
@@ -114,18 +113,50 @@ class HomeDashboardView(APIView):
             )
         ).order_by('-total_kg')[:5]
         
+        # Get list of top airline names for delay calculation
+        top_airlines = [stat['aerolinea__nombre'] for stat in airline_stats]
+        
+        # Step 2: Calculate delay hours only for delayed orders of top 5 airlines (limited dataset)
+        delay_hours_by_airline = {}
+        if top_airlines:
+            delayed_orders = query.filter(
+                aerolinea__nombre__in=top_airlines,
+                eta__isnull=False,
+                eta_real__isnull=False,
+                eta_real__gt=F('eta')
+            ).values('aerolinea__nombre', 'eta', 'eta_real')
+            
+            # Group delays by airline
+            airline_delays = {}
+            for order in delayed_orders:
+                name = order['aerolinea__nombre']
+                if name not in airline_delays:
+                    airline_delays[name] = []
+                diff = order['eta_real'] - order['eta']
+                hours = diff.total_seconds() / 3600
+                if hours > 0:
+                    airline_delays[name].append(hours)
+            
+            # Calculate averages
+            for name, delays in airline_delays.items():
+                if delays:
+                    delay_hours_by_airline[name] = sum(delays) / len(delays)
+        
+        # Step 3: Build final performance list
         performance = []
         for stat in airline_stats:
             count = stat['count'] or 1
+            name = stat['aerolinea__nombre']
             total_kg = float(stat['total_kg'] or 0)
             total_diff = float(stat['total_diff'] or 0)
             delayed_count = stat['delayed_count'] or 0
+            avg_delay = delay_hours_by_airline.get(name, 0)
             
             performance.append({
-                "name": stat['aerolinea__nombre'],
+                "name": name,
                 "kg_sent": round(total_kg, 1),
                 "avg_weight_diff": round(total_diff / count, 2),
-                "avg_delay_hours": 0,  # Simplified - exact hour calculation requires complex DB ops
+                "avg_delay_hours": round(avg_delay, 1),
                 "delayed_percentage": round((delayed_count / count) * 100, 1) if count > 0 else 0
             })
         
