@@ -141,7 +141,7 @@ export default function EstadoCuentaPage() {
                         <Button
                             variant="outline"
                             className="bg-white hover:bg-slate-50 border-slate-200 text-slate-700"
-                            onClick={() => window.open(`/comercial/dashboard_cliente/exportar/?cliente=${selectedClient}&fecha_inicial=${startDate}&fecha_final=${endDate}&grupo=${selectedGroup}`, '_blank')}
+                            onClick={() => window.open(`${process.env.NEXT_PUBLIC_API_URL || ''}/comercial/dashboard_cliente/exportar/?cliente=${selectedClient}&fecha_inicial=${startDate}&fecha_final=${endDate}&grupo=${selectedGroup}`, '_blank')}
                         >
                             <Download className="mr-2 h-4 w-4" />
                             Exportar Excel
