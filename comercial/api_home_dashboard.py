@@ -2,14 +2,18 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from decimal import Decimal
-from django.db.models import Sum, Q, Count, F
+from django.db.models import Sum, Q, Count, F, Avg, FloatField
+from django.db.models.functions import ExtractDay
 from django.utils import timezone
 from datetime import timedelta
+import logging
 
 # Modelos
 from comercial.models import (
     Pedido, 
-    Exportador
+    Exportador,
+    Aerolinea,
+    Iata
 )
 from inventarios.models import Inventario, Bodega
 from nacionales.models import VentaNacional, ReporteCalidadExportador, CompraNacional
@@ -87,10 +91,74 @@ class HomeDashboardView(APIView):
         
         return logos.get(normalized, '/img/heavens.webp') # Default fallback
 
+    def _get_airline_performance(self, user, exportador=None):
+        thirty_days_ago = timezone.now().date() - timedelta(days=30)
+        
+        query = Pedido.objects.filter(
+            fecha_entrega__gte=thirty_days_ago,
+            aerolinea__isnull=False,
+            awb__isnull=False
+        )
+        
+        if exportador:
+            query = query.filter(exportadora=exportador)
+            
+        # Optimization: Fetch needed fields
+        orders = query.select_related('aerolinea').only(
+            'aerolinea__nombre', 'total_peso_bruto_enviado', 
+            'diferencia_peso_factura_awb', 'eta', 'eta_real'
+        )
+
+        stats = {}
+        for order in orders:
+            name = order.aerolinea.nombre
+            if name not in stats:
+                stats[name] = {
+                    'count': 0, 
+                    'total_kg': 0.0, 
+                    'total_diff': 0.0,
+                    'total_delay_hours': 0.0,
+                    'delayed_count': 0
+                }
+            
+            s = stats[name]
+            s['count'] += 1
+            s['total_kg'] += float(order.total_peso_bruto_enviado or 0)
+            s['total_diff'] += float(order.diferencia_peso_factura_awb or 0)
+            
+            if order.eta and order.eta_real:
+                # Calculate delay
+                # If eta_real > eta => delay
+                diff = order.eta_real - order.eta
+                hours = diff.total_seconds() / 3600
+                if hours > 0:
+                    s['total_delay_hours'] += hours
+                    s['delayed_count'] += 1
+        
+        performance = []
+        for name, data in stats.items():
+            count = data['count']
+            if count > 0:
+                performance.append({
+                    "name": name,
+                    "kg_sent": round(data['total_kg'], 1),
+                    "avg_weight_diff": round(data['total_diff'] / count, 2),
+                    "avg_delay_hours": round(data['total_delay_hours'] / count, 1) if count > 0 else 0,
+                    "delayed_percentage": round((data['delayed_count'] / count) * 100, 1)
+                })
+        
+        return sorted(performance, key=lambda x: x['kg_sent'], reverse=True)[:5]
+
     def _get_heavens_data(self, user):
         today = timezone.now().date()
         start_of_week = today - timedelta(days=today.weekday())  # Monday
+        
+        # Trend Calculation Logic
+        # We compare "This Week So Far" vs "Last Week Up To Same Day"
+        days_passed = (today - start_of_week).days
         start_of_last_week = start_of_week - timedelta(days=7)
+        end_of_last_week_comparison = start_of_last_week + timedelta(days=days_passed)
+
         fifteen_days_ago = today - timedelta(days=15)
         
         # --- 1. Critical Alerts ---
@@ -108,7 +176,7 @@ class HomeDashboardView(APIView):
         
         orders_last_week = Pedido.objects.filter(
             fecha_solicitud__gte=start_of_last_week,
-            fecha_solicitud__lt=start_of_week
+            fecha_solicitud__lte=end_of_last_week_comparison
         ).count()
         
         # Calculate trend percentage
@@ -165,18 +233,8 @@ class HomeDashboardView(APIView):
         }
 
 
-        # --- 6. Recent Activity ---
-        last_orders = Pedido.objects.select_related('cliente', 'exportadora').order_by('-id')[:5]
-        activity = []
-        for order in last_orders:
-            activity.append({
-                "id": order.id,
-                "type": "new_order",
-                "title": f"Pedido #{order.id}",
-                "description": f"{order.cliente.nombre} ({order.exportadora.nombre})",
-                "date": order.fecha_solicitud,
-                "status": order.estado_pedido
-            })
+        # --- 6. Airline Performance (Replaces Recent Activity) ---
+        airline_performance = self._get_airline_performance(user)
 
         # --- 7. Upcoming Deliveries (next 7 days) ---
         upcoming_deliveries = Pedido.objects.filter(
@@ -244,7 +302,8 @@ class HomeDashboardView(APIView):
 
         return {
             "metrics": metrics,
-            "activity": activity,
+            "activity": [], # Deprecated in frontend for this view possibly, or ignored
+            "airlines_performance": airline_performance,
             "upcoming_deliveries": upcoming,
             "trends_clients": trends_clients,
             "trends_fruits": trends_fruits,
@@ -260,6 +319,11 @@ class HomeDashboardView(APIView):
         start_of_week = today - timedelta(days=today.weekday())
         fifteen_days_ago = today - timedelta(days=15)
         
+        # Fix Trend Logic
+        days_passed = (today - start_of_week).days
+        start_of_last_week = start_of_week - timedelta(days=7)
+        end_of_last_week_comparison = start_of_last_week + timedelta(days=days_passed)
+
         try:
             exportador = Exportador.objects.get(nombre__icontains=exportador_name)
         except Exportador.DoesNotExist:
@@ -271,11 +335,10 @@ class HomeDashboardView(APIView):
             fecha_solicitud__gte=start_of_week
         ).count()
         
-        start_of_last_week = start_of_week - timedelta(days=7)
         orders_last_week = Pedido.objects.filter(
             exportadora=exportador,
             fecha_solicitud__gte=start_of_last_week,
-            fecha_solicitud__lt=start_of_week
+            fecha_solicitud__lte=end_of_last_week_comparison
         ).count()
         
         if orders_last_week > 0:
@@ -318,21 +381,8 @@ class HomeDashboardView(APIView):
             "inventory_items": total_items_stock,
         }
 
-        # --- 6. Recent Activity ---
-        last_orders = Pedido.objects.filter(
-            exportadora=exportador
-        ).order_by('-id')[:5]
-        
-        activity = []
-        for order in last_orders:
-            activity.append({
-                "id": order.id,
-                "type": "my_order",
-                "title": f"Pedido #{order.id}",
-                "description": f"Destino: {order.cliente.nombre}",
-                "date": order.fecha_solicitud,
-                "status": order.estado_pedido
-            })
+        # --- 6. Airline Performance ---
+        airline_performance = self._get_airline_performance(user, exportador)
 
         # --- 7. Trends (últimos 15 días) ---
         # Top Clientes por cantidad de pedidos
@@ -403,7 +453,8 @@ class HomeDashboardView(APIView):
 
         return {
             "metrics": metrics,
-            "activity": activity,
+            "activity": [],
+            "airlines_performance": airline_performance,
             "overdue_clients": overdue_clients,
             "trends_clients": trends_clients,
             "trends_fruits": trends_fruits,

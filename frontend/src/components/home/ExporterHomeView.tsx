@@ -1,7 +1,8 @@
 import { HomeDashboardData } from "@/types/home-dashboard";
 import { TrendPieChart } from "./TrendPieChart";
 import { StatCard } from "./StatCard";
-import { ActivityFeed } from "./ActivityFeed";
+// import { ActivityFeed } from "./ActivityFeed"; // Removed
+import { AirlinePerformanceCard, AirlineData } from "./AirlinePerformanceCard";
 import { QuickActions } from "./QuickActions";
 import { OverdueClientsTable } from "./OverdueClientsTable";
 import { TrendBarChart } from "./TrendBarChart";
@@ -19,7 +20,7 @@ import {
     CalendarDays
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
 interface OverdueClient {
@@ -48,6 +49,7 @@ interface ExtendedDashboardData extends HomeDashboardData {
     trends_clients?: TrendItem[];
     trends_fruits?: TrendItem[];
     upcoming_deliveries?: UpcomingDelivery[];
+    airlines_performance?: AirlineData[];
 }
 
 export function ExporterHomeView({ data }: { data: HomeDashboardData }) {
@@ -58,6 +60,7 @@ export function ExporterHomeView({ data }: { data: HomeDashboardData }) {
     const trendsClients = extendedData.trends_clients || [];
     const trendsFruits = extendedData.trends_fruits || [];
     const upcomingDeliveries = extendedData.upcoming_deliveries || [];
+    const airlinesPerformance = extendedData.airlines_performance || [];
 
     const navActions = [
         { label: "Mis Pedidos", icon: ShoppingCart, href: "/pedidos", color: "bg-blue-600" },
@@ -178,13 +181,13 @@ export function ExporterHomeView({ data }: { data: HomeDashboardData }) {
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-sm font-medium text-slate-700">
-                                                    {format(new Date(delivery.date), "EEE d MMM", { locale: es })}
+                                                    {format(parseISO(delivery.date), "EEE d MMM", { locale: es })}
                                                 </p>
                                                 <span className={`text-xs px-2 py-0.5 rounded-full ${delivery.status === 'Despachado'
-                                                        ? 'bg-indigo-100 text-indigo-700'
-                                                        : delivery.status === 'Reprogramado'
-                                                            ? 'bg-amber-100 text-amber-700'
-                                                            : 'bg-slate-100 text-slate-700'
+                                                    ? 'bg-indigo-100 text-indigo-700'
+                                                    : delivery.status === 'Reprogramado'
+                                                        ? 'bg-amber-100 text-amber-700'
+                                                        : 'bg-slate-100 text-slate-700'
                                                     }`}>
                                                     {delivery.status}
                                                 </span>
@@ -209,7 +212,8 @@ export function ExporterHomeView({ data }: { data: HomeDashboardData }) {
                 {/* Right Column (1/3) - Moved Activity Feed Here for better visibility */}
                 <div className="xl:col-span-1">
                     <div className="sticky top-4">
-                        <ActivityFeed items={data.activity} />
+                        {/* Replaced ActivityFeed with AirlinePerformanceCard */}
+                        <AirlinePerformanceCard data={airlinesPerformance} />
                     </div>
                 </div>
             </div>

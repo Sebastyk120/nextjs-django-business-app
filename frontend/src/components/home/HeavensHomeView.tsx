@@ -1,6 +1,7 @@
 import { HomeDashboardData } from "@/types/home-dashboard";
 import { StatCard } from "./StatCard";
-import { ActivityFeed } from "./ActivityFeed";
+// import { ActivityFeed } from "./ActivityFeed"; // Removed
+import { AirlinePerformanceCard, AirlineData } from "./AirlinePerformanceCard";
 import { QuickActions } from "./QuickActions";
 import { TrendBarChart } from "./TrendBarChart";
 import { TrendPieChart } from "./TrendPieChart";
@@ -16,10 +17,11 @@ import {
     Truck,
     Wallet,
     Clock,
-    CalendarDays
+    CalendarDays,
+    LineChart
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
 interface UpcomingDelivery {
@@ -48,6 +50,7 @@ interface ExtendedDashboardData extends HomeDashboardData {
     trends_clients?: TrendItem[];
     trends_fruits?: TrendItem[];
     overdue_clients?: OverdueClient[];
+    airlines_performance?: AirlineData[];
 }
 
 export function HeavensHomeView({ data }: { data: HomeDashboardData }) {
@@ -58,9 +61,10 @@ export function HeavensHomeView({ data }: { data: HomeDashboardData }) {
     const trendsClients = extendedData.trends_clients || [];
     const trendsFruits = extendedData.trends_fruits || [];
     const overdueClients = extendedData.overdue_clients || [];
+    const airlinesPerformance = extendedData.airlines_performance || [];
 
     const navActions = [
-        { label: "Nuevo Pedido", icon: ShoppingCart, href: "/pedidos?action=new", color: "bg-blue-600" },
+        { label: "Dashboard Comercial", icon: LineChart, href: "/dashboard-comercial", color: "bg-blue-600" },
         { label: "Proyección de Ventas", icon: TrendingUp, href: "/comercial/proyeccion-ventas", color: "bg-indigo-600" },
         { label: "Dash. Nacionales", icon: Truck, href: "/dashboard-nacionales", color: "bg-emerald-600" },
         { label: "Estados De Cuenta Clientes", icon: Wallet, href: "/comercial/estado-cuenta", color: "bg-amber-600" },
@@ -201,7 +205,7 @@ export function HeavensHomeView({ data }: { data: HomeDashboardData }) {
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-sm font-medium text-slate-700">
-                                                    {format(new Date(delivery.date), "EEE d MMM", { locale: es })}
+                                                    {format(parseISO(delivery.date), "EEE d MMM", { locale: es })}
                                                 </p>
                                                 <span className={`text-xs px-2 py-0.5 rounded-full ${delivery.status === 'Despachado'
                                                     ? 'bg-indigo-100 text-indigo-700'
@@ -222,13 +226,15 @@ export function HeavensHomeView({ data }: { data: HomeDashboardData }) {
 
                 {/* Right Column (1/3) - Activity & Alerts */}
                 <div className="xl:col-span-1 space-y-6">
-                    {/* Activity Feed - Now at the top for visibility */}
-                    <ActivityFeed items={data.activity} />
+                    {/* Airline Performance - Replaces ActivityFeed */}
+                    <div className="sticky top-4 space-y-6">
+                        <AirlinePerformanceCard data={airlinesPerformance} />
 
-                    {/* Overdue Clients */}
-                    {(overdueClients.length > 0) && (
-                        <OverdueClientsTable clients={overdueClients} />
-                    )}
+                        {/* Overdue Clients */}
+                        {(overdueClients.length > 0) && (
+                            <OverdueClientsTable clients={overdueClients} />
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

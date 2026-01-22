@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2, ArrowUpDown } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
 import {
@@ -149,7 +149,7 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
                             data.map((item) => (
                                 <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors">
                                     <TableCell className="font-medium text-slate-700">
-                                        {format(new Date(item.fecha_transferencia), "dd MMM yyyy", { locale: es })}
+                                        {format(parseISO(item.fecha_transferencia), "dd MMM yyyy", { locale: es })}
                                     </TableCell>
                                     <TableCell className="font-medium text-blue-900">
                                         {item.proveedor_nombre}
@@ -233,7 +233,7 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
                                         $ {Number(transferToDelete?.valor_transferencia || 0).toLocaleString('es-CO')}
                                     </div>
                                     <p className="text-xs mt-1 italic">
-                                        {transferToDelete?.fecha_transferencia && format(new Date(transferToDelete.fecha_transferencia), "dd 'de' MMMM, yyyy", { locale: es })}
+                                        {transferToDelete?.fecha_transferencia && format(parseISO(transferToDelete.fecha_transferencia), "dd 'de' MMMM, yyyy", { locale: es })}
                                     </p>
                                 </div>
                                 <p className="pt-2">

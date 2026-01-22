@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import {
     Table,
     TableBody,
@@ -87,10 +87,10 @@ export function ReportesVencidosTable({
                                         {reporte.numero_guia}
                                     </TableCell>
                                     <TableCell className="text-slate-600 whitespace-nowrap">
-                                        {format(new Date(reporte.fecha_llegada), 'dd/MM/yy')}
+                                        {format(parseISO(reporte.fecha_llegada), 'dd/MM/yy')}
                                     </TableCell>
                                     <TableCell className="text-slate-600 whitespace-nowrap">
-                                        {format(new Date(reporte.fecha_vencimiento), 'dd/MM/yy')}
+                                        {format(parseISO(reporte.fecha_vencimiento), 'dd/MM/yy')}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-1.5 text-red-600 font-bold bg-red-50 px-2 py-1 rounded w-fit">
