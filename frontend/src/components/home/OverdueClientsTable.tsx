@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { AlertTriangle } from 'lucide-react';
 
 interface OverdueClient {
+    id: number;
     name: string;
     amount: number;
     max_days: number;
@@ -42,7 +43,10 @@ export function OverdueClientsTable({ clients }: OverdueClientsTableProps) {
                     <div
                         key={client.name}
                         className="p-4 hover:bg-slate-50 cursor-pointer transition-colors flex items-center justify-between"
-                        onClick={() => router.push(`/comercial/estado-cuenta?cliente=${encodeURIComponent(client.name)}`)}
+                        onClick={() => {
+                            const today = new Date().toISOString().split('T')[0];
+                            router.push(`/comercial/estado-cuenta?cliente=${client.id}&fecha_inicial=2024-01-01&fecha_final=${today}`);
+                        }}
                     >
                         <div className="flex items-center gap-3">
                             <span className={`
@@ -63,8 +67,8 @@ export function OverdueClientsTable({ clients }: OverdueClientsTableProps) {
                                 ${client.amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
                             <p className={`text-xs font-medium ${client.max_days > 60 ? 'text-rose-600' :
-                                    client.max_days > 30 ? 'text-amber-600' :
-                                        'text-slate-500'
+                                client.max_days > 30 ? 'text-amber-600' :
+                                    'text-slate-500'
                                 }`}>
                                 {client.max_days} días máx.
                             </p>

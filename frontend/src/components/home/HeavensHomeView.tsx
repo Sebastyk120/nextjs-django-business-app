@@ -39,6 +39,7 @@ interface TrendItem {
 }
 
 interface OverdueClient {
+    id: number;
     name: string;
     amount: number;
     max_days: number;

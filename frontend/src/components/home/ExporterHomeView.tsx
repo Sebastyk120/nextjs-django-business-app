@@ -24,6 +24,7 @@ import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 
 interface OverdueClient {
+    id: number;
     name: string;
     amount: number;
     max_days: number;

@@ -191,7 +191,8 @@ class HomeDashboardView(APIView):
         if exportador:
             query = query.filter(exportadora=exportador)
         
-        top_overdue = query.values('cliente__nombre').annotate(
+        # We must group by both ID and Name to get the ID but grouping by unique client
+        top_overdue = query.values('cliente__id', 'cliente__nombre').annotate(
             total_overdue=Sum(
                 F('valor_total_factura_usd') - F('valor_pagado_cliente_usd') - 
                 F('valor_total_nota_credito_usd') - F('descuento')
@@ -202,6 +203,7 @@ class HomeDashboardView(APIView):
         
         return [
             {
+                "id": client['cliente__id'],
                 "name": client['cliente__nombre'],
                 "amount": float(client['total_overdue']) if client['total_overdue'] else 0,
                 "max_days": client['max_days'] or 0,
