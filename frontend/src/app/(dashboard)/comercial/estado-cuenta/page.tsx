@@ -105,7 +105,15 @@ export default function EstadoCuentaPage() {
 
     const availableStatuses = useMemo(() => {
         if (!data) return [];
-        return Array.from(new Set(data.facturas.map(f => f.estado_texto))).sort();
+        const statuses = new Set<string>();
+        data.facturas.forEach(f => {
+            if (f.estado_texto.toLowerCase().includes('vencida')) {
+                statuses.add('Vencida');
+            } else {
+                statuses.add(f.estado_texto);
+            }
+        });
+        return Array.from(statuses).sort();
     }, [data?.facturas]);
 
     const filteredInvoices = useMemo(() => {
@@ -116,7 +124,16 @@ export default function EstadoCuentaPage() {
             const search = tableSearch.toLowerCase();
 
             const matchesSearch = numeroFactura.includes(search) || awb.includes(search);
-            const matchesStatus = tableStatusFilter === 'all' || f.estado_texto === tableStatusFilter;
+
+            let matchesStatus = true;
+            if (tableStatusFilter !== 'all') {
+                if (tableStatusFilter === 'Vencida') {
+                    matchesStatus = f.estado_texto.toLowerCase().includes('vencida');
+                } else {
+                    matchesStatus = f.estado_texto === tableStatusFilter;
+                }
+            }
+
             return matchesSearch && matchesStatus;
         });
     }, [data, tableSearch, tableStatusFilter]);
