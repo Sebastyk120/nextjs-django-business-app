@@ -64,7 +64,7 @@ export function CancellationNotifications() {
         const checkSolicitudes = async () => {
             if (!user) return;
 
-            const isAutorizador = user.groups?.includes("Heavens") || user.groups?.includes("Autorizadores");
+            const isAutorizador = user.groups?.includes("Autorizadores");
             if (!isAutorizador) return;
 
             try {

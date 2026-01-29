@@ -35,7 +35,7 @@ export function OrderCancellationModal({
     const [observaciones, setObservaciones] = useState("");
 
     // Derived State
-    const isAutorizador = userGroups.includes("Heavens") || userGroups.includes("Autorizadores");
+    const isAutorizador = userGroups.includes("Autorizadores");
     const estado = order?.estado_cancelacion || 'sin_solicitud';
 
     // Reset form on open

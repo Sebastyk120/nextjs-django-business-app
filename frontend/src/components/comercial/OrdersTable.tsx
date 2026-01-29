@@ -203,7 +203,7 @@ export function OrdersTable({ data, visibleColumns, columnsConfig, onEdit, onVie
                                             <FileText className="h-3.5 w-3.5" />
                                         </button>
                                         {(() => {
-                                            const isAutorizador = userGroups.includes("Heavens") || userGroups.includes("Autorizadores");
+                                            const isAutorizador = userGroups.includes("Autorizadores");
                                             const estado = pedido.estado_cancelacion || 'sin_solicitud';
 
                                             // 1. Authorizer can Approve/Reject if Pending
