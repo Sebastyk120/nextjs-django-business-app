@@ -1531,6 +1531,13 @@ class DetallePedido(models.Model):
     precio_proforma = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$Proforma", null=True,
                                           blank=True, default=None)
     observaciones = models.CharField(verbose_name="Observaciones", max_length=100, blank=True, null=True)
+    porcentaje_afectacion_utilidad = models.DecimalField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        max_digits=5, decimal_places=2,
+        verbose_name="% Afectación Utilidad",
+        null=True, blank=True, default=0,
+        help_text="Porcentaje de afectación de la utilidad para Juan Matas (0-100)"
+    )
     history = HistoricalRecords()
 
     def get_inline_title(self):
@@ -1554,18 +1561,49 @@ class DetallePedido(models.Model):
         self.kilos_enviados = self.presentacion_peso * self.cajas_enviadas
         self.diferencia = self.cajas_solicitadas - self.cajas_enviadas
 
-        self.valor_x_producto = self.valor_x_caja_usd * self.cajas_enviadas
+        self.valor_x_producto = (self.valor_x_caja_usd or 0) * (self.cajas_enviadas or 0)
+        
+        # Verificar si es exportador Juan_Matas y aplica lógica especial
+        es_juan_matas = False
+        if self.pedido and self.pedido.exportadora:
+            es_juan_matas = self.pedido.exportadora.nombre == "Juan_Matas"
+        
+        # Asegurar valores numéricos para evitar errores con None
+        cajas_enviadas = self.cajas_enviadas or 0
+        no_cajas_nc = self.no_cajas_nc or 0
+        tarifa_utilidad = self.tarifa_utilidad or 0
+        tarifa_recuperacion = self.tarifa_recuperacion or 0
+        valor_x_caja_usd = self.valor_x_caja_usd or 0
+        porcentaje_afectacion = self.porcentaje_afectacion_utilidad or 0
+        
         if self.afecta_utilidad is True:  # O sea "Sí"
-            self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
-            self.valor_total_recuperacion_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_recuperacion
-            self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
+            # Lógica especial para Juan_Matas con afectación de utilidad
+            if es_juan_matas and no_cajas_nc > 0 and porcentaje_afectacion > 0:
+                # Calcular el total de la nota crédito
+                total_nc = no_cajas_nc * valor_x_caja_usd
+                # Calcular la utilidad base sin afectación
+                utilidad_base = cajas_enviadas * tarifa_utilidad
+                # Aplicar el porcentaje de afectación: Utilidad base - (Total NC * % establecido)
+                deduccion = total_nc * porcentaje_afectacion / 100
+                # Si la deducción supera la utilidad base, el resultado es 0
+                if deduccion >= utilidad_base:
+                    self.valor_total_utilidad_x_producto = 0
+                else:
+                    self.valor_total_utilidad_x_producto = utilidad_base - deduccion
+                self.valor_total_recuperacion_x_producto = (cajas_enviadas - no_cajas_nc) * tarifa_recuperacion
+                self.valor_nota_credito_usd = total_nc
+            else:
+                # Cálculo normal
+                self.valor_total_utilidad_x_producto = (cajas_enviadas - no_cajas_nc) * tarifa_utilidad
+                self.valor_total_recuperacion_x_producto = (cajas_enviadas - no_cajas_nc) * tarifa_recuperacion
+                self.valor_nota_credito_usd = no_cajas_nc * valor_x_caja_usd
         elif self.afecta_utilidad is False:  # O sea "No"
-            self.valor_total_utilidad_x_producto = self.cajas_enviadas * self.tarifa_utilidad
-            self.valor_total_recuperacion_x_producto = self.cajas_enviadas * self.tarifa_recuperacion
-            self.valor_nota_credito_usd = (self.no_cajas_nc or 0) * self.valor_x_caja_usd
+            self.valor_total_utilidad_x_producto = cajas_enviadas * tarifa_utilidad
+            self.valor_total_recuperacion_x_producto = cajas_enviadas * tarifa_recuperacion
+            self.valor_nota_credito_usd = no_cajas_nc * valor_x_caja_usd
         else:  # None = "Descuento"
-            self.valor_total_recuperacion_x_producto =(self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_recuperacion
-            self.valor_total_utilidad_x_producto = (self.cajas_enviadas - self.no_cajas_nc) * self.tarifa_utilidad
+            self.valor_total_recuperacion_x_producto = (cajas_enviadas - no_cajas_nc) * tarifa_recuperacion
+            self.valor_total_utilidad_x_producto = (cajas_enviadas - no_cajas_nc) * tarifa_utilidad
             self.valor_nota_credito_usd = 0
 
         if self.lleva_contenedor and self.referencia and self.referencia.contenedor:

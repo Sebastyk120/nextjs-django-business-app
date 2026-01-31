@@ -174,6 +174,7 @@ class DetallePedidoSerializer(serializers.ModelSerializer):
     tipo_caja_nombre = serializers.SerializerMethodField()
     referencia_nombre = serializers.SerializerMethodField()
     pedido_info = serializers.SerializerMethodField()
+    exportador_nombre = serializers.SerializerMethodField()
 
     class Meta:
         model = DetallePedido
@@ -191,6 +192,35 @@ class DetallePedidoSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "lleva_contenedor": "No puedes seleccionar Si en el campo Lleva contenedor porque la referencia no permite contenedor."
                 })
+        
+        # Validar que si afecta_utilidad es True, no_cajas_nc debe ser > 0
+        afecta_utilidad = data.get('afecta_utilidad')
+        no_cajas_nc = data.get('no_cajas_nc')
+        cajas_enviadas = data.get('cajas_enviadas')
+        
+        # Validar que no se puedan establecer NC si no hay cajas enviadas
+        if (no_cajas_nc is not None and no_cajas_nc > 0) and (cajas_enviadas is None or cajas_enviadas <= 0):
+            raise serializers.ValidationError({
+                "no_cajas_nc": "No puede establecer 'NC Cajas' si no hay cajas enviadas."
+            })
+        
+        # Validar que no_cajas_nc no sea mayor que cajas_enviadas
+        if no_cajas_nc is not None and cajas_enviadas is not None and no_cajas_nc > cajas_enviadas:
+            raise serializers.ValidationError({
+                "no_cajas_nc": "El número de cajas NC no puede ser mayor que las cajas enviadas."
+            })
+
+        if afecta_utilidad is True and (no_cajas_nc is None or no_cajas_nc <= 0):
+            raise serializers.ValidationError({
+                "no_cajas_nc": "Si 'Afecta Utilidad' es 'Sí', debe ingresar un valor mayor a 0 en 'NC Cajas'."
+            })
+        
+        # Validar porcentaje_afectacion_utilidad entre 0 y 100
+        porcentaje = data.get('porcentaje_afectacion_utilidad')
+        if porcentaje is not None and (porcentaje < 0 or porcentaje > 100):
+            raise serializers.ValidationError({
+                "porcentaje_afectacion_utilidad": "El porcentaje debe estar entre 0 y 100."
+            })
         
         return data
 
@@ -216,6 +246,10 @@ class DetallePedidoSerializer(serializers.ModelSerializer):
             'numero_factura': obj.pedido.numero_factura,
             'estado_factura': obj.pedido.estado_factura
         }
+
+    def get_exportador_nombre(self, obj):
+        """Return exporter name for special calculations"""
+        return obj.pedido.exportadora.nombre if obj.pedido and obj.pedido.exportadora else None
 
 
 class FrutaSerializer(serializers.ModelSerializer):

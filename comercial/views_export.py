@@ -453,7 +453,7 @@ def exportar_pedidos_excel_general(request):
         'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
         'Tarifa Recuperacion',
         'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
-        'Valor Total utilidad Producto', 'Valor Total Recuperacion X Producto', 'Precio Proforma', 'Observaciones'
+        '% Afectacion Utilidad', 'Valor Total utilidad Producto', 'Valor Total Recuperacion X Producto', 'Precio Proforma', 'Observaciones'
     ]
 
     # 5. Verificar si el usuario incluyó detalles
@@ -629,6 +629,7 @@ def exportar_pedidos_excel_general(request):
                     detalle.no_cajas_nc,
                     detalle.valor_nota_credito_usd,
                     detalle.afecta_utilidad,
+                    detalle.porcentaje_afectacion_utilidad,
                     detalle.valor_total_utilidad_x_producto,
                     detalle.precio_proforma,
                     detalle.observaciones,

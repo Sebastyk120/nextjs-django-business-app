@@ -20,7 +20,8 @@ import {
     Plus,
     Pencil,
     Lock,
-    ShieldCheck
+    ShieldCheck,
+    Calculator
 } from "lucide-react";
 import { DetallePedido } from "@/types/detalle_pedido";
 import axiosClient from "@/lib/axios";
@@ -233,6 +234,33 @@ export function OrderDetailsDrawer({
     };
 
     const handleSave = async () => {
+        const noCajasNc = editForm.no_cajas_nc;
+        const cajasEnviadas = editForm.cajas_enviadas;
+        
+        // Validación: no se pueden establecer NC si no hay cajas enviadas
+        if ((noCajasNc !== null && noCajasNc !== undefined && noCajasNc !== '' && parseFloat(noCajasNc as any) > 0) && 
+            (cajasEnviadas === null || cajasEnviadas === undefined || cajasEnviadas === '' || parseFloat(cajasEnviadas as any) <= 0)) {
+            toast.error("No puede establecer 'NC Cajas' si no hay cajas enviadas.");
+            return;
+        }
+        
+        // Validación: no_cajas_nc no puede ser mayor que cajas_enviadas
+        if (noCajasNc !== null && noCajasNc !== undefined && noCajasNc !== '' && 
+            cajasEnviadas !== null && cajasEnviadas !== undefined && cajasEnviadas !== '') {
+            if (parseFloat(noCajasNc as any) > parseFloat(cajasEnviadas as any)) {
+                toast.error("El número de cajas NC no puede ser mayor que las cajas enviadas.");
+                return;
+            }
+        }
+        
+        // Validación: si afecta_utilidad es true, no_cajas_nc debe ser > 0
+        if (editForm.afecta_utilidad === true) {
+            if (noCajasNc === null || noCajasNc === undefined || noCajasNc === '' || parseFloat(noCajasNc as any) <= 0) {
+                toast.error("Si 'Afecta Utilidad' es 'Sí', debe ingresar un valor mayor a 0 en 'NC Cajas'.");
+                return;
+            }
+        }
+        
         setSaving(true);
         try {
             if (editingId === "new") {
@@ -297,6 +325,73 @@ export function OrderDetailsDrawer({
 
             return newForm;
         });
+    };
+
+    // Función para calcular valores dinámicamente
+    const calculatePreviewValues = (form: Partial<DetallePedido>) => {
+        const cajasSolicitadas = parseFloat(form.cajas_solicitadas as any) || 0;
+        const cajasEnviadas = parseFloat(form.cajas_enviadas as any) || 0;
+        const presentacionPeso = parseFloat(form.presentacion_peso as any) || 0;
+        const valorXCajaUsd = parseFloat(form.valor_x_caja_usd as any) || 0;
+        const tarifaUtilidad = parseFloat(form.tarifa_utilidad as any) || 0;
+        const tarifaRecuperacion = parseFloat(form.tarifa_recuperacion as any) || 0;
+        const noCajasNc = parseFloat(form.no_cajas_nc as any) || 0;
+        const afectaUtilidad = form.afecta_utilidad;
+        const porcentajeAfectacion = parseFloat(form.porcentaje_afectacion_utilidad as any) || 0;
+        const exportadorNombre = form.exportador_nombre;
+
+        // Cálculos básicos
+        const kilos = presentacionPeso * cajasSolicitadas;
+        const kilosEnviados = presentacionPeso * cajasEnviadas;
+        const diferencia = cajasSolicitadas - cajasEnviadas;
+        const valorXProducto = valorXCajaUsd * cajasEnviadas;
+
+        // Cálculos de utilidad y recuperación
+        let valorTotalUtilidad = 0;
+        let valorTotalRecuperacion = 0;
+        let valorNotaCredito = 0;
+
+        if (afectaUtilidad === true) {
+            // Lógica especial para Juan_Matas
+            const esJuanMatas = exportadorNombre === "Juan_Matas";
+            if (esJuanMatas && noCajasNc > 0 && porcentajeAfectacion > 0) {
+                const totalNc = noCajasNc * valorXCajaUsd;
+                const utilidadBase = cajasEnviadas * tarifaUtilidad;
+                const deduccion = totalNc * (porcentajeAfectacion / 100);
+                
+                if (deduccion >= utilidadBase) {
+                    valorTotalUtilidad = 0;
+                } else {
+                    valorTotalUtilidad = utilidadBase - deduccion;
+                }
+                valorTotalRecuperacion = (cajasEnviadas - noCajasNc) * tarifaRecuperacion;
+                valorNotaCredito = totalNc;
+            } else {
+                // Cálculo normal
+                valorTotalUtilidad = (cajasEnviadas - noCajasNc) * tarifaUtilidad;
+                valorTotalRecuperacion = (cajasEnviadas - noCajasNc) * tarifaRecuperacion;
+                valorNotaCredito = noCajasNc * valorXCajaUsd;
+            }
+        } else if (afectaUtilidad === false) {
+            valorTotalUtilidad = cajasEnviadas * tarifaUtilidad;
+            valorTotalRecuperacion = cajasEnviadas * tarifaRecuperacion;
+            valorNotaCredito = noCajasNc * valorXCajaUsd;
+        } else {
+            // Descuento (null)
+            valorTotalRecuperacion = (cajasEnviadas - noCajasNc) * tarifaRecuperacion;
+            valorTotalUtilidad = (cajasEnviadas - noCajasNc) * tarifaUtilidad;
+            valorNotaCredito = 0;
+        }
+
+        return {
+            kilos,
+            kilosEnviados,
+            diferencia,
+            valorXProducto,
+            valorTotalUtilidad,
+            valorTotalRecuperacion,
+            valorNotaCredito
+        };
     };
 
     // Business Logic
@@ -433,6 +528,7 @@ export function OrderDetailsDrawer({
                                             saving={saving}
                                             formatMoney={formatMoney}
                                             formatNumber={formatNumber}
+                                            calculatePreview={calculatePreviewValues}
                                         />
                                     ))}
                                     {/* New Row Creation */}
@@ -458,6 +554,7 @@ export function OrderDetailsDrawer({
                                             formatMoney={formatMoney}
                                             formatNumber={formatNumber}
                                             isNew
+                                            calculatePreview={calculatePreviewValues}
                                         />
                                     )}
                                 </>
@@ -584,11 +681,14 @@ function DataRow({
     frutas, presentaciones, tiposCaja, referencias,
     onEdit, onDelete, onSave, onCancel, onChange,
     canEditGeneral, canEditFinancial,
-    saving, formatMoney, formatNumber, isNew
+    saving, formatMoney, formatNumber, isNew, calculatePreview
 }: any) {
     const isEditing = editingId === (isNew ? 'new' : detail.id);
     const data = isEditing ? editForm : detail;
     const cellProps = { isEditing, data, onChange, formatMoney, formatNumber };
+
+    // Calcular valores de preview cuando está editando
+    const previewValues = isEditing && calculatePreview ? calculatePreview(data) : null;
 
     return (
         <>
@@ -630,16 +730,37 @@ function DataRow({
                     <span className="text-slate-500 text-xs block text-center">{formatNumber(data.presentacion_peso) || '-'}</span>
                 </TableCell>
                 <TableCell className="w-[60px] align-top py-2">
-                    <span className="text-slate-500 text-xs block text-center">{formatNumber(data.kilos) || '-'}</span>
+                    <span className={cn(
+                        "text-xs block text-center",
+                        isEditing && previewValues ? "text-blue-600 font-medium" : "text-slate-500"
+                    )}>
+                        {isEditing && previewValues 
+                            ? formatNumber(previewValues.kilos) 
+                            : formatNumber(data.kilos)}
+                    </span>
                 </TableCell>
                 <TableCell className="w-[55px] align-top py-2">
                     <InputCell {...cellProps} field="cajas_enviadas" type="number" disabled={!canEditGeneral} width="w-full" align="center" />
                 </TableCell>
                 <TableCell className="w-[60px] align-top py-2">
-                    <span className="text-slate-500 text-xs block text-center">{formatNumber(data.kilos_enviados) || '-'}</span>
+                    <span className={cn(
+                        "text-xs block text-center",
+                        isEditing && previewValues ? "text-blue-600 font-medium" : "text-slate-500"
+                    )}>
+                        {isEditing && previewValues 
+                            ? formatNumber(previewValues.kilosEnviados) 
+                            : formatNumber(data.kilos_enviados)}
+                    </span>
                 </TableCell>
                 <TableCell className="w-[55px] align-top py-2">
-                    <span className="text-slate-500 text-xs block text-center">{formatNumber(data.diferencia) || '-'}</span>
+                    <span className={cn(
+                        "text-xs block text-center",
+                        isEditing && previewValues ? "text-blue-600 font-medium" : "text-slate-500"
+                    )}>
+                        {isEditing && previewValues 
+                            ? formatNumber(previewValues.diferencia) 
+                            : formatNumber(data.diferencia)}
+                    </span>
                 </TableCell>
 
                 <TableCell className="w-[90px] align-top py-2">
@@ -824,7 +945,14 @@ function DataRow({
 
                         <div className="flex items-center gap-1">
                             <span className="text-slate-400 font-medium">Valor Prod:</span>
-                            <span className="text-slate-600">{formatMoney(data.valor_x_producto)}</span>
+                            <span className={cn(
+                                "font-medium",
+                                isEditing && previewValues ? "text-blue-600" : "text-slate-600"
+                            )}>
+                                {isEditing && previewValues 
+                                    ? formatMoney(previewValues.valorXProducto) 
+                                    : formatMoney(data.valor_x_producto)}
+                            </span>
                         </div>
 
                         <div className="flex items-center gap-1">
@@ -877,7 +1005,14 @@ function DataRow({
 
                         <div className="flex items-center gap-1">
                             <span className="text-orange-600 font-medium">Valor NC:</span>
-                            <span className="text-orange-700">{formatMoney(data.valor_nota_credito_usd)}</span>
+                            <span className={cn(
+                                "font-medium",
+                                isEditing && previewValues ? "text-blue-600" : "text-orange-700"
+                            )}>
+                                {isEditing && previewValues 
+                                    ? formatMoney(previewValues.valorNotaCredito) 
+                                    : formatMoney(data.valor_nota_credito_usd)}
+                            </span>
                         </div>
 
                         <div className="flex items-center gap-1">
@@ -909,17 +1044,71 @@ function DataRow({
                             )}
                         </div>
 
+                        {/* Campo % Afectación Utilidad - Solo para Juan Matas cuando afecta_utilidad=true y no_cajas_nc>0 */}
+                        {(data.exportador_nombre === "Juan_Matas" && data.afecta_utilidad === true && (data.no_cajas_nc || 0) > 0) && (
+                            <div className="flex items-center gap-1">
+                                <span className="text-purple-600 font-medium">% Afect. Util:</span>
+                                {isEditing ? (
+                                    <Input
+                                        type="text"
+                                        value={data.porcentaje_afectacion_utilidad ?? ''}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === '' || /^-?\d*\.?\d*$/.test(val)) {
+                                                const num = parseFloat(val);
+                                                if (val === '' || (num >= 0 && num <= 100)) {
+                                                    onChange('porcentaje_afectacion_utilidad', val);
+                                                }
+                                            }
+                                        }}
+                                        className={cn(
+                                            "h-6 w-14 px-1.5 text-xs rounded-sm transition-all duration-200",
+                                            !canEditFinancial
+                                                ? "bg-slate-50 border-slate-200 text-slate-400"
+                                                : "bg-purple-50 border-purple-300 shadow-sm shadow-purple-100 focus-visible:ring-2 focus-visible:ring-purple-400 animate-in fade-in-50 duration-300"
+                                        )}
+                                        disabled={!canEditFinancial}
+                                        placeholder="0-100"
+                                    />
+                                ) : (
+                                    <span className="text-purple-700">{data.porcentaje_afectacion_utilidad ?? '0'}%</span>
+                                )}
+                            </div>
+                        )}
+
                         <div className="h-4 w-px bg-slate-200" />
 
                         <div className="flex items-center gap-1">
                             <span className="text-emerald-600 font-medium">Total Util:</span>
-                            <span className="text-emerald-700 font-semibold">{formatMoney(data.valor_total_utilidad_x_producto)}</span>
+                            <span className={cn(
+                                "font-semibold",
+                                isEditing && previewValues ? "text-blue-600" : "text-emerald-700"
+                            )}>
+                                {isEditing && previewValues 
+                                    ? formatMoney(previewValues.valorTotalUtilidad) 
+                                    : formatMoney(data.valor_total_utilidad_x_producto)}
+                            </span>
                         </div>
 
                         <div className="flex items-center gap-1">
                             <span className="text-blue-600 font-medium">Total Recup:</span>
-                            <span className="text-blue-700 font-semibold">{formatMoney(data.valor_total_recuperacion_x_producto)}</span>
+                            <span className={cn(
+                                "font-semibold",
+                                isEditing && previewValues ? "text-blue-600" : "text-blue-700"
+                            )}>
+                                {isEditing && previewValues 
+                                    ? formatMoney(previewValues.valorTotalRecuperacion) 
+                                    : formatMoney(data.valor_total_recuperacion_x_producto)}
+                            </span>
                         </div>
+
+                        {/* Indicador de Preview */}
+                        {isEditing && previewValues && (
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 rounded-full">
+                                <Calculator className="h-3 w-3 text-blue-600" />
+                                <span className="text-[10px] font-medium text-blue-600">Preview</span>
+                            </div>
+                        )}
 
                         <div className="h-4 w-px bg-slate-200" />
 

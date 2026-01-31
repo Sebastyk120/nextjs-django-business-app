@@ -30,6 +30,7 @@ export interface DetallePedido {
     no_cajas_nc: number | null;
     valor_nota_credito_usd: number | null;
     afecta_utilidad: boolean | null; // true, false, or null (descuento)
+    porcentaje_afectacion_utilidad: number | null; // % de afectación para Juan Matas
     valor_total_utilidad_x_producto: number | null;
     valor_total_recuperacion_x_producto: number | null;
     precio_proforma: number | null;
@@ -42,4 +43,5 @@ export interface DetallePedido {
         numero_factura: string | null;
         estado_factura: string | null;
     };
+    exportador_nombre: string | null;
 }

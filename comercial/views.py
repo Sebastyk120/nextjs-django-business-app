@@ -437,7 +437,7 @@ def exportar_detalles_pedidos_excel(request):
         'Referencia', 'Stiker', 'Lleva Contenedor', 'Ref Contenedor', 'Cant Contenedor', 'Tarifa utilidad',
         'Tarifa Recuperacion',
         'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', 'Afecta utilidad',
-        'Valor Total utilidad Producto', 'Total Recuperacion X Producto', 'Precio Proforma', 'Observaciones'
+        '% Afectacion Utilidad', 'Valor Total utilidad Producto', 'Total Recuperacion X Producto', 'Precio Proforma', 'Observaciones'
     ]
 
     # Anchos aproximados para cada columna
@@ -448,7 +448,7 @@ def exportar_detalles_pedidos_excel(request):
         'Tipo Caja': 15, 'Referencia': 15, 'Stiker': 15, 'Lleva Contenedor': 15,
         'Ref Contenedor': 15, 'Cant Contenedor': 15, 'Tarifa utilidad': 15,
         'Tarifa Recuperacion': 15, 'Valor x Caja USD': 15, 'Valor X Producto': 15,
-        'No Cajas NC': 12, 'Valor NC': 12, 'Afecta utilidad': 15,
+        'No Cajas NC': 12, 'Valor NC': 12, 'Afecta utilidad': 15, '% Afectacion Utilidad': 18,
         'Valor Total utilidad Producto': 22, 'Total Recuperacion X Producto': 22,
         'Precio Proforma': 15, 'Observaciones': 30
     }
@@ -457,7 +457,7 @@ def exportar_detalles_pedidos_excel(request):
     numeric_columns = [
         'Cajas Solicitadas', 'Peso Presentacion', 'kilos', 'Cajas Enviadas', 'Kilos Enviados',
         'Diferencia', 'Cant Contenedor', 'Tarifa utilidad', 'Tarifa Recuperacion',
-        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC',
+        'Valor x Caja USD', 'Valor X Producto', 'No Cajas NC', 'Valor NC', '% Afectacion Utilidad',
         'Valor Total utilidad Producto', 'Total Recuperacion X Producto', 'Precio Proforma'
     ]
     numeric_indices = [columnas.index(col) for col in numeric_columns]
@@ -545,6 +545,7 @@ def exportar_detalles_pedidos_excel(request):
                 detalle.no_cajas_nc,
                 detalle.valor_nota_credito_usd,
                 detalle.afecta_utilidad,
+                detalle.porcentaje_afectacion_utilidad,
                 detalle.valor_total_utilidad_x_producto,
                 detalle.valor_total_recuperacion_x_producto,
                 detalle.precio_proforma,
