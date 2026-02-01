@@ -6,6 +6,9 @@ export interface DashboardMetrics {
     recuperacion: MetricData;
     notas_credito: MetricData;
     cancelados: MetricData;
+    profit_margin: MetricData;
+    nc_ratio: MetricData;
+    portfolio_days: MetricData;
 }
 
 export interface MetricData {

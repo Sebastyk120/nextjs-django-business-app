@@ -1,11 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Star, Leaf, Award, Truck } from "lucide-react";
+import { Leaf, Award, Truck } from "lucide-react";
 import { useRef } from "react";
-
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function Hero() {
@@ -16,27 +14,30 @@ export default function Hero() {
         offset: ["start start", "end start"],
     });
 
-    const yBackground = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+    const yBackground = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
     const opacityBackground = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+    const scaleBackground = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
 
     const t = {
         es: {
             pill: "Sabor y Calidad de Origen",
-            title1: "Colombia en tu Paladar:",
-            title2: "¡Sabores Exóticos Inolvidables!",
-            desc: "Llevamos la riqueza de nuestros campos directamente a tu mercado. Frutas seleccionadas, frescura garantizada y un compromiso inquebrantable con la sostenibilidad.",
+            title1: "Sabores que",
+            titleHighlight: "Conquistan",
+            title2: "el Mundo",
+            desc: "Llevamos la esencia de Colombia a los mercados internacionales. Frutas seleccionadas, frescura garantizada y un compromiso inquebrantable con la sostenibilidad.",
             natural: "100% Natural",
-            certified: "Certificación GlobalG.A.P.",
-            logistics: "Logística Global"
+            certified: "GlobalG.A.P.",
+            logistics: "Exportación Global"
         },
         en: {
-            pill: "Origin Taste & Quality",
-            title1: "Colombia on your Palate:",
-            title2: "Unforgettable Exotic Flavors!",
-            desc: "We bring the richness of our fields directly to your market. Selected fruits, guaranteed freshness, and an unwavering commitment to sustainability.",
+            pill: "Exporters of Excellence",
+            title1: "Flavors that",
+            titleHighlight: "Conquer",
+            title2: "the World",
+            desc: "We bring the essence of Colombia to international markets. Selected fruits, guaranteed freshness, and an unwavering commitment to sustainability.",
             natural: "100% Natural",
-            certified: "GlobalG.A.P. Certified",
-            logistics: "Global Logistics"
+            certified: "GlobalG.A.P.",
+            logistics: "Global Export"
         }
     }[lang];
 
@@ -45,41 +46,65 @@ export default function Hero() {
         visible: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.15,
-                delayChildren: 0.3
+                staggerChildren: 0.12,
+                delayChildren: 0.2
             }
         }
     };
 
     const itemVariants = {
-        hidden: { opacity: 0, y: 30 },
+        hidden: { opacity: 0, y: 40 },
         visible: {
             opacity: 1,
             y: 0,
-            transition: { type: "spring" as const, stiffness: 50, damping: 20 }
+            transition: { 
+                type: "spring" as const, 
+                stiffness: 100, 
+                damping: 20,
+                duration: 0.8
+            }
+        }
+    };
+
+    const floatingVariants = {
+        animate: {
+            y: [0, -8, 0],
+            transition: {
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+            }
         }
     };
 
     return (
-        <section ref={targetRef} id="inicio" className="min-h-screen pt-28 pb-20 flex items-center overflow-hidden relative">
-            {/* Sophisticated Background with Parallax */}
+        <section 
+            ref={targetRef} 
+            id="inicio" 
+            className="min-h-screen pt-24 pb-16 flex items-center overflow-hidden relative bg-gradient-to-br from-[#F8FAFC] via-white to-[#FFFBF5]"
+        >
+            {/* Animated Background Elements */}
             <motion.div
-                style={{ y: yBackground, opacity: opacityBackground }}
-                className="absolute inset-0 bg-gradient-to-br from-[#f8f9fc] via-[#fff] to-[#f0fdf4] -z-20"
-            ></motion.div>
+                style={{ y: yBackground, opacity: opacityBackground, scale: scaleBackground }}
+                className="absolute inset-0 -z-20"
+            >
+                {/* Gradient Orbs */}
+                <div className="absolute top-20 right-20 w-[600px] h-[600px] bg-gradient-to-br from-[#0D7377]/5 to-transparent rounded-full blur-3xl" />
+                <div className="absolute bottom-20 left-10 w-[500px] h-[500px] bg-gradient-to-tr from-[#FF6B4A]/5 to-transparent rounded-full blur-3xl" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-[#FFB800]/5 via-transparent to-[#0D7377]/5 rounded-full blur-3xl" />
+            </motion.div>
 
-            {/* Organic Shape Decoration */}
-            <motion.div
-                animate={{
-                    scale: [1, 1.1, 1],
-                    rotate: [0, 5, -5, 0],
+            {/* Grid Pattern Overlay */}
+            <div 
+                className="absolute inset-0 -z-10 opacity-[0.015]"
+                style={{
+                    backgroundImage: `linear-gradient(#0D7377 1px, transparent 1px), linear-gradient(90deg, #0D7377 1px, transparent 1px)`,
+                    backgroundSize: '60px 60px'
                 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute top-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_center,rgba(0,91,96,0.03)_0%,transparent_70%)] rounded-full blur-3xl -z-10 -translate-y-1/4 translate-x-1/4"
-            ></motion.div>
+            />
 
-            <div className="container mx-auto px-4 md:px-6 z-10">
-                <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
+            <div className="container mx-auto px-4 md:px-6 lg:px-8 z-10">
+                <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
                     {/* Left Content */}
                     <motion.div
@@ -88,30 +113,40 @@ export default function Hero() {
                         initial="hidden"
                         animate="visible"
                     >
+                        {/* Feature Pill */}
                         <motion.div
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-gray-100 shadow-sm text-[--color-primary] text-sm font-bold tracking-wide uppercase mb-8"
-                            whileHover={{ y: -2, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#0D7377]/10 shadow-sm text-[#0D7377] text-xs font-bold tracking-widest uppercase mb-8"
+                            whileHover={{ 
+                                y: -3, 
+                                boxShadow: "0 20px 40px -10px rgba(13, 115, 119, 0.2)",
+                                scale: 1.02
+                            }}
                             variants={itemVariants}
                         >
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#25D366] opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#25D366]"></span>
+                            <span className="relative flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0D7377] opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0D7377]" />
                             </span>
                             {t.pill}
                         </motion.div>
 
+                        {/* Main Title */}
                         <motion.h1
-                            className="text-5xl md:text-6xl lg:text-[5rem] font-extrabold leading-[1.1] mb-8 font-heading text-[#1a1a1a] tracking-tight"
+                            className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold leading-[0.95] mb-8 tracking-tight"
                             variants={itemVariants}
                         >
-                            {t.title1} <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[--color-primary] via-[#0A7778] to-[--color-secondary] drop-shadow-sm">
-                                {t.title2}
+                            <span className="text-[#1A1A2E]">{t.title1}</span>
+                            <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0D7377] via-[#14A0A5] to-[#32E0C4]">
+                                {t.titleHighlight}
                             </span>
+                            <br />
+                            <span className="text-[#1A1A2E]">{t.title2}</span>
                         </motion.h1>
 
+                        {/* Description */}
                         <motion.p
-                            className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-body"
+                            className="text-lg md:text-xl text-[#4A4A5A] mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light"
                             variants={itemVariants}
                         >
                             {t.desc}
@@ -119,85 +154,165 @@ export default function Hero() {
 
                         {/* Features Grid */}
                         <motion.div
-                            className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12 border-l-4 border-[--color-primary] pl-6 py-2 bg-gradient-to-r from-gray-50 to-transparent"
+                            className="flex flex-wrap justify-center lg:justify-start gap-6"
                             variants={itemVariants}
                         >
-                            <div className="flex items-center gap-3 group">
-                                <div className="p-2 bg-green-100 rounded-lg text-green-700 group-hover:bg-green-600 group-hover:text-white transition-colors duration-300">
-                                    <Leaf size={20} />
-                                </div>
-                                <span className="font-semibold text-sm text-gray-700">{t.natural}</span>
-                            </div>
-                            <div className="flex items-center gap-3 group">
-                                <div className="p-2 bg-blue-100 rounded-lg text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                                    <Award size={20} />
-                                </div>
-                                <span className="font-semibold text-sm text-gray-700">{t.certified}</span>
-                            </div>
-                            <div className="flex items-center gap-3 group">
-                                <div className="p-2 bg-orange-100 rounded-lg text-orange-700 group-hover:bg-orange-600 group-hover:text-white transition-colors duration-300">
-                                    <Truck size={20} />
-                                </div>
-                                <span className="font-semibold text-sm text-gray-700">{t.logistics}</span>
-                            </div>
+                            {[
+                                { icon: Leaf, text: t.natural, color: "#10B981" },
+                                { icon: Award, text: t.certified, color: "#0D7377" },
+                                { icon: Truck, text: t.logistics, color: "#FF6B4A" }
+                            ].map((feature, index) => (
+                                <motion.div
+                                    key={index}
+                                    className="flex items-center gap-3 group cursor-default"
+                                    whileHover={{ x: 4 }}
+                                    transition={{ type: "spring", stiffness: 400 }}
+                                >
+                                    <div 
+                                        className="p-2.5 rounded-xl transition-all duration-300 group-hover:scale-110"
+                                        style={{ backgroundColor: `${feature.color}15` }}
+                                    >
+                                        <feature.icon size={20} style={{ color: feature.color }} />
+                                    </div>
+                                    <span className="font-semibold text-sm text-[#4A4A5A] group-hover:text-[#1A1A2E] transition-colors">
+                                        {feature.text}
+                                    </span>
+                                </motion.div>
+                            ))}
                         </motion.div>
                     </motion.div>
 
-                    {/* Right Image */}
+                    {/* Right Image Section */}
                     <motion.div
-                        className="lg:flex-[1.3] relative w-full max-w-[600px] lg:max-w-none"
-                        initial={{ opacity: 0, x: 50, rotate: 5 }}
-                        animate={{ opacity: 1, x: 0, rotate: 0 }}
-                        transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+                        className="lg:flex-[1.1] relative w-full max-w-[580px] lg:max-w-none"
+                        initial={{ opacity: 0, x: 80, scale: 0.9 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
                     >
-                        {/* Abstract backdrop blob */}
-                        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] -z-10 opacity-30 text-yellow-200 fill-current animate-spin-slow">
-                            <path d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,81.6,-46.6C91.4,-34.1,98.1,-19.2,95.8,-4.9C93.5,9.3,82.1,22.9,70.6,33.5C59.1,44.1,47.5,51.7,35.8,59.2C24.1,66.7,12.3,74.1,-1.3,76.4C-15,78.7,-28.3,75.9,-40.3,68.6C-52.3,61.3,-63,49.5,-70.5,36.2C-78,22.9,-82.3,8.1,-79.8,-5.4C-77.3,-18.9,-68,-31.1,-57.4,-41.8C-46.8,-52.5,-34.9,-61.7,-22.1,-66.6C-9.3,-71.5,4.3,-72.1,17.7,-71.6L30.5,-76.4Z" transform="translate(100 100)" />
-                        </svg>
+                        {/* Decorative Elements */}
+                        <motion.div
+                            className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-[#FFB800] to-[#FF6B4A] rounded-full opacity-20 blur-2xl"
+                            animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }}
+                            transition={{ duration: 4, repeat: Infinity }}
+                        />
+                        <motion.div
+                            className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br from-[#0D7377] to-[#14A0A5] rounded-full opacity-20 blur-2xl"
+                            animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.35, 0.2] }}
+                            transition={{ duration: 5, repeat: Infinity, delay: 0.5 }}
+                        />
 
-                        <div className="relative z-10">
+                        {/* Main Image Container */}
+                        <motion.div
+                            className="relative z-10"
+                            variants={floatingVariants}
+                            animate="animate"
+                        >
+                            {/* Rotating Frame - Decorative SVG */}
                             <motion.div
-                                className="relative aspect-[3/2] rounded-[2.5rem] overflow-hidden shadow-2xl shadow-gray-200/50 group"
-                                whileHover={{ scale: 1.02 }}
-                                transition={{ duration: 0.5 }}
+                                className="absolute inset-0 rounded-[2.5rem] -z-10"
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                                style={{ margin: -12 }}
                             >
-                                <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors duration-500 z-10"></div>
+                                <svg viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                                    {/* Esquinas decorativas - estilo marco orgánico/fruta */}
+                                    <path
+                                        d="M20 80 Q20 20 80 20"
+                                        stroke="#0D7377"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        fill="none"
+                                        opacity="0.4"
+                                    />
+                                    <path
+                                        d="M380 80 Q380 20 320 20"
+                                        stroke="#0D7377"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        fill="none"
+                                        opacity="0.4"
+                                    />
+                                    <path
+                                        d="M20 220 Q20 280 80 280"
+                                        stroke="#0D7377"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        fill="none"
+                                        opacity="0.4"
+                                    />
+                                    <path
+                                        d="M380 220 Q380 280 320 280"
+                                        stroke="#0D7377"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        fill="none"
+                                        opacity="0.4"
+                                    />
+                                    {/* Hojas decorativas */}
+                                    <ellipse cx="200" cy="10" rx="15" ry="8" fill="#0D7377" opacity="0.3" />
+                                    <ellipse cx="200" cy="290" rx="15" ry="8" fill="#0D7377" opacity="0.3" />
+                                    <ellipse cx="10" cy="150" rx="8" ry="15" fill="#0D7377" opacity="0.3" />
+                                    <ellipse cx="390" cy="150" rx="8" ry="15" fill="#0D7377" opacity="0.3" />
+                                </svg>
+                            </motion.div>
+
+                            {/* Image Card */}
+                            <motion.div
+                                className="relative aspect-[4/3.5] rounded-[2rem] overflow-hidden shadow-2xl shadow-[#0D7377]/10"
+                                whileHover={{ scale: 1.02 }}
+                                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                            >
+                                {/* Gradient Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#0D7377]/30 via-transparent to-transparent z-10" />
+                                
                                 <Image
                                     src="/landing/mango-hermoso.webp"
-                                    alt="Mango Premium Colombiano Heavens Fruits"
+                                    alt="Premium Colombian Mango - Heavens Fruits"
                                     fill
-                                    className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                                    className="object-cover transition-transform duration-1000 hover:scale-110"
                                     priority
                                     quality={100}
                                 />
+
+                                {/* Floating Badge */}
+                                <motion.div
+                                    className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-xl z-20"
+                                    initial={{ y: 30, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    transition={{ delay: 1, type: "spring", stiffness: 100 }}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0D7377] to-[#14A0A5] flex items-center justify-center text-white shadow-lg">
+                                            <Award size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-[#8A8A9A] uppercase tracking-wider">Calidad Premium</p>
+                                            <p className="text-base font-bold text-[#1A1A2E]">Exportación Mundial</p>
+                                        </div>
+                                    </div>
+                                </motion.div>
                             </motion.div>
 
-                            {/* Floating Premium Badge */}
+                            {/* Floating Stats Card */}
                             <motion.div
-                                className="absolute -bottom-8 -left-8 bg-white p-6 rounded-2xl shadow-xl z-20 hidden md:block border border-gray-50"
-                                initial={{ y: 40, opacity: 0, scale: 0.8 }}
-                                animate={{ y: 0, opacity: 1, scale: 1 }}
-                                transition={{
-                                    delay: 0.8,
-                                    type: "spring",
-                                    stiffness: 100,
-                                    damping: 10
-                                }}
-                                whileHover={{ y: -5 }}
+                                className="absolute -top-3 -right-3 bg-white p-3 rounded-xl shadow-xl z-20 hidden md:block"
+                                initial={{ x: 30, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ delay: 1.2, type: "spring", stiffness: 100 }}
+                                whileHover={{ y: -3, scale: 1.05 }}
                             >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-[#005B60] flex items-center justify-center text-white">
-                                        <Award size={24} />
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FFB800] to-[#FF6B4A] flex items-center justify-center text-white font-bold text-xs">
+                                        20+
                                     </div>
                                     <div>
-                                        <p className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Garantía</p>
-                                        <p className="text-lg font-bold text-gray-800">Calidad Exportación</p>
+                                        <p className="text-xs text-[#8A8A9A]">Países</p>
+                                        <p className="text-xs font-bold text-[#1A1A2E]">Exportando</p>
                                     </div>
                                 </div>
                             </motion.div>
-                        </div>
+                        </motion.div>
                     </motion.div>
-
                 </div>
             </div>
         </section>

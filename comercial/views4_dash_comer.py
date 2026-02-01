@@ -756,7 +756,7 @@ def get_dashboard_comercial_data(request):
     # Aquí necesitamos agrupar por fruta, pero como la relación es a través de DetallePedido
     # y un pedido puede tener múltiples frutas, debemos usar un enfoque diferente
     with connection.cursor() as cursor:
-        cursor.execute("""
+        query = """
             SELECT f.nombre, 
                    SUM(dp.valor_total_utilidad_x_producto) as total_utilidad,
                    SUM(dp.valor_nota_credito_usd) as total_nc
@@ -764,10 +764,20 @@ def get_dashboard_comercial_data(request):
             JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
             JOIN comercial_fruta f ON dp.fruta_id = f.id
             WHERE p.id IN %s
+        """
+        params = [tuple(pedidos_ids) or (0,)]
+        
+        if fruta_id:
+            query += " AND dp.fruta_id = %s"
+            params.append(fruta_id)
+            
+        query += """
             GROUP BY f.nombre
             ORDER BY total_utilidad DESC
             LIMIT 10
-        """, [tuple(pedidos_ids) or (0,)])
+        """
+        
+        cursor.execute(query, params)
         utilidad_por_fruta = [{'fruta__nombre': row[0], 
                               'total_utilidad': float(row[1]) if row[1] else 0,
                               'total_nc': float(row[2]) if row[2] else 0}
@@ -797,31 +807,65 @@ def get_dashboard_comercial_data(request):
     # Datos para gráfico de participación de kilos por fruta
     # Usamos el mismo enfoque SQL para obtener datos precisos
     with connection.cursor() as cursor:
-        cursor.execute("""
+        query = """
             SELECT f.nombre, SUM(dp.kilos_enviados) as total_kilos
             FROM comercial_pedido p
             JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
             JOIN comercial_fruta f ON dp.fruta_id = f.id
             WHERE p.id IN %s
+        """
+        params = [tuple(pedidos_ids) or (0,)]
+        
+        if fruta_id:
+            query += " AND dp.fruta_id = %s"
+            params.append(fruta_id)
+
+        query += """
             GROUP BY f.nombre
             ORDER BY total_kilos DESC
-        """, [tuple(pedidos_ids) or (0,)])
+        """
+        cursor.execute(query, params)
         kilos_por_fruta = [{'fruta__nombre': row[0], 'total_kilos': float(row[1])}
                            for row in cursor.fetchall()]
 
     # Datos para gráfico de utilidad por exportador
+    # Datos para gráfico de utilidad por exportador
     with connection.cursor() as cursor:
-        cursor.execute("""
+        query = """
             SELECT e.nombre, 
                    SUM(p.valor_total_utilidad_usd) as total_utilidad,
                    SUM(p.valor_total_nota_credito_usd) as total_nc
             FROM comercial_pedido p
             JOIN comercial_exportador e ON p.exportadora_id = e.id
-            WHERE p.id IN %s
-            GROUP BY e.nombre
-            ORDER BY total_utilidad DESC
-            LIMIT 10
-        """, [tuple(pedidos_ids) or (0,)])
+        """
+        params = [tuple(pedidos_ids) or (0,)]
+        
+        if fruta_id:
+            # Si filtramos por fruta, debemos unir con detallepedido para filtrar
+            # OJO: Al unir, debemos tener cuidado de no duplicar si hay multiples lineas de la misma fruta
+            # Pero como estamos agrupando por exportador (pedido), mejor sumamos desde detalle si hay filtro fruta
+            query = """
+                SELECT e.nombre, 
+                       SUM(dp.valor_total_utilidad_x_producto) as total_utilidad,
+                       SUM(dp.valor_nota_credito_usd) as total_nc
+                FROM comercial_pedido p
+                JOIN comercial_exportador e ON p.exportadora_id = e.id
+                JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
+                WHERE p.id IN %s AND dp.fruta_id = %s
+                GROUP BY e.nombre
+                ORDER BY total_utilidad DESC
+                LIMIT 10
+            """
+            params.append(fruta_id)
+        else:
+            query += """
+                WHERE p.id IN %s
+                GROUP BY e.nombre
+                ORDER BY total_utilidad DESC
+                LIMIT 10
+            """
+            
+        cursor.execute(query, params)
         utilidad_por_exportador = [{'exportadora__nombre': row[0], 
                                    'total_utilidad': float(row[1]) if row[1] else 0,
                                    'total_nc': float(row[2]) if row[2] else 0}
@@ -833,7 +877,7 @@ def get_dashboard_comercial_data(request):
     
     if pedidos_anterior_ids:
         with connection.cursor() as cursor:
-            cursor.execute("""
+            query = """
                 SELECT c.nombre, 
                        SUM(dp.valor_total_utilidad_x_producto) as total_utilidad,
                        SUM(dp.valor_nota_credito_usd) as total_nc
@@ -841,10 +885,19 @@ def get_dashboard_comercial_data(request):
                 JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
                 JOIN comercial_cliente c ON p.cliente_id = c.id
                 WHERE p.id IN %s
+            """
+            params = [tuple(pedidos_anterior_ids) or (0,)]
+            
+            if fruta_id:
+                query += " AND dp.fruta_id = %s"
+                params.append(fruta_id)
+                
+            query += """
                 GROUP BY c.nombre
                 ORDER BY total_utilidad DESC
                 LIMIT 10
-            """, [tuple(pedidos_anterior_ids) or (0,)])
+            """
+            cursor.execute(query, params)
             utilidad_por_cliente_anterior = [{'cliente__nombre': row[0], 
                                            'total_utilidad': float(row[1]) if row[1] else 0,
                                            'total_nc': float(row[2]) if row[2] else 0}
@@ -854,7 +907,7 @@ def get_dashboard_comercial_data(request):
     utilidad_por_fruta_anterior = []
     if pedidos_anterior_ids:
         with connection.cursor() as cursor:
-            cursor.execute("""
+            query = """
                 SELECT f.nombre, 
                        SUM(dp.valor_total_utilidad_x_producto) as total_utilidad,
                        SUM(dp.valor_nota_credito_usd) as total_nc
@@ -862,10 +915,19 @@ def get_dashboard_comercial_data(request):
                 JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
                 JOIN comercial_fruta f ON dp.fruta_id = f.id
                 WHERE p.id IN %s
+            """
+            params = [tuple(pedidos_anterior_ids) or (0,)]
+            
+            if fruta_id:
+                query += " AND dp.fruta_id = %s"
+                params.append(fruta_id)
+                
+            query += """
                 GROUP BY f.nombre
                 ORDER BY total_utilidad DESC
                 LIMIT 10
-            """, [tuple(pedidos_anterior_ids) or (0,)])
+            """
+            cursor.execute(query, params)
             utilidad_por_fruta_anterior = [{'fruta__nombre': row[0], 
                                          'total_utilidad': float(row[1]) if row[1] else 0,
                                          'total_nc': float(row[2]) if row[2] else 0}
@@ -875,17 +937,38 @@ def get_dashboard_comercial_data(request):
     utilidad_por_exportador_anterior = []
     if pedidos_anterior_ids:
         with connection.cursor() as cursor:
-            cursor.execute("""
+            query = """
                 SELECT e.nombre, 
                        SUM(p.valor_total_utilidad_usd) as total_utilidad,
                        SUM(p.valor_total_nota_credito_usd) as total_nc
                 FROM comercial_pedido p
                 JOIN comercial_exportador e ON p.exportadora_id = e.id
-                WHERE p.id IN %s
-                GROUP BY e.nombre
-                ORDER BY total_utilidad DESC
-                LIMIT 10
-            """, [tuple(pedidos_anterior_ids) or (0,)])
+            """
+            params = [tuple(pedidos_anterior_ids) or (0,)]
+            
+            if fruta_id:
+                query = """
+                    SELECT e.nombre, 
+                           SUM(dp.valor_total_utilidad_x_producto) as total_utilidad,
+                           SUM(dp.valor_nota_credito_usd) as total_nc
+                    FROM comercial_pedido p
+                    JOIN comercial_exportador e ON p.exportadora_id = e.id
+                    JOIN comercial_detallepedido dp ON p.id = dp.pedido_id
+                    WHERE p.id IN %s AND dp.fruta_id = %s
+                    GROUP BY e.nombre
+                    ORDER BY total_utilidad DESC
+                    LIMIT 10
+                """
+                params.append(fruta_id)
+            else:
+                query += """
+                    WHERE p.id IN %s
+                    GROUP BY e.nombre
+                    ORDER BY total_utilidad DESC
+                    LIMIT 10
+                """
+                
+            cursor.execute(query, params)
             utilidad_por_exportador_anterior = [{'exportadora__nombre': row[0], 
                                               'total_utilidad': float(row[1]) if row[1] else 0,
                                               'total_nc': float(row[2]) if row[2] else 0}
@@ -1027,6 +1110,53 @@ def get_dashboard_comercial_data(request):
 
     cancelados_percent = calcular_porcentaje(total_pedidos_cancelados, cancelados_prev)
 
+    # ------------------ NEW METRICS ------------------
+    
+    # 1. Profit Margin % (Total Utility / Total Facturado)
+    profit_margin_current = 0
+    if total_facturado and total_facturado > 0:
+        profit_margin_current = (total_utilidad_usd / total_facturado) * 100
+        
+    profit_margin_prev = 0
+    if facturado_prev and facturado_prev > 0:
+        profit_margin_prev = (utilidad_usd_prev / facturado_prev) * 100
+        
+    profit_margin_percent_change = calcular_porcentaje(profit_margin_current, profit_margin_prev)
+    
+    # 2. Credit Note Ratio % (Total NC / Total Facturado)
+    nc_ratio_current = 0
+    if total_facturado and total_facturado > 0:
+        nc_ratio_current = (total_notas_credito / total_facturado) * 100
+        
+    nc_ratio_prev = 0
+    if facturado_prev and facturado_prev > 0:
+        nc_ratio_prev = (notas_credito_prev / facturado_prev) * 100
+    
+    nc_ratio_percent_change = calcular_porcentaje(nc_ratio_current, nc_ratio_prev)
+    
+    # 3. Average Portfolio Days (Weighted Average)
+    # We need to get all clients involved in these orders and average their negociaciones_cartera
+    avg_portfolio_days = 0
+    if pedidos.exists():
+        # Get unique clients and their days
+        # We can do a weighted average by invoiced amount or just a simple average of the clients
+        # Let's do simple average of the clients involved in the filter
+        clients_in_period = Cliente.objects.filter(pedido__in=pedidos).distinct()
+        avg_portfolio_days = clients_in_period.aggregate(avg=Coalesce(Sum('negociaciones_cartera'), 0, output_field=IntegerField()) / Count('id'))['avg'] or 0
+        
+        # Or better, weighted by sales volume? 
+        # For now, let's stick to the average days of the clients who bought something
+        avg_days = 0
+        count = 0
+        for client in clients_in_period:
+            if client.negociaciones_cartera:
+                avg_days += client.negociaciones_cartera
+                count += 1
+        if count > 0:
+            avg_portfolio_days = avg_days / count
+
+    # ------------------------------------------------
+
     context = {
         'fecha_inicio': fecha_inicio_str,
         'fecha_fin': fecha_fin_str,
@@ -1083,6 +1213,16 @@ def get_dashboard_comercial_data(request):
         'notas_credito_percent': notas_credito_percent,
         'cancelados_prev': float(cancelados_prev),
         'cancelados_percent': cancelados_percent,
+        'cancelados_prev': float(cancelados_prev),
+        'cancelados_percent': cancelados_percent,
+        # New Metrics
+        'profit_margin_current': float(profit_margin_current),
+        'profit_margin_prev': float(profit_margin_prev),
+        'profit_margin_percent_change': profit_margin_percent_change,
+        'nc_ratio_current': float(nc_ratio_current),
+        'nc_ratio_prev': float(nc_ratio_prev),
+        'nc_ratio_percent_change': nc_ratio_percent_change,
+        'avg_portfolio_days': float(avg_portfolio_days),
     }
 
     return context

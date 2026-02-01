@@ -2,9 +2,10 @@ import { useState, useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, RefreshCw, FilterX } from "lucide-react";
+import { Calendar as CalendarIcon, RefreshCw, FilterX, Clock, History } from "lucide-react";
 import { parseISO, format, isValid, subYears } from "date-fns";
 import { cn } from "@/lib/utils";
+import { es } from "date-fns/locale";
 
 interface DashboardDateFiltersProps {
     filters: {
@@ -25,7 +26,6 @@ export function DashboardDateFilters({
     onReset
 }: DashboardDateFiltersProps) {
 
-    // Local state to allow free typing without triggering recalculations on every keystroke
     const [localValues, setLocalValues] = useState({
         fecha_inicio: filters.fecha_inicio,
         fecha_fin: filters.fecha_fin,
@@ -33,7 +33,6 @@ export function DashboardDateFilters({
         fecha_fin_anterior: filters.fecha_fin_anterior
     });
 
-    // Sync local state when filters prop changes (e.g., from reset)
     const syncFromProps = useCallback(() => {
         setLocalValues({
             fecha_inicio: filters.fecha_inicio,
@@ -43,17 +42,14 @@ export function DashboardDateFilters({
         });
     }, [filters]);
 
-    // Handle local change (user typing)
     const handleLocalChange = (key: keyof typeof localValues, value: string) => {
         setLocalValues(prev => ({ ...prev, [key]: value }));
     };
 
-    // Commit the value and auto-calculate comparative period on blur
     const handleBlur = (key: "fecha_inicio" | "fecha_fin") => {
         const value = localValues[key];
         onFilterChange(key, value);
 
-        // Auto-calculate the comparative field (previous year) only if valid
         const date = parseISO(value);
         if (isValid(date)) {
             const prevYearDate = subYears(date, 1);
@@ -64,107 +60,162 @@ export function DashboardDateFilters({
         }
     };
 
-    // For comparative period, just commit directly
     const handleComparativeBlur = (key: "fecha_inicio_anterior" | "fecha_fin_anterior") => {
         onFilterChange(key, localValues[key]);
     };
 
-    // Handle reset - sync local state
     const handleReset = () => {
         onReset();
-        // After reset, the filters prop will change; we need to sync
-        // However, the prop change will happen asynchronously
-        // So we use a small timeout to ensure we get the updated values
         setTimeout(syncFromProps, 50);
     };
 
+    const formatDisplayDate = (dateStr: string) => {
+        if (!dateStr) return "";
+        const date = parseISO(dateStr);
+        if (!isValid(date)) return dateStr;
+        return format(date, "dd MMM yyyy", { locale: es });
+    };
+
     return (
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
-            <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4 text-slate-500" />
-                    Periodos de Análisis
-                </h3>
-                <div className="flex gap-2">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleReset}
-                        className="h-8 text-xs text-slate-500 hover:text-slate-800"
-                    >
-                        <FilterX className="h-3 w-3 mr-1" />
-                        Limpiar
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={onRefresh}
-                        className="h-8 text-xs bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                    >
-                        <RefreshCw className="h-3 w-3 mr-1" />
-                        Actualizar
-                    </Button>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 px-5 py-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                            <CalendarIcon className="h-5 w-5 text-emerald-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-800">
+                                Periodos de Análisis
+                            </h3>
+                            <p className="text-[11px] text-slate-400">
+                                Selecciona el rango de fechas para comparar
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleReset}
+                            className="h-9 px-3 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                        >
+                            <FilterX className="h-3.5 w-3.5 mr-1.5" />
+                            Limpiar
+                        </Button>
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={onRefresh}
+                            className="h-9 px-3 text-xs font-medium bg-slate-900 hover:bg-slate-800"
+                        >
+                            <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                            Actualizar
+                        </Button>
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Content */}
+            <div className="p-5 space-y-5">
                 {/* Current Period */}
-                <div className="space-y-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <div className="text-xs font-medium text-emerald-700 uppercase tracking-wider mb-2">
-                        Periodo Actual
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-emerald-100 flex items-center justify-center">
+                            <Clock className="h-3.5 w-3.5 text-emerald-600" />
+                        </div>
+                        <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                            Periodo Actual
+                        </span>
+                        <span className="text-[10px] text-slate-400 ml-auto">
+                            {formatDisplayDate(localValues.fecha_inicio)} - {formatDisplayDate(localValues.fecha_fin)}
+                        </span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <Label htmlFor="fecha_inicio" className="text-xs text-slate-500">Desde</Label>
-                            <Input
-                                id="fecha_inicio"
-                                type="date"
-                                value={localValues.fecha_inicio}
-                                onChange={(e) => handleLocalChange("fecha_inicio", e.target.value)}
-                                onBlur={() => handleBlur("fecha_inicio")}
-                                className="h-9 text-sm bg-white border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-                            />
+                        <div className="space-y-1.5">
+                            <Label htmlFor="fecha_inicio" className="text-[11px] font-semibold text-slate-600">
+                                Fecha Inicio
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    id="fecha_inicio"
+                                    type="date"
+                                    value={localValues.fecha_inicio}
+                                    onChange={(e) => handleLocalChange("fecha_inicio", e.target.value)}
+                                    onBlur={() => handleBlur("fecha_inicio")}
+                                    className="h-10 text-sm bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:border-emerald-500 focus:ring-emerald-500/20 transition-all"
+                                />
+                            </div>
                         </div>
-                        <div className="space-y-1">
-                            <Label htmlFor="fecha_fin" className="text-xs text-slate-500">Hasta</Label>
-                            <Input
-                                id="fecha_fin"
-                                type="date"
-                                value={localValues.fecha_fin}
-                                onChange={(e) => handleLocalChange("fecha_fin", e.target.value)}
-                                onBlur={() => handleBlur("fecha_fin")}
-                                className="h-9 text-sm bg-white border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-                            />
+                        <div className="space-y-1.5">
+                            <Label htmlFor="fecha_fin" className="text-[11px] font-semibold text-slate-600">
+                                Fecha Fin
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    id="fecha_fin"
+                                    type="date"
+                                    value={localValues.fecha_fin}
+                                    onChange={(e) => handleLocalChange("fecha_fin", e.target.value)}
+                                    onBlur={() => handleBlur("fecha_fin")}
+                                    className="h-10 text-sm bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:border-emerald-500 focus:ring-emerald-500/20 transition-all"
+                                />
+                            </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Divider */}
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-100"></div>
+                    </div>
+                    <div className="relative flex justify-center">
+                        <span className="bg-white px-3 text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                            Comparar con
+                        </span>
                     </div>
                 </div>
 
                 {/* Comparative Period */}
-                <div className="space-y-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2 flex justify-between">
-                        <span>Periodo Comparativo</span>
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center">
+                            <History className="h-3.5 w-3.5 text-slate-500" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                            Periodo Anterior
+                        </span>
+                        <span className="text-[10px] text-slate-400 ml-auto">
+                            {formatDisplayDate(localValues.fecha_inicio_anterior)} - {formatDisplayDate(localValues.fecha_fin_anterior)}
+                        </span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                            <Label htmlFor="fecha_inicio_anterior" className="text-xs text-slate-500">Desde</Label>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="fecha_inicio_anterior" className="text-[11px] font-semibold text-slate-600">
+                                Fecha Inicio
+                            </Label>
                             <Input
                                 id="fecha_inicio_anterior"
                                 type="date"
                                 value={localValues.fecha_inicio_anterior}
                                 onChange={(e) => handleLocalChange("fecha_inicio_anterior", e.target.value)}
                                 onBlur={() => handleComparativeBlur("fecha_inicio_anterior")}
-                                className="h-9 text-sm bg-white border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                                className="h-10 text-sm bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:border-slate-400 focus:ring-slate-400/20 transition-all"
                             />
                         </div>
-                        <div className="space-y-1">
-                            <Label htmlFor="fecha_fin_anterior" className="text-xs text-slate-500">Hasta</Label>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="fecha_fin_anterior" className="text-[11px] font-semibold text-slate-600">
+                                Fecha Fin
+                            </Label>
                             <Input
                                 id="fecha_fin_anterior"
                                 type="date"
                                 value={localValues.fecha_fin_anterior}
                                 onChange={(e) => handleLocalChange("fecha_fin_anterior", e.target.value)}
                                 onBlur={() => handleComparativeBlur("fecha_fin_anterior")}
-                                className="h-9 text-sm bg-white border-slate-200 focus:border-slate-400 focus:ring-slate-400/20"
+                                className="h-10 text-sm bg-slate-50 border-slate-200 rounded-xl focus:bg-white focus:border-slate-400 focus:ring-slate-400/20 transition-all"
                             />
                         </div>
                     </div>

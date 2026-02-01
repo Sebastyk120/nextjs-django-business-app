@@ -9,12 +9,12 @@ interface TrendChartProps {
     unit?: string;
 }
 
-const COLORS = ['#F8C8DC', '#FFDAB9', '#B2DFDB', '#DCEDC8', '#FFF9C4']; // Soft Pastel palette
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
 
 export function TrendPieChart({ data, title, dataKey = 'orders', unit = 'pedidos' }: TrendChartProps) {
     if (!data || data.length === 0) {
         return (
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                 <h3 className="text-sm font-semibold text-slate-700 mb-4">{title}</h3>
                 <p className="text-slate-500 text-sm">Sin datos disponibles</p>
             </div>
@@ -30,22 +30,22 @@ export function TrendPieChart({ data, title, dataKey = 'orders', unit = 'pedidos
     };
 
     return (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col">
             <h3 className="text-sm font-semibold text-slate-700 mb-4">{title}</h3>
             <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
                             data={data}
-                            cx="50%"
+                            cx="40%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
+                            innerRadius={50}
+                            outerRadius={75}
+                            paddingAngle={3}
                             dataKey={dataKey}
                         >
                             {data.map((_, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="white" strokeWidth={2} />
                             ))}
                         </Pie>
                         <Tooltip
@@ -53,8 +53,9 @@ export function TrendPieChart({ data, title, dataKey = 'orders', unit = 'pedidos
                             contentStyle={{
                                 background: '#fff',
                                 border: '1px solid #e2e8f0',
-                                borderRadius: '8px',
-                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                                borderRadius: '12px',
+                                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                padding: '12px'
                             }}
                         />
                         <Legend

@@ -1,15 +1,13 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowRight, Leaf, Star } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowRight, Leaf, Sparkles, ExternalLink } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Fruit } from "@/types/fruit";
 import ProductModal from "./ProductModal";
 import AllProductsModal from "./AllProductsModal";
 import axiosClient from "@/lib/axios";
-
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function Products() {
@@ -19,21 +17,28 @@ export default function Products() {
     const [selectedFruit, setSelectedFruit] = useState<Fruit | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
     const t = {
         es: {
-            sub: "Nuestra Selección",
-            title: "Frutas Exóticas de Calidad Mundial",
-            desc: "Descubre el sabor auténtico de Colombia. Contamos con un portafolio de más de 23 frutas exóticas listas para exportar.",
-            viewAll: "Ver Catálogo Completo (23+ Frutas)",
-            featured: "Destacados"
+            sub: "Portafolio Premium",
+            title: "Frutas Exóticas",
+            titleHighlight: "de Clase Mundial",
+            desc: "Descubre más de 23 variedades de frutas tropicales cultivadas en las tierras más fértiles de Colombia. Cada fruta es seleccionada a mano para garantizar la máxima calidad.",
+            viewAll: "Ver Catálogo Completo",
+            viewAllSub: "23+ frutas exóticas",
+            featured: "Destacadas",
+            discover: "Descubrir"
         },
         en: {
-            sub: "Our Selection",
-            title: "World Class Exotic Fruits",
-            desc: "Discover the authentic taste of Colombia. We have a portfolio of over 23 exotic fruits ready for export.",
-            viewAll: "View Full Catalog (23+ Fruits)",
-            featured: "Featured"
+            sub: "Premium Portfolio",
+            title: "World-Class",
+            titleHighlight: "Exotic Fruits",
+            desc: "Discover more than 23 varieties of tropical fruits grown in Colombia's most fertile lands. Each fruit is hand-selected to guarantee maximum quality.",
+            viewAll: "View Full Catalog",
+            viewAllSub: "23+ exotic fruits",
+            featured: "Featured",
+            discover: "Discover"
         }
     }[lang];
 
@@ -57,143 +62,234 @@ export default function Products() {
         setIsDetailModalOpen(true);
     };
 
-    // Show only first 6 fruits for the teaser
     const featuredFruits = fruits.slice(0, 6);
 
     return (
-        <section id="productos" className="py-24 bg-[--color-background-alt]">
-            <div className="container mx-auto px-4 md:px-6">
+        <section id="productos" className="py-32 bg-[#F8FAFC] relative overflow-hidden">
+            {/* Background Decorations */}
+            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white to-transparent" />
+            <motion.div
+                className="absolute top-40 right-0 w-[500px] h-[500px] bg-gradient-to-br from-[#0D7377]/5 to-transparent rounded-full blur-3xl"
+                animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
+                transition={{ duration: 8, repeat: Infinity }}
+            />
+            <motion.div
+                className="absolute bottom-40 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-[#FF6B4A]/5 to-transparent rounded-full blur-3xl"
+                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.4, 0.3] }}
+                transition={{ duration: 10, repeat: Infinity, delay: 2 }}
+            />
 
+            <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
                 {/* Header Section */}
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 40 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-100px" }}
-                    className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6"
+                    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-20 gap-8"
                 >
                     <div className="max-w-2xl">
-                        <span className="text-[--color-primary] font-bold tracking-wider uppercase text-sm mb-2 block">{t.sub}</span>
-                        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{t.title}</h2>
-                        <p className="text-lg text-gray-600 leading-relaxed">
+                        <motion.span 
+                            className="inline-flex items-center gap-2 text-[#0D7377] font-bold tracking-widest uppercase text-xs mb-4"
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <Sparkles size={16} />
+                            {t.sub}
+                        </motion.span>
+                        
+                        <motion.h2 
+                            className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.3 }}
+                        >
+                            {t.title}{" "}
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0D7377] to-[#14A0A5]">
+                                {t.titleHighlight}
+                            </span>
+                        </motion.h2>
+                        
+                        <motion.p 
+                            className="text-lg text-[#4A4A5A] leading-relaxed"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.4 }}
+                        >
                             {t.desc}
-                        </p>
+                        </motion.p>
                     </div>
+                    
                     <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        initial={{ opacity: 0, x: 20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.5 }}
+                        whileHover={{ scale: 1.05, y: -4 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => setIsCatalogOpen(true)}
-                        className="hidden md:flex items-center gap-2 bg-[--color-primary] text-white px-8 py-4 rounded-full font-bold shadow-lg hover:shadow-xl hover:bg-[--color-secondary] transition-all"
+                        className="hidden lg:flex flex-col items-start bg-white px-8 py-5 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-gray-100 group"
                     >
-                        {t.viewAll} <ArrowRight size={20} />
+                        <span className="flex items-center gap-2 font-bold text-[#1A1A2E] group-hover:text-[#0D7377] transition-colors">
+                            {t.viewAll}
+                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                        </span>
+                        <span className="text-xs text-[#8A8A9A] mt-1">{t.viewAllSub}</span>
                     </motion.button>
                 </motion.div>
 
                 {/* Featured Grid */}
                 {loading ? (
                     <div className="flex justify-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[--color-primary]"></div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-4 h-4 bg-[#0D7377] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <div className="w-4 h-4 bg-[#0D7377] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <div className="w-4 h-4 bg-[#0D7377] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
                     </div>
                 ) : (
                     <motion.div
                         initial="hidden"
                         whileInView="visible"
-                        viewport={{ once: true, margin: "-100px" }}
+                        viewport={{ once: true, margin: "-50px" }}
                         variants={{
                             hidden: { opacity: 0 },
                             visible: {
                                 opacity: 1,
-                                transition: {
-                                    staggerChildren: 0.1
-                                }
+                                transition: { staggerChildren: 0.1 }
                             }
                         }}
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16"
                     >
                         {featuredFruits.map((fruit, index) => (
                             <motion.div
                                 key={fruit.id}
                                 variants={{
-                                    hidden: { opacity: 0, y: 50 },
+                                    hidden: { opacity: 0, y: 60, scale: 0.95 },
                                     visible: {
                                         opacity: 1,
                                         y: 0,
-                                        transition: { type: "spring" as const, stiffness: 50, damping: 20 }
+                                        scale: 1,
+                                        transition: { 
+                                            type: "spring" as const, 
+                                            stiffness: 80, 
+                                            damping: 20 
+                                        }
                                     }
                                 }}
                                 onClick={() => openDetailModal(fruit)}
-                                className="group relative h-[400px] rounded-3xl overflow-hidden cursor-pointer shadow-md hover:shadow-2xl transition-all duration-500"
+                                onMouseEnter={() => setHoveredIndex(index)}
+                                onMouseLeave={() => setHoveredIndex(null)}
+                                className="group relative h-[450px] rounded-[2rem] overflow-hidden cursor-pointer bg-white shadow-lg hover:shadow-2xl transition-all duration-500"
                             >
                                 {/* Background Image */}
-                                {fruit.imagen ? (
-                                    <Image
-                                        src={fruit.imagen}
-                                        alt={fruit.nombre}
-                                        fill
-                                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                                    />
-                                ) : (
-                                    <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                                        <Leaf size={48} className="text-gray-400" />
-                                    </div>
-                                )}
+                                <div className="absolute inset-0">
+                                    {fruit.imagen ? (
+                                        <Image
+                                            src={fruit.imagen}
+                                            alt={fruit.nombre}
+                                            fill
+                                            className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                        />
+                                    ) : (
+                                        <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                                            <Leaf size={64} className="text-gray-300" />
+                                        </div>
+                                    )}
+                                </div>
 
-                                {/* Overlay Gradient */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90 transition-opacity duration-300"></div>
+                                {/* Gradient Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A2E] via-[#1A1A2E]/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
 
                                 {/* Content */}
-                                <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <h3 className="text-2xl font-bold text-white group-hover:text-[--color-accent] transition-colors">{fruit.nombre}</h3>
-                                        <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity delay-100">
-                                            <ArrowRight className="text-white" size={20} />
-                                        </div>
+                                <div className="absolute inset-0 p-8 flex flex-col justify-end">
+                                    {/* Badge */}
+                                    <motion.div 
+                                        className="absolute top-6 right-6 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: hoveredIndex === index ? 1 : 0.9, scale: hoveredIndex === index ? 1.05 : 1 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <span className="text-xs font-bold text-[#0D7377] uppercase tracking-wider">{t.featured}</span>
+                                    </motion.div>
+
+                                    {/* Text Content */}
+                                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                                        <h3 className="text-3xl font-bold text-white mb-2 group-hover:text-[#32E0C4] transition-colors">
+                                            {fruit.nombre}
+                                        </h3>
+                                        
+                                        {fruit.nombre_en && (
+                                            <p className="text-white/70 italic mb-4 text-sm">{fruit.nombre_en}</p>
+                                        )}
+                                        
+                                        <p className="text-white/80 line-clamp-2 text-sm mb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100"
+                                        >
+                                            {lang === 'en' && fruit.descripcion_en ? fruit.descripcion_en : fruit.descripcion}
+                                        </p>
+
+                                        {/* CTA */}
+                                        <motion.div 
+                                            className="flex items-center gap-2 text-white font-semibold text-sm opacity-0 group-hover:opacity-100 transition-all duration-500 delay-150"
+                                            whileHover={{ x: 5 }}
+                                        >
+                                            <span>{t.discover}</span>
+                                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-[#0D7377] transition-colors">
+                                                <ArrowRight size={16} />
+                                            </div>
+                                        </motion.div>
                                     </div>
-                                    {fruit.nombre_en && (
-                                        <p className="text-white/80 italic mb-4 text-sm font-light">{fruit.nombre_en}</p>
-                                    )}
-                                    <p className="text-white/70 line-clamp-2 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-75">
-                                        {lang === 'en' && fruit.descripcion_en ? fruit.descripcion_en : fruit.descripcion}
-                                    </p>
                                 </div>
 
-                                {/* Floating Badge */}
-                                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[--color-primary] shadow-sm flex items-center gap-1">
-                                    <Star size={12} fill="currentColor" /> Premium
-                                </div>
+                                {/* Hover Border Effect */}
+                                <div className="absolute inset-0 rounded-[2rem] border-2 border-transparent group-hover:border-[#0D7377]/30 transition-colors duration-500 pointer-events-none" />
                             </motion.div>
                         ))}
                     </motion.div>
                 )}
 
                 {/* Mobile Button */}
-                <div className="md:hidden text-center">
+                <div className="lg:hidden text-center">
                     <motion.button
-                        whileTap={{ scale: 0.95 }}
+                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ y: -4 }}
                         onClick={() => setIsCatalogOpen(true)}
-                        className="flex w-full justify-center items-center gap-2 bg-[--color-primary] text-white px-8 py-4 rounded-full font-bold shadow-lg hover:bg-[--color-secondary] transition-colors"
+                        className="inline-flex items-center gap-3 bg-gradient-to-r from-[#0D7377] to-[#14A0A5] text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-[#0D7377]/25"
                     >
-                        {t.viewAll} <ArrowRight size={20} />
+                        {t.viewAll}
+                        <ExternalLink size={18} />
                     </motion.button>
                 </div>
             </div>
 
             {/* Modals */}
-            <ProductModal
-                fruit={selectedFruit}
-                isOpen={isDetailModalOpen}
-                onClose={() => setIsDetailModalOpen(false)}
-            />
+            <AnimatePresence>
+                {isDetailModalOpen && (
+                    <ProductModal
+                        fruit={selectedFruit}
+                        isOpen={isDetailModalOpen}
+                        onClose={() => setIsDetailModalOpen(false)}
+                    />
+                )}
+            </AnimatePresence>
 
-            <AllProductsModal
-                isOpen={isCatalogOpen}
-                onClose={() => setIsCatalogOpen(false)}
-                fruits={fruits}
-                onSelectFruit={(fruit) => {
-                    setIsCatalogOpen(false); // Close catalog
-                    // Short timeout to allow catalog close animation to start/finish smoothly if needed
-                    setTimeout(() => openDetailModal(fruit), 100);
-                }}
-            />
+            <AnimatePresence>
+                {isCatalogOpen && (
+                    <AllProductsModal
+                        isOpen={isCatalogOpen}
+                        onClose={() => setIsCatalogOpen(false)}
+                        fruits={fruits}
+                        onSelectFruit={(fruit) => {
+                            setIsCatalogOpen(false);
+                            setTimeout(() => openDetailModal(fruit), 100);
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </section>
     );
 }

@@ -9,12 +9,12 @@ interface TrendChartProps {
     unit?: string;
 }
 
-const COLORS = ['#F8C8DC', '#FFDAB9', '#B2DFDB', '#DCEDC8', '#FFF9C4']; // Soft Pastel palette (Rose, Peach, Mint, Sage, Lemon)
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
 
 export function TrendBarChart({ data, title, dataKey = 'orders', unit = 'pedidos' }: TrendChartProps) {
     if (!data || data.length === 0) {
         return (
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
                 <h3 className="text-sm font-semibold text-slate-700 mb-4">{title}</h3>
                 <p className="text-slate-500 text-sm">Sin datos disponibles</p>
             </div>
@@ -30,7 +30,7 @@ export function TrendBarChart({ data, title, dataKey = 'orders', unit = 'pedidos
     };
 
     return (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
             <h3 className="text-sm font-semibold text-slate-700 mb-4">{title}</h3>
             <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
@@ -40,21 +40,23 @@ export function TrendBarChart({ data, title, dataKey = 'orders', unit = 'pedidos
                             type="category"
                             dataKey="name"
                             width={130}
-                            tick={{ fontSize: 11, fill: '#64748b' }}
+                            tick={{ fontSize: 11, fill: '#64748b', fontWeight: 500 }}
                             tickLine={false}
                             axisLine={false}
                             tickFormatter={(value) => value.length > 20 ? `${value.substring(0, 17)}...` : value}
                         />
                         <Tooltip
+                            cursor={{ fill: 'rgba(0,0,0,0.02)' }}
                             formatter={(value: number | undefined) => [formatValue(value), dataKey === 'kilos' ? 'Kilos' : 'Cantidad']}
                             contentStyle={{
                                 background: '#fff',
                                 border: '1px solid #e2e8f0',
-                                borderRadius: '8px',
-                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                                borderRadius: '12px',
+                                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                padding: '12px'
                             }}
                         />
-                        <Bar dataKey={dataKey} radius={[0, 4, 4, 0]}>
+                        <Bar dataKey={dataKey} radius={[0, 8, 8, 0]} barSize={24}>
                             {data.map((_, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}

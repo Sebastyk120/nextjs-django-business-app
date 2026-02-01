@@ -215,6 +215,14 @@ class DetallePedidoSerializer(serializers.ModelSerializer):
                 "no_cajas_nc": "Si 'Afecta Utilidad' es 'Sí', debe ingresar un valor mayor a 0 en 'NC Cajas'."
             })
         
+        # Validar que valor_x_caja_usd sea obligatorio cuando hay cajas enviadas
+        valor_x_caja_usd = data.get('valor_x_caja_usd')
+        if cajas_enviadas is not None and cajas_enviadas > 0:
+            if valor_x_caja_usd is None or valor_x_caja_usd <= 0:
+                raise serializers.ValidationError({
+                    "valor_x_caja_usd": "Debe ingresar el 'Costo por Caja' cuando hay cajas enviadas."
+                })
+        
         # Validar porcentaje_afectacion_utilidad entre 0 y 100
         porcentaje = data.get('porcentaje_afectacion_utilidad')
         if porcentaje is not None and (porcentaje < 0 or porcentaje > 100):

@@ -236,31 +236,52 @@ export function OrderDetailsDrawer({
     const handleSave = async () => {
         const noCajasNc = editForm.no_cajas_nc;
         const cajasEnviadas = editForm.cajas_enviadas;
-        
+
+        // Helper function to check if a value is a valid positive number
+        const isValidPositiveNumber = (val: unknown): boolean => {
+            if (val === null || val === undefined) return false;
+            const num = typeof val === 'string' ? parseFloat(val) : Number(val);
+            return !isNaN(num) && num > 0;
+        };
+
+        // Helper function to get numeric value
+        const toNumber = (val: unknown): number => {
+            if (val === null || val === undefined) return 0;
+            const num = typeof val === 'string' ? parseFloat(val) : Number(val);
+            return isNaN(num) ? 0 : num;
+        };
+
         // Validación: no se pueden establecer NC si no hay cajas enviadas
-        if ((noCajasNc !== null && noCajasNc !== undefined && noCajasNc !== '' && parseFloat(noCajasNc as any) > 0) && 
-            (cajasEnviadas === null || cajasEnviadas === undefined || cajasEnviadas === '' || parseFloat(cajasEnviadas as any) <= 0)) {
+        if (isValidPositiveNumber(noCajasNc) && !isValidPositiveNumber(cajasEnviadas)) {
             toast.error("No puede establecer 'NC Cajas' si no hay cajas enviadas.");
             return;
         }
-        
+
         // Validación: no_cajas_nc no puede ser mayor que cajas_enviadas
-        if (noCajasNc !== null && noCajasNc !== undefined && noCajasNc !== '' && 
-            cajasEnviadas !== null && cajasEnviadas !== undefined && cajasEnviadas !== '') {
-            if (parseFloat(noCajasNc as any) > parseFloat(cajasEnviadas as any)) {
+        if (isValidPositiveNumber(noCajasNc) && isValidPositiveNumber(cajasEnviadas)) {
+            if (toNumber(noCajasNc) > toNumber(cajasEnviadas)) {
                 toast.error("El número de cajas NC no puede ser mayor que las cajas enviadas.");
                 return;
             }
         }
-        
+
         // Validación: si afecta_utilidad es true, no_cajas_nc debe ser > 0
         if (editForm.afecta_utilidad === true) {
-            if (noCajasNc === null || noCajasNc === undefined || noCajasNc === '' || parseFloat(noCajasNc as any) <= 0) {
+            if (!isValidPositiveNumber(noCajasNc)) {
                 toast.error("Si 'Afecta Utilidad' es 'Sí', debe ingresar un valor mayor a 0 en 'NC Cajas'.");
                 return;
             }
         }
-        
+
+        // Validación: valor_x_caja_usd es obligatorio cuando hay cajas enviadas
+        const valorXCajaUsd = editForm.valor_x_caja_usd;
+        if (isValidPositiveNumber(cajasEnviadas)) {
+            if (!isValidPositiveNumber(valorXCajaUsd)) {
+                toast.error("Debe ingresar el 'Costo por Caja' cuando hay cajas enviadas.");
+                return;
+            }
+        }
+
         setSaving(true);
         try {
             if (editingId === "new") {
@@ -358,7 +379,7 @@ export function OrderDetailsDrawer({
                 const totalNc = noCajasNc * valorXCajaUsd;
                 const utilidadBase = cajasEnviadas * tarifaUtilidad;
                 const deduccion = totalNc * (porcentajeAfectacion / 100);
-                
+
                 if (deduccion >= utilidadBase) {
                     valorTotalUtilidad = 0;
                 } else {
@@ -734,8 +755,8 @@ function DataRow({
                         "text-xs block text-center",
                         isEditing && previewValues ? "text-blue-600 font-medium" : "text-slate-500"
                     )}>
-                        {isEditing && previewValues 
-                            ? formatNumber(previewValues.kilos) 
+                        {isEditing && previewValues
+                            ? formatNumber(previewValues.kilos)
                             : formatNumber(data.kilos)}
                     </span>
                 </TableCell>
@@ -747,8 +768,8 @@ function DataRow({
                         "text-xs block text-center",
                         isEditing && previewValues ? "text-blue-600 font-medium" : "text-slate-500"
                     )}>
-                        {isEditing && previewValues 
-                            ? formatNumber(previewValues.kilosEnviados) 
+                        {isEditing && previewValues
+                            ? formatNumber(previewValues.kilosEnviados)
                             : formatNumber(data.kilos_enviados)}
                     </span>
                 </TableCell>
@@ -757,8 +778,8 @@ function DataRow({
                         "text-xs block text-center",
                         isEditing && previewValues ? "text-blue-600 font-medium" : "text-slate-500"
                     )}>
-                        {isEditing && previewValues 
-                            ? formatNumber(previewValues.diferencia) 
+                        {isEditing && previewValues
+                            ? formatNumber(previewValues.diferencia)
                             : formatNumber(data.diferencia)}
                     </span>
                 </TableCell>
@@ -949,8 +970,8 @@ function DataRow({
                                 "font-medium",
                                 isEditing && previewValues ? "text-blue-600" : "text-slate-600"
                             )}>
-                                {isEditing && previewValues 
-                                    ? formatMoney(previewValues.valorXProducto) 
+                                {isEditing && previewValues
+                                    ? formatMoney(previewValues.valorXProducto)
                                     : formatMoney(data.valor_x_producto)}
                             </span>
                         </div>
@@ -1009,8 +1030,8 @@ function DataRow({
                                 "font-medium",
                                 isEditing && previewValues ? "text-blue-600" : "text-orange-700"
                             )}>
-                                {isEditing && previewValues 
-                                    ? formatMoney(previewValues.valorNotaCredito) 
+                                {isEditing && previewValues
+                                    ? formatMoney(previewValues.valorNotaCredito)
                                     : formatMoney(data.valor_nota_credito_usd)}
                             </span>
                         </div>
@@ -1084,8 +1105,8 @@ function DataRow({
                                 "font-semibold",
                                 isEditing && previewValues ? "text-blue-600" : "text-emerald-700"
                             )}>
-                                {isEditing && previewValues 
-                                    ? formatMoney(previewValues.valorTotalUtilidad) 
+                                {isEditing && previewValues
+                                    ? formatMoney(previewValues.valorTotalUtilidad)
                                     : formatMoney(data.valor_total_utilidad_x_producto)}
                             </span>
                         </div>
@@ -1096,8 +1117,8 @@ function DataRow({
                                 "font-semibold",
                                 isEditing && previewValues ? "text-blue-600" : "text-blue-700"
                             )}>
-                                {isEditing && previewValues 
-                                    ? formatMoney(previewValues.valorTotalRecuperacion) 
+                                {isEditing && previewValues
+                                    ? formatMoney(previewValues.valorTotalRecuperacion)
                                     : formatMoney(data.valor_total_recuperacion_x_producto)}
                             </span>
                         </div>

@@ -77,6 +77,21 @@ def dashboard_comercial_api(request):
                     'prev': context['cancelados_prev'], 
                     'percent': context['cancelados_percent']
                 },
+                'profit_margin': {
+                    'current': safe_float(context.get('profit_margin_current', 0)),
+                    'prev': safe_float(context.get('profit_margin_prev', 0)),
+                    'percent': context.get('profit_margin_percent_change', 0)
+                },
+                'nc_ratio': {
+                    'current': safe_float(context.get('nc_ratio_current', 0)),
+                    'prev': safe_float(context.get('nc_ratio_prev', 0)),
+                    'percent': context.get('nc_ratio_percent_change', 0)
+                },
+                'portfolio_days': {
+                    'current': safe_float(context.get('avg_portfolio_days', 0)),
+                    'prev': 0, # Not calculating previous for this one yet as it is a status metric
+                    'percent': 0
+                },
             },
             
             # Charts Data
