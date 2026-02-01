@@ -112,6 +112,9 @@ export default function ImpactStory() {
                                 alt="Historia de Heavens Fruits - Mabelly Díaz y Valentina Garay"
                                 fill
                                 className="object-cover opacity-80 hover:opacity-100 transition-opacity duration-700"
+                                loading="lazy"
+                                quality={75}
+                                sizes="(max-width: 768px) 100vw, 50vw"
                             />
                             {/* Overlay Content */}
                             <div className="absolute inset-0 flex flex-col justify-end p-8 bg-gradient-to-t from-[#0a2e2f] via-transparent to-transparent">

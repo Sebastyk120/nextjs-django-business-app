@@ -89,7 +89,7 @@ export default function Products() {
                     className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-20 gap-8"
                 >
                     <div className="max-w-2xl">
-                        <motion.span 
+                        <motion.span
                             className="inline-flex items-center gap-2 text-[#0D7377] font-bold tracking-widest uppercase text-xs mb-4"
                             initial={{ opacity: 0, x: -20 }}
                             whileInView={{ opacity: 1, x: 0 }}
@@ -99,8 +99,8 @@ export default function Products() {
                             <Sparkles size={16} />
                             {t.sub}
                         </motion.span>
-                        
-                        <motion.h2 
+
+                        <motion.h2
                             className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -112,8 +112,8 @@ export default function Products() {
                                 {t.titleHighlight}
                             </span>
                         </motion.h2>
-                        
-                        <motion.p 
+
+                        <motion.p
                             className="text-lg text-[#4A4A5A] leading-relaxed"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
@@ -123,7 +123,7 @@ export default function Products() {
                             {t.desc}
                         </motion.p>
                     </div>
-                    
+
                     <motion.button
                         initial={{ opacity: 0, x: 20 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -174,10 +174,10 @@ export default function Products() {
                                         opacity: 1,
                                         y: 0,
                                         scale: 1,
-                                        transition: { 
-                                            type: "spring" as const, 
-                                            stiffness: 80, 
-                                            damping: 20 
+                                        transition: {
+                                            type: "spring" as const,
+                                            stiffness: 80,
+                                            damping: 20
                                         }
                                     }
                                 }}
@@ -194,6 +194,9 @@ export default function Products() {
                                             alt={fruit.nombre}
                                             fill
                                             className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                            loading="lazy"
+                                            quality={80}
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                         />
                                     ) : (
                                         <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -208,7 +211,7 @@ export default function Products() {
                                 {/* Content */}
                                 <div className="absolute inset-0 p-8 flex flex-col justify-end">
                                     {/* Badge */}
-                                    <motion.div 
+                                    <motion.div
                                         className="absolute top-6 right-6 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg"
                                         initial={{ opacity: 0, scale: 0.8 }}
                                         animate={{ opacity: hoveredIndex === index ? 1 : 0.9, scale: hoveredIndex === index ? 1.05 : 1 }}
@@ -222,18 +225,18 @@ export default function Products() {
                                         <h3 className="text-3xl font-bold text-white mb-2 group-hover:text-[#32E0C4] transition-colors">
                                             {fruit.nombre}
                                         </h3>
-                                        
+
                                         {fruit.nombre_en && (
                                             <p className="text-white/70 italic mb-4 text-sm">{fruit.nombre_en}</p>
                                         )}
-                                        
+
                                         <p className="text-white/80 line-clamp-2 text-sm mb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100"
                                         >
                                             {lang === 'en' && fruit.descripcion_en ? fruit.descripcion_en : fruit.descripcion}
                                         </p>
 
                                         {/* CTA */}
-                                        <motion.div 
+                                        <motion.div
                                             className="flex items-center gap-2 text-white font-semibold text-sm opacity-0 group-hover:opacity-100 transition-all duration-500 delay-150"
                                             whileHover={{ x: 5 }}
                                         >

@@ -54,11 +54,10 @@ export default function Header({ onOpenLanguage }: HeaderProps) {
 
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-                isScrolled 
-                    ? "py-3 bg-white/90 backdrop-blur-xl shadow-lg shadow-black/5" 
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
+                    ? "py-3 bg-white/90 backdrop-blur-xl shadow-lg shadow-black/5"
                     : "py-5 bg-transparent"
-            }`}
+                }`}
         >
             <div className="container mx-auto px-4 md:px-6 lg:px-8"
             >
@@ -67,12 +66,11 @@ export default function Header({ onOpenLanguage }: HeaderProps) {
                     {/* Logo */}
                     <Link href="#inicio" className="relative z-10"
                     >
-                        <motion.img 
-                            src="/landing/heavens.webp" 
-                            alt="Heavens Fruits SAS Logo" 
-                            className={`h-10 md:h-12 w-auto transition-all duration-300 ${
-                                isScrolled ? '' : 'brightness-0'
-                            }`}
+                        <motion.img
+                            src="/landing/heavens.webp"
+                            alt="Heavens Fruits SAS Logo"
+                            className={`h-10 md:h-12 w-auto transition-all duration-300 ${isScrolled ? 'brightness-0 invert' : ''
+                                }`}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                         />
@@ -85,9 +83,8 @@ export default function Header({ onOpenLanguage }: HeaderProps) {
                             <Link
                                 key={link.name}
                                 href={link.href}
-                                className={`relative px-4 py-2 font-medium text-sm transition-colors group ${
-                                    isScrolled ? 'text-[#4A4A5A] hover:text-[#0D7377]' : 'text-[#4A4A5A] hover:text-[#0D7377]'
-                                }`}
+                                className={`relative px-4 py-2 font-medium text-sm transition-colors group ${isScrolled ? 'text-[#4A4A5A] hover:text-[#0D7377]' : 'text-[#4A4A5A] hover:text-[#0D7377]'
+                                    }`}
                             >
                                 {link.name}
                                 <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-[#0D7377] transition-all duration-300 group-hover:w-1/2" />
@@ -100,11 +97,10 @@ export default function Header({ onOpenLanguage }: HeaderProps) {
                     >
                         <button
                             onClick={onOpenLanguage}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-semibold text-sm transition-all ${
-                                isScrolled 
-                                    ? 'text-[#4A4A5A] hover:bg-gray-100' 
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg font-semibold text-sm transition-all ${isScrolled
+                                    ? 'text-[#4A4A5A] hover:bg-gray-100'
                                     : 'text-[#4A4A5A] hover:bg-white/10'
-                            }`}
+                                }`}
                         >
                             <Globe size={18} />
                             <span>{t.langLabel}</span>
@@ -112,11 +108,10 @@ export default function Header({ onOpenLanguage }: HeaderProps) {
 
                         <Link
                             href="/login"
-                            className={`px-5 py-2.5 rounded-full font-semibold text-sm transition-all border ${
-                                isScrolled 
-                                    ? 'text-[#0D7377] border-[#0D7377]/30 hover:bg-[#0D7377] hover:text-white' 
+                            className={`px-5 py-2.5 rounded-full font-semibold text-sm transition-all border ${isScrolled
+                                    ? 'text-[#0D7377] border-[#0D7377]/30 hover:bg-[#0D7377] hover:text-white'
                                     : 'text-[#0D7377] border-[#0D7377]/30 hover:bg-[#0D7377] hover:text-white'
-                            }`}
+                                }`}
                         >
                             {t.login}
                         </Link>
@@ -183,7 +178,7 @@ export default function Header({ onOpenLanguage }: HeaderProps) {
                                         </Link>
                                     </motion.div>
                                 ))}
-                                
+
                                 <div className="pt-4 space-y-3"
                                 >
                                     <button

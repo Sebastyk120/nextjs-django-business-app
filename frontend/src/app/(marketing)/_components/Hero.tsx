@@ -5,18 +5,21 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Leaf, Award, Truck } from "lucide-react";
 import { useRef } from "react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export default function Hero() {
     const { lang } = useLanguage();
+    const isMobile = useIsMobile();
     const targetRef = useRef<HTMLElement>(null);
     const { scrollYProgress } = useScroll({
         target: targetRef,
         offset: ["start start", "end start"],
     });
 
-    const yBackground = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-    const opacityBackground = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-    const scaleBackground = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
+    // Disable parallax on mobile for better performance
+    const yBackground = useTransform(scrollYProgress, [0, 1], isMobile ? ["0%", "0%"] : ["0%", "30%"]);
+    const opacityBackground = useTransform(scrollYProgress, [0, 0.5], isMobile ? [1, 1] : [1, 0]);
+    const scaleBackground = useTransform(scrollYProgress, [0, 1], isMobile ? [1, 1] : [1, 1.1]);
 
     const t = {
         es: {
@@ -57,9 +60,9 @@ export default function Hero() {
         visible: {
             opacity: 1,
             y: 0,
-            transition: { 
-                type: "spring" as const, 
-                stiffness: 100, 
+            transition: {
+                type: "spring" as const,
+                stiffness: 100,
                 damping: 20,
                 duration: 0.8
             }
@@ -72,15 +75,15 @@ export default function Hero() {
             transition: {
                 duration: 4,
                 repeat: Infinity,
-                ease: "easeInOut"
+                ease: "easeInOut" as const
             }
         }
     };
 
     return (
-        <section 
-            ref={targetRef} 
-            id="inicio" 
+        <section
+            ref={targetRef}
+            id="inicio"
             className="min-h-screen pt-24 pb-16 flex items-center overflow-hidden relative bg-gradient-to-br from-[#F8FAFC] via-white to-[#FFFBF5]"
         >
             {/* Animated Background Elements */}
@@ -88,14 +91,14 @@ export default function Hero() {
                 style={{ y: yBackground, opacity: opacityBackground, scale: scaleBackground }}
                 className="absolute inset-0 -z-20"
             >
-                {/* Gradient Orbs */}
-                <div className="absolute top-20 right-20 w-[600px] h-[600px] bg-gradient-to-br from-[#0D7377]/5 to-transparent rounded-full blur-3xl" />
-                <div className="absolute bottom-20 left-10 w-[500px] h-[500px] bg-gradient-to-tr from-[#FF6B4A]/5 to-transparent rounded-full blur-3xl" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-[#FFB800]/5 via-transparent to-[#0D7377]/5 rounded-full blur-3xl" />
+                {/* Gradient Orbs - Reduced blur for mobile performance */}
+                <div className="absolute top-20 right-20 w-[600px] h-[600px] bg-gradient-to-br from-[#0D7377]/5 to-transparent rounded-full blur-xl md:blur-3xl" />
+                <div className="absolute bottom-20 left-10 w-[500px] h-[500px] bg-gradient-to-tr from-[#FF6B4A]/5 to-transparent rounded-full blur-xl md:blur-3xl" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-[#FFB800]/5 via-transparent to-[#0D7377]/5 rounded-full blur-xl md:blur-3xl" />
             </motion.div>
 
             {/* Grid Pattern Overlay */}
-            <div 
+            <div
                 className="absolute inset-0 -z-10 opacity-[0.015]"
                 style={{
                     backgroundImage: `linear-gradient(#0D7377 1px, transparent 1px), linear-gradient(90deg, #0D7377 1px, transparent 1px)`,
@@ -116,8 +119,8 @@ export default function Hero() {
                         {/* Feature Pill */}
                         <motion.div
                             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/80 backdrop-blur-sm border border-[#0D7377]/10 shadow-sm text-[#0D7377] text-xs font-bold tracking-widest uppercase mb-8"
-                            whileHover={{ 
-                                y: -3, 
+                            whileHover={{
+                                y: -3,
                                 boxShadow: "0 20px 40px -10px rgba(13, 115, 119, 0.2)",
                                 scale: 1.02
                             }}
@@ -168,7 +171,7 @@ export default function Hero() {
                                     whileHover={{ x: 4 }}
                                     transition={{ type: "spring", stiffness: 400 }}
                                 >
-                                    <div 
+                                    <div
                                         className="p-2.5 rounded-xl transition-all duration-300 group-hover:scale-110"
                                         style={{ backgroundColor: `${feature.color}15` }}
                                     >
@@ -190,13 +193,14 @@ export default function Hero() {
                         transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
                     >
                         {/* Decorative Elements */}
+                        {/* Decorative Elements - Simplified for mobile */}
                         <motion.div
-                            className="absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-[#FFB800] to-[#FF6B4A] rounded-full opacity-20 blur-2xl"
+                            className="hidden md:block absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br from-[#FFB800] to-[#FF6B4A] rounded-full opacity-20 blur-2xl"
                             animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }}
                             transition={{ duration: 4, repeat: Infinity }}
                         />
                         <motion.div
-                            className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br from-[#0D7377] to-[#14A0A5] rounded-full opacity-20 blur-2xl"
+                            className="hidden md:block absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br from-[#0D7377] to-[#14A0A5] rounded-full opacity-20 blur-2xl"
                             animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.35, 0.2] }}
                             transition={{ duration: 5, repeat: Infinity, delay: 0.5 }}
                         />
@@ -264,14 +268,15 @@ export default function Hero() {
                             >
                                 {/* Gradient Overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#0D7377]/30 via-transparent to-transparent z-10" />
-                                
+
                                 <Image
                                     src="/landing/mango-hermoso.webp"
                                     alt="Premium Colombian Mango - Heavens Fruits"
                                     fill
                                     className="object-cover transition-transform duration-1000 hover:scale-110"
                                     priority
-                                    quality={100}
+                                    quality={85}
+                                    sizes="(max-width: 768px) 100vw, 50vw"
                                 />
 
                                 {/* Floating Badge */}
