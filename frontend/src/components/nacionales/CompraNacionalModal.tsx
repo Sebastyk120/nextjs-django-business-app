@@ -147,7 +147,19 @@ export function CompraNacionalModal({ open, onOpenChange, initialData, onSuccess
             onOpenChange(false);
         } catch (error: any) {
             console.error("Error saving compra:", error);
-            const msg = error.response?.data?.numero_guia ? "El número de guía ya existe" : "Error al guardar la compra";
+            console.error("Error response:", error.response?.data);
+            const errorData = error.response?.data;
+            let msg = "Error al guardar la compra";
+            if (errorData?.numero_guia) {
+                msg = "El número de guía ya existe";
+            } else if (errorData?.detail) {
+                msg = errorData.detail;
+            } else if (typeof errorData === 'object') {
+                const firstError = Object.entries(errorData)[0];
+                if (firstError) {
+                    msg = `${firstError[0]}: ${Array.isArray(firstError[1]) ? firstError[1].join(', ') : firstError[1]}`;
+                }
+            }
             toast.error(msg);
         }
     };

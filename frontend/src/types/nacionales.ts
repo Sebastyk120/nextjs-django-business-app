@@ -111,6 +111,11 @@ export interface CompraNacional {
     estado_facturacion_exp?: string;
     estado_reporte_prov?: string;
     remision_exp?: string;
+
+    // Proveedor tax settings
+    proveedor_asohofrucol?: boolean;
+    proveedor_rte_fte?: boolean;
+    proveedor_rte_ica?: boolean;
 }
 
 export interface CompraNacionalResponse {

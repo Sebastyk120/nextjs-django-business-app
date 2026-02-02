@@ -1,9 +1,11 @@
 "use client";
 
 import { CompraNacional } from "@/types/nacionales";
-import { Check, Clock, ShoppingCart, Store, FileOutput, FileCheck, ChevronRight, Package, DollarSign, Calendar, Truck } from "lucide-react";
+import { Check, Clock, ShoppingCart, Store, FileOutput, FileCheck, Package, DollarSign, Calendar, Truck, TrendingUp, Scale, ArrowRightCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 interface NacionalesTimelineProps {
     data: CompraNacional;
@@ -14,7 +16,6 @@ export function NacionalesTimeline({ data }: NacionalesTimelineProps) {
     // Aggregate data from all ventas
     const ventas = data.ventas || [];
     const hasVentas = ventas.length > 0;
-    const allVentasComplete = hasVentas; // At least one sale means venta step is "complete"
 
     // Check if ANY venta has a ReporteExp
     const anyReporteExp = ventas.some(v => v.reportecalidadexportador);
@@ -26,7 +27,7 @@ export function NacionalesTimeline({ data }: NacionalesTimelineProps) {
     const allReportesProvCompleted = hasVentas && ventas.every(v => v.reportecalidadexportador?.reportecalidadproveedor?.completado);
 
     // Aggregate summary info
-    const totalPesoRecibido = ventas.reduce((sum, v) => sum + (v.peso_neto_recibido || 0), 0);
+    const totalPesoRecibido = ventas.reduce((sum, v) => sum + (Number(v.peso_neto_recibido) || 0), 0);
     const exportadorNames = [...new Set(ventas.map(v => v.exportador_nombre))].join(', ');
 
     // Get first venta for date/detail display (representative)
@@ -80,14 +81,31 @@ export function NacionalesTimeline({ data }: NacionalesTimelineProps) {
         };
     })();
 
+    // Calculate overall progress
+    const calculateProgress = () => {
+        if (allReportesProvCompleted) return 100;
+        if (anyReporteProv) return 85;
+        if (anyReporteExp) return 65;
+        if (hasVentas) return 40;
+        return 15;
+    };
+
+    const progress = calculateProgress();
+
     const steps = [
         {
             id: 'compra',
             label: 'Compra Nacional',
+            shortLabel: 'Compra',
             icon: ShoppingCart,
             date: data.fecha_compra,
             status: 'completed' as const,
             color: 'emerald',
+            gradient: 'from-emerald-500 to-emerald-600',
+            bgColor: 'bg-emerald-50',
+            borderColor: 'border-emerald-200',
+            textColor: 'text-emerald-700',
+            lightColor: 'text-emerald-600',
             summary: `${data.proveedor_nombre}`,
             details: {
                 guia: data.numero_guia,
@@ -100,37 +118,49 @@ export function NacionalesTimeline({ data }: NacionalesTimelineProps) {
         {
             id: 'venta',
             label: 'Venta Nacional',
+            shortLabel: 'Venta',
             icon: Store,
             date: firstVenta?.fecha_llegada,
             status: hasVentas ? 'completed' as const : 'current' as const,
             color: 'blue',
+            gradient: 'from-blue-500 to-blue-600',
+            bgColor: 'bg-blue-50',
+            borderColor: 'border-blue-200',
+            textColor: 'text-blue-700',
+            lightColor: 'text-blue-600',
             summary: hasVentas ? (ventas.length > 1 ? `${ventas.length} Ventas` : exportadorNames) : 'Pendiente',
             details: hasVentas ? {
                 exportador: exportadorNames,
                 pesoRecibido: totalPesoRecibido,
                 llegada: firstVenta?.fecha_llegada,
                 vencimiento: firstVenta?.fecha_vencimiento,
-                diferenciaPeso: totalPesoRecibido - data.peso_compra
+                diferenciaPeso: totalPesoRecibido - Number(data.peso_compra || 0)
             } : null
         },
         {
             id: 'reporte_exp',
             label: 'Reporte Exportador',
+            shortLabel: 'Rpt. Exp.',
             icon: FileOutput,
             date: firstReporteExp?.fecha_reporte,
             status: allReportesExp
                 ? 'completed' as const
                 : (anyReporteExp ? 'current' as const : (hasVentas ? 'current' as const : 'pending' as const)),
             color: 'indigo',
+            gradient: 'from-indigo-500 to-indigo-600',
+            bgColor: 'bg-indigo-50',
+            borderColor: 'border-indigo-200',
+            textColor: 'text-indigo-700',
+            lightColor: 'text-indigo-600',
             summary: allReportesExp
                 ? `${ventas.length} Reportes`
                 : (anyReporteExp ? 'Parcial' : 'Pendiente'),
-            // Use aggregated data instead of first reporte
             details: aggregatedReporteExp
         },
         {
             id: 'reporte_prov',
             label: 'Reporte Proveedor',
+            shortLabel: 'Rpt. Prov.',
             icon: FileCheck,
             date: firstReporteProv?.p_fecha_reporte,
             status: allReportesProvCompleted
@@ -139,306 +169,340 @@ export function NacionalesTimeline({ data }: NacionalesTimelineProps) {
                     ? 'current' as const
                     : (anyReporteExp ? 'current' as const : 'pending' as const)),
             color: 'purple',
+            gradient: 'from-purple-500 to-purple-600',
+            bgColor: 'bg-purple-50',
+            borderColor: 'border-purple-200',
+            textColor: 'text-purple-700',
+            lightColor: 'text-purple-600',
             summary: allReportesProvCompleted
                 ? 'Completado'
                 : (anyReporteProv ? 'En Proceso' : 'Pendiente'),
-            // Use aggregated data instead of first reporte
             details: aggregatedReporteProv
         }
     ];
 
-    const getStatusStyles = (status: 'completed' | 'current' | 'pending', color: string) => {
-        if (status === 'completed') {
-            return {
-                circle: `bg-gradient-to-br from-${color}-400 to-${color}-600 text-white shadow-lg shadow-${color}-200/50`,
-                label: `text-${color}-700`,
-                connector: `bg-gradient-to-r from-${color}-400 to-${color}-500`
-            };
-        }
-        if (status === 'current') {
-            return {
-                circle: `bg-white border-2 border-${color}-500 text-${color}-600 ring-4 ring-${color}-100 animate-pulse`,
-                label: `text-${color}-600 font-bold`,
-                connector: 'bg-slate-200'
-            };
-        }
-        return {
-            circle: 'bg-slate-100 border-2 border-slate-200 text-slate-400',
-            label: 'text-slate-400',
-            connector: 'bg-slate-200'
-        };
-    };
-
-    // Calculate overall progress
-    const calculateProgress = () => {
-        if (allReportesProvCompleted) return 100;
-        if (anyReporteProv) return 85;
-        if (anyReporteExp) return 65;
-        if (hasVentas) return 40;
-        return 15;
-    };
-
     return (
-        <div className="w-full">
-            {/* Progress Overview Bar */}
-            <div className="mb-6 px-4">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-slate-500">Progreso del Proceso</span>
-                    <Badge
-                        variant="outline"
-                        className={cn(
-                            "text-xs font-bold",
-                            calculateProgress() === 100 ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                                calculateProgress() >= 65 ? "bg-blue-50 text-blue-700 border-blue-200" :
-                                    "bg-amber-50 text-amber-700 border-amber-200"
-                        )}
-                    >
-                        {calculateProgress()}% Completado
-                    </Badge>
-                </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                        className={cn(
-                            "h-full rounded-full transition-all duration-700 ease-out",
-                            calculateProgress() === 100 ? "bg-gradient-to-r from-emerald-400 to-emerald-600" :
-                                calculateProgress() >= 65 ? "bg-gradient-to-r from-blue-400 to-indigo-500" :
-                                    "bg-gradient-to-r from-amber-400 to-orange-500"
-                        )}
-                        style={{ width: `${calculateProgress()}%` }}
-                    />
-                </div>
+        <div className="w-full space-y-6">
+            {/* Progress Overview */}
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur flex items-center justify-center">
+                                <TrendingUp className="h-6 w-6 text-emerald-400" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold">Progreso del Proceso</h3>
+                                <p className="text-sm text-slate-400">Guía: <span className="font-mono text-slate-200">{data.numero_guia}</span></p>
+                            </div>
+                        </div>
+                        <Badge
+                            variant="outline"
+                            className={cn(
+                                "text-sm font-bold px-4 py-2 border-2",
+                                progress === 100 ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50" :
+                                    progress >= 65 ? "bg-blue-500/20 text-blue-300 border-blue-500/50" :
+                                        "bg-amber-500/20 text-amber-300 border-amber-500/50"
+                            )}
+                        >
+                            {progress}% Completado
+                        </Badge>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="relative">
+                        <div className="h-3 w-full bg-slate-700/50 rounded-full overflow-hidden">
+                            <div
+                                className={cn(
+                                    "h-full rounded-full transition-all duration-1000 ease-out relative",
+                                    progress === 100 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" :
+                                        progress >= 65 ? "bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400" :
+                                            "bg-gradient-to-r from-amber-400 to-orange-400"
+                                )}
+                                style={{ width: `${progress}%` }}
+                            >
+                                <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                            </div>
+                        </div>
+
+                        {/* Step indicators on progress bar */}
+                        <div className="flex justify-between mt-2">
+                            {steps.map((step, index) => {
+                                const position = (index / (steps.length - 1)) * 100;
+                                const isCompleted = step.status === 'completed';
+                                const isCurrent = step.status === 'current';
+
+                                return (
+                                    <div
+                                        key={step.id}
+                                        className="flex flex-col items-center"
+                                        style={{ position: 'absolute', left: `${position}%`, transform: 'translateX(-50%)' }}
+                                    >
+                                        <div className={cn(
+                                            "w-3 h-3 rounded-full border-2 transition-all duration-300",
+                                            isCompleted ? "bg-emerald-400 border-emerald-400" :
+                                                isCurrent ? "bg-blue-400 border-blue-400 animate-pulse" :
+                                                    "bg-slate-700 border-slate-600"
+                                        )} />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Timeline Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {steps.map((step, index) => {
+                    const StepIcon = step.icon;
+                    const isCompleted = step.status === 'completed';
+                    const isCurrent = step.status === 'current';
+                    const isPending = step.status === 'pending';
+
+                    return (
+                        <Card
+                            key={step.id}
+                            className={cn(
+                                "relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2",
+                                isCompleted ? `${step.bgColor} ${step.borderColor}` :
+                                    isCurrent ? "bg-white border-blue-300 shadow-lg shadow-blue-100/50" :
+                                        "bg-slate-50 border-slate-200 opacity-75"
+                            )}
+                        >
+                            {/* Status Indicator Strip */}
+                            <div className={cn(
+                                "absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r",
+                                isCompleted ? step.gradient :
+                                    isCurrent ? "from-blue-400 to-blue-600" :
+                                        "from-slate-300 to-slate-400"
+                            )} />
+
+                            {/* Step Number Badge */}
+                            <div className="absolute top-3 right-3">
+                                <span className={cn(
+                                    "flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold",
+                                    isCompleted ? `bg-gradient-to-br ${step.gradient} text-white` :
+                                        isCurrent ? "bg-blue-100 text-blue-600 ring-2 ring-blue-300" :
+                                            "bg-slate-200 text-slate-500"
+                                )}>
+                                    {isCompleted ? <Check className="h-3.5 w-3.5" /> : index + 1}
+                                </span>
+                            </div>
+
+                            <CardContent className="p-5 pt-6">
+                                {/* Icon and Title */}
+                                <div className="flex items-start gap-3 mb-4">
+                                    <div className={cn(
+                                        "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all",
+                                        isCompleted ? `bg-gradient-to-br ${step.gradient} text-white shadow-lg` :
+                                            isCurrent ? "bg-blue-100 text-blue-600 ring-2 ring-blue-200" :
+                                                "bg-slate-200 text-slate-400"
+                                    )}>
+                                        <StepIcon className="h-5 w-5" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h4 className={cn(
+                                            "font-semibold text-sm leading-tight",
+                                            isCompleted ? step.textColor :
+                                                isCurrent ? "text-blue-700" :
+                                                    "text-slate-500"
+                                        )}>
+                                            {step.label}
+                                        </h4>
+                                        <p className="text-xs text-slate-400 mt-0.5">
+                                            {step.date || 'Sin fecha'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Status Badge */}
+                                <div className="mb-3">
+                                    <Badge
+                                        variant="outline"
+                                        className={cn(
+                                            "text-xs font-medium",
+                                            isCompleted ? `${step.bgColor} ${step.lightColor} ${step.borderColor}` :
+                                                isCurrent ? "bg-blue-50 text-blue-600 border-blue-200" :
+                                                    "bg-slate-100 text-slate-500 border-slate-200"
+                                        )}
+                                    >
+                                        {isCompleted ? 'Completado' : isCurrent ? 'En Proceso' : 'Pendiente'}
+                                    </Badge>
+                                </div>
+
+                                {/* Summary */}
+                                <p className={cn(
+                                    "text-sm font-medium truncate",
+                                    isCompleted ? "text-slate-800" :
+                                        isCurrent ? "text-slate-700" :
+                                            "text-slate-400"
+                                )}>
+                                    {step.summary}
+                                </p>
+
+                                {/* Expanded Details */}
+                                <div className="mt-4 pt-4 border-t border-slate-200/60 space-y-2">
+                                    {step.id === 'compra' && (
+                                        <>
+                                            <DetailRow icon={<Package className="h-3 w-3" />} label="Fruta" value={data.fruta_nombre} />
+                                            <DetailRow icon={<Scale className="h-3 w-3" />} label="Peso" value={`${data.peso_compra?.toLocaleString()} Kg`} />
+                                            <DetailRow icon={<DollarSign className="h-3 w-3" />} label="Precio" value={`$${data.precio_compra_exp?.toLocaleString()}`} accent />
+                                        </>
+                                    )}
+
+                                    {step.id === 'venta' && hasVentas && (
+                                        <>
+                                            <DetailRow icon={<Truck className="h-3 w-3" />} label="Recibido" value={`${totalPesoRecibido.toLocaleString()} Kg`} />
+                                            <DetailRow icon={<Calendar className="h-3 w-3" />} label="Llegada" value={firstVenta?.fecha_llegada} />
+                                            <DetailRow
+                                                icon={<ArrowRightCircle className="h-3 w-3" />}
+                                                label="Diferencia"
+                                                value={`${(totalPesoRecibido - Number(data.peso_compra || 0)).toLocaleString()} Kg`}
+                                                accent={(totalPesoRecibido - Number(data.peso_compra || 0)) < 0}
+                                            />
+                                        </>
+                                    )}
+
+                                    {step.id === 'reporte_exp' && aggregatedReporteExp && (
+                                        <>
+                                            <div className="grid grid-cols-3 gap-1 text-center mb-2">
+                                                <div className="bg-emerald-100 rounded p-1">
+                                                    <div className="text-[10px] text-emerald-600 font-bold">EXP</div>
+                                                    <div className="text-xs font-bold text-emerald-700">{aggregatedReporteExp.porcExp}%</div>
+                                                </div>
+                                                <div className="bg-blue-100 rounded p-1">
+                                                    <div className="text-[10px] text-blue-600 font-bold">NAL</div>
+                                                    <div className="text-xs font-bold text-blue-700">{aggregatedReporteExp.porcNal}%</div>
+                                                </div>
+                                                <div className="bg-slate-100 rounded p-1">
+                                                    <div className="text-[10px] text-slate-600 font-bold">MER</div>
+                                                    <div className="text-xs font-bold text-slate-700">{aggregatedReporteExp.porcMerma}%</div>
+                                                </div>
+                                            </div>
+                                            <DetailRow label="Total" value={`$${aggregatedReporteExp.total.toLocaleString()}`} accent />
+                                        </>
+                                    )}
+
+                                    {step.id === 'reporte_prov' && aggregatedReporteProv && (
+                                        <>
+                                            <DetailRow label="A Pagar" value={`$${aggregatedReporteProv.totalPagar.toLocaleString()}`} />
+                                            <DetailRow
+                                                label="Utilidad"
+                                                value={`$${aggregatedReporteProv.utilidad.toLocaleString()}`}
+                                                accent={aggregatedReporteProv.utilidad >= 0}
+                                            />
+                                            {aggregatedReporteProv.completado && (
+                                                <div className="mt-2 bg-emerald-100 text-emerald-700 text-xs font-bold text-center py-1.5 rounded">
+                                                    ✓ PROCESO COMPLETADO
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {isPending && (
+                                        <div className="text-center py-2 text-slate-400 text-xs italic">
+                                            Esperando etapa anterior...
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </div>
 
-            {/* Timeline Steps */}
-            <div className="relative px-4">
-                {/* Connector Line */}
-                <div className="absolute top-8 left-[12%] right-[12%] h-1 bg-slate-100 rounded-full z-0" />
-                <div
-                    className="absolute top-8 left-[12%] h-1 bg-gradient-to-r from-emerald-400 via-blue-500 to-indigo-500 rounded-full z-0 transition-all duration-700"
-                    style={{
-                        width: calculateProgress() >= 85 ? '76%' :
-                            calculateProgress() >= 65 ? '50%' :
-                                calculateProgress() >= 40 ? '25%' : '0%'
-                    }}
+            {/* Quick Stats Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <QuickStat
+                    label="Total Ventas"
+                    value={ventas.length.toString()}
+                    sublabel="registradas"
+                    color="blue"
                 />
-
-                <div className="flex justify-between items-start relative z-10">
-                    {steps.map((step, index) => {
-                        const StepIcon = step.icon;
-                        const isCompleted = step.status === 'completed';
-                        const isCurrent = step.status === 'current';
-                        const isPending = step.status === 'pending';
-
-                        return (
-                            <div key={step.id} className="flex flex-col items-center flex-1 group">
-                                {/* Step Circle */}
-                                <div className={cn(
-                                    "w-16 h-16 rounded-2xl flex items-center justify-center mb-3 transition-all duration-300 cursor-pointer relative",
-                                    isCompleted && "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-200/60 hover:shadow-emerald-300/80 hover:scale-105",
-                                    isCurrent && "bg-white border-2 border-blue-500 text-blue-600 shadow-lg shadow-blue-100/80 ring-4 ring-blue-50",
-                                    isPending && "bg-slate-100 border-2 border-slate-200 text-slate-400 hover:border-slate-300"
-                                )}>
-                                    {isCompleted ? (
-                                        <Check className="h-7 w-7" strokeWidth={2.5} />
-                                    ) : isCurrent ? (
-                                        <div className="relative">
-                                            <StepIcon className="h-6 w-6" />
-                                            <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full animate-ping" />
-                                            <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full" />
-                                        </div>
-                                    ) : (
-                                        <StepIcon className="h-6 w-6" />
-                                    )}
-                                </div>
-
-                                {/* Step Label */}
-                                <h4 className={cn(
-                                    "text-sm font-semibold text-center mb-1 transition-colors",
-                                    isCompleted && "text-emerald-700",
-                                    isCurrent && "text-blue-700",
-                                    isPending && "text-slate-400"
-                                )}>
-                                    {step.label}
-                                </h4>
-
-                                {/* Date Badge */}
-                                <div className={cn(
-                                    "text-xs font-mono px-2 py-0.5 rounded-md mb-2",
-                                    isCompleted && "bg-emerald-50 text-emerald-600 border border-emerald-100",
-                                    isCurrent && "bg-blue-50 text-blue-600 border border-blue-100",
-                                    isPending && "bg-slate-50 text-slate-400 border border-slate-100"
-                                )}>
-                                    {step.date || '--/--/----'}
-                                </div>
-
-                                {/* Summary Badge */}
-                                <Badge
-                                    variant="outline"
-                                    className={cn(
-                                        "text-xs font-normal max-w-[120px] truncate",
-                                        isCompleted && "bg-white text-emerald-600 border-emerald-200",
-                                        isCurrent && "bg-white text-blue-600 border-blue-200",
-                                        isPending && "bg-white text-slate-400 border-slate-200"
-                                    )}
-                                >
-                                    {step.summary}
-                                </Badge>
-
-                                {/* Hover Card */}
-                                <div className="absolute top-full mt-4 w-72 bg-white rounded-xl shadow-2xl border border-slate-200 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform translate-y-2 group-hover:translate-y-0 text-left">
-                                    {/* Arrow */}
-                                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-t border-l border-slate-200 transform rotate-45" />
-
-                                    <div className={cn(
-                                        "flex items-center gap-2 pb-3 mb-3 border-b",
-                                        isCompleted && "border-emerald-100",
-                                        isCurrent && "border-blue-100",
-                                        isPending && "border-slate-100"
-                                    )}>
-                                        <div className={cn(
-                                            "w-8 h-8 rounded-lg flex items-center justify-center",
-                                            isCompleted && "bg-emerald-100 text-emerald-600",
-                                            isCurrent && "bg-blue-100 text-blue-600",
-                                            isPending && "bg-slate-100 text-slate-400"
-                                        )}>
-                                            <StepIcon className="h-4 w-4" />
-                                        </div>
-                                        <div>
-                                            <h5 className="font-bold text-sm text-slate-800">{step.label}</h5>
-                                            <span className={cn(
-                                                "text-xs",
-                                                isCompleted && "text-emerald-600",
-                                                isCurrent && "text-blue-600",
-                                                isPending && "text-slate-400"
-                                            )}>
-                                                {isCompleted ? '✓ Completado' : isCurrent ? '◉ En Proceso' : '○ Pendiente'}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        {step.id === 'compra' && (
-                                            <>
-                                                <InfoRow icon={<Package className="h-3.5 w-3.5" />} label="Guía" value={data.numero_guia} />
-                                                <InfoRow icon={<Truck className="h-3.5 w-3.5" />} label="Proveedor" value={data.proveedor_nombre} />
-                                                <InfoRow label="Fruta" value={data.fruta_nombre} highlight />
-                                                <InfoRow label="Peso" value={`${data.peso_compra?.toLocaleString()} Kg`} mono />
-                                                <InfoRow icon={<DollarSign className="h-3.5 w-3.5" />} label="Precio/Kg" value={`$${data.precio_compra_exp?.toLocaleString()}`} mono accent />
-                                            </>
-                                        )}
-
-                                        {step.id === 'venta' && hasVentas && (
-                                            <>
-                                                <InfoRow label="Exportador" value={exportadorNames} />
-                                                <InfoRow label="Peso Recibido" value={`${totalPesoRecibido.toLocaleString()} Kg`} mono />
-                                                <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Llegada" value={firstVenta?.fecha_llegada} />
-                                                <InfoRow label="Vencimiento" value={firstVenta?.fecha_vencimiento} />
-                                                {(totalPesoRecibido - data.peso_compra) !== 0 && (
-                                                    <InfoRow
-                                                        label="Diferencia Peso"
-                                                        value={`${(totalPesoRecibido - data.peso_compra).toLocaleString()} Kg`}
-                                                        mono
-                                                        accent={(totalPesoRecibido - data.peso_compra) < 0}
-                                                    />
-                                                )}
-                                            </>
-                                        )}
-
-                                        {step.id === 'reporte_exp' && aggregatedReporteExp && (
-                                            <>
-                                                <InfoRow label="Remisión" value={aggregatedReporteExp.remision || 'Sin remisión'} />
-                                                <div className="flex gap-2 my-2">
-                                                    <div className="flex-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg text-center">
-                                                        <div className="text-lg font-bold">{aggregatedReporteExp.porcExp}%</div>
-                                                        <div className="text-[10px] uppercase font-medium">Exportación</div>
-                                                    </div>
-                                                    <div className="flex-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-lg text-center">
-                                                        <div className="text-lg font-bold">{aggregatedReporteExp.porcNal}%</div>
-                                                        <div className="text-[10px] uppercase font-medium">Nacional</div>
-                                                    </div>
-                                                    <div className="flex-1 bg-slate-50 text-slate-600 px-2 py-1 rounded-lg text-center">
-                                                        <div className="text-lg font-bold">{aggregatedReporteExp.porcMerma}%</div>
-                                                        <div className="text-[10px] uppercase font-medium">Merma</div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex justify-between items-center pt-2 border-t border-dashed border-slate-200">
-                                                    <span className="text-xs font-bold text-slate-600">Total Factura:</span>
-                                                    <span className="text-sm font-bold text-emerald-600 font-mono">${aggregatedReporteExp.total.toLocaleString()}</span>
-                                                </div>
-                                            </>
-                                        )}
-
-                                        {step.id === 'reporte_prov' && aggregatedReporteProv && (
-                                            <>
-                                                <InfoRow label="Estado" value={aggregatedReporteProv.estado} highlight />
-                                                <InfoRow label="Factura Prov" value={aggregatedReporteProv.factura || 'Pendiente'} />
-                                                <div className="flex justify-between items-center pt-2 mt-2 border-t border-dashed border-slate-200">
-                                                    <span className="text-xs font-bold text-slate-600">Total a Pagar:</span>
-                                                    <span className="text-sm font-bold text-blue-600 font-mono">${aggregatedReporteProv.totalPagar.toLocaleString()}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-xs font-bold text-slate-600">Utilidad:</span>
-                                                    <span className={cn(
-                                                        "text-sm font-bold font-mono",
-                                                        aggregatedReporteProv.utilidad >= 0 ? "text-emerald-600" : "text-red-600"
-                                                    )}>
-                                                        ${aggregatedReporteProv.utilidad.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                                {aggregatedReporteProv.completado && (
-                                                    <div className="mt-2 bg-emerald-50 text-emerald-700 text-center py-1.5 rounded-lg text-xs font-bold">
-                                                        ✓ PROCESO COMPLETADO
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
-
-                                        {!step.details && (
-                                            <div className="text-center py-4 text-slate-400 text-sm italic">
-                                                Pendiente de registro
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                <QuickStat
+                    label="Reportes Exp."
+                    value={`${ventas.filter(v => v.reportecalidadexportador).length}/${ventas.length}`}
+                    sublabel="completados"
+                    color="indigo"
+                />
+                <QuickStat
+                    label="Reportes Prov."
+                    value={`${ventas.filter(v => v.reportecalidadexportador?.reportecalidadproveedor).length}/${ventas.length}`}
+                    sublabel="generados"
+                    color="purple"
+                />
+                <QuickStat
+                    label="Estado General"
+                    value={allReportesProvCompleted ? 'Completo' : 'En Proceso'}
+                    sublabel={allReportesProvCompleted ? 'Todo finalizado' : 'Pendientes por hacer'}
+                    color={allReportesProvCompleted ? 'emerald' : 'amber'}
+                />
             </div>
         </div>
     );
 }
 
-// Helper component for info rows in hover cards
-function InfoRow({
+// Helper component for detail rows
+function DetailRow({
     icon,
     label,
     value,
-    mono,
-    highlight,
     accent
 }: {
     icon?: React.ReactNode;
     label: string;
     value: string | undefined;
-    mono?: boolean;
-    highlight?: boolean;
     accent?: boolean;
 }) {
     return (
         <div className="flex justify-between items-center text-xs">
             <span className="text-slate-500 flex items-center gap-1.5">
                 {icon}
-                {label}:
+                {label}
             </span>
             <span className={cn(
-                "font-medium truncate max-w-[140px]",
-                mono && "font-mono",
-                highlight && "text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded",
-                accent && "text-emerald-600"
+                "font-medium truncate max-w-[100px]",
+                accent === true ? "text-emerald-600" :
+                    accent === false ? "text-red-600" :
+                        "text-slate-700"
             )}>
                 {value || '-'}
             </span>
+        </div>
+    );
+}
+
+// Quick stat component
+function QuickStat({
+    label,
+    value,
+    sublabel,
+    color
+}: {
+    label: string;
+    value: string;
+    sublabel: string;
+    color: 'emerald' | 'blue' | 'indigo' | 'purple' | 'amber';
+}) {
+    const colorClasses = {
+        emerald: 'from-emerald-500 to-emerald-600',
+        blue: 'from-blue-500 to-blue-600',
+        indigo: 'from-indigo-500 to-indigo-600',
+        purple: 'from-purple-500 to-purple-600',
+        amber: 'from-amber-500 to-amber-600',
+    };
+
+    return (
+        <div className="bg-white rounded-lg border border-slate-200 p-3 flex items-center gap-3">
+            <div className={cn("w-10 h-10 rounded-lg bg-gradient-to-br flex items-center justify-center text-white font-bold text-lg", colorClasses[color])}>
+                {value.charAt(0)}
+            </div>
+            <div>
+                <div className="text-lg font-bold text-slate-800">{value}</div>
+                <div className="text-xs text-slate-500">{label}</div>
+                <div className="text-[10px] text-slate-400">{sublabel}</div>
+            </div>
         </div>
     );
 }
