@@ -176,7 +176,7 @@ export function ReporteExportadorModal({ open, onOpenChange, ventaData, compraDa
     const submitForm = async (values: z.infer<typeof formSchema>) => {
         try {
             const payload = {
-                venta_nacional: ventaData.compra_nacional,
+                venta_nacional: ventaData.id,
                 fecha_reporte: values.fecha_reporte,
                 remision_exp: values.remision_exp,
                 kg_exportacion: Number(values.kg_exportacion),
@@ -189,7 +189,7 @@ export function ReporteExportadorModal({ open, onOpenChange, ventaData, compraDa
             };
 
             if (initialData) {
-                await axiosClient.patch(`/nacionales/api/reporte-exp/${ventaData.compra_nacional}/`, payload);
+                await axiosClient.patch(`/nacionales/api/reporte-exp/${initialData?.venta_nacional}/`, payload);
                 toast.success("Reporte actualizado correctamente");
             } else {
                 await axiosClient.post('/nacionales/api/reporte-exp/', payload);

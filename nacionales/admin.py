@@ -39,7 +39,7 @@ class EmpaqueAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin):
 class VentaNacionalInline(TabularInline):
     model = VentaNacional
     extra = 0
-    fields = ('exportador', 'fecha_llegada', 'cantidad_empaque_recibida', 'peso_bruto_recibido')
+    fields = ('exportador', 'fecha_llegada', 'cantidad_empaque_recibida', 'peso_bruto_recibido', 'tipo', 'lote')
     show_change_link = True
     classes = ("collapse",)
     verbose_name = "Venta nacional"
@@ -60,7 +60,7 @@ class CompraNacionalAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin
 class VentaNacionalAdmin(ModelAdmin, ImportExportModelAdmin, SimpleHistoryAdmin):
     import_form_class = ImportForm
     export_form_class = SelectableFieldsExportForm
-    list_display = ('pk', 'compra_nacional', 'exportador', 'fecha_llegada', 'fecha_vencimiento', 'cantidad_empaque_recibida', 'peso_bruto_recibido', 'peso_neto_recibido', 'diferencia_peso', 'diferencia_empaque', 'estado_venta')
+    list_display = ('pk', 'compra_nacional', 'exportador', 'fecha_llegada', 'fecha_vencimiento', 'cantidad_empaque_recibida', 'peso_bruto_recibido', 'peso_neto_recibido', 'diferencia_peso', 'diferencia_empaque', 'estado_venta', 'tipo', 'lote')
     search_fields = ('compra_nacional__numero_guia', 'exportador__nombre')
     search_help_text = "Buscar por: número de guía de la compra y nombre del exportador."
     list_filter = ('exportador',)

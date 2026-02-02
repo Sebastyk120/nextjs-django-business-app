@@ -164,23 +164,15 @@ class HomeDashboardView(APIView):
 
     def _get_pending_quality_reports_count(self):
         """
-        Optimized: Use a single query with annotations instead of N+1 loop.
-        Count compras without complete quality chain.
+        Count compras that have at least one sale with incomplete report chain
+        or no sales at all.
         """
-        # Count compras that have a complete chain: compra -> venta -> reporte_exp -> reporte_prov(completado=True)
-        # We want to count those that DON'T have this complete chain
-        
-        total_compras = CompraNacional.objects.count()
-        
-        # Count compras with complete chain
-        complete_chain = CompraNacional.objects.filter(
-            ventanacional__isnull=False,
-            ventanacional__reportecalidadexportador__isnull=False,
-            ventanacional__reportecalidadexportador__reportecalidadproveedor__isnull=False,
-            ventanacional__reportecalidadexportador__reportecalidadproveedor__completado=True
-        ).count()
-        
-        return total_compras - complete_chain
+        return CompraNacional.objects.filter(
+            Q(ventas__isnull=True) |
+            Q(ventas__reportecalidadexportador__isnull=True) |
+            Q(ventas__reportecalidadexportador__reportecalidadproveedor__isnull=True) |
+            Q(ventas__reportecalidadexportador__reportecalidadproveedor__completado=False)
+        ).distinct().count()
 
     def _get_overdue_clients_optimized(self, exportador=None):
         """Optimized: Get max_days in the same query using Max aggregation"""

@@ -53,18 +53,28 @@ class CompraNacional(models.Model):
         return str(self.id) + ' - ' + str(self.proveedor) + ' Guia: ' + str(self.numero_guia) + ' Peso: ' + str(self.peso_compra)
 
     def calcular_porcentaje_completitud(self):
-        completados = 1  # CompraNacional siempre existe
-        if hasattr(self, 'ventanacional'):
-            completados += 1
-            if hasattr(self.ventanacional, 'reportecalidadexportador'):
+        """Calcula el porcentaje de completitud considerando múltiples ventas."""
+        ventas = self.ventas.all()
+        if not ventas.exists():
+            return 25  # Solo existe CompraNacional (1/4 * 100 = 25%)
+        
+        total_porcentaje = 0
+        for venta in ventas:
+            completados = 2  # CompraNacional + VentaNacional
+            if hasattr(venta, 'reportecalidadexportador'):
                 completados += 1
-                if hasattr(self.ventanacional.reportecalidadexportador, 'reportecalidadproveedor'):
+                if hasattr(venta.reportecalidadexportador, 'reportecalidadproveedor'):
                     completados += 1
-        if completados < 4:
-            return (completados / 4) * 90
-        # Si existen los 4 modelos, se asignan 90% base y se agregan 10% si 'completado' es True.
-        reporte_prov = self.ventanacional.reportecalidadexportador.reportecalidadproveedor
-        return 100 if reporte_prov.completado else 90
+            
+            if completados < 4:
+                venta_porcentaje = (completados / 4) * 90
+            else:
+                reporte_prov = venta.reportecalidadexportador.reportecalidadproveedor
+                venta_porcentaje = 100 if reporte_prov.completado else 90
+            
+            total_porcentaje += venta_porcentaje
+        
+        return total_porcentaje / ventas.count() if ventas.count() > 0 else 25
 
     @property
     def porcentaje_completitud(self):
@@ -87,22 +97,30 @@ class CompraNacional(models.Model):
 
     @property
     def reporte_completo(self):
-        tiene_venta = hasattr(self, 'ventanacional')
-        tiene_reporte_exp = False
-        tiene_reporte_prov = False
-
-        if tiene_venta:
-            venta = self.ventanacional
+        """Verifica si todas las ventas asociadas tienen sus reportes completos."""
+        ventas = self.ventas.all()
+        if not ventas.exists():
+            return False
+        
+        for venta in ventas:
             tiene_reporte_exp = hasattr(venta, 'reportecalidadexportador')
-            if tiene_reporte_exp:
-                reporte_exp = venta.reportecalidadexportador
-                tiene_reporte_prov = hasattr(reporte_exp, 'reportecalidadproveedor')
+            if not tiene_reporte_exp:
+                return False
+            tiene_reporte_prov = hasattr(venta.reportecalidadexportador, 'reportecalidadproveedor')
+            if not tiene_reporte_prov:
+                return False
+        
+        return True
 
-        return tiene_venta and tiene_reporte_exp and tiene_reporte_prov
+
+TIPO_VENTA_CHOICES = [
+    ('Mango Europa', 'Mango Europa'),
+    ('Otros Destinos', 'Otros Destinos'),
+]
 
 
 class VentaNacional(models.Model):
-    compra_nacional = models.OneToOneField(CompraNacional, on_delete=models.CASCADE, verbose_name="Compra Nacional", primary_key=True)
+    compra_nacional = models.ForeignKey(CompraNacional, on_delete=models.CASCADE, verbose_name="Compra Nacional", related_name='ventas')
     exportador = models.ForeignKey(Exportador, on_delete=models.PROTECT, verbose_name="Exportador")
     fecha_llegada = models.DateField(verbose_name="Fecha de Llegada")
     fecha_vencimiento = models.DateField(verbose_name="Vencimiento Reporte", editable=False)
@@ -113,17 +131,14 @@ class VentaNacional(models.Model):
     diferencia_empaque = models.IntegerField(verbose_name="Diferencia Empaque", blank=True, null=True, editable=False)
     estado_venta = models.CharField(max_length=20, verbose_name="Estado Reporte (Exportador)", default='Pendiente', editable=False)
     observaciones = models.TextField(verbose_name="Observaciones", blank=True, null=True)
-
+    tipo = models.CharField(max_length=20, verbose_name="Tipo", choices=TIPO_VENTA_CHOICES, blank=True, null=True)
+    lote = models.CharField(max_length=30, verbose_name="Lote", blank=True, null=True)
 
     class Meta:
         ordering = ['-pk']
 
     def __str__(self):
         return str(self.id) + ' - ' + str(self.compra_nacional.proveedor) + ' Guia: ' + str(self.compra_nacional.numero_guia) + ' Neto Recibido: ' + str(self.peso_neto_recibido)
-    
-    @property
-    def id(self):
-        return self.pk
 
     def clean(self):
         if not self.compra_nacional_id:

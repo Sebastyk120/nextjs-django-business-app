@@ -11,8 +11,74 @@ interface NacionalesTimelineProps {
 
 export function NacionalesTimeline({ data }: NacionalesTimelineProps) {
 
-    const reporteProvExists = !!data.ventanacional?.reportecalidadexportador?.reportecalidadproveedor;
-    const reporteProvCompleted = data.ventanacional?.reportecalidadexportador?.reportecalidadproveedor?.completado;
+    // Aggregate data from all ventas
+    const ventas = data.ventas || [];
+    const hasVentas = ventas.length > 0;
+    const allVentasComplete = hasVentas; // At least one sale means venta step is "complete"
+
+    // Check if ANY venta has a ReporteExp
+    const anyReporteExp = ventas.some(v => v.reportecalidadexportador);
+    const allReportesExp = hasVentas && ventas.every(v => v.reportecalidadexportador);
+
+    // Check if ANY venta has a ReporteProv
+    const anyReporteProv = ventas.some(v => v.reportecalidadexportador?.reportecalidadproveedor);
+    const allReportesProv = hasVentas && ventas.every(v => v.reportecalidadexportador?.reportecalidadproveedor);
+    const allReportesProvCompleted = hasVentas && ventas.every(v => v.reportecalidadexportador?.reportecalidadproveedor?.completado);
+
+    // Aggregate summary info
+    const totalPesoRecibido = ventas.reduce((sum, v) => sum + (v.peso_neto_recibido || 0), 0);
+    const exportadorNames = [...new Set(ventas.map(v => v.exportador_nombre))].join(', ');
+
+    // Get first venta for date/detail display (representative)
+    const firstVenta = ventas[0];
+    const firstReporteExp = firstVenta?.reportecalidadexportador;
+    const firstReporteProv = firstReporteExp?.reportecalidadproveedor;
+
+    // Aggregate reporte_exp data across all ventas
+    const aggregatedReporteExp = (() => {
+        const reportes = ventas
+            .map(v => v.reportecalidadexportador)
+            .filter(Boolean);
+
+        if (reportes.length === 0) return null;
+
+        const totalKg = reportes.reduce((sum, r) => sum + (Number(r?.kg_totales) || 0), 0);
+        const totalKgExp = reportes.reduce((sum, r) => sum + (Number(r?.kg_exportacion) || 0), 0);
+        const totalKgNal = reportes.reduce((sum, r) => sum + (Number(r?.kg_nacional) || 0), 0);
+        const totalKgMerma = reportes.reduce((sum, r) => sum + (Number(r?.kg_merma) || 0), 0);
+        const totalPrecio = reportes.reduce((sum, r) => sum + (Number(r?.precio_total) || 0), 0);
+
+        return {
+            remision: reportes.length === 1 ? reportes[0]?.remision_exp : `${reportes.length} remisiones`,
+            porcExp: totalKg > 0 ? (totalKgExp / totalKg * 100).toFixed(2) : '0',
+            porcNal: totalKg > 0 ? (totalKgNal / totalKg * 100).toFixed(2) : '0',
+            porcMerma: totalKg > 0 ? (totalKgMerma / totalKg * 100).toFixed(2) : '0',
+            total: totalPrecio,
+            estado: allReportesExp ? 'Completado' : 'Parcial',
+            count: reportes.length
+        };
+    })();
+
+    // Aggregate reporte_prov data across all ventas
+    const aggregatedReporteProv = (() => {
+        const reportes = ventas
+            .map(v => v.reportecalidadexportador?.reportecalidadproveedor)
+            .filter(Boolean);
+
+        if (reportes.length === 0) return null;
+
+        const totalPagar = reportes.reduce((sum, r) => sum + (Number(r?.p_total_pagar) || 0), 0);
+        const totalUtilidad = reportes.reduce((sum, r) => sum + (Number(r?.p_utilidad) || 0), 0);
+
+        return {
+            estado: allReportesProvCompleted ? 'Completado' : 'En Proceso',
+            factura: reportes.length === 1 ? reportes[0]?.factura_prov : `${reportes.filter(r => r?.factura_prov).length}/${reportes.length} facturas`,
+            totalPagar: totalPagar,
+            utilidad: totalUtilidad,
+            completado: allReportesProvCompleted,
+            count: reportes.length
+        };
+    })();
 
     const steps = [
         {
@@ -35,60 +101,49 @@ export function NacionalesTimeline({ data }: NacionalesTimelineProps) {
             id: 'venta',
             label: 'Venta Nacional',
             icon: Store,
-            date: data.ventanacional?.fecha_llegada,
-            status: data.ventanacional ? 'completed' as const : 'current' as const,
+            date: firstVenta?.fecha_llegada,
+            status: hasVentas ? 'completed' as const : 'current' as const,
             color: 'blue',
-            summary: data.ventanacional ? data.ventanacional.exportador_nombre : 'Pendiente',
-            details: data.ventanacional ? {
-                exportador: data.ventanacional.exportador_nombre,
-                pesoRecibido: data.ventanacional.peso_neto_recibido,
-                llegada: data.ventanacional.fecha_llegada,
-                vencimiento: data.ventanacional.fecha_vencimiento,
-                diferenciaPeso: data.ventanacional.diferencia_peso
+            summary: hasVentas ? (ventas.length > 1 ? `${ventas.length} Ventas` : exportadorNames) : 'Pendiente',
+            details: hasVentas ? {
+                exportador: exportadorNames,
+                pesoRecibido: totalPesoRecibido,
+                llegada: firstVenta?.fecha_llegada,
+                vencimiento: firstVenta?.fecha_vencimiento,
+                diferenciaPeso: totalPesoRecibido - data.peso_compra
             } : null
         },
         {
             id: 'reporte_exp',
             label: 'Reporte Exportador',
             icon: FileOutput,
-            date: data.ventanacional?.reportecalidadexportador?.fecha_reporte,
-            status: data.ventanacional?.reportecalidadexportador
+            date: firstReporteExp?.fecha_reporte,
+            status: allReportesExp
                 ? 'completed' as const
-                : (data.ventanacional ? 'current' as const : 'pending' as const),
+                : (anyReporteExp ? 'current' as const : (hasVentas ? 'current' as const : 'pending' as const)),
             color: 'indigo',
-            summary: data.ventanacional?.reportecalidadexportador
-                ? `${data.ventanacional.reportecalidadexportador.porcentaje_exportacion}% Exp`
-                : 'Pendiente',
-            details: data.ventanacional?.reportecalidadexportador ? {
-                remision: data.ventanacional.reportecalidadexportador.remision_exp,
-                porcExp: data.ventanacional.reportecalidadexportador.porcentaje_exportacion,
-                porcNal: data.ventanacional.reportecalidadexportador.porcentaje_nacional,
-                porcMerma: data.ventanacional.reportecalidadexportador.porcentaje_merma,
-                total: data.ventanacional.reportecalidadexportador.precio_total,
-                estado: data.ventanacional.reportecalidadexportador.estado_reporte_exp
-            } : null
+            summary: allReportesExp
+                ? `${ventas.length} Reportes`
+                : (anyReporteExp ? 'Parcial' : 'Pendiente'),
+            // Use aggregated data instead of first reporte
+            details: aggregatedReporteExp
         },
         {
             id: 'reporte_prov',
             label: 'Reporte Proveedor',
             icon: FileCheck,
-            date: data.ventanacional?.reportecalidadexportador?.reportecalidadproveedor?.p_fecha_reporte,
-            status: reporteProvCompleted
+            date: firstReporteProv?.p_fecha_reporte,
+            status: allReportesProvCompleted
                 ? 'completed' as const
-                : (reporteProvExists
+                : (anyReporteProv
                     ? 'current' as const
-                    : (data.ventanacional?.reportecalidadexportador ? 'current' as const : 'pending' as const)),
+                    : (anyReporteExp ? 'current' as const : 'pending' as const)),
             color: 'purple',
-            summary: reporteProvExists
-                ? (reporteProvCompleted ? 'Completado' : 'En Proceso')
-                : 'Pendiente',
-            details: data.ventanacional?.reportecalidadexportador?.reportecalidadproveedor ? {
-                estado: data.ventanacional.reportecalidadexportador.reportecalidadproveedor.estado_reporte_prov,
-                factura: data.ventanacional.reportecalidadexportador.reportecalidadproveedor.factura_prov,
-                totalPagar: data.ventanacional.reportecalidadexportador.reportecalidadproveedor.p_total_pagar,
-                utilidad: data.ventanacional.reportecalidadexportador.reportecalidadproveedor.p_utilidad,
-                completado: data.ventanacional.reportecalidadexportador.reportecalidadproveedor.completado
-            } : null
+            summary: allReportesProvCompleted
+                ? 'Completado'
+                : (anyReporteProv ? 'En Proceso' : 'Pendiente'),
+            // Use aggregated data instead of first reporte
+            details: aggregatedReporteProv
         }
     ];
 
@@ -116,10 +171,10 @@ export function NacionalesTimeline({ data }: NacionalesTimelineProps) {
 
     // Calculate overall progress
     const calculateProgress = () => {
-        if (reporteProvCompleted) return 100;
-        if (reporteProvExists) return 85;
-        if (data.ventanacional?.reportecalidadexportador) return 65;
-        if (data.ventanacional) return 40;
+        if (allReportesProvCompleted) return 100;
+        if (anyReporteProv) return 85;
+        if (anyReporteExp) return 65;
+        if (hasVentas) return 40;
         return 15;
     };
 
@@ -262,75 +317,75 @@ export function NacionalesTimeline({ data }: NacionalesTimelineProps) {
                                     </div>
 
                                     <div className="space-y-2">
-                                        {step.id === 'compra' && step.details && (
+                                        {step.id === 'compra' && (
                                             <>
-                                                <InfoRow icon={<Package className="h-3.5 w-3.5" />} label="Guía" value={step.details.guia} />
-                                                <InfoRow icon={<Truck className="h-3.5 w-3.5" />} label="Proveedor" value={step.details.proveedor} />
-                                                <InfoRow label="Fruta" value={step.details.fruta} highlight />
-                                                <InfoRow label="Peso" value={`${step.details.peso?.toLocaleString()} Kg`} mono />
-                                                <InfoRow icon={<DollarSign className="h-3.5 w-3.5" />} label="Precio/Kg" value={`$${step.details.precio?.toLocaleString()}`} mono accent />
+                                                <InfoRow icon={<Package className="h-3.5 w-3.5" />} label="Guía" value={data.numero_guia} />
+                                                <InfoRow icon={<Truck className="h-3.5 w-3.5" />} label="Proveedor" value={data.proveedor_nombre} />
+                                                <InfoRow label="Fruta" value={data.fruta_nombre} highlight />
+                                                <InfoRow label="Peso" value={`${data.peso_compra?.toLocaleString()} Kg`} mono />
+                                                <InfoRow icon={<DollarSign className="h-3.5 w-3.5" />} label="Precio/Kg" value={`$${data.precio_compra_exp?.toLocaleString()}`} mono accent />
                                             </>
                                         )}
 
-                                        {step.id === 'venta' && step.details && (
+                                        {step.id === 'venta' && hasVentas && (
                                             <>
-                                                <InfoRow label="Exportador" value={step.details.exportador} />
-                                                <InfoRow label="Peso Recibido" value={`${step.details.pesoRecibido?.toLocaleString()} Kg`} mono />
-                                                <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Llegada" value={step.details.llegada} />
-                                                <InfoRow label="Vencimiento" value={step.details.vencimiento} />
-                                                {step.details.diferenciaPeso !== undefined && (
+                                                <InfoRow label="Exportador" value={exportadorNames} />
+                                                <InfoRow label="Peso Recibido" value={`${totalPesoRecibido.toLocaleString()} Kg`} mono />
+                                                <InfoRow icon={<Calendar className="h-3.5 w-3.5" />} label="Llegada" value={firstVenta?.fecha_llegada} />
+                                                <InfoRow label="Vencimiento" value={firstVenta?.fecha_vencimiento} />
+                                                {(totalPesoRecibido - data.peso_compra) !== 0 && (
                                                     <InfoRow
                                                         label="Diferencia Peso"
-                                                        value={`${step.details.diferenciaPeso?.toLocaleString()} Kg`}
+                                                        value={`${(totalPesoRecibido - data.peso_compra).toLocaleString()} Kg`}
                                                         mono
-                                                        accent={step.details.diferenciaPeso < 0}
+                                                        accent={(totalPesoRecibido - data.peso_compra) < 0}
                                                     />
                                                 )}
                                             </>
                                         )}
 
-                                        {step.id === 'reporte_exp' && step.details && (
+                                        {step.id === 'reporte_exp' && aggregatedReporteExp && (
                                             <>
-                                                <InfoRow label="Remisión" value={step.details.remision || 'Sin remisión'} />
+                                                <InfoRow label="Remisión" value={aggregatedReporteExp.remision || 'Sin remisión'} />
                                                 <div className="flex gap-2 my-2">
                                                     <div className="flex-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg text-center">
-                                                        <div className="text-lg font-bold">{step.details.porcExp}%</div>
+                                                        <div className="text-lg font-bold">{aggregatedReporteExp.porcExp}%</div>
                                                         <div className="text-[10px] uppercase font-medium">Exportación</div>
                                                     </div>
                                                     <div className="flex-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-lg text-center">
-                                                        <div className="text-lg font-bold">{step.details.porcNal}%</div>
+                                                        <div className="text-lg font-bold">{aggregatedReporteExp.porcNal}%</div>
                                                         <div className="text-[10px] uppercase font-medium">Nacional</div>
                                                     </div>
                                                     <div className="flex-1 bg-slate-50 text-slate-600 px-2 py-1 rounded-lg text-center">
-                                                        <div className="text-lg font-bold">{step.details.porcMerma}%</div>
+                                                        <div className="text-lg font-bold">{aggregatedReporteExp.porcMerma}%</div>
                                                         <div className="text-[10px] uppercase font-medium">Merma</div>
                                                     </div>
                                                 </div>
                                                 <div className="flex justify-between items-center pt-2 border-t border-dashed border-slate-200">
                                                     <span className="text-xs font-bold text-slate-600">Total Factura:</span>
-                                                    <span className="text-sm font-bold text-emerald-600 font-mono">${parseFloat(step.details.total?.toString() || '0').toLocaleString()}</span>
+                                                    <span className="text-sm font-bold text-emerald-600 font-mono">${aggregatedReporteExp.total.toLocaleString()}</span>
                                                 </div>
                                             </>
                                         )}
 
-                                        {step.id === 'reporte_prov' && step.details && (
+                                        {step.id === 'reporte_prov' && aggregatedReporteProv && (
                                             <>
-                                                <InfoRow label="Estado" value={step.details.estado} highlight />
-                                                <InfoRow label="Factura Prov" value={step.details.factura || 'Pendiente'} />
+                                                <InfoRow label="Estado" value={aggregatedReporteProv.estado} highlight />
+                                                <InfoRow label="Factura Prov" value={aggregatedReporteProv.factura || 'Pendiente'} />
                                                 <div className="flex justify-between items-center pt-2 mt-2 border-t border-dashed border-slate-200">
                                                     <span className="text-xs font-bold text-slate-600">Total a Pagar:</span>
-                                                    <span className="text-sm font-bold text-blue-600 font-mono">${parseFloat(step.details.totalPagar?.toString() || '0').toLocaleString()}</span>
+                                                    <span className="text-sm font-bold text-blue-600 font-mono">${aggregatedReporteProv.totalPagar.toLocaleString()}</span>
                                                 </div>
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-xs font-bold text-slate-600">Utilidad:</span>
                                                     <span className={cn(
                                                         "text-sm font-bold font-mono",
-                                                        (step.details.utilidad || 0) >= 0 ? "text-emerald-600" : "text-red-600"
+                                                        aggregatedReporteProv.utilidad >= 0 ? "text-emerald-600" : "text-red-600"
                                                     )}>
-                                                        ${parseFloat(step.details.utilidad?.toString() || '0').toLocaleString()}
+                                                        ${aggregatedReporteProv.utilidad.toLocaleString()}
                                                     </span>
                                                 </div>
-                                                {step.details.completado && (
+                                                {aggregatedReporteProv.completado && (
                                                     <div className="mt-2 bg-emerald-50 text-emerald-700 text-center py-1.5 rounded-lg text-xs font-bold">
                                                         ✓ PROCESO COMPLETADO
                                                     </div>

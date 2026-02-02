@@ -155,17 +155,20 @@ def get_reporte_detalle(request):
     
     try:
         # Obtener la compra nacional y sus relaciones
-        compra = get_object_or_404(CompraNacional.objects.select_related(
+        compra = get_object_or_404(CompraNacional.objects.prefetch_related(
+            'ventas',
+            'ventas__exportador',
+            'ventas__reportecalidadexportador',
+            'ventas__reportecalidadexportador__reportecalidadproveedor'
+        ).select_related(
             'proveedor',
             'fruta',
             'tipo_empaque',
-            'ventanacional',
-            'ventanacional__exportador',
-            'ventanacional__reportecalidadexportador',
-            'ventanacional__reportecalidadexportador__reportecalidadproveedor'
         ), pk=compra_id)
         
-        venta = compra.ventanacional
+        venta = compra.ventas.first()
+        if not venta:
+            return JsonResponse({'error': 'No hay venta asociada a esta compra'})
         rep_exp = venta.reportecalidadexportador if hasattr(venta, 'reportecalidadexportador') else None
         rep_prov = rep_exp.reportecalidadproveedor if rep_exp and hasattr(rep_exp, 'reportecalidadproveedor') else None
 

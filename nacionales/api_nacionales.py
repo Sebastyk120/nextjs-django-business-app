@@ -45,17 +45,17 @@ class CompraNacionalViewSet(viewsets.ModelViewSet):
         queryset = CompraNacional.objects.all().select_related(
             'proveedor', 'fruta', 'tipo_empaque'
         ).prefetch_related(
-            'ventanacional', 
-            'ventanacional__reportecalidadexportador', 
-            'ventanacional__reportecalidadexportador__reportecalidadproveedor'
+            'ventas', 
+            'ventas__reportecalidadexportador', 
+            'ventas__reportecalidadexportador__reportecalidadproveedor'
         ).order_by('-fecha_compra', '-id')
 
         # Filter by 'completed' status
         completed = self.request.query_params.get('completed')
         if completed == 'true':
             queryset = queryset.filter(
-                ventanacional__reportecalidadexportador__reportecalidadproveedor__completado=True
-            )
+                ventas__reportecalidadexportador__reportecalidadproveedor__completado=True
+            ).distinct()
         
         return queryset
 
@@ -67,23 +67,30 @@ class CompraNacionalViewSet(viewsets.ModelViewSet):
         
         # Logic adapted from nacionales_list_detallada view
         for compra in queryset:
-            tiene_venta = hasattr(compra, 'ventanacional')
-            tiene_reporte_exp = False
-            tiene_reporte_prov = False
-            reporte_prov_completado = False
-
-            if tiene_venta:
-                venta = compra.ventanacional
+            ventas = compra.ventas.all()
+            if not ventas.exists():
+                incompletas.append(compra)
+                continue
+                
+            compra_completa = True
+            for venta in ventas:
                 tiene_reporte_exp = hasattr(venta, 'reportecalidadexportador')
+                tiene_reporte_prov = False
+                reporte_prov_completado = False
+                
                 if tiene_reporte_exp:
                     reporte_exp = venta.reportecalidadexportador
                     tiene_reporte_prov = hasattr(reporte_exp, 'reportecalidadproveedor')
                     if tiene_reporte_prov:
                         reporte_prov = reporte_exp.reportecalidadproveedor
                         reporte_prov_completado = reporte_prov.completado
-
-            # Condition: purchase is incomplete if relations are missing or provider report not completed
-            if not (tiene_venta and tiene_reporte_exp and tiene_reporte_prov and reporte_prov_completado):
+                
+                # If any sale in the chain is incomplete, the purchase is incomplete
+                if not (tiene_reporte_exp and tiene_reporte_prov and reporte_prov_completado):
+                    compra_completa = False
+                    break
+            
+            if not compra_completa:
                 incompletas.append(compra)
         
         # Use standard pagination if available
@@ -210,43 +217,57 @@ class ProveedorNacionalViewSet(viewsets.ReadOnlyModelViewSet):
         # Preparar datos para compras en proceso
         compras_proceso = []
         for compra in todas_compras:
-            # Excluir compras ya completadas
-            if compra.id in compras_completas_ids:
-                continue
-            
-            # Datos básicos de la compra
-            datos_compra = {
-                'numero_guia': compra.numero_guia,
-                'fecha_compra': compra.fecha_compra,
-                'peso_recibido': None,
-                'fecha_reporte': None,
-                'estado': 'Registrado',
-            }
-            
-            # Verificar si tiene venta relacionada
-            try:
-                venta = VentaNacional.objects.get(compra_nacional=compra)
-                datos_compra['peso_recibido'] = venta.peso_neto_recibido
-                datos_compra['estado'] = venta.estado_venta
+            # Check if all ventas are complete
+            ventas = VentaNacional.objects.filter(compra_nacional=compra)
+            if not ventas.exists():
+                 compras_proceso.append({
+                    'numero_guia': compra.numero_guia,
+                    'fecha_compra': compra.fecha_compra,
+                    'peso_recibido': None,
+                    'fecha_reporte': None,
+                    'estado': 'Sin Ingreso'
+                })
+                 continue
+
+            for venta in ventas:
+                # Excluir ventas ya completadas (si se desea filtrar por venta individual)
+                # O si la compra entera está en compras_completos_ids (que parece ser ids de reportes completos)
+                # La lógica original usaba compra.id in compras_completas_ids
+                # Vamos a listar cada venta como un item separado si es necesario o agrupar
                 
-                # Verificar si tiene reporte de exportador
+                # Para simplificar, listamos cada venta
+                datos_venta = {
+                    'numero_guia': f"{compra.numero_guia} ({venta.tipo or 'N/A'})",
+                    'fecha_compra': compra.fecha_compra,
+                    'peso_recibido': venta.peso_neto_recibido,
+                    'fecha_reporte': None,
+                    'estado': venta.estado_venta,
+                }
+                
                 try:
                     reporte_exp = ReporteCalidadExportador.objects.get(venta_nacional=venta)
-                    datos_compra['estado'] = reporte_exp.estado_reporte_exp
+                    datos_venta['estado'] = reporte_exp.estado_reporte_exp
                     
-                    # Verificar si tiene reporte de proveedor
                     try:
                         reporte_prov = ReporteCalidadProveedor.objects.get(rep_cal_exp=reporte_exp)
-                        datos_compra['fecha_reporte'] = reporte_prov.p_fecha_reporte
-                        datos_compra['estado'] = reporte_prov.estado_reporte_prov
+                        if reporte_prov.reporte_enviado:
+                             # Already in reports lists?
+                             pass
+                        datos_venta['fecha_reporte'] = reporte_prov.p_fecha_reporte
+                        datos_venta['estado'] = reporte_prov.estado_reporte_prov
+                        
+                        # Si ya fue enviado, probablemente no debería estar en "en proceso" si se considera completado
+                        # Pero la lógica original filtraba compras enteras.
+                        # Aquí, si el reporte fue enviado, ya aparecería arriba en pendientes o pagados o sin factura.
+                        if reporte_prov.reporte_enviado:
+                            continue
+                            
                     except ReporteCalidadProveedor.DoesNotExist:
-                        datos_compra['estado'] = 'Pendiente Enviar A Proveedor'
+                        datos_venta['estado'] = 'Pendiente Enviar A Proveedor'
                 except ReporteCalidadExportador.DoesNotExist:
-                    datos_compra['estado'] = 'Sin Reporte Calidad'
-            except VentaNacional.DoesNotExist:
-                datos_compra['estado'] = 'Sin Ingreso'
-            
-            compras_proceso.append(datos_compra)
+                    datos_venta['estado'] = 'Sin Reporte Calidad'
+                
+                compras_proceso.append(datos_venta)
         
         # Ordenar compras_proceso por fecha_compra de más reciente a más antigua
         compras_proceso = sorted(compras_proceso, key=lambda x: x['fecha_compra'], reverse=True)
@@ -275,9 +296,76 @@ class ProveedorNacionalViewSet(viewsets.ReadOnlyModelViewSet):
         # Serializar datos
         from .serializers import TransferenciasProveedorSerializer
         
-        reportes_pendientes_data = ResumenReporteProveedorSerializer(reportes_pendientes, many=True).data
-        reportes_pagados_data = ResumenReporteProveedorSerializer(reportes_pagados, many=True).data
-        reportes_sin_factura_data = ResumenReporteProveedorSerializer(reportes_sin_factura, many=True).data
+        # Helper function to aggregate reports by compra_nacional
+        def aggregate_by_compra(reportes_queryset):
+            """Agrupa reportes por compra_nacional y suma los valores"""
+            from decimal import Decimal
+            from collections import defaultdict
+            
+            compras_dict = defaultdict(lambda: {
+                'compra_guia': None,
+                'compra_fecha': None,
+                'compra_id': None,
+                'p_kg_totales': Decimal('0'),
+                'p_kg_exportacion': Decimal('0'),
+                'p_kg_nacional': Decimal('0'),
+                'p_total_pagar': Decimal('0'),
+                'p_total_facturar': Decimal('0'),
+                'monto_pendiente': Decimal('0'),
+                'p_fecha_reporte': None,  # Use the latest
+                'count': 0
+            })
+            
+            for reporte in reportes_queryset:
+                compra = reporte.rep_cal_exp.venta_nacional.compra_nacional
+                compra_id = compra.id
+                entry = compras_dict[compra_id]
+                
+                entry['compra_guia'] = compra.numero_guia
+                entry['compra_fecha'] = compra.fecha_compra
+                entry['compra_id'] = compra_id
+                entry['p_kg_totales'] += reporte.p_kg_totales or Decimal('0')
+                entry['p_kg_exportacion'] += reporte.p_kg_exportacion or Decimal('0')
+                entry['p_kg_nacional'] += reporte.p_kg_nacional or Decimal('0')
+                entry['p_total_pagar'] += reporte.p_total_pagar or Decimal('0')
+                entry['p_total_facturar'] += reporte.p_total_facturar or Decimal('0')
+                entry['monto_pendiente'] += reporte.monto_pendiente or Decimal('0')
+                entry['count'] += 1
+                
+                # Keep the latest date
+                if entry['p_fecha_reporte'] is None or (reporte.p_fecha_reporte and reporte.p_fecha_reporte > entry['p_fecha_reporte']):
+                    entry['p_fecha_reporte'] = reporte.p_fecha_reporte
+            
+            # Calculate weighted percentages
+            result = []
+            for compra_id, data in compras_dict.items():
+                if data['p_kg_totales'] > 0:
+                    data['p_porcentaje_exportacion'] = (data['p_kg_exportacion'] / data['p_kg_totales'] * 100).quantize(Decimal('0.1'))
+                    data['p_porcentaje_nacional'] = (data['p_kg_nacional'] / data['p_kg_totales'] * 100).quantize(Decimal('0.1'))
+                else:
+                    data['p_porcentaje_exportacion'] = Decimal('0')
+                    data['p_porcentaje_nacional'] = Decimal('0')
+                
+                # Convert decimals to floats for JSON serialization
+                data['p_kg_totales'] = float(data['p_kg_totales'])
+                data['p_kg_exportacion'] = float(data['p_kg_exportacion'])
+                data['p_kg_nacional'] = float(data['p_kg_nacional'])
+                data['p_total_pagar'] = float(data['p_total_pagar'])
+                data['p_total_facturar'] = float(data['p_total_facturar'])
+                data['monto_pendiente'] = float(data['monto_pendiente'])
+                data['p_porcentaje_exportacion'] = float(data['p_porcentaje_exportacion'])
+                data['p_porcentaje_nacional'] = float(data['p_porcentaje_nacional'])
+                
+                result.append(data)
+            
+            # Sort by date descending
+            result.sort(key=lambda x: x['compra_fecha'] or '', reverse=True)
+            return result
+        
+        # Aggregate by compra instead of showing individual ventas
+        reportes_pendientes_data = aggregate_by_compra(reportes_pendientes)
+        reportes_pagados_data = aggregate_by_compra(reportes_pagados)
+        reportes_sin_factura_data = aggregate_by_compra(reportes_sin_factura)
         transferencias_data = TransferenciasProveedorSerializer(transferencias, many=True).data
         
         return Response({
@@ -360,33 +448,40 @@ class ProveedorNacionalViewSet(viewsets.ReadOnlyModelViewSet):
         
         compras_proceso = []
         for compra in todas_compras:
-            if compra.id in compras_completas_ids:
-                continue
-            datos_compra = {
-                'numero_guia': compra.numero_guia,
-                'fecha_compra': compra.fecha_compra,
-                'peso_recibido': None,
-                'fecha_reporte': None,
-                'estado': 'Registrado',
-            }
-            try:
-                venta = VentaNacional.objects.get(compra_nacional=compra)
-                datos_compra['peso_recibido'] = venta.peso_neto_recibido
-                datos_compra['estado'] = venta.estado_venta
+            ventas = VentaNacional.objects.filter(compra_nacional=compra)
+            
+            if not ventas.exists():
+                 compras_proceso.append({
+                    'numero_guia': compra.numero_guia,
+                    'fecha_compra': compra.fecha_compra,
+                    'peso_recibido': None,
+                    'fecha_reporte': None,
+                    'estado': 'Sin Ingreso'
+                })
+                 continue
+
+            for venta in ventas:
+                datos_venta = {
+                    'numero_guia': f"{compra.numero_guia} ({venta.tipo or 'N/A'})",
+                    'fecha_compra': compra.fecha_compra,
+                    'peso_recibido': venta.peso_neto_recibido,
+                    'fecha_reporte': None,
+                    'estado': venta.estado_venta,
+                }
                 try:
                     reporte_exp = ReporteCalidadExportador.objects.get(venta_nacional=venta)
-                    datos_compra['estado'] = reporte_exp.estado_reporte_exp
+                    datos_venta['estado'] = reporte_exp.estado_reporte_exp
                     try:
                         reporte_prov = ReporteCalidadProveedor.objects.get(rep_cal_exp=reporte_exp)
-                        datos_compra['fecha_reporte'] = reporte_prov.p_fecha_reporte
-                        datos_compra['estado'] = reporte_prov.estado_reporte_prov
+                        datos_venta['fecha_reporte'] = reporte_prov.p_fecha_reporte
+                        datos_venta['estado'] = reporte_prov.estado_reporte_prov
+                        if reporte_prov.reporte_enviado:
+                            continue
                     except ReporteCalidadProveedor.DoesNotExist:
-                        datos_compra['estado'] = 'Pendiente Enviar A Proveedor'
+                        datos_venta['estado'] = 'Pendiente Enviar A Proveedor'
                 except ReporteCalidadExportador.DoesNotExist:
-                    datos_compra['estado'] = 'Sin Reporte Calidad'
-            except VentaNacional.DoesNotExist:
-                datos_compra['estado'] = 'Sin Ingreso'
-            compras_proceso.append(datos_compra)
+                    datos_venta['estado'] = 'Sin Reporte Calidad'
+                compras_proceso.append(datos_venta)
         
         compras_proceso = sorted(compras_proceso, key=lambda x: x['fecha_compra'], reverse=True)
         
@@ -397,9 +492,70 @@ class ProveedorNacionalViewSet(viewsets.ReadOnlyModelViewSet):
         saldo_actual = saldo_disponible
         valor_consignar = monto_pendiente_total - saldo_actual
         
-        reportes_pendientes_data = ResumenReporteProveedorSerializer(reportes_pendientes, many=True).data
-        reportes_pagados_data = ResumenReporteProveedorSerializer(reportes_pagados, many=True).data
-        reportes_sin_factura_data = ResumenReporteProveedorSerializer(reportes_sin_factura, many=True).data
+        # Helper function to aggregate reports by compra_nacional (same as resumen_reportes)
+        def aggregate_by_compra(reportes_queryset):
+            """Agrupa reportes por compra_nacional y suma los valores"""
+            from decimal import Decimal
+            from collections import defaultdict
+            
+            compras_dict = defaultdict(lambda: {
+                'compra_guia': None,
+                'compra_fecha': None,
+                'compra_id': None,
+                'p_kg_totales': Decimal('0'),
+                'p_kg_exportacion': Decimal('0'),
+                'p_kg_nacional': Decimal('0'),
+                'p_total_pagar': Decimal('0'),
+                'p_total_facturar': Decimal('0'),
+                'monto_pendiente': Decimal('0'),
+                'p_fecha_reporte': None,
+                'count': 0
+            })
+            
+            for reporte in reportes_queryset:
+                compra = reporte.rep_cal_exp.venta_nacional.compra_nacional
+                compra_id = compra.id
+                entry = compras_dict[compra_id]
+                
+                entry['compra_guia'] = compra.numero_guia
+                entry['compra_fecha'] = compra.fecha_compra
+                entry['compra_id'] = compra_id
+                entry['p_kg_totales'] += reporte.p_kg_totales or Decimal('0')
+                entry['p_kg_exportacion'] += reporte.p_kg_exportacion or Decimal('0')
+                entry['p_kg_nacional'] += reporte.p_kg_nacional or Decimal('0')
+                entry['p_total_pagar'] += reporte.p_total_pagar or Decimal('0')
+                entry['p_total_facturar'] += reporte.p_total_facturar or Decimal('0')
+                entry['monto_pendiente'] += reporte.monto_pendiente or Decimal('0')
+                entry['count'] += 1
+                
+                if entry['p_fecha_reporte'] is None or (reporte.p_fecha_reporte and reporte.p_fecha_reporte > entry['p_fecha_reporte']):
+                    entry['p_fecha_reporte'] = reporte.p_fecha_reporte
+            
+            result = []
+            for compra_id, data in compras_dict.items():
+                if data['p_kg_totales'] > 0:
+                    data['p_porcentaje_exportacion'] = float((data['p_kg_exportacion'] / data['p_kg_totales'] * 100).quantize(Decimal('0.1')))
+                    data['p_porcentaje_nacional'] = float((data['p_kg_nacional'] / data['p_kg_totales'] * 100).quantize(Decimal('0.1')))
+                else:
+                    data['p_porcentaje_exportacion'] = 0
+                    data['p_porcentaje_nacional'] = 0
+                
+                data['p_kg_totales'] = float(data['p_kg_totales'])
+                data['p_kg_exportacion'] = float(data['p_kg_exportacion'])
+                data['p_kg_nacional'] = float(data['p_kg_nacional'])
+                data['p_total_pagar'] = float(data['p_total_pagar'])
+                data['p_total_facturar'] = float(data['p_total_facturar'])
+                data['monto_pendiente'] = float(data['monto_pendiente'])
+                
+                result.append(data)
+            
+            result.sort(key=lambda x: x['compra_fecha'] or '', reverse=True)
+            return result
+        
+        # Aggregate by compra (same as resumen_reportes)
+        reportes_pendientes_data = aggregate_by_compra(reportes_pendientes)
+        reportes_pagados_data = aggregate_by_compra(reportes_pagados)
+        reportes_sin_factura_data = aggregate_by_compra(reportes_sin_factura)
         transferencias_data = TransferenciasProveedorSerializer(transferencias, many=True).data
         
         pdf_data = {
@@ -463,9 +619,9 @@ class ProveedorNacionalViewSet(viewsets.ReadOnlyModelViewSet):
         compras = CompraNacional.objects.filter(proveedor=proveedor).select_related(
             'fruta', 'tipo_empaque'
         ).prefetch_related(
-            'ventanacional',
-            'ventanacional__reportecalidadexportador',
-            'ventanacional__reportecalidadexportador__reportecalidadproveedor'
+            'ventas',
+            'ventas__reportecalidadexportador',
+            'ventas__reportecalidadexportador__reportecalidadproveedor'
         )
         
         if not es_primera_carga:
@@ -503,9 +659,9 @@ class ProveedorNacionalViewSet(viewsets.ReadOnlyModelViewSet):
                 'diferencia_utilidad': None,
             }
             
-            try:
-                venta = compra.ventanacional
-                if venta:
+            ventas = compra.ventas.all()
+            if ventas:
+                for venta in ventas:
                     total_kilos += venta.peso_neto_recibido or Decimal('0')
                     
                     try:
@@ -516,22 +672,22 @@ class ProveedorNacionalViewSet(viewsets.ReadOnlyModelViewSet):
                                 if reporte_prov:
                                     if reporte_prov.p_total_pagar:
                                         total_compras_valor += reporte_prov.p_total_pagar
-                                        compra_item['total_pagar'] = float(reporte_prov.p_total_pagar)
+                                        compra_item['total_pagar'] = (compra_item['total_pagar'] or 0) + float(reporte_prov.p_total_pagar)
                                     
                                     if reporte_prov.p_utilidad is not None:
                                         total_utilidad += reporte_prov.p_utilidad
-                                        compra_item['utilidad'] = float(reporte_prov.p_utilidad)
+                                        compra_item['utilidad'] = (compra_item['utilidad'] or 0) + float(reporte_prov.p_utilidad)
                                     
                                     if reporte_prov.p_utilidad_sin_ajuste is not None:
-                                        compra_item['utilidad_sin_ajuste'] = float(reporte_prov.p_utilidad_sin_ajuste)
+                                        compra_item['utilidad_sin_ajuste'] = (compra_item['utilidad_sin_ajuste'] or 0) + float(reporte_prov.p_utilidad_sin_ajuste)
                                     
                                     if reporte_prov.diferencia_utilidad is not None:
-                                        compra_item['diferencia_utilidad'] = float(reporte_prov.diferencia_utilidad)
+                                        compra_item['diferencia_utilidad'] = (compra_item['diferencia_utilidad'] or 0) + float(reporte_prov.diferencia_utilidad)
                             except ReporteCalidadProveedor.DoesNotExist:
                                 pass
                     except ReporteCalidadExportador.DoesNotExist:
                         pass
-            except VentaNacional.DoesNotExist:
+            else:
                 pass
             
             compras_data.append(compra_item)
@@ -715,10 +871,14 @@ def reporte_individual_api(request):
     except CompraNacional.DoesNotExist:
         return Response({'error': 'No se encontró la compra con ese número de guía'}, status=404)
     
-    try:
-        venta = VentaNacional.objects.get(compra_nacional=compra)
-    except VentaNacional.DoesNotExist:
+    ventas = VentaNacional.objects.filter(compra_nacional=compra)
+    if not ventas.exists():
         return Response({'error': 'No se encontró la venta asociada a esta compra'}, status=404)
+    
+    # NOTE: This endpoint was designed for single sale. 
+    # For now, we take the first sale to maintain compatibility, 
+    # or we should update it to accept venta_id (TODO for future if needed by specific view)
+    venta = ventas.first()
     
     try:
         reporte_exportador = ReporteCalidadExportador.objects.get(venta_nacional=venta)

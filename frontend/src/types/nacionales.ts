@@ -20,9 +20,18 @@ export interface ReporteCalidadProveedor {
     p_kg_nacional: number | null;
     p_porcentaje_nacional: number;
     p_precio_kg_nal: number;
+    p_kg_merma: number;
+    p_porcentaje_merma: number;
     p_total_facturar: number;
+    asohofrucol: number;
+    rte_fte: number;
+    rte_ica: number;
     p_total_pagar: number;
+    monto_pendiente: number;
     p_utilidad: number;
+    p_utilidad_sin_ajuste: number | null;
+    diferencia_utilidad: number | null;
+    p_porcentaje_utilidad: number;
     estado_reporte_prov: string;
     completado: boolean;
     factura_prov?: string;
@@ -38,17 +47,22 @@ export interface ReporteCalidadExportador {
     kg_totales: number;
     kg_exportacion: number;
     porcentaje_exportacion: number;
+    precio_venta_kg_exp: number;
     kg_nacional: number;
     porcentaje_nacional: number;
+    precio_venta_kg_nal: number;
+    kg_merma?: number;
+    porcentaje_merma?: number;
     precio_total: number;
     factura?: string;
     fecha_factura?: string;
+    vencimiento_factura?: string;
     estado_reporte_exp: string;
     reportecalidadproveedor?: ReporteCalidadProveedor;
 }
 
 export interface VentaNacional {
-    id: number; // PK is OneToOne with CompraNacional
+    id: number; // PK
     compra_nacional: number;
     exportador: number;
     exportador_nombre: string;
@@ -61,6 +75,8 @@ export interface VentaNacional {
     diferencia_empaque?: number;
     estado_venta: string;
     observaciones?: string;
+    tipo?: string;
+    lote?: string;
     reportecalidadexportador?: ReporteCalidadExportador;
 }
 
@@ -84,7 +100,7 @@ export interface CompraNacional {
     observaciones?: string;
 
     // Nested
-    ventanacional?: VentaNacional;
+    ventas?: VentaNacional[];
 
     // Computed helpers from Serializer
     porcentaje_completitud: number;

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import axiosClient from "@/lib/axios";
 import { VentaNacional, CompraNacional } from "@/types/nacionales";
+import { Badge } from "@/components/ui/badge";
 import {
     Dialog,
     DialogContent,
@@ -39,24 +40,56 @@ interface VentaNacionalModalProps {
 export function VentaNacionalModal({ open, onOpenChange, compraData, initialData, onSuccess }: VentaNacionalModalProps) {
     const [exportadores, setExportadores] = useState<any[]>([]);
 
+    // Calculate stats regarding usage of purchase quantity AND peso
+    const stats = useMemo(() => {
+        let usedEmpaque = 0;
+        let usedPesoBruto = 0;
+        if (compraData.ventas) {
+            compraData.ventas.forEach(v => {
+                // If editing, exclude current sale from existing count
+                if (initialData && v.id === initialData.id) return;
+                // IMPORTANT: Convert to Number to avoid string concatenation from API responses
+                usedEmpaque += Number(v.cantidad_empaque_recibida) || 0;
+                usedPesoBruto += Number(v.peso_bruto_recibido) || 0;
+            });
+        }
+        const totalEmpaque = Number(compraData.cantidad_empaque) || 0;
+        const totalPeso = Number(compraData.peso_compra) || 0;
+        return {
+            used: usedEmpaque,
+            usedPeso: usedPesoBruto,
+            total: totalEmpaque,
+            totalPeso: totalPeso,
+            remaining: totalEmpaque - usedEmpaque,
+            remainingPeso: totalPeso - usedPesoBruto
+        };
+    }, [compraData, initialData]);
+
     // Dynamic schema with compraData validation
-    const formSchema = useMemo(() => z.object({
-        exportador: z.string().min(1, "Seleccione un exportador"),
-        fecha_llegada: z.string().min(1, "Ingrese fecha llegada"),
-        peso_bruto_recibido: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Peso inválido"),
-        cantidad_empaque_recibida: z.string()
-            .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Cantidad inválida")
-            .refine((val) => {
-                const num = Number(val);
-                return num <= compraData.cantidad_empaque;
-            }, `No puede ser mayor que la cantidad de compra (${compraData.cantidad_empaque})`),
-        observaciones: z.string().optional(),
-    }), [compraData.cantidad_empaque]);
+    const formSchema = useMemo(() => {
+        // Stats are now calculated above
+
+        const remainingQuantity = stats.remaining;
+
+        return z.object({
+            exportador: z.string().min(1, "Seleccione un exportador"),
+            tipo: z.enum(["Mango Europa", "Otros Destinos"] as const),
+            lote: z.string().optional(),
+            fecha_llegada: z.string().min(1, "Ingrese fecha llegada"),
+            peso_bruto_recibido: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Peso inválido"),
+            cantidad_empaque_recibida: z.string()
+                .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Cantidad inválida"),
+            // Removed checks against remainingQuantity as per user request
+            observaciones: z.string().optional(),
+        });
+    }, [compraData.cantidad_empaque, compraData.ventas, initialData]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             exportador: "",
+            tipo: "Mango Europa",
+            lote: "",
             fecha_llegada: new Date().toISOString().split('T')[0],
             peso_bruto_recibido: "",
             cantidad_empaque_recibida: "",
@@ -91,16 +124,18 @@ export function VentaNacionalModal({ open, onOpenChange, compraData, initialData
         return date.toISOString().split('T')[0];
     }, [fechaLlegada]);
 
-    // Calculate differences
+    // Calculate differences (GLOBAL - includes all sales)
     const diferenciaPeso = useMemo(() => {
         const bruto = Number(pesoBruto) || 0;
-        return bruto - compraData.peso_compra;
-    }, [pesoBruto, compraData.peso_compra]);
+        // Global difference: (Previously Sold Peso + Current Input Peso) - Total Purchase Peso
+        return (stats.usedPeso + bruto) - stats.totalPeso;
+    }, [pesoBruto, stats]);
 
     const diferenciaEmpaque = useMemo(() => {
         const cant = Number(cantidadEmpaque) || 0;
-        return cant - compraData.cantidad_empaque;
-    }, [cantidadEmpaque, compraData.cantidad_empaque]);
+        // Global difference: (Previously Sold + Current Input) - Total Purchase
+        return (stats.used + cant) - stats.total;
+    }, [cantidadEmpaque, stats]);
 
     useEffect(() => {
         if (open) {
@@ -111,6 +146,8 @@ export function VentaNacionalModal({ open, onOpenChange, compraData, initialData
             if (initialData) {
                 form.reset({
                     exportador: initialData.exportador.toString(),
+                    tipo: (initialData.tipo as any) || "Mango Europa",
+                    lote: initialData.lote || "",
                     fecha_llegada: initialData.fecha_llegada,
                     peso_bruto_recibido: initialData.peso_bruto_recibido.toString(),
                     cantidad_empaque_recibida: initialData.cantidad_empaque_recibida?.toString() || "0",
@@ -119,9 +156,11 @@ export function VentaNacionalModal({ open, onOpenChange, compraData, initialData
             } else {
                 form.reset({
                     exportador: "",
+                    tipo: "Mango Europa",
+                    lote: "",
                     fecha_llegada: new Date().toISOString().split('T')[0],
                     peso_bruto_recibido: "",
-                    cantidad_empaque_recibida: compraData.cantidad_empaque.toString(), // Default to compra cantidad
+                    cantidad_empaque_recibida: "", // Removed default full amount, user should input
                     observaciones: "",
                 });
             }
@@ -139,7 +178,7 @@ export function VentaNacionalModal({ open, onOpenChange, compraData, initialData
             };
 
             if (initialData) {
-                await axiosClient.patch(`/nacionales/api/venta/${compraData.id}/`, payload);
+                await axiosClient.patch(`/nacionales/api/venta/${initialData.id}/`, payload);
                 toast.success("Venta actualizada correctamente");
             } else {
                 await axiosClient.post('/nacionales/api/venta/', payload);
@@ -160,18 +199,68 @@ export function VentaNacionalModal({ open, onOpenChange, compraData, initialData
                     <DialogTitle>{initialData ? "Editar Venta Nacional" : "Registrar Venta Nacional"}</DialogTitle>
                 </DialogHeader>
 
-                {/* Info Card - Compra Reference */}
-                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-sm">
-                    <div className="flex items-center gap-2 mb-2 text-slate-700 font-medium">
-                        <Info className="h-4 w-4" />
-                        Datos de Compra (Referencia)
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div><span className="text-slate-500">Guía:</span> <span className="font-mono">{compraData.numero_guia}</span></div>
-                        <div><span className="text-slate-500">Peso Compra:</span> <span className="font-mono">{compraData.peso_compra.toLocaleString()} Kg</span></div>
-                        <div><span className="text-slate-500">Empaque:</span> <span className="font-mono">{compraData.cantidad_empaque} uds</span></div>
-                    </div>
-                </div>
+                {/* Info Card - Compra Reference - DYNAMIC with form values */}
+                {(() => {
+                    // Calculate LIVE totals including current form input
+                    const currentEmpaque = Number(cantidadEmpaque) || 0;
+                    const currentPeso = Number(pesoBruto) || 0;
+                    const liveUsedEmpaque = stats.used + currentEmpaque;
+                    const liveUsedPeso = stats.usedPeso + currentPeso;
+                    const liveRemainingEmpaque = stats.total - liveUsedEmpaque;
+                    const liveRemainingPeso = stats.totalPeso - liveUsedPeso;
+
+                    return (
+                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-sm">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2 text-slate-700 font-medium">
+                                    <Info className="h-4 w-4" />
+                                    Balance de Compra
+                                </div>
+                                <div className="flex gap-2">
+                                    <Badge variant={liveRemainingEmpaque < 0 ? "destructive" : "outline"} className="bg-white">
+                                        Empaque: {liveRemainingEmpaque >= 0 ? liveRemainingEmpaque : `+${Math.abs(liveRemainingEmpaque)}`} uds
+                                    </Badge>
+                                    <Badge variant={liveRemainingPeso < 0 ? "destructive" : "outline"} className="bg-white">
+                                        Peso: {liveRemainingPeso >= 0 ? liveRemainingPeso.toLocaleString() : `+${Math.abs(liveRemainingPeso).toLocaleString()}`} Kg
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 text-xs mb-2">
+                                {/* Empaque Stats */}
+                                <div className="bg-white p-2 rounded border border-slate-100">
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Empaque</span>
+                                    <div className="flex justify-between">
+                                        <span>Total: <strong className="font-mono">{stats.total}</strong></span>
+                                        <span>Vendido: <strong className="font-mono">{liveUsedEmpaque}</strong></span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mt-1">
+                                        <div
+                                            className={liveUsedEmpaque > stats.total ? "bg-red-400 h-full transition-all" : "bg-emerald-400 h-full transition-all"}
+                                            style={{ width: `${Math.min(100, (liveUsedEmpaque / stats.total) * 100)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                                {/* Peso Stats */}
+                                <div className="bg-white p-2 rounded border border-slate-100">
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Peso Bruto (Kg)</span>
+                                    <div className="flex justify-between">
+                                        <span>Total: <strong className="font-mono">{stats.totalPeso.toLocaleString()}</strong></span>
+                                        <span>Vendido: <strong className="font-mono">{liveUsedPeso.toLocaleString()}</strong></span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mt-1">
+                                        <div
+                                            className={liveUsedPeso > stats.totalPeso ? "bg-red-400 h-full transition-all" : "bg-emerald-400 h-full transition-all"}
+                                            style={{ width: `${Math.min(100, (liveUsedPeso / stats.totalPeso) * 100)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="text-xs text-slate-400 text-center">
+                                Guía: <span className="font-mono text-slate-600">{compraData.numero_guia}</span>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -194,6 +283,42 @@ export function VentaNacionalModal({ open, onOpenChange, compraData, initialData
                                                 ))}
                                             </SelectContent>
                                         </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="tipo"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Tipo de Venta <span className="text-red-500">*</span></FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Seleccione Tipo" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="Mango Europa">Mango Europa</SelectItem>
+                                                <SelectItem value="Otros Destinos">Otros Destinos</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="lote"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Lote</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Ej: L-001" {...field} />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -252,6 +377,18 @@ export function VentaNacionalModal({ open, onOpenChange, compraData, initialData
                                     </FormItem>
                                 )}
                             />
+
+                            {/* Warning if exceeds remaining */}
+                            {Number(cantidadEmpaque) > stats.remaining && (
+                                <div className="col-span-1 md:col-span-2">
+                                    <Alert className="bg-amber-50 border-amber-200 py-2">
+                                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                                        <AlertDescription className="text-amber-700 text-xs ml-2">
+                                            Advertencia: La cantidad ({cantidadEmpaque}) excede el saldo disponible ({stats.remaining}). El balance será negativo ({stats.remaining - Number(cantidadEmpaque)}).
+                                        </AlertDescription>
+                                    </Alert>
+                                </div>
+                            )}
 
                             {/* Display-only: Peso Neto Calculado */}
                             <div className="space-y-2">

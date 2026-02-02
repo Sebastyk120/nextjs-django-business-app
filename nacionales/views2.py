@@ -404,12 +404,13 @@ def dashboard_nacionales(request):
 
         reportes_pendientes_prev = 0
         for compra in compras_periodo_anterior:
-            tiene_venta = hasattr(compra, 'ventanacional')
+            ventas = compra.ventas.all()
+            tiene_venta = ventas.exists()
             tiene_reporte_exp = False
             tiene_reporte_prov = False
 
             if tiene_venta:
-                venta = compra.ventanacional
+                venta = ventas.first()
                 tiene_reporte_exp = hasattr(venta, 'reportecalidadexportador')
                 if tiene_reporte_exp:
                     reporte_exp = venta.reportecalidadexportador
@@ -436,12 +437,13 @@ def dashboard_nacionales(request):
         # Count incomplete reports
         compras_incompletas = []
         for compra in compras:
-            tiene_venta = hasattr(compra, 'ventanacional')
+            ventas = compra.ventas.all()
+            tiene_venta = ventas.exists()
             tiene_reporte_exp = False
             tiene_reporte_prov = False
 
             if tiene_venta:
-                venta = compra.ventanacional
+                venta = ventas.first()
                 tiene_reporte_exp = hasattr(venta, 'reportecalidadexportador')
                 if tiene_reporte_exp:
                     reporte_exp = venta.reportecalidadexportador

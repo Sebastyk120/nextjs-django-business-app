@@ -36,9 +36,9 @@ class DashboardNacionalesService:
             fecha_compra__gte=self.fecha_inicio,
             fecha_compra__lte=self.fecha_fin
         ).select_related('proveedor', 'fruta', 'tipo_empaque').prefetch_related(
-            'ventanacional',
-            'ventanacional__reportecalidadexportador',
-            'ventanacional__reportecalidadexportador__reportecalidadproveedor'
+            'ventas',
+            'ventas__reportecalidadexportador',
+            'ventas__reportecalidadexportador__reportecalidadproveedor'
         )
 
         if self.proveedor_id:
@@ -53,9 +53,9 @@ class DashboardNacionalesService:
             fecha_compra__gte=self.periodo_anterior_inicio,
             fecha_compra__lte=self.periodo_anterior_fin
         ).select_related('proveedor', 'fruta').prefetch_related(
-            'ventanacional',
-            'ventanacional__reportecalidadexportador',
-            'ventanacional__reportecalidadexportador__reportecalidadproveedor'
+            'ventas',
+            'ventas__reportecalidadexportador',
+            'ventas__reportecalidadexportador__reportecalidadproveedor'
         )
 
         if self.proveedor_id:
@@ -67,15 +67,19 @@ class DashboardNacionalesService:
 
     def _count_reportes_pendientes(self, compras_queryset) -> int:
         count = 0
+        count = 0
         for compra in compras_queryset:
-            tiene_venta = hasattr(compra, 'ventanacional')
-            tiene_reporte_exp = False
-            tiene_reporte_prov = False
-            reporte_prov_completado = False
+            ventas = compra.ventas.all()
+            if not ventas.exists():
+                count += 1
+                continue
 
-            if tiene_venta:
-                venta = compra.ventanacional
+            compra_completa = True
+            for venta in ventas:
                 tiene_reporte_exp = hasattr(venta, 'reportecalidadexportador')
+                tiene_reporte_prov = False
+                reporte_prov_completado = False
+
                 if tiene_reporte_exp:
                     reporte_exp = venta.reportecalidadexportador
                     tiene_reporte_prov = hasattr(reporte_exp, 'reportecalidadproveedor')
@@ -83,8 +87,13 @@ class DashboardNacionalesService:
                         reporte_prov = reporte_exp.reportecalidadproveedor
                         reporte_prov_completado = reporte_prov.completado
 
-            if not (tiene_venta and tiene_reporte_exp and tiene_reporte_prov and reporte_prov_completado):
+                if not (tiene_reporte_exp and tiene_reporte_prov and reporte_prov_completado):
+                    compra_completa = False
+                    break
+            
+            if not compra_completa:
                 count += 1
+        return count
         return count
 
     def _calc_percent(self, current: Decimal, prev: Decimal) -> float:
@@ -192,14 +201,17 @@ class DashboardNacionalesService:
 
             reportes_pendientes = 0
             for compra in compras_proveedor:
-                tiene_venta = hasattr(compra, 'ventanacional')
-                tiene_reporte_exp = False
-                tiene_reporte_prov = False
-                reporte_prov_completado = False
+                ventas = compra.ventas.all()
+                if not ventas.exists():
+                    reportes_pendientes += 1
+                    continue
 
-                if tiene_venta:
-                    venta = compra.ventanacional
+                compra_completa = True
+                for venta in ventas:
                     tiene_reporte_exp = hasattr(venta, 'reportecalidadexportador')
+                    tiene_reporte_prov = False
+                    reporte_prov_completado = False
+
                     if tiene_reporte_exp:
                         reporte_exp = venta.reportecalidadexportador
                         tiene_reporte_prov = hasattr(reporte_exp, 'reportecalidadproveedor')
@@ -207,7 +219,11 @@ class DashboardNacionalesService:
                             reporte_prov = reporte_exp.reportecalidadproveedor
                             reporte_prov_completado = reporte_prov.completado
 
-                if not (tiene_venta and tiene_reporte_exp and tiene_reporte_prov and reporte_prov_completado):
+                    if not (tiene_reporte_exp and tiene_reporte_prov and reporte_prov_completado):
+                        compra_completa = False
+                        break
+                
+                if not compra_completa:
                     reportes_pendientes += 1
 
             valor_compras = ReporteCalidadProveedor.objects.filter(

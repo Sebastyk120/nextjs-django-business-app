@@ -93,6 +93,11 @@ class VentaNacionalForm(forms.ModelForm):
                     Column('cantidad_empaque_recibida', css_class='col-md-6'),
                     css_class='g-3'
                 ),
+                Row(
+                    Column('tipo', css_class='col-md-6'),
+                    Column('lote', css_class='col-md-6'),
+                    css_class='g-3'
+                ),
                 HTML('<hr class="my-4">'),
                 HTML('<h5 class="text-primary mb-4">Observaciones</h5>'),
                 'observaciones',

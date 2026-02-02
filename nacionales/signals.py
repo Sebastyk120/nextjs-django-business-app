@@ -5,22 +5,41 @@ from .models import CompraNacional, VentaNacional, ReporteCalidadExportador, Rep
 @receiver(post_save, sender=CompraNacional)
 def actualizar_venta_nacional(sender, instance, **kwargs):
     """
-    Actualiza la VentaNacional relacionada cuando se guarda una CompraNacional.
+    Actualiza las Ventas Nacionales relacionadas cuando se guarda una CompraNacional.
     """
-    try:
-        venta_nacional = instance.ventanacional  # Accede al modelo relacionado
-        venta_nacional.save()
-    except VentaNacional.DoesNotExist:
-        pass  # No existe una VentaNacional relacionada
+    ventas = instance.ventas.all()
+    for venta in ventas:
+        venta.save()
 
 @receiver(post_save, sender=VentaNacional)
 def actualizar_reporte_calidad_exportador(sender, instance, **kwargs):
     """
     Actualiza el ReporteCalidadExportador relacionado cuando se guarda una VentaNacional.
+    Si el peso_neto_recibido disminuye por debajo de los kg registrados, ajusta proporcionalmente.
     """
+    from decimal import Decimal, ROUND_HALF_UP
     try:
         reporte = instance.reportecalidadexportador  # Accede al modelo relacionado
-        reporte.save()  # Esto ejecutará el
+        nuevo_peso_neto = instance.peso_neto_recibido
+        
+        # Si el peso neto ha disminuido y los kg registrados exceden el nuevo peso,
+        # ajustar proporcionalmente para evitar errores de validación
+        if nuevo_peso_neto and reporte.kg_exportacion and reporte.kg_nacional:
+            total_kg_actual = reporte.kg_exportacion + reporte.kg_nacional
+            
+            if total_kg_actual > nuevo_peso_neto:
+                # Calcular factor de escala
+                factor = nuevo_peso_neto / total_kg_actual
+                
+                # Ajustar proporcionalmente
+                reporte.kg_exportacion = (reporte.kg_exportacion * factor).quantize(
+                    Decimal('0.01'), rounding=ROUND_HALF_UP
+                )
+                reporte.kg_nacional = (reporte.kg_nacional * factor).quantize(
+                    Decimal('0.01'), rounding=ROUND_HALF_UP
+                )
+        
+        reporte.save()  # Esto ejecutará el full_clean y recalculará porcentajes
     except ReporteCalidadExportador.DoesNotExist:
         pass  # No existe un ReporteCalidadExportador relacionado
 

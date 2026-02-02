@@ -56,7 +56,7 @@ class CompraNacionalSerializer(serializers.ModelSerializer):
     proveedor_rte_ica = serializers.ReadOnlyField(source='proveedor.rte_ica')
     
     # Nested relationships for full chain display
-    ventanacional = VentaNacionalSerializer(read_only=True)
+    ventas = VentaNacionalSerializer(many=True, read_only=True)
     
     # Computed properties
     porcentaje_completitud = serializers.ReadOnlyField()
@@ -74,23 +74,27 @@ class CompraNacionalSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_estado_venta(self, obj):
-        if hasattr(obj, 'ventanacional'):
-            return obj.ventanacional.estado_venta
+        venta = obj.ventas.first()
+        if venta:
+            return venta.estado_venta
         return None
 
     def get_estado_reporte_exp(self, obj):
-        if hasattr(obj, 'ventanacional') and hasattr(obj.ventanacional, 'reportecalidadexportador'):
-            return obj.ventanacional.reportecalidadexportador.estado_reporte_exp
+        venta = obj.ventas.first()
+        if venta and hasattr(venta, 'reportecalidadexportador'):
+            return venta.reportecalidadexportador.estado_reporte_exp
         return None
 
     def get_estado_reporte_prov(self, obj):
-        if hasattr(obj, 'ventanacional') and hasattr(obj.ventanacional, 'reportecalidadexportador') and hasattr(obj.ventanacional.reportecalidadexportador, 'reportecalidadproveedor'):
-            return obj.ventanacional.reportecalidadexportador.reportecalidadproveedor.estado_reporte_prov
+        venta = obj.ventas.first()
+        if venta and hasattr(venta, 'reportecalidadexportador') and hasattr(venta.reportecalidadexportador, 'reportecalidadproveedor'):
+            return venta.reportecalidadexportador.reportecalidadproveedor.estado_reporte_prov
         return None
     
     def get_estado_facturacion_exp(self, obj):
-        if hasattr(obj, 'ventanacional') and hasattr(obj.ventanacional, 'reportecalidadexportador'):
-            reporte = obj.ventanacional.reportecalidadexportador
+        venta = obj.ventas.first()
+        if venta and hasattr(venta, 'reportecalidadexportador'):
+            reporte = venta.reportecalidadexportador
             if reporte.factura:
                 return "Facturado"
             return "Pendiente"
@@ -98,9 +102,10 @@ class CompraNacionalSerializer(serializers.ModelSerializer):
         
 
     def get_remision_exp(self, obj):
-         if hasattr(obj, 'ventanacional') and hasattr(obj.ventanacional, 'reportecalidadexportador'):
-            return obj.ventanacional.reportecalidadexportador.remision_exp
-         return None
+        venta = obj.ventas.first()
+        if venta and hasattr(venta, 'reportecalidadexportador'):
+            return venta.reportecalidadexportador.remision_exp
+        return None
 
 
 class TransferenciasProveedorSerializer(serializers.ModelSerializer):

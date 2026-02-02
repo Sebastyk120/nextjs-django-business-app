@@ -53,10 +53,10 @@ def nacionales_list_general(request):
     filtro_completado = request.GET.get('completed') == 'true'
     if filtro_completado:
         compra_qs = CompraNacional.objects.filter(
-            ventanacional__reportecalidadexportador__reportecalidadproveedor__completado=True
+            ventas__reportecalidadexportador__reportecalidadproveedor__completado=True
         )
         venta_qs = VentaNacional.objects.filter(
-            compra_nacional__ventanacional__reportecalidadexportador__reportecalidadproveedor__completado=True
+            compra_nacional__ventas__reportecalidadexportador__reportecalidadproveedor__completado=True
         )
         calidad_exp_qs = ReporteCalidadExportador.objects.filter(
             reportecalidadproveedor__completado=True
@@ -114,13 +114,15 @@ def nacionales_list_detallada(request):
     # Lógica para obtener compras incompletas
     compras_nacionales = CompraNacional.objects.all().order_by('-fecha_compra', '-id')
     for compra in compras_nacionales:
-        tiene_venta = hasattr(compra, 'ventanacional')
+        ventas = compra.ventas.all()
+        tiene_venta = ventas.exists()
         tiene_reporte_exp = False
         tiene_reporte_prov = False
         reporte_prov_completado = False  # Nueva variable para el estado de completado
 
         if tiene_venta:
-            venta = compra.ventanacional
+            # Para compatibilidad, usamos la primera venta
+            venta = ventas.first()
             tiene_reporte_exp = hasattr(venta, 'reportecalidadexportador')
             if tiene_reporte_exp:
                 reporte_exp = venta.reportecalidadexportador
@@ -131,13 +133,14 @@ def nacionales_list_detallada(request):
 
         # Condición actualizada: la compra es incompleta si faltan relaciones o completado es False
         if not (tiene_venta and tiene_reporte_exp and tiene_reporte_prov and reporte_prov_completado):
-            if hasattr(compra, 'ventanacional'):
-                compra.estado_venta = compra.ventanacional.estado_venta
-                if hasattr(compra.ventanacional, 'reportecalidadexportador'):
-                    compra.estado_reporte_exp = compra.ventanacional.reportecalidadexportador.estado_reporte_exp
-                    compra.remision_exp = compra.ventanacional.reportecalidadexportador.remision_exp
-                    if hasattr(compra.ventanacional.reportecalidadexportador, 'reportecalidadproveedor'):
-                        compra.estado_reporte_prov = compra.ventanacional.reportecalidadexportador.reportecalidadproveedor.estado_reporte_prov
+            if tiene_venta:
+                venta = ventas.first()
+                compra.estado_venta = venta.estado_venta
+                if hasattr(venta, 'reportecalidadexportador'):
+                    compra.estado_reporte_exp = venta.reportecalidadexportador.estado_reporte_exp
+                    compra.remision_exp = venta.reportecalidadexportador.remision_exp
+                    if hasattr(venta.reportecalidadexportador, 'reportecalidadproveedor'):
+                        compra.estado_reporte_prov = venta.reportecalidadexportador.reportecalidadproveedor.estado_reporte_prov
                     else:
                         compra.estado_reporte_prov = 'Sin reporte Proveedor'
                 else:
@@ -228,7 +231,7 @@ def venta_nacional_create(request, compra_id):
 @login_required
 @user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def reporte_exportador_create(request, venta_id):
-    venta = get_object_or_404(VentaNacional, compra_nacional_id=venta_id)
+    venta = get_object_or_404(VentaNacional, pk=venta_id)
 
     if request.method == 'POST':
         form = ReporteCalidadExportadorForm(request.POST, venta_nacional=venta)
@@ -257,7 +260,7 @@ def reporte_exportador_create(request, venta_id):
 @login_required
 @user_passes_test(es_miembro_del_grupo('Heavens'), login_url='home')
 def reporte_proveedor_create(request, reporte_exp_id):
-    reporte_exp = get_object_or_404(ReporteCalidadExportador, venta_nacional_id=reporte_exp_id)
+    reporte_exp = get_object_or_404(ReporteCalidadExportador, pk=reporte_exp_id)
 
     if request.method == 'POST':
         # Pasa venta_nacional al formulario
@@ -713,7 +716,9 @@ def export_data(request):
             if 'venta_nacional' in data_types:
                 col = venta_start
                 try:
-                    venta = compra.ventanacional
+                    venta = compra.ventas.first()
+                    if not venta:
+                        raise Exception('No venta')
                     sheet_relacionados.write(row, col, venta.exportador.nombre, cell_format)
                     col += 1
                     sheet_relacionados.write(row, col, venta.fecha_llegada, date_format)
@@ -737,7 +742,10 @@ def export_data(request):
             if 'reporte_exportador' in data_types:
                 col = reporte_exp_start
                 try:
-                    reporte_exp = compra.ventanacional.reportecalidadexportador
+                    venta = compra.ventas.first()
+                    if not venta:
+                        raise Exception('No venta')
+                    reporte_exp = venta.reportecalidadexportador
                     sheet_relacionados.write(row, col, reporte_exp.remision_exp or 'N/A', cell_format)
                     col += 1
                     sheet_relacionados.write(row, col, reporte_exp.fecha_reporte, date_format)
@@ -777,7 +785,10 @@ def export_data(request):
             if 'reporte_proveedor' in data_types:
                 col = reporte_prov_start
                 try:
-                    reporte_prov = compra.ventanacional.reportecalidadexportador.reportecalidadproveedor
+                    venta = compra.ventas.first()
+                    if not venta:
+                        raise Exception('No venta')
+                    reporte_prov = venta.reportecalidadexportador.reportecalidadproveedor
                     sheet_relacionados.write(row, col, reporte_prov.p_fecha_reporte, date_format)
                     col += 1
                     sheet_relacionados.write(row, col, float(reporte_prov.p_kg_totales), number_format)

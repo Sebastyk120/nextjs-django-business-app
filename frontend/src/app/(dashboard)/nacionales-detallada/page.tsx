@@ -40,6 +40,7 @@ function NacionalesPageContent() {
     }));
     const [searchTerm, setSearchTerm] = useState(querySearch || "");
     const [searchResult, setSearchResult] = useState<CompraNacional | null>(null);
+    const [selectedVentaForAction, setSelectedVentaForAction] = useState<VentaNacional | null>(null);
 
     // Modal States
     const [openCompraModal, setOpenCompraModal] = useState(false);
@@ -232,15 +233,34 @@ function NacionalesPageContent() {
                         </div>
 
                         {/* Accordion Details */}
+                        {/* Accordion Details */}
                         <NacionalesDetailsAccordion
                             data={searchResult}
                             onEditCompra={() => setOpenCompraModal(true)}
-                            onCreateVenta={() => setOpenVentaModal(true)}
-                            onEditVenta={() => setOpenVentaModal(true)}
-                            onCreateReporteExp={() => setOpenReporteExpModal(true)}
-                            onEditReporteExp={() => setOpenReporteExpModal(true)}
-                            onCreateReporteProv={() => setOpenReporteProvModal(true)}
-                            onEditReporteProv={() => setOpenReporteProvModal(true)}
+                            onCreateVenta={() => {
+                                setSelectedVentaForAction(null);
+                                setOpenVentaModal(true);
+                            }}
+                            onEditVenta={(venta) => {
+                                setSelectedVentaForAction(venta);
+                                setOpenVentaModal(true);
+                            }}
+                            onCreateReporteExp={(venta) => {
+                                setSelectedVentaForAction(venta);
+                                setOpenReporteExpModal(true);
+                            }}
+                            onEditReporteExp={(venta) => {
+                                setSelectedVentaForAction(venta);
+                                setOpenReporteExpModal(true);
+                            }}
+                            onCreateReporteProv={(venta) => {
+                                setSelectedVentaForAction(venta);
+                                setOpenReporteProvModal(true);
+                            }}
+                            onEditReporteProv={(venta) => {
+                                setSelectedVentaForAction(venta);
+                                setOpenReporteProvModal(true);
+                            }}
                         />
                     </div>
                 </div>
@@ -278,28 +298,28 @@ function NacionalesPageContent() {
                         open={openVentaModal}
                         onOpenChange={setOpenVentaModal}
                         compraData={searchResult}
-                        initialData={searchResult.ventanacional}
+                        initialData={selectedVentaForAction || undefined}
                         onSuccess={refreshCurrentView}
                     />
 
-                    {searchResult.ventanacional && (
+                    {selectedVentaForAction && (
                         <ReporteExportadorModal
                             open={openReporteExpModal}
                             onOpenChange={setOpenReporteExpModal}
-                            ventaData={searchResult.ventanacional}
+                            ventaData={selectedVentaForAction}
                             compraData={searchResult}
-                            initialData={searchResult.ventanacional.reportecalidadexportador}
+                            initialData={selectedVentaForAction.reportecalidadexportador}
                             onSuccess={refreshCurrentView}
                         />
                     )}
 
-                    {searchResult.ventanacional?.reportecalidadexportador && (
+                    {selectedVentaForAction?.reportecalidadexportador && (
                         <ReporteProveedorModal
                             open={openReporteProvModal}
                             onOpenChange={setOpenReporteProvModal}
-                            reporteExpData={searchResult.ventanacional.reportecalidadexportador}
+                            reporteExpData={selectedVentaForAction.reportecalidadexportador}
                             compraData={searchResult}
-                            initialData={searchResult.ventanacional.reportecalidadexportador.reportecalidadproveedor}
+                            initialData={selectedVentaForAction.reportecalidadexportador.reportecalidadproveedor}
                             onSuccess={refreshCurrentView}
                         />
                     )}
