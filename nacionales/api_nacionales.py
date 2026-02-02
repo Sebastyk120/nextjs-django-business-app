@@ -858,7 +858,11 @@ def reporte_individual_api(request):
     """
     API endpoint para obtener datos del reporte individual del proveedor.
     GET /nacionales/api/reporte-individual/?numero_guia=XXX
+    
+    This endpoint aggregates data from ALL ventas of the same compra/guia.
     """
+    from decimal import Decimal
+    
     numero_guia = request.query_params.get('numero_guia', '').strip()
     
     if not numero_guia:
@@ -875,20 +879,50 @@ def reporte_individual_api(request):
     if not ventas.exists():
         return Response({'error': 'No se encontró la venta asociada a esta compra'}, status=404)
     
-    # NOTE: This endpoint was designed for single sale. 
-    # For now, we take the first sale to maintain compatibility, 
-    # or we should update it to accept venta_id (TODO for future if needed by specific view)
-    venta = ventas.first()
+    # Collect all reportes_proveedor for aggregation
+    reportes_proveedor = []
+    first_venta = None
     
-    try:
-        reporte_exportador = ReporteCalidadExportador.objects.get(venta_nacional=venta)
-    except ReporteCalidadExportador.DoesNotExist:
-        return Response({'error': 'No se encontró el reporte del exportador'}, status=404)
+    for venta in ventas:
+        if first_venta is None:
+            first_venta = venta
+        
+        try:
+            reporte_exportador = ReporteCalidadExportador.objects.get(venta_nacional=venta)
+            try:
+                reporte_proveedor = ReporteCalidadProveedor.objects.get(rep_cal_exp=reporte_exportador)
+                reportes_proveedor.append(reporte_proveedor)
+            except ReporteCalidadProveedor.DoesNotExist:
+                pass
+        except ReporteCalidadExportador.DoesNotExist:
+            pass
     
-    try:
-        reporte_proveedor = ReporteCalidadProveedor.objects.get(rep_cal_exp=reporte_exportador)
-    except ReporteCalidadProveedor.DoesNotExist:
-        return Response({'error': 'No se encontró el reporte del proveedor'}, status=404)
+    if not reportes_proveedor:
+        return Response({'error': 'No se encontraron reportes del proveedor para esta guía'}, status=404)
+    
+    # Aggregate data from all reportes
+    total_kg = sum(Decimal(str(r.p_kg_totales or 0)) for r in reportes_proveedor)
+    total_kg_exp = sum(Decimal(str(r.p_kg_exportacion or 0)) for r in reportes_proveedor)
+    total_kg_nal = sum(Decimal(str(r.p_kg_nacional or 0)) for r in reportes_proveedor)
+    total_kg_merma = sum(Decimal(str(r.p_kg_merma or 0)) for r in reportes_proveedor)
+    total_facturar = sum(Decimal(str(r.p_total_facturar or 0)) for r in reportes_proveedor)
+    total_asohofrucol = sum(Decimal(str(r.asohofrucol or 0)) for r in reportes_proveedor)
+    total_rte_fte = sum(Decimal(str(r.rte_fte or 0)) for r in reportes_proveedor)
+    total_rte_ica = sum(Decimal(str(r.rte_ica or 0)) for r in reportes_proveedor)
+    total_pagar = sum(Decimal(str(r.p_total_pagar or 0)) for r in reportes_proveedor)
+    
+    # Calculate weighted percentages
+    if total_kg > 0:
+        porc_exp = (total_kg_exp / total_kg * 100).quantize(Decimal('0.01'))
+        porc_nal = (total_kg_nal / total_kg * 100).quantize(Decimal('0.01'))
+        porc_merma = (total_kg_merma / total_kg * 100).quantize(Decimal('0.01'))
+    else:
+        porc_exp = porc_nal = porc_merma = Decimal('0')
+    
+    # Use average price per kg from the first report (or calculate weighted average)
+    first_reporte = reportes_proveedor[0]
+    precio_kg_exp = first_reporte.p_precio_kg_exp or 0
+    precio_kg_nal = first_reporte.p_precio_kg_nal or 0
     
     proveedor = compra.proveedor
     today = datetime.date.today()
@@ -907,24 +941,25 @@ def reporte_individual_api(request):
             'fecha_compra': compra.fecha_compra.strftime('%Y-%m-%d') if compra.fecha_compra else None,
         },
         'venta': {
-            'fecha_llegada': venta.fecha_llegada.strftime('%Y-%m-%d') if venta.fecha_llegada else None,
+            'fecha_llegada': first_venta.fecha_llegada.strftime('%Y-%m-%d') if first_venta and first_venta.fecha_llegada else None,
         },
         'reporte_proveedor': {
-            'pk': reporte_proveedor.pk,
-            'p_kg_totales': float(reporte_proveedor.p_kg_totales) if reporte_proveedor.p_kg_totales else 0,
-            'p_kg_exportacion': float(reporte_proveedor.p_kg_exportacion) if reporte_proveedor.p_kg_exportacion else 0,
-            'p_porcentaje_exportacion': float(reporte_proveedor.p_porcentaje_exportacion) if reporte_proveedor.p_porcentaje_exportacion else 0,
-            'p_precio_kg_exp': float(reporte_proveedor.p_precio_kg_exp) if reporte_proveedor.p_precio_kg_exp else 0,
-            'p_kg_nacional': float(reporte_proveedor.p_kg_nacional) if reporte_proveedor.p_kg_nacional else 0,
-            'p_porcentaje_nacional': float(reporte_proveedor.p_porcentaje_nacional) if reporte_proveedor.p_porcentaje_nacional else 0,
-            'p_precio_kg_nal': float(reporte_proveedor.p_precio_kg_nal) if reporte_proveedor.p_precio_kg_nal else 0,
-            'p_kg_merma': float(reporte_proveedor.p_kg_merma) if reporte_proveedor.p_kg_merma else 0,
-            'p_porcentaje_merma': float(reporte_proveedor.p_porcentaje_merma) if reporte_proveedor.p_porcentaje_merma else 0,
-            'p_total_facturar': float(reporte_proveedor.p_total_facturar) if reporte_proveedor.p_total_facturar else 0,
-            'asohofrucol': float(reporte_proveedor.asohofrucol) if reporte_proveedor.asohofrucol else 0,
-            'rte_fte': float(reporte_proveedor.rte_fte) if reporte_proveedor.rte_fte else 0,
-            'rte_ica': float(reporte_proveedor.rte_ica) if reporte_proveedor.rte_ica else 0,
-            'p_total_pagar': float(reporte_proveedor.p_total_pagar) if reporte_proveedor.p_total_pagar else 0,
+            'pk': first_reporte.pk,  # For reference, though we aggregated
+            'ventas_count': len(reportes_proveedor),  # Number of ventas aggregated
+            'p_kg_totales': float(total_kg),
+            'p_kg_exportacion': float(total_kg_exp),
+            'p_porcentaje_exportacion': float(porc_exp),
+            'p_precio_kg_exp': float(precio_kg_exp),
+            'p_kg_nacional': float(total_kg_nal),
+            'p_porcentaje_nacional': float(porc_nal),
+            'p_precio_kg_nal': float(precio_kg_nal),
+            'p_kg_merma': float(total_kg_merma),
+            'p_porcentaje_merma': float(porc_merma),
+            'p_total_facturar': float(total_facturar),
+            'asohofrucol': float(total_asohofrucol),
+            'rte_fte': float(total_rte_fte),
+            'rte_ica': float(total_rte_ica),
+            'p_total_pagar': float(total_pagar),
         },
         'today': today.strftime('%Y-%m-%d'),
     })
