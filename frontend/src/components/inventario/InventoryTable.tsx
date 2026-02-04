@@ -8,27 +8,30 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Inventario } from "@/types/inventario";
 import {
     ChevronDown,
     MoreHorizontal,
     Pencil,
-    Trash2,
-    ArrowUpDown,
+    History,
+    Package,
+    ArrowUpRight,
+    ArrowDownRight,
+    Minus,
     AlertCircle,
-    CheckCircle2,
-    History
+    Box
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface InventoryTableProps {
     data: Inventario[];
@@ -38,27 +41,32 @@ interface InventoryTableProps {
     userGroups?: string[];
 }
 
+const exporterColors: Record<string, string> = {
+    Etnico: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    Fieldex: "bg-blue-50 text-blue-700 border-blue-200",
+    "Juan Matas": "bg-amber-50 text-amber-700 border-amber-200",
+    "CI Dorado": "bg-purple-50 text-purple-700 border-purple-200",
+};
+
 export function InventoryTable({
     data,
     loading,
     onEdit,
-    onDelete,
     userGroups = []
 }: InventoryTableProps) {
     const [sortConfig, setSortConfig] = useState<{ key: keyof Inventario; direction: 'asc' | 'desc' } | null>(null);
+    const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
     // Columns Configuration
     const columns = [
-        { key: 'numero_item_nombre', label: 'Referencia', sortable: true },
-        { key: 'exportador_nombre', label: 'Exportador', sortable: true },
-        { key: 'compras_efectivas', label: 'Compras Efec.', sortable: true, format: 'number' },
-        { key: 'saldos_iniciales', label: 'Saldos Ini.', sortable: true, format: 'number' },
-        { key: 'salidas', label: 'Salidas/Bajas', sortable: true, format: 'number' },
-        { key: 'traslado_propio', label: 'Trasl. Propio', sortable: true, format: 'number' },
-        { key: 'traslado_remisionado', label: 'Trasl. Remis.', sortable: true, format: 'number' },
-        { key: 'ventas', label: 'Ventas', sortable: true, format: 'number' },
-        { key: 'venta_contenedor', label: 'Venta Cont.', sortable: true, format: 'number' },
-        { key: 'stock_actual', label: 'Stock Actual', sortable: true, format: 'stock' },
+        { key: 'numero_item_nombre', label: 'Referencia', sortable: true, width: 'w-[200px]' },
+        { key: 'exportador_nombre', label: 'Exportador', sortable: true, width: 'w-[120px]' },
+        { key: 'compras_efectivas', label: 'Compras', sortable: true, format: 'number', width: 'w-[100px]' },
+        { key: 'salidas', label: 'Salidas', sortable: true, format: 'number', width: 'w-[100px]' },
+        { key: 'traslado_propio', label: 'Trasl. Propio', sortable: true, format: 'number', width: 'w-[100px]' },
+        { key: 'traslado_remisionado', label: 'Trasl. Remis.', sortable: true, format: 'number', width: 'w-[100px]' },
+        { key: 'ventas', label: 'Ventas', sortable: true, format: 'number', width: 'w-[100px]' },
+        { key: 'stock_actual', label: 'Stock Actual', sortable: true, format: 'stock', width: 'w-[120px]' },
     ];
 
     const handleSort = (key: keyof Inventario) => {
@@ -84,114 +92,228 @@ export function InventoryTable({
             : String(bValue).localeCompare(String(aValue));
     });
 
-    const formatValue = (value: any, type?: string) => {
-        if (value === null || value === undefined) return '-';
-        if (type === 'number') return value.toLocaleString('es-CO');
+    const getStockStatus = (value: number) => {
+        if (value <= 0) return { variant: "out", label: "Agotado", icon: AlertCircle };
+        if (value < 50) return { variant: "low", label: "Bajo", icon: ArrowDownRight };
+        return { variant: "ok", label: "OK", icon: ArrowUpRight };
+    };
+
+    const formatValue = (value: any, type?: string, row?: Inventario) => {
+        if (value === null || value === undefined) return <span className="text-slate-300">-</span>;
+
+        if (type === 'number') {
+            const num = Number(value);
+            if (num === 0) return <span className="text-slate-300">-</span>;
+            return (
+                <span className={cn(
+                    "font-medium",
+                    num > 0 ? "text-slate-700" : "text-slate-400"
+                )}>
+                    {num.toLocaleString('es-CO')}
+                </span>
+            );
+        }
+
         if (type === 'stock') {
             const num = Number(value);
-            let colorClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
+            const status = getStockStatus(num);
+            const Icon = status.icon;
 
-            if (num < 0) {
-                colorClass = "bg-rose-50 text-rose-700 border-rose-100";
-            } else if (num === 0) {
-                colorClass = "bg-slate-50 text-slate-600 border-slate-200";
-            } else if (num < 100) {
-                colorClass = "bg-amber-50 text-amber-700 border-amber-100";
+            let badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+            if (status.variant === "out") {
+                badgeClass = "bg-rose-50 text-rose-700 border-rose-200";
+            } else if (status.variant === "low") {
+                badgeClass = "bg-amber-50 text-amber-700 border-amber-200";
             }
 
             return (
-                <div className={cn("inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-bold border", colorClass)}>
-                    {num.toLocaleString()}
+                <div className="flex items-center justify-end gap-2">
+                    <Badge
+                        variant="outline"
+                        className={cn(
+                            "font-bold px-2.5 py-1 text-xs border shadow-sm min-w-[60px] justify-center gap-1",
+                            badgeClass
+                        )}
+                    >
+                        <Icon className="h-3 w-3" />
+                        {num.toLocaleString()}
+                    </Badge>
                 </div>
             );
         }
+
         return value;
     };
 
     if (loading) {
         return (
-            <div className="w-full h-64 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
+            <div className="w-full h-64 flex flex-col items-center justify-center gap-4">
+                <div className="relative">
+                    <div className="w-12 h-12 border-4 border-slate-100 border-t-indigo-500 rounded-full animate-spin" />
+                    <div className="absolute inset-0 w-12 h-12 border-4 border-transparent border-t-indigo-300 rounded-full animate-spin" style={{ animationDuration: '1.5s' }} />
+                </div>
+                <p className="text-sm text-slate-500 font-medium">Cargando inventario...</p>
             </div>
         );
     }
 
     if (data.length === 0) {
         return (
-            <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-300">
-                No se encontraron registros de inventario.
-            </div>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center py-16 px-4"
+            >
+                <div className="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+                    <Box className="h-10 w-10 text-slate-300" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-1">No se encontraron registros</h3>
+                <p className="text-sm text-slate-500 text-center max-w-sm">
+                    No hay items de inventario que coincidan con tus filtros. Intenta ajustar los criterios de búsqueda.
+                </p>
+            </motion.div>
         );
     }
 
     return (
         <div className="w-full overflow-x-auto">
             <Table>
-                <TableHeader className="bg-slate-50">
+                <TableHeader className="bg-slate-50/80 backdrop-blur-sm sticky top-0 z-10">
                     <TableRow className="hover:bg-transparent border-slate-200">
                         {columns.map((col) => (
-                            <TableHead key={col.key} className="h-10 px-2 py-2 text-[11px] font-semibold uppercase tracking-tight text-slate-600 whitespace-nowrap">
-                                <div className="flex items-center">
+                            <TableHead
+                                key={col.key}
+                                className={cn(
+                                    "h-11 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap",
+                                    col.width
+                                )}
+                            >
+                                <div className="flex items-center gap-1">
                                     {col.label}
                                     {col.sortable && (
                                         <Button
                                             variant="ghost"
+                                            size="sm"
                                             onClick={() => handleSort(col.key as keyof Inventario)}
-                                            className="h-6 w-6 p-0 ml-1 hover:bg-slate-200"
+                                            className={cn(
+                                                "h-6 w-6 p-0 ml-1 hover:bg-slate-200 rounded",
+                                                sortConfig?.key === col.key && "bg-slate-200 text-slate-900"
+                                            )}
                                         >
                                             <ChevronDown className={cn(
-                                                "h-3 w-3 transition-transform",
-                                                sortConfig?.key === col.key && sortConfig.direction === 'desc' ? "rotate-180" : ""
+                                                "h-3 w-3 transition-transform duration-200",
+                                                sortConfig?.key === col.key && sortConfig.direction === 'desc' ? "rotate-180" : "",
+                                                sortConfig?.key === col.key && "text-indigo-600"
                                             )} />
                                         </Button>
                                     )}
                                 </div>
                             </TableHead>
                         ))}
-                        <TableHead className="w-[40px] px-2 text-[10px] font-black uppercase text-slate-400 text-center">
-                            Acc.
-                        </TableHead>
+                        <TableHead className="w-[60px] px-2" />
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {sortedData.map((row) => (
-                        <TableRow key={row.id} className="hover:bg-slate-50/50 transition-colors border-slate-100">
-                            {columns.map((col) => (
-                                <TableCell key={`${row.id}-${col.key}`} className={cn(
-                                    "px-2 py-1.5 text-[12px] whitespace-nowrap whitespace-nowrap",
-                                    col.key === 'numero_item_nombre' ? "font-bold text-slate-900" : "font-medium text-slate-600",
-                                    col.format === 'number' || col.format === 'stock' ? "text-right" : "text-left"
-                                )}>
-                                    {formatValue(row[col.key as keyof Inventario], col.format)}
-                                </TableCell>
-                            ))}
-                            <TableCell className="px-2 py-1.5 text-center">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="h-7 w-7 p-0 hover:bg-slate-200 rounded-full bg-slate-100/50">
-                                            <MoreHorizontal className="h-4 w-4 text-slate-600" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48">
-                                        <DropdownMenuCheckboxItem
-                                            className="py-2 cursor-pointer"
-                                            onClick={() => onEdit?.(row)}
+                    <AnimatePresence>
+                        {sortedData.map((row, index) => {
+                            const isHovered = hoveredRow === row.id;
+                            const stockStatus = getStockStatus(row.stock_actual);
+
+                            return (
+                                <motion.tr
+                                    key={row.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.03, duration: 0.2 }}
+                                    onMouseEnter={() => setHoveredRow(row.id)}
+                                    onMouseLeave={() => setHoveredRow(null)}
+                                    className={cn(
+                                        "group border-b border-slate-100 transition-all duration-200",
+                                        isHovered ? "bg-blue-50/40 shadow-sm" : "hover:bg-slate-50/50"
+                                    )}
+                                >
+                                    {columns.map((col) => (
+                                        <TableCell
+                                            key={`${row.id}-${col.key}`}
+                                            className={cn(
+                                                "px-3 py-3 text-[13px] whitespace-nowrap transition-colors",
+                                                col.key === 'numero_item_nombre'
+                                                    ? "font-semibold text-slate-900"
+                                                    : "text-slate-600",
+                                                col.format === 'number' || col.format === 'stock'
+                                                    ? "text-right"
+                                                    : "text-left"
+                                            )}
                                         >
-                                            <History className="mr-2 h-4 w-4 text-indigo-500" />
-                                            Ver Historial
-                                        </DropdownMenuCheckboxItem>
-                                        <DropdownMenuCheckboxItem
-                                            className="py-2 cursor-pointer"
-                                            onClick={() => onEdit?.(row)}
-                                        >
-                                            <Pencil className="mr-2 h-4 w-4 text-slate-400" />
-                                            Ajustar
-                                        </DropdownMenuCheckboxItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                                            {col.key === 'exportador_nombre' ? (
+                                                <Badge
+                                                    variant="outline"
+                                                    className={cn(
+                                                        "text-[10px] font-medium px-2 py-0.5",
+                                                        exporterColors[row.exportador_nombre] || "bg-slate-50 text-slate-600 border-slate-200"
+                                                    )}
+                                                >
+                                                    {row[col.key as keyof Inventario] as string}
+                                                </Badge>
+                                            ) : col.key === 'numero_item_nombre' ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className={cn(
+                                                        "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
+                                                        stockStatus.variant === "out"
+                                                            ? "bg-rose-100 text-rose-600"
+                                                            : stockStatus.variant === "low"
+                                                                ? "bg-amber-100 text-amber-600"
+                                                                : "bg-emerald-100 text-emerald-600"
+                                                    )}
+                                                    >
+                                                        <Package className="h-4 w-4" />
+                                                    </div>
+                                                    <span className="truncate max-w-[150px]" title={row[col.key as keyof Inventario] as string}>
+                                                        {row[col.key as keyof Inventario] as string}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                formatValue(row[col.key as keyof Inventario], col.format, row)
+                                            )}
+                                        </TableCell>
+                                    ))}
+                                    <TableCell className="px-2 py-3 text-center">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    className={cn(
+                                                        "h-9 w-9 rounded-lg transition-all duration-200 border-slate-200 bg-white shadow-sm",
+                                                        "hover:border-blue-300 hover:text-blue-600 hover:shadow-md",
+                                                        "text-slate-600"
+                                                    )}
+                                                >
+                                                    <MoreHorizontal className="h-5 w-5" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-48">
+                                                <DropdownMenuItem
+                                                    onClick={() => onEdit?.(row)}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <History className="mr-2 h-4 w-4 text-indigo-500" />
+                                                    Ver Historial
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => onEdit?.(row)}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Pencil className="mr-2 h-4 w-4 text-slate-400" />
+                                                    Ajustar Stock
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </motion.tr>
+                            );
+                        })}
+                    </AnimatePresence>
                 </TableBody>
             </Table>
         </div>

@@ -76,6 +76,7 @@ export interface PaginatedResponse<T> {
 export interface InventarioFilters {
     search?: string;
     exportador?: string;
+    stockStatus?: "low" | "out";
 }
 
 export interface ItemFilters {

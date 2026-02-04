@@ -71,8 +71,7 @@ module.exports = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       fontFamily: {
-        "plus-jakarta": ["var(--font-plus-jakarta)", "sans-serif"],
-        outfit: ["var(--font-outfit)", "sans-serif"],
+        "google-sans": ["var(--font-google-sans)", "Google Sans", "sans-serif"],
       },
     },
   },

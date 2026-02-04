@@ -97,8 +97,8 @@
     --gradient-dark: linear-gradient(180deg, #0A2E2F 0%, #0D7377 100%);
 
     /* Typography */
-    --font-heading: var(--font-plus-jakarta), 'Plus Jakarta Sans', sans-serif;
-    --font-body: var(--font-outfit), 'Outfit', sans-serif;
+    --font-heading: var(--font-google-sans), 'Google Sans', sans-serif;
+    --font-body: var(--font-google-sans), 'Google Sans', sans-serif;
 
     /* Spacing & Radius */
     --radius-sm: 0.5rem;

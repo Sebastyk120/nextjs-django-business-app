@@ -12,7 +12,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit2, Trash2, ArrowUpDown } from "lucide-react";
+import { Edit2, Trash2, ArrowUpDown, Receipt, Calendar, User, Wallet, FileText, AlertCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
@@ -27,16 +27,24 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-
-
-
+import { motion, AnimatePresence } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/comercial/Pagination";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface TransferenciasTableProps {
     filters: any;
     refreshTrigger: number;
     onEdit: (transferencia: Transferencia) => void;
 }
+
+const origenColors: Record<string, string> = {
+    'Alianza': 'bg-purple-50 text-purple-700 border-purple-200',
+    'Mabelly Diaz': 'bg-pink-50 text-pink-700 border-pink-200',
+    'Pedro Diaz Melo': 'bg-blue-50 text-blue-700 border-blue-200',
+    'Valentina Garay': 'bg-amber-50 text-amber-700 border-amber-200',
+    'HEAVENS CO': 'bg-emerald-50 text-emerald-700 border-emerald-200'
+};
 
 export function TransferenciasTable({ filters, refreshTrigger, onEdit }: TransferenciasTableProps) {
     const [data, setData] = useState<Transferencia[]>([]);
@@ -63,21 +71,16 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
 
             const response = await axiosClient.get(`/nacionales/api/transferencias/?${params.toString()}`);
 
-            // Handle Paginated Response
             if (response.data.results) {
                 setData(response.data.results);
                 setTotalItems(response.data.count);
-                // If backend provides total value (custom pagination), use it. 
-                // Otherwise we might need another way, but we implemented custom pagination.
                 if (response.data.total_valor !== undefined) {
                     setTotalValue(response.data.total_valor);
                 } else {
-                    // Fallback if backend update is not yet effective (should not happen if deployed correctly)
                     const currentSum = response.data.results.reduce((sum: number, item: any) => sum + Number(item.valor_transferencia), 0);
                     setTotalValue(currentSum);
                 }
             } else {
-                // Fallback for non-paginated (legacy)
                 setData(response.data);
                 setTotalItems(response.data.length);
                 const sum = response.data.reduce((acc: number, item: any) => acc + Number(item.valor_transferencia), 0);
@@ -97,7 +100,6 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
         fetchData();
     }, [filters, refreshTrigger, page, pageSize]);
 
-    // Reset to page 1 when filters change (except just pagination)
     useEffect(() => {
         setPage(1);
     }, [filters]);
@@ -106,103 +108,205 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
         if (!transferToDelete) return;
         try {
             await axiosClient.delete(`/nacionales/api/transferencias/${transferToDelete.id}/`);
-            toast.success("Transferencia eliminada");
+            toast.success("Transferencia eliminada exitosamente");
             fetchData();
         } catch (error) {
-            toast.error("Error al eliminar");
+            toast.error("Error al eliminar la transferencia");
         } finally {
             setTransferToDelete(null);
         }
     };
 
+    const formatCurrency = (value: number | string) => {
+        return new Intl.NumberFormat("es-CO", {
+            style: "currency",
+            currency: "COP",
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(Number(value));
+    };
+
+    if (loading) {
+        return (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 space-y-4">
+                    <div className="flex items-center gap-4">
+                        <Skeleton className="h-12 w-12 rounded-xl" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-5 w-48" />
+                            <Skeleton className="h-4 w-32" />
+                        </div>
+                    </div>
+                    <div className="space-y-3">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                            <Skeleton key={i} className="h-16 w-full" />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <>
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <Table>
-                    <TableHeader className="bg-slate-50/80">
-                        <TableRow>
-                            <TableHead className="w-[120px] font-semibold text-slate-700">Fecha</TableHead>
-                            <TableHead className="font-semibold text-slate-700">Proveedor</TableHead>
-                            <TableHead className="font-semibold text-slate-700">Origen</TableHead>
-                            <TableHead className="text-right font-semibold text-slate-700">Valor</TableHead>
-                            <TableHead className="font-semibold text-slate-700 w-[30%]">Observaciones</TableHead>
-                            <TableHead className="w-[100px] text-right">Acciones</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
-                                    <div className="flex justify-center items-center gap-2 text-slate-500">
-                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
-                                        Cargando datos...
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ) : data.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={6} className="h-32 text-center text-slate-500">
-                                    No se encontraron transferencias
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            data.map((item) => (
-                                <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                                    <TableCell className="font-medium text-slate-700">
-                                        {format(parseISO(item.fecha_transferencia), "dd MMM yyyy", { locale: es })}
-                                    </TableCell>
-                                    <TableCell className="font-medium text-blue-900">
-                                        {item.proveedor_nombre}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className="text-slate-600 bg-slate-50 font-normal">
-                                            {item.origen_transferencia}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right font-bold text-emerald-600">
-                                        $ {Number(item.valor_transferencia).toLocaleString('es-CO')}
-                                    </TableCell>
-                                    <TableCell className="text-slate-500 text-sm truncate max-w-[200px]" title={item.observaciones}>
-                                        {item.observaciones}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                                onClick={() => onEdit(item)}
-                                            >
-                                                <Edit2 className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
-                                                onClick={() => setTransferToDelete(item)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-
-                {/* Footer with totals */}
-                <div className="bg-slate-50 p-4 border-t border-slate-200 flex flex-col gap-4">
-                    <div className="flex justify-between items-center px-4">
-                        <span className="text-slate-500 font-medium text-sm"></span>
-                        <div className="flex items-center gap-4">
-                            <span className="text-slate-600 font-semibold">Total (Filtro Actual):</span>
-                            <span className="text-xl font-bold text-emerald-600">
-                                $ {totalValue.toLocaleString('es-CO')}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                {/* Table Header */}
+                <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50/50 to-white">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-emerald-50 rounded-xl">
+                                <Receipt className="h-5 w-5 text-emerald-600" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-slate-900">Listado de Transferencias</h3>
+                                <p className="text-sm text-slate-500">
+                                    {totalItems} {totalItems === 1 ? 'registro encontrado' : 'registros encontrados'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 bg-emerald-50/50 px-4 py-2.5 rounded-xl border border-emerald-100">
+                            <span className="text-sm text-slate-600">Total del período:</span>
+                            <span className="text-lg font-bold text-emerald-600 tabular-nums">
+                                {formatCurrency(totalValue)}
                             </span>
                         </div>
                     </div>
+                </div>
 
+                {/* Table */}
+                <ScrollArea className="w-full">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-slate-50/80 hover:bg-slate-50/80">
+                                <TableHead className="w-[130px] font-semibold text-slate-700">
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4 text-slate-400" />
+                                        Fecha
+                                    </div>
+                                </TableHead>
+                                <TableHead className="font-semibold text-slate-700">
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4 text-slate-400" />
+                                        Proveedor
+                                    </div>
+                                </TableHead>
+                                <TableHead className="font-semibold text-slate-700">Origen</TableHead>
+                                <TableHead className="text-right font-semibold text-slate-700">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <Wallet className="h-4 w-4 text-slate-400" />
+                                        Valor
+                                    </div>
+                                </TableHead>
+                                <TableHead className="font-semibold text-slate-700 w-[35%]">
+                                    <div className="flex items-center gap-2">
+                                        <FileText className="h-4 w-4 text-slate-400" />
+                                        Observaciones
+                                    </div>
+                                </TableHead>
+                                <TableHead className="w-[100px] text-right">Acciones</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <AnimatePresence mode="wait">
+                                {data.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="h-64">
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                className="flex flex-col items-center justify-center text-center"
+                                            >
+                                                <div className="p-4 bg-slate-50 rounded-full mb-4">
+                                                    <AlertCircle className="h-8 w-8 text-slate-300" />
+                                                </div>
+                                                <h4 className="text-lg font-medium text-slate-900 mb-1">
+                                                    No se encontraron transferencias
+                                                </h4>
+                                                <p className="text-sm text-slate-500 max-w-sm">
+                                                    No hay registros que coincidan con los filtros aplicados. 
+                                                    Intenta ajustar los criterios de búsqueda.
+                                                </p>
+                                            </motion.div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    data.map((item, index) => (
+                                        <motion.tr
+                                            key={item.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.03 }}
+                                            className="group border-b border-slate-100 hover:bg-blue-50/30 transition-colors"
+                                        >
+                                            <TableCell className="font-medium text-slate-700">
+                                                <div className="flex flex-col">
+                                                    <span>
+                                                        {format(parseISO(item.fecha_transferencia), "dd MMM yyyy", { locale: es })}
+                                                    </span>
+                                                    <span className="text-xs text-slate-400">
+                                                        {format(parseISO(item.fecha_transferencia), "EEEE", { locale: es })}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-600 font-semibold text-xs">
+                                                        {item.proveedor_nombre?.charAt(0).toUpperCase() || '?'}
+                                                    </div>
+                                                    <span className="font-medium text-slate-900">
+                                                        {item.proveedor_nombre}
+                                                    </span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={`font-medium ${origenColors[item.origen_transferencia] || 'bg-slate-50 text-slate-600 border-slate-200'}`}
+                                                >
+                                                    {item.origen_transferencia}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <span className="font-bold text-emerald-600 tabular-nums text-base">
+                                                    {formatCurrency(item.valor_transferencia)}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="text-slate-600 text-sm line-clamp-2" title={item.observaciones}>
+                                                    {item.observaciones || <span className="text-slate-400 italic">Sin observaciones</span>}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                        onClick={() => onEdit(item)}
+                                                    >
+                                                        <Edit2 className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                                                        onClick={() => setTransferToDelete(item)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </motion.tr>
+                                    ))
+                                )}
+                            </AnimatePresence>
+                        </TableBody>
+                    </Table>
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+
+                {/* Footer */}
+                <div className="bg-slate-50/80 p-4 border-t border-slate-200">
                     <Pagination
                         currentPage={page}
                         totalItems={totalItems}
@@ -218,34 +322,50 @@ export function TransferenciasTable({ filters, refreshTrigger, onEdit }: Transfe
                 </div>
             </div>
 
+            {/* Delete Dialog */}
             <AlertDialog open={!!transferToDelete} onOpenChange={() => setTransferToDelete(null)}>
-                <AlertDialogContent>
+                <AlertDialogContent className="border-none shadow-2xl">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>¿Está seguro de eliminar esta transferencia?</AlertDialogTitle>
+                        <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                            <Trash2 className="h-8 w-8 text-red-500" />
+                        </div>
+                        <AlertDialogTitle className="text-center text-xl">
+                            ¿Eliminar transferencia?
+                        </AlertDialogTitle>
                         <AlertDialogDescription asChild>
-                            <div className="space-y-3 text-sm text-slate-500">
-                                <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-900 mt-2">
-                                    <p className="text-xs font-semibold uppercase tracking-wider opacity-60">Detalles del registro:</p>
-                                    <div className="mt-1 font-bold">
-                                        {transferToDelete?.proveedor_nombre}
+                            <div className="space-y-4 text-center">
+                                <div className="p-4 bg-slate-50 rounded-xl text-left space-y-2">
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Proveedor:</span>
+                                        <span className="font-medium text-slate-900">{transferToDelete?.proveedor_nombre}</span>
                                     </div>
-                                    <div className="text-lg font-bold text-red-600">
-                                        $ {Number(transferToDelete?.valor_transferencia || 0).toLocaleString('es-CO')}
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Monto:</span>
+                                        <span className="font-bold text-emerald-600">
+                                            {transferToDelete && formatCurrency(transferToDelete.valor_transferencia)}
+                                        </span>
                                     </div>
-                                    <p className="text-xs mt-1 italic">
-                                        {transferToDelete?.fecha_transferencia && format(parseISO(transferToDelete.fecha_transferencia), "dd 'de' MMMM, yyyy", { locale: es })}
-                                    </p>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Fecha:</span>
+                                        <span className="font-medium text-slate-900">
+                                            {transferToDelete?.fecha_transferencia && 
+                                                format(parseISO(transferToDelete.fecha_transferencia), "dd 'de' MMMM, yyyy", { locale: es })}
+                                        </span>
+                                    </div>
                                 </div>
-                                <p className="pt-2">
-                                    Esta acción eliminará permanentemente la transferencia. Esto afectará el balance y los pagos del proveedor.
+                                <p className="text-sm text-slate-500">
+                                    Esta acción no se puede deshacer. La transferencia será eliminada permanentemente.
                                 </p>
                             </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white">
-                            Sí, eliminar registro
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel className="border-slate-200">Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Sí, eliminar
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

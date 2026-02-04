@@ -7,7 +7,8 @@ import { Pagination } from "@/components/comercial/Pagination";
 import nacionalesService from "@/services/nacionalesService";
 import { CompraNacional } from "@/types/nacionales";
 import { useSearchParams } from "next/navigation";
-import { BarChart3, Package, CheckCircle2, AlertCircle, Activity } from "lucide-react";
+import { BarChart3, Package, CheckCircle2, AlertCircle, Activity, TrendingUp, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function NacionalesGeneralPage() {
     const searchParams = useSearchParams();
@@ -32,13 +33,10 @@ export default function NacionalesGeneralPage() {
                     pageSize
                 });
 
-                // Handle both paginated ({ results: [], count: 0 }) and non-paginated ([]) responses
-                // Note: responseData can be cast or checked. API now returns { results, count, ... }
                 if ('results' in responseData) {
                     setData(responseData.results);
                     setTotalItems(responseData.count);
                 } else {
-                    // Fallback for array response
                     const results = Array.isArray(responseData) ? responseData : [];
                     setData(results);
                     setTotalItems(results.length);
@@ -56,90 +54,115 @@ export default function NacionalesGeneralPage() {
     }, [search, completed, page, pageSize]);
 
     const stats = {
-        total: totalItems, // Show total from count
-        // Note: These stats are now only approximate if based on 'data' (current page) 
-        // OR we need a separate stats endpoint. For now, let's keep calculating from current 'data' 
-        // but acknowledge it might be misleading if not all data is loaded. 
-        // However, user asked for pagination. 
-        // Ideally we would fetch stats separately. 
-        // Given the request scope, I will base stats on current page for now or 
-        // just keep logic but update 'total' to be the total count from backend.
+        total: totalItems,
         completed: data.filter(c => c.porcentaje_completitud >= 100).length,
         pending: data.filter(c => c.porcentaje_completitud < 100).length,
         problematic: data.filter(c => c.estado_reporte_exp === 'Vencido').length
     };
 
+    const statCards = [
+        {
+            label: "Operaciones (Total)",
+            value: stats.total,
+            icon: Package,
+            color: "blue",
+            gradient: "from-blue-500 to-blue-600",
+            bgColor: "bg-blue-50",
+            textColor: "text-blue-600"
+        },
+        {
+            label: "Completadas (Pág)",
+            value: stats.completed,
+            icon: CheckCircle2,
+            color: "emerald",
+            gradient: "from-emerald-500 to-emerald-600",
+            bgColor: "bg-emerald-50",
+            textColor: "text-emerald-600"
+        },
+        {
+            label: "En Proceso (Pág)",
+            value: stats.pending,
+            icon: Clock,
+            color: "amber",
+            gradient: "from-amber-500 to-amber-600",
+            bgColor: "bg-amber-50",
+            textColor: "text-amber-600"
+        },
+        {
+            label: "Vencidos (Pág)",
+            value: stats.problematic,
+            icon: AlertCircle,
+            color: "red",
+            gradient: "from-red-500 to-red-600",
+            bgColor: "bg-red-50",
+            textColor: "text-red-600"
+        }
+    ];
+
     return (
-        <div className="min-h-screen bg-slate-50/10 p-4 md:p-8 space-y-8">
+        <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 space-y-6">
+            {/* Header */}
             <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
-                    <Activity className="h-8 w-8 text-blue-600" />
-                    Vista General Nacionales
-                </h1>
-                <p className="text-muted-foreground text-sm">Seguimiento centralizado de operaciones, compras y reportes.</p>
-            </div>
-
-            {/* Stats Cards - Note: These now reflect CURRENT PAGE stats except Total which is global if paginated */}
-            <div className="grid gap-4 md:grid-cols-4">
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <Activity className="h-6 w-6 text-white" />
+                    </div>
                     <div>
-                        <p className="text-sm font-medium text-slate-500">Operaciones (Total)</p>
-                        <h3 className="text-2xl font-bold text-slate-900 mt-1">{stats.total}</h3>
-                    </div>
-                    <div className="h-10 w-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600">
-                        <Package className="h-5 w-5" />
-                    </div>
-                </div>
-                {/* Other stats cards show stats for the visible page, which is acceptable for tables but maybe confusing. 
-                    Fixing this properly would require backend aggregate endpoints. 
-                    I'll leave them as is per instructions to just "add pagination". */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">Completadas (Pág)</p>
-                        <h3 className="text-2xl font-bold text-emerald-600 mt-1">{stats.completed}</h3>
-                    </div>
-                    <div className="h-10 w-10 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600">
-                        <CheckCircle2 className="h-5 w-5" />
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">En Proceso (Pág)</p>
-                        <h3 className="text-2xl font-bold text-amber-600 mt-1">{stats.pending}</h3>
-                    </div>
-                    <div className="h-10 w-10 bg-amber-50 rounded-full flex items-center justify-center text-amber-600">
-                        <BarChart3 className="h-5 w-5" />
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-medium text-slate-500">Vencidos (Pág)</p>
-                        <h3 className="text-2xl font-bold text-red-600 mt-1">{stats.problematic}</h3>
-                    </div>
-                    <div className="h-10 w-10 bg-red-50 rounded-full flex items-center justify-center text-red-600">
-                        <AlertCircle className="h-5 w-5" />
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                            Vista General Nacionales
+                        </h1>
+                        <p className="text-muted-foreground text-sm">Seguimiento centralizado de operaciones, compras y reportes.</p>
                     </div>
                 </div>
             </div>
 
-            <div className="space-y-4">
-                <NacionalesFilters />
-                <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden p-0">
-                    <NacionalesGeneralTable data={data} isLoading={loading} />
-                    <div className="border-t border-slate-100">
-                        <Pagination
-                            currentPage={page}
-                            totalItems={totalItems}
-                            totalPages={Math.ceil(totalItems / pageSize)}
-                            itemsPerPage={pageSize}
-                            onPageChange={setPage}
-                            onPageSizeChange={(size) => {
-                                setPageSize(size);
-                                setPage(1);
-                            }}
-                            itemLabel="registros"
-                        />
+            {/* Stats Cards - Modern Design */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {statCards.map((stat, index) => (
+                    <div
+                        key={index}
+                        className="group bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
+                    >
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-3">
+                                <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                                <h3 className={cn("text-3xl font-bold", stat.textColor)}>
+                                    {stat.value}
+                                </h3>
+                            </div>
+                            <div className={cn(
+                                "h-12 w-12 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110",
+                                stat.bgColor
+                            )}>
+                                <stat.icon className={cn("h-6 w-6", stat.textColor)} />
+                            </div>
+                        </div>
+                        <div className={cn("mt-4 h-1 w-full rounded-full overflow-hidden", stat.bgColor)}>
+                            <div className={cn("h-full rounded-full bg-gradient-to-r", stat.gradient)} style={{ width: '60%' }} />
+                        </div>
                     </div>
+                ))}
+            </div>
+
+            {/* Filters */}
+            <NacionalesFilters />
+
+            {/* Table Section */}
+            <div className="space-y-0">
+                <NacionalesGeneralTable data={data} isLoading={loading} />
+                <div className="mt-4">
+                    <Pagination
+                        currentPage={page}
+                        totalItems={totalItems}
+                        totalPages={Math.ceil(totalItems / pageSize)}
+                        itemsPerPage={pageSize}
+                        onPageChange={setPage}
+                        onPageSizeChange={(size) => {
+                            setPageSize(size);
+                            setPage(1);
+                        }}
+                        itemLabel="registros"
+                    />
                 </div>
             </div>
         </div>

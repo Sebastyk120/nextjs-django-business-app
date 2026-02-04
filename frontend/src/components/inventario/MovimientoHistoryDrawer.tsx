@@ -4,23 +4,15 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { useEffect, useState } from "react";
 import axiosClient from "@/lib/axios";
 import { Item, Inventario } from "@/types/inventario";
-import { Loader2, Calendar, FileText, User, ArrowRight, Trash2, Pencil } from "lucide-react";
+import { Loader2, Calendar, FileText, User, ArrowRight, Trash2, Pencil, Package, ArrowUpRight, ArrowDownRight, History, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import { toast } from "sonner";
 import { DeleteItemDialog } from "./DeleteItemDialog";
 import { ItemEditSheet } from "./ItemEditSheet";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface MovimientoHistoryDrawerProps {
     open: boolean;
@@ -83,137 +75,191 @@ export function MovimientoHistoryDrawer({
         }
     };
 
+    const getMovementType = (bodegaNombre: string) => {
+        const lower = bodegaNombre.toLowerCase();
+        if (lower.includes('ingreso') || lower.includes('compra')) return { type: 'in', label: 'Entrada', color: 'emerald' };
+        if (lower.includes('salida') || lower.includes('venta')) return { type: 'out', label: 'Salida', color: 'rose' };
+        if (lower.includes('traslado')) return { type: 'transfer', label: 'Traslado', color: 'blue' };
+        return { type: 'other', label: 'Ajuste', color: 'slate' };
+    };
+
+    const totalIn = movements.filter(m => getMovementType(m.bodega_nombre).type === 'in').reduce((sum, m) => sum + m.cantidad_cajas, 0);
+    const totalOut = movements.filter(m => getMovementType(m.bodega_nombre).type === 'out').reduce((sum, m) => sum + m.cantidad_cajas, 0);
+
     return (
         <>
             <Sheet open={open} onOpenChange={onOpenChange}>
-                <SheetContent className="w-full sm:max-w-[1000px] flex flex-col h-full">
-                    <SheetHeader className="mb-4">
-                        <div className="flex items-center gap-3">
-                            <SheetTitle className="text-2xl font-bold text-slate-900">Historial de Movimientos</SheetTitle>
-                            <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 font-medium">
-                                {movements.length} Registros
-                            </Badge>
-                        </div>
-                        <SheetDescription className="text-slate-500 mt-1">
-                            Referencia: <span className="font-semibold text-slate-900">{inventarioItem?.numero_item_nombre}</span>
-                            <br />
-                            Exportador: {inventarioItem?.exportador_nombre}
-                        </SheetDescription>
-                    </SheetHeader>
+                <SheetContent className="w-full sm:max-w-[700px] flex flex-col h-full p-0">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white">
+                        <SheetHeader className="space-y-4">
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-white/10 rounded-xl">
+                                        <History className="h-5 w-5 text-indigo-300" />
+                                    </div>
+                                    <div>
+                                        <SheetTitle className="text-xl font-bold text-white">Historial de Movimientos</SheetTitle>
+                                        <SheetDescription className="text-slate-400">
+                                            {inventarioItem?.numero_item_nombre}
+                                        </SheetDescription>
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => onOpenChange(false)}
+                                    className="text-slate-400 hover:text-white hover:bg-white/10"
+                                >
+                                    <X className="h-5 w-5" />
+                                </Button>
+                            </div>
 
-                    <div className="flex-1 overflow-hidden relative">
+                            {/* Summary Cards */}
+                            <div className="grid grid-cols-3 gap-3 mt-4">
+                                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10">
+                                    <p className="text-xs text-slate-400 mb-1">Total Movimientos</p>
+                                    <p className="text-2xl font-bold text-white">{movements.length}</p>
+                                </div>
+                                <div className="bg-emerald-500/10 backdrop-blur-sm rounded-lg p-3 border border-emerald-500/20">
+                                    <p className="text-xs text-emerald-400 mb-1">Entradas</p>
+                                    <p className="text-2xl font-bold text-emerald-400">+{totalIn.toLocaleString()}</p>
+                                </div>
+                                <div className="bg-rose-500/10 backdrop-blur-sm rounded-lg p-3 border border-rose-500/20">
+                                    <p className="text-xs text-rose-400 mb-1">Salidas</p>
+                                    <p className="text-2xl font-bold text-rose-400">-{totalOut.toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </SheetHeader>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 overflow-hidden bg-slate-50/50">
                         {loading ? (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+                            <div className="h-full flex flex-col items-center justify-center gap-3">
+                                <div className="relative">
+                                    <div className="w-10 h-10 border-3 border-slate-200 border-t-indigo-500 rounded-full animate-spin" />
+                                </div>
+                                <p className="text-sm text-slate-500">Cargando historial...</p>
                             </div>
                         ) : movements.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-slate-500">
-                                <FileText className="h-12 w-12 mb-2 opacity-20" />
-                                <p>No hay movimientos registrados.</p>
+                            <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8">
+                                <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+                                    <History className="h-8 w-8 text-slate-300" />
+                                </div>
+                                <p className="text-lg font-medium text-slate-600 mb-1">Sin movimientos</p>
+                                <p className="text-sm text-slate-400 text-center">No hay registros de movimientos para esta referencia.</p>
                             </div>
                         ) : (
                             <ScrollArea className="h-full">
-                                <Table>
-                                    <TableHeader className="bg-slate-50/50 backdrop-blur-sm sticky top-0 z-10 border-y border-slate-200/60">
-                                        <TableRow className="hover:bg-transparent">
-                                            <TableHead className="w-[120px] font-semibold text-slate-900">Fecha</TableHead>
-                                            <TableHead className="font-semibold text-slate-900">Tipo de Movimiento</TableHead>
-                                            <TableHead className="text-center font-semibold text-slate-900 w-[100px]">Cajas</TableHead>
-                                            <TableHead className="font-semibold text-slate-900">Documento</TableHead>
-                                            <TableHead className="font-semibold text-slate-900">Usuario</TableHead>
-                                            <TableHead className="w-[120px] text-right font-semibold text-slate-900">Acciones</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {movements.map((move) => {
-                                            const isIngreso = move.bodega_nombre.toLowerCase().includes('ingreso');
-                                            const isSalida = move.bodega_nombre.toLowerCase().includes('salida');
+                                <div className="p-4 space-y-3">
+                                    <AnimatePresence>
+                                        {movements.map((move, index) => {
+                                            const moveType = getMovementType(move.bodega_nombre);
+                                            const isIn = moveType.type === 'in';
+                                            const Icon = isIn ? ArrowUpRight : ArrowDownRight;
 
                                             return (
-                                                <TableRow key={move.id} className="group hover:bg-indigo-50/30 transition-colors border-b border-slate-100/80">
-                                                    <TableCell className="py-4">
-                                                        <div className="flex items-center gap-2 font-medium text-slate-600">
-                                                            <div className="p-1.5 bg-slate-100 rounded-md">
-                                                                <Calendar className="h-3.5 w-3.5 text-slate-500" />
-                                                            </div>
-                                                            <span className="text-xs whitespace-nowrap">{move.fecha_movimiento}</span>
+                                                <motion.div
+                                                    key={move.id}
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: index * 0.05 }}
+                                                    className="group bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-all duration-200"
+                                                >
+                                                    <div className="flex items-start gap-4">
+                                                        {/* Icon */}
+                                                        <div className={cn(
+                                                            "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
+                                                            moveType.color === 'emerald' && "bg-emerald-50 text-emerald-600",
+                                                            moveType.color === 'rose' && "bg-rose-50 text-rose-600",
+                                                            moveType.color === 'blue' && "bg-blue-50 text-blue-600",
+                                                            moveType.color === 'slate' && "bg-slate-50 text-slate-600"
+                                                        )}>
+                                                            <Icon className="h-6 w-6" />
                                                         </div>
-                                                    </TableCell>
-                                                    <TableCell className="py-4">
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <span className={cn(
-                                                                "text-sm font-semibold tracking-tight",
-                                                                isIngreso ? "text-emerald-700" : isSalida ? "text-rose-700" : "text-slate-800"
-                                                            )}>
-                                                                {move.bodega_nombre}
-                                                            </span>
+
+                                                        {/* Content */}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-start justify-between gap-2">
+                                                                <div>
+                                                                    <h4 className="font-semibold text-slate-900">{move.bodega_nombre}</h4>
+                                                                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                                                                        <Calendar className="h-3 w-3" />
+                                                                        {move.fecha_movimiento}
+                                                                    </p>
+                                                                </div>
+                                                                <Badge
+                                                                    className={cn(
+                                                                        "font-bold px-2.5 py-1 text-sm",
+                                                                        isIn
+                                                                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+                                                                            : "bg-rose-100 text-rose-700 hover:bg-rose-100"
+                                                                    )}
+                                                                >
+                                                                    {isIn ? "+" : "-"}{move.cantidad_cajas}
+                                                                </Badge>
+                                                            </div>
+
+                                                            {/* Details */}
+                                                            <div className="flex flex-wrap items-center gap-3 mt-3 text-xs">
+                                                                <span className="flex items-center gap-1 text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+                                                                    <FileText className="h-3 w-3" />
+                                                                    {move.documento || "S/D"}
+                                                                </span>
+                                                                <span className="flex items-center gap-1 text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+                                                                    <User className="h-3 w-3" />
+                                                                    {move.user_username.split('@')[0]}
+                                                                </span>
+                                                                <span className={cn(
+                                                                    "px-2 py-1 rounded-md font-medium",
+                                                                    moveType.color === 'emerald' && "bg-emerald-50 text-emerald-700",
+                                                                    moveType.color === 'rose' && "bg-rose-50 text-rose-700",
+                                                                    moveType.color === 'blue' && "bg-blue-50 text-blue-700",
+                                                                    moveType.color === 'slate' && "bg-slate-50 text-slate-700"
+                                                                )}>
+                                                                    {moveType.label}
+                                                                </span>
+                                                            </div>
+
                                                             {move.observaciones && (
-                                                                <p className="text-[11px] text-slate-400 italic line-clamp-1" title={move.observaciones}>
+                                                                <p className="text-xs text-slate-500 mt-2 italic bg-slate-50 p-2 rounded-lg">
                                                                     "{move.observaciones}"
                                                                 </p>
                                                             )}
                                                         </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-center py-4">
-                                                        <Badge
-                                                            className={cn(
-                                                                "font-bold px-2.5 py-0.5 rounded-full border-none shadow-sm min-w-[50px] justify-center",
-                                                                isSalida
-                                                                    ? "bg-rose-100 text-rose-700 hover:bg-rose-100"
-                                                                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-                                                            )}
-                                                        >
-                                                            {isSalida ? "-" : "+"}{Math.abs(move.cantidad_cajas)}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="py-4">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-600">
-                                                                {move.documento || "S/D"}
-                                                            </span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="py-4">
-                                                        <div className="flex items-center gap-2 group/user max-w-[150px]">
-                                                            <div className="h-7 w-7 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-                                                                <User className="h-3.5 w-3.5 text-indigo-500" />
-                                                            </div>
-                                                            <span className="text-xs text-slate-600 truncate font-medium" title={move.user_username}>
-                                                                {move.user_username.split('@')[0]}
-                                                            </span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-right py-4">
-                                                        <div className="flex justify-end gap-1.5 transition-all">
+
+                                                        {/* Actions */}
+                                                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <Button
-                                                                variant="outline"
+                                                                variant="ghost"
                                                                 size="icon"
-                                                                className="h-8 w-8 border-slate-200 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 shadow-sm"
+                                                                className="h-8 w-8 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
                                                                 onClick={() => {
                                                                     setEditItem(move);
                                                                     setIsEditSheetOpen(true);
                                                                 }}
                                                             >
-                                                                <Pencil className="h-3.5 w-3.5" />
+                                                                <Pencil className="h-4 w-4" />
                                                             </Button>
                                                             <Button
-                                                                variant="outline"
+                                                                variant="ghost"
                                                                 size="icon"
-                                                                className="h-8 w-8 border-slate-200 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 shadow-sm text-slate-400"
+                                                                className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
                                                                 onClick={() => {
                                                                     setDeleteItem(move);
                                                                     setIsDeleteDialogOpen(true);
                                                                 }}
                                                             >
-                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                                <Trash2 className="h-4 w-4" />
                                                             </Button>
                                                         </div>
-                                                    </TableCell>
-                                                </TableRow>
+                                                    </div>
+                                                </motion.div>
                                             );
                                         })}
-                                    </TableBody>
-                                </Table>
+                                    </AnimatePresence>
+                                </div>
                             </ScrollArea>
                         )}
                     </div>
@@ -225,7 +271,7 @@ export function MovimientoHistoryDrawer({
                 onOpenChange={setIsDeleteDialogOpen}
                 onConfirm={handleDelete}
                 title="Eliminar Movimiento"
-                description={`¿Estás seguro de eliminar el movimiento de ${deleteItem?.cantidad_cajas} cajas? Esto actualizará el stock automáticamente.`}
+                description={`Estas seguro de eliminar el movimiento de ${deleteItem?.cantidad_cajas} cajas? Esto actualizara el stock automaticamente.`}
                 isDeleting={isDeleting}
             />
 

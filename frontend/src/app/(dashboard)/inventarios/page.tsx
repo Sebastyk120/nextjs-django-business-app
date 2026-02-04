@@ -5,15 +5,17 @@ import { useAuth } from "@/hooks/useAuth";
 import axiosClient from "@/lib/axios";
 import { Inventario, InventarioFilters } from "@/types/inventario";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, RefreshCw, Warehouse } from "lucide-react";
+import { Plus, Download, RefreshCw, Warehouse, Package, Filter } from "lucide-react";
 import { InventoryTable } from "@/components/inventario/InventoryTable";
 import { InventoryFilters as FiltersComponent } from "@/components/inventario/InventoryFilters";
 import { InventoryStockCard } from "@/components/inventario/InventoryStockCard";
 import { NewItemModal } from "@/components/inventario/NewItemModal";
 import { ExportInventoryModal } from "@/components/inventario/ExportInventoryModal";
 import { MovimientoHistoryDrawer } from "@/components/inventario/MovimientoHistoryDrawer";
-import { Pagination } from "@/components/comercial/Pagination"; // Reuse existing
+import { Pagination } from "@/components/comercial/Pagination";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
 
 function InventariosContent() {
     const { user } = useAuth({ middleware: 'auth' });
@@ -95,95 +97,140 @@ function InventariosContent() {
 
     const handleRefresh = () => {
         setRefreshTrigger(prev => prev + 1);
+        toast.success("Inventario actualizado");
     };
 
+    const activeFiltersCount = (filters.search ? 1 : 0) + (filters.exportador ? 1 : 0) + (filters.stockStatus ? 1 : 0);
+
     return (
-        <div className="flex flex-col gap-6 p-4 md:p-8 max-w-[100vw] overflow-x-hidden bg-slate-50/50 min-h-screen">
-            {/* Page Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-plus-jakarta flex items-center gap-3">
-                        <Warehouse className="h-8 w-8 text-indigo-600" />
-                        Inventarios
-                    </h1>
-                    <p className="text-muted-foreground text-sm">
-                        Gestión de existencias y movimientos por exportador.
-                    </p>
+        <div className="min-h-screen bg-slate-50/50">
+            {/* Header Section */}
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white border-b border-slate-200 sticky top-0 z-20"
+            >
+                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-200">
+                                <Warehouse className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-bold text-slate-900">Inventarios</h1>
+                                <p className="text-sm text-slate-500">Gestion de existencias y movimientos</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleRefresh}
+                                className="h-10 px-3 text-slate-600 hover:text-slate-900 border-slate-200"
+                            >
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Actualizar
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsExportOpen(true)}
+                                className="h-10 px-3 text-slate-600 hover:text-slate-900 border-slate-200"
+                            >
+                                <Download className="h-4 w-4 mr-2 text-emerald-600" />
+                                Exportar
+                            </Button>
+
+                            <Button
+                                size="sm"
+                                onClick={() => setIsNewItemOpen(true)}
+                                className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200"
+                            >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Nuevo Movimiento
+                            </Button>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleRefresh}
-                        className="text-slate-500 hover:text-slate-700"
-                    >
-                        <RefreshCw className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={() => setIsExportOpen(true)}
-                        className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                    >
-                        <Download className="mr-2 h-4 w-4 text-green-600" />
-                        Exportar
-                    </Button>
-                    <Button
-                        onClick={() => setIsNewItemOpen(true)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-100"
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nuevo Movimiento
-                    </Button>
-                </div>
-            </div>
+            </motion.div>
 
-            {/* KPIs */}
-            <InventoryStockCard
-                stockTotal={kpis.stockTotal}
-                referenciasCount={kpis.referenciasCount}
-                lowStockCount={kpis.lowStockCount}
-                outOfStockCount={kpis.outOfStockCount}
-                loading={loading}
-            />
-
-            {/* Filters & Table Container */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-100/50 overflow-hidden">
-                <FiltersComponent
-                    filters={filters}
-                    onFiltersChange={setFilters}
-                    onClearFilters={() => setFilters({})}
-                    userGroups={user?.groups}
-                />
-
-                <div className="p-0 border-t border-slate-100">
-                    <InventoryTable
-                        data={data}
+            {/* Main Content */}
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+                {/* KPI Cards */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                >
+                    <InventoryStockCard
+                        stockTotal={kpis.stockTotal}
+                        referenciasCount={kpis.referenciasCount}
+                        lowStockCount={kpis.lowStockCount}
+                        outOfStockCount={kpis.outOfStockCount}
                         loading={loading}
-                        onEdit={handleEditHistory}
+                    />
+                </motion.div>
+
+                {/* Table Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+                >
+                    {/* Filters */}
+                    <FiltersComponent
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        onClearFilters={() => setFilters({})}
                         userGroups={user?.groups}
                     />
-                </div>
 
-                {/* Pagination */}
-                <div className="flex justify-between items-center bg-white p-4 border-t border-slate-100">
-                    <div className="text-sm text-slate-500 font-medium">
-                        Mostrando {(page - 1) * pageSize + 1} a {Math.min(page * pageSize, totalItems)} de {totalItems} referencias
+                    {/* Active Filters Indicator */}
+                    {activeFiltersCount > 0 && (
+                        <div className="px-4 py-2 bg-blue-50/50 border-b border-slate-100 flex items-center gap-2">
+                            <Filter className="h-3.5 w-3.5 text-blue-500" />
+                            <span className="text-xs text-blue-700">
+                                Filtros activos: {activeFiltersCount}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Table */}
+                    <div className="border-t border-slate-100">
+                        <InventoryTable
+                            data={data}
+                            loading={loading}
+                            onEdit={handleEditHistory}
+                            userGroups={user?.groups}
+                        />
                     </div>
-                    <Pagination
-                        currentPage={page}
-                        totalItems={totalItems}
-                        totalPages={Math.ceil(totalItems / pageSize)}
-                        itemsPerPage={pageSize}
-                        onPageChange={setPage}
-                        onPageSizeChange={(size) => {
-                            setPageSize(size);
-                            setPage(1);
-                        }}
-                    />
-                </div>
+
+                    {/* Pagination */}
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-4 py-4 bg-slate-50/50 border-t border-slate-200">
+                        <div className="text-sm text-slate-500">
+                            Mostrando <span className="font-medium text-slate-900">{(page - 1) * pageSize + 1}</span> a{" "}
+                            <span className="font-medium text-slate-900">{Math.min(page * pageSize, totalItems)}</span> de{" "}
+                            <span className="font-medium text-slate-900">{totalItems}</span> referencias
+                        </div>
+                        <Pagination
+                            currentPage={page}
+                            totalItems={totalItems}
+                            totalPages={Math.ceil(totalItems / pageSize)}
+                            itemsPerPage={pageSize}
+                            onPageChange={setPage}
+                            onPageSizeChange={(size) => {
+                                setPageSize(size);
+                                setPage(1);
+                            }}
+                        />
+                    </div>
+                </motion.div>
             </div>
 
-            {/* Dialogs */}
+            {/* Modals */}
             <NewItemModal
                 open={isNewItemOpen}
                 onOpenChange={setIsNewItemOpen}
@@ -209,7 +256,12 @@ function InventariosContent() {
 
 export default function InventariosPage() {
     return (
-        <Suspense fallback={<div className="p-8">Cargando inventarios...</div>}>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-indigo-500 rounded-full animate-spin" />
+                <p className="text-slate-500">Cargando inventarios...</p>
+            </div>
+        </div>}>
             <InventariosContent />
         </Suspense>
     );

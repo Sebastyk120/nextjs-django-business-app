@@ -22,6 +22,13 @@ export interface TransferenciaFormData {
     observaciones?: string;
 }
 
+export interface TransferenciaStats {
+    total_transferencias: number;
+    total_monto: number;
+    promedio_monto: number;
+    transferencias_hoy: number;
+}
+
 export const ORIGEN_OPTIONS = [
     'Alianza',
     'Mabelly Diaz',
