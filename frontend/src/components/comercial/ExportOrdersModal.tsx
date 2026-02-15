@@ -36,6 +36,28 @@ export function ExportOrdersModal({ open, onOpenChange, initialFechaInicial = ""
     if (open && fechaFinal !== initialFechaFinal && fechaFinal === "") setFechaFinal(initialFechaFinal);
 
     const handleExport = async () => {
+        // Validation: Verify dates are present
+        if (!fechaInicial || !fechaFinal) {
+            toast.error("Por favor selecciona una fecha inicial y final.");
+            return;
+        }
+
+        // Validation: Verify range is not greater than 1 year
+        const start = new Date(fechaInicial);
+        const end = new Date(fechaFinal);
+        const differenceInTime = end.getTime() - start.getTime();
+        const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+        if (differenceInDays > 365) {
+            toast.error("El rango de fechas no puede ser mayor a un año.");
+            return;
+        }
+
+        if (differenceInDays < 0) {
+            toast.error("La fecha final debe ser posterior a la fecha inicial.");
+            return;
+        }
+
         setIsLoading(true);
         try {
             const formData = new FormData();
@@ -132,7 +154,7 @@ export function ExportOrdersModal({ open, onOpenChange, initialFechaInicial = ""
                     <div className="flex items-start gap-3 p-3 bg-blue-50 text-blue-800 rounded-lg border border-blue-100 text-sm">
                         <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                         <p>
-                            Para exportar todos los pedidos omita los campos de fecha.
+                            Seleccione un rango de fechas para exportar (<strong>máximo 1 año</strong>).
                             El filtro se aplica con la <strong>fecha de factura</strong>.
                         </p>
                     </div>

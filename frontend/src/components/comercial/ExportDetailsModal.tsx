@@ -27,6 +27,30 @@ export function ExportDetailsModal({ open, onOpenChange }: ExportDetailsModalPro
     const [idFinal, setIdFinal] = useState("");
 
     const handleExport = async () => {
+        if (!idInicial || !idFinal) {
+            toast.error("Por favor, ingresa los números de pedido inicial y final.");
+            return;
+        }
+
+        const start = parseInt(idInicial);
+        const end = parseInt(idFinal);
+
+        if (isNaN(start) || isNaN(end)) {
+            toast.error("Los números de pedido no son válidos.");
+            return;
+        }
+
+        if (end < start) {
+            toast.error("El número final debe ser mayor o igual al inicial.");
+            return;
+        }
+
+        // Check range size
+        if ((end - start + 1) > 700) {
+            toast.error("No se pueden exportar más de 700 pedidos a la vez.");
+            return;
+        }
+
         setIsLoading(true);
         try {
             const formData = new FormData();
@@ -112,7 +136,7 @@ export function ExportDetailsModal({ open, onOpenChange }: ExportDetailsModalPro
                     <div className="flex items-start gap-3 p-3 bg-blue-50 text-blue-800 rounded-lg border border-blue-100 text-sm">
                         <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                         <p>
-                            Para exportar <strong>todos los detalles</strong> de los pedidos omita los campos de número de pedido.
+                            Ingrese el rango de pedidos a exportar. El rango <strong>no puede exceder los 700 pedidos</strong>.
                         </p>
                     </div>
                 </div>
