@@ -75,6 +75,8 @@ export function ReferenciasTable({
                         <TableHead className="h-11 px-4 text-[11px] font-semibold uppercase tracking-tight text-slate-600">Contenedor</TableHead>
                         <TableHead className="h-11 px-4 text-[11px] font-semibold uppercase tracking-tight text-slate-600 text-right">Cant. Cont</TableHead>
                         <TableHead className="h-11 px-4 text-[11px] font-semibold uppercase tracking-tight text-slate-600 text-right">Precio</TableHead>
+                        <TableHead className="h-11 px-4 text-[11px] font-semibold uppercase tracking-tight text-slate-600 text-center">Pallet c/ Cont.</TableHead>
+                        <TableHead className="h-11 px-4 text-[11px] font-semibold uppercase tracking-tight text-slate-600 text-center">Pallet s/ Cont.</TableHead>
                         <TableHead className="h-11 px-4 text-[11px] font-semibold uppercase tracking-tight text-slate-600 text-center">% Peso</TableHead>
                         <TableHead className="h-11 w-[60px]"></TableHead>
                     </TableRow>
@@ -118,6 +120,26 @@ export function ReferenciasTable({
                                     Number(row.precio) > 0 ? "text-emerald-600" : "text-slate-400"
                                 )}>
                                     ${Number(row.precio).toFixed(2)}
+                                </span>
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-center">
+                                <span className={cn(
+                                    "text-xs font-semibold px-2 py-0.5 rounded-full",
+                                    row.cantidad_pallet_con_contenedor && row.cantidad_pallet_con_contenedor > 0
+                                        ? "text-blue-700 bg-blue-50"
+                                        : "text-slate-400 bg-slate-50"
+                                )}>
+                                    {row.cantidad_pallet_con_contenedor ?? "-"}
+                                </span>
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-center">
+                                <span className={cn(
+                                    "text-xs font-semibold px-2 py-0.5 rounded-full",
+                                    row.cantidad_pallet_sin_contenedor && row.cantidad_pallet_sin_contenedor > 0
+                                        ? "text-amber-700 bg-amber-50"
+                                        : "text-slate-400 bg-slate-50"
+                                )}>
+                                    {row.cantidad_pallet_sin_contenedor ?? "-"}
                                 </span>
                             </TableCell>
                             <TableCell className="px-4 py-3 text-center">

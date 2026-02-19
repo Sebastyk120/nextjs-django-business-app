@@ -58,6 +58,11 @@ interface AuxItem {
     nombre: string;
 }
 
+interface RefItem extends AuxItem {
+    cantidad_pallet_con_contenedor: number | null;
+    cantidad_pallet_sin_contenedor: number | null;
+}
+
 interface OrderDetailsDrawerProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -80,7 +85,7 @@ export function OrderDetailsDrawer({
     const [frutas, setFrutas] = useState<AuxItem[]>([]);
     const [presentaciones, setPresentaciones] = useState<AuxItem[]>([]);
     const [tiposCaja, setTiposCaja] = useState<AuxItem[]>([]);
-    const [referencias, setReferencias] = useState<AuxItem[]>([]);
+    const [referencias, setReferencias] = useState<RefItem[]>([]);
 
     // Edit State
     const [editingId, setEditingId] = useState<number | "new" | null>(null);
@@ -250,6 +255,30 @@ export function OrderDetailsDrawer({
             const num = typeof val === 'string' ? parseFloat(val) : Number(val);
             return isNaN(num) ? 0 : num;
         };
+
+        // Validación: Verificar que la referencia tenga el valor de pallet correspondiente
+        if (editForm.referencia) {
+            const selectedRef = referencias.find(r => r.id === editForm.referencia);
+            if (selectedRef) {
+                if (editForm.lleva_contenedor === true) {
+                    if (!selectedRef.cantidad_pallet_con_contenedor || selectedRef.cantidad_pallet_con_contenedor <= 0) {
+                        toast.error(
+                            "La referencia seleccionada no tiene un valor de 'Cajas Pallet Con Contenedor'. " +
+                            "Debe actualizar la referencia antes de usarla con contenedor."
+                        );
+                        return;
+                    }
+                } else {
+                    if (!selectedRef.cantidad_pallet_sin_contenedor || selectedRef.cantidad_pallet_sin_contenedor <= 0) {
+                        toast.error(
+                            "La referencia seleccionada no tiene un valor de 'Cajas Pallet Sin Contenedor'. " +
+                            "Debe actualizar la referencia antes de usarla sin contenedor."
+                        );
+                        return;
+                    }
+                }
+            }
+        }
 
         // Validación: no se pueden establecer NC si no hay cajas enviadas
         if (isValidPositiveNumber(noCajasNc) && !isValidPositiveNumber(cajasEnviadas)) {

@@ -281,7 +281,7 @@ class TipoCajaSerializer(serializers.ModelSerializer):
 class ReferenciasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Referencias
-        fields = ['id', 'nombre']
+        fields = ['id', 'nombre', 'cantidad_pallet_con_contenedor', 'cantidad_pallet_sin_contenedor']
 
 
 class AerolineaSerializer(serializers.ModelSerializer):

@@ -9,9 +9,16 @@ import { auth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     Pagination,
     PaginationContent,
-    PaginationItem,
+    PaginationItem as PagItem,
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
@@ -22,7 +29,7 @@ import {
     RefreshCw,
     Plus,
     Download,
-    ArrowLeft
+    Filter
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -37,6 +44,10 @@ export default function ReferenciasPage() {
     const [page, setPage] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const pageSize = 20;
+
+    // Exportador filter
+    const [exportadores, setExportadores] = useState<{ id: number; nombre: string }[]>([]);
+    const [selectedExportador, setSelectedExportador] = useState<string>("all");
 
     // User info for permissions
     const [userGroups, setUserGroups] = useState<string[]>([]);
@@ -53,8 +64,12 @@ export default function ReferenciasPage() {
 
     useEffect(() => {
         checkPermissions();
+        fetchExportadores();
+    }, []);
+
+    useEffect(() => {
         fetchReferencias();
-    }, [page]);
+    }, [page, selectedExportador]);
 
     const checkPermissions = async () => {
         const authStatus = await auth.checkAuth();
@@ -62,6 +77,15 @@ export default function ReferenciasPage() {
             const groups = authStatus.user.groups || [];
             setUserGroups(groups);
             setCanCreate(groups.includes("Heavens") || groups.includes("Superuser") || groups.includes("Autorizadores"));
+        }
+    };
+
+    const fetchExportadores = async () => {
+        try {
+            const res = await axiosClient.get('/comercial/api/exportadores/');
+            setExportadores(res.data);
+        } catch (error) {
+            console.error("Error fetching exportadores:", error);
         }
     };
 
@@ -75,6 +99,9 @@ export default function ReferenciasPage() {
             params.append('page', currentPage.toString());
             params.append('page_size', pageSize.toString());
             if (searchTerm) params.append('search', searchTerm);
+            if (selectedExportador && selectedExportador !== 'all') {
+                params.append('exportador', selectedExportador);
+            }
 
             const response = await axiosClient.get<PaginatedReferencias>(`/inventarios/api/referencias/?${params.toString()}`);
             setData(response.data.results);
@@ -184,7 +211,33 @@ export default function ReferenciasPage() {
                     </Button>
                 </form>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                    {/* Exportador Filter */}
+                    <div className="flex items-center gap-2">
+                        <Filter className="h-4 w-4 text-slate-400" />
+                        <Select
+                            value={selectedExportador}
+                            onValueChange={(value) => {
+                                setSelectedExportador(value);
+                                setPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="h-9 w-[180px] rounded-lg bg-slate-50 border-slate-200 text-xs font-medium">
+                                <SelectValue placeholder="Todos los Exportadores" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los Exportadores</SelectItem>
+                                {exportadores.map((exp) => (
+                                    <SelectItem key={exp.id} value={exp.nombre}>
+                                        {exp.nombre}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="h-6 w-px bg-slate-200" />
+
                     <Button
                         variant="ghost"
                         size="icon"
@@ -220,12 +273,12 @@ export default function ReferenciasPage() {
                 <div className="flex justify-center mt-4">
                     <Pagination>
                         <PaginationContent className="bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-                            <PaginationItem>
+                            <PagItem>
                                 <PaginationPrevious
                                     onClick={() => setPage(p => Math.max(1, p - 1))}
                                     className={cn("cursor-pointer", page === 1 && "pointer-events-none opacity-50")}
                                 />
-                            </PaginationItem>
+                            </PagItem>
 
                             {[...Array(Math.min(5, totalPages))].map((_, i) => {
                                 let pageNum = page;
@@ -236,7 +289,7 @@ export default function ReferenciasPage() {
                                 if (pageNum > totalPages || pageNum < 1) return null;
 
                                 return (
-                                    <PaginationItem key={pageNum}>
+                                    <PagItem key={pageNum}>
                                         <PaginationLink
                                             onClick={() => setPage(pageNum)}
                                             isActive={page === pageNum}
@@ -244,16 +297,16 @@ export default function ReferenciasPage() {
                                         >
                                             {pageNum}
                                         </PaginationLink>
-                                    </PaginationItem>
+                                    </PagItem>
                                 );
                             })}
 
-                            <PaginationItem>
+                            <PagItem>
                                 <PaginationNext
                                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                     className={cn("cursor-pointer", page === totalPages && "pointer-events-none opacity-50")}
                                 />
-                            </PaginationItem>
+                            </PagItem>
                         </PaginationContent>
                     </Pagination>
                 </div>

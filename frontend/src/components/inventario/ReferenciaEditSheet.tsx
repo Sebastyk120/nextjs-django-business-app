@@ -45,7 +45,7 @@ const formSchema = z.object({
     precio: z.coerce.number().min(0).optional().nullable(),
     exportador: z.string().min(1, "Exportador es requerido"), // ID as string
     cantidad_pallet_con_contenedor: z.coerce.number().min(0).optional().nullable(),
-    cantidad_pallet_sin_contenedor: z.coerce.number().min(0).optional().nullable(),
+    cantidad_pallet_sin_contenedor: z.coerce.number().min(1, "Cajas Pallet Sin Contenedor es obligatorio (mínimo 1)"),
     porcentaje_peso_bruto: z.coerce.number().min(0).max(100).optional(),
 });
 
