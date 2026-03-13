@@ -571,7 +571,10 @@ function ReporteExpCard({ venta, locked, onCreate, onEdit }: { venta: VentaNacio
                         <div>
                             <div className="text-sm text-slate-500">Valor Total Factura</div>
                             
-                            <div className="text-xs text-slate-400">Precio Exp: ${parseFloat(reporte.precio_venta_kg_exp.toString()).toLocaleString()}</div>
+                            <div className="flex gap-3 text-xs text-slate-400">
+                                <span>Precio Exp: ${parseFloat(reporte.precio_venta_kg_exp.toString()).toLocaleString()}/Kg</span>
+                                <span>Precio Nal: ${parseFloat((reporte.precio_venta_kg_nal || 0).toString()).toLocaleString()}/Kg</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -691,7 +694,7 @@ function ReporteProvCard({ venta, locked, onCreate, onEdit }: { venta: VentaNaci
                         <span className="block text-xs uppercase font-bold text-blue-600 mb-1">NACIONAL</span>
                         <div className="text-lg font-bold text-slate-800">{Number(reporteProv.p_porcentaje_nacional || 0).toFixed(2)}%</div>
                         <div className="text-sm text-slate-500">{Number(reporteProv.p_kg_nacional || 0).toLocaleString()} Kg</div>
-                        <div className="text-sm text-blue-600 font-mono">{formatCurrency(reporteProv.p_precio_kg_nal)}/Kg</div>
+                        <div className="text-sm text-blue-600 font-mono">{formatCurrency(reporteProv.p_precio_kg_nal || reporteExp.precio_venta_kg_nal || 0)}/Kg</div>
                     </div>
                     <div className="text-center">
                         <span className="block text-xs uppercase font-bold text-slate-500 mb-1">MERMA</span>
