@@ -45,9 +45,11 @@ class CompraNacionalViewSet(viewsets.ModelViewSet):
         queryset = CompraNacional.objects.all().select_related(
             'proveedor', 'fruta', 'tipo_empaque'
         ).prefetch_related(
-            'ventas', 
-            'ventas__reportecalidadexportador', 
-            'ventas__reportecalidadexportador__reportecalidadproveedor'
+            'ventas',
+            'ventas__exportador',
+            'ventas__reportecalidadexportador',
+            'ventas__reportecalidadexportador__reportecalidadproveedor',
+            'ventas__reportecalidadexportador__venta_nacional__compra_nacional__proveedor',
         ).order_by('-fecha_compra', '-id')
 
         # Filter by 'completed' status
