@@ -921,8 +921,15 @@ def reporte_individual_api(request):
     
     # Use average price per kg from the first report (or calculate weighted average)
     first_reporte = reportes_proveedor[0]
-    precio_kg_exp = first_reporte.p_precio_kg_exp or 0
-    precio_kg_nal = first_reporte.p_precio_kg_nal or 0
+    if total_kg_exp > 0:
+        precio_kg_exp = sum(Decimal(str(r.p_kg_exportacion or 0)) * Decimal(str(r.p_precio_kg_exp or 0)) for r in reportes_proveedor) / total_kg_exp
+    else:
+        precio_kg_exp = first_reporte.p_precio_kg_exp or 0
+        
+    if total_kg_nal > 0:
+        precio_kg_nal = sum(Decimal(str(r.p_kg_nacional or 0)) * Decimal(str(r.p_precio_kg_nal or 0)) for r in reportes_proveedor) / total_kg_nal
+    else:
+        precio_kg_nal = first_reporte.p_precio_kg_nal or 0
     
     proveedor = compra.proveedor
     today = datetime.date.today()

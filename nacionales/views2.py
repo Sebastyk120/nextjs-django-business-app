@@ -277,27 +277,72 @@ def reporte_individual_proveedor(request):
         try:
             # Buscar la compra nacional por número de guía
             compra = CompraNacional.objects.get(numero_guia=numero_guia)
+            ventas = VentaNacional.objects.filter(compra_nacional=compra)
             
-            # Obtener la venta relacionada con la compra
-            venta = VentaNacional.objects.get(compra_nacional=compra)
+            reportes_proveedor = []
+            for v in ventas:
+                rep_exp = ReporteCalidadExportador.objects.filter(venta_nacional=v).first()
+                if rep_exp:
+                    try:
+                        rep_prov = ReporteCalidadProveedor.objects.get(rep_cal_exp=rep_exp)
+                        reportes_proveedor.append(rep_prov)
+                    except ReporteCalidadProveedor.DoesNotExist:
+                        pass
             
-            # Obtener el reporte de exportador relacionado con la venta
-            reporte_exportador = ReporteCalidadExportador.objects.filter(
-                venta_nacional=venta
-            ).first()
-            
-            if reporte_exportador:
-                # Obtener el reporte de proveedor relacionado con el reporte de exportador
-                reporte_proveedor = ReporteCalidadProveedor.objects.get(
-                    rep_cal_exp=reporte_exportador
-                )
+            if reportes_proveedor:
+                first_reporte = reportes_proveedor[0]
                 
-                # Obtener el proveedor
+                # Consolidate
+                total_kg = sum(Decimal(str(r.p_kg_totales or 0)) for r in reportes_proveedor)
+                total_kg_exp = sum(Decimal(str(r.p_kg_exportacion or 0)) for r in reportes_proveedor)
+                total_kg_nal = sum(Decimal(str(r.p_kg_nacional or 0)) for r in reportes_proveedor)
+                total_kg_merma = sum(Decimal(str(r.p_kg_merma or 0)) for r in reportes_proveedor)
+                total_facturar = sum(Decimal(str(r.p_total_facturar or 0)) for r in reportes_proveedor)
+                total_asohofrucol = sum(Decimal(str(r.asohofrucol or 0)) for r in reportes_proveedor)
+                total_rte_fte = sum(Decimal(str(r.rte_fte or 0)) for r in reportes_proveedor)
+                total_rte_ica = sum(Decimal(str(r.rte_ica or 0)) for r in reportes_proveedor)
+                total_pagar = sum(Decimal(str(r.p_total_pagar or 0)) for r in reportes_proveedor)
+                
+                if total_kg > 0:
+                    porc_exp = (total_kg_exp / total_kg * 100).quantize(Decimal('0.01'))
+                    porc_nal = (total_kg_nal / total_kg * 100).quantize(Decimal('0.01'))
+                    porc_merma = (total_kg_merma / total_kg * 100).quantize(Decimal('0.01'))
+                else:
+                    porc_exp = porc_nal = porc_merma = Decimal('0')
+
+                if total_kg_exp > 0:
+                    precio_kg_exp = sum(Decimal(str(r.p_kg_exportacion or 0)) * Decimal(str(r.p_precio_kg_exp or 0)) for r in reportes_proveedor) / total_kg_exp
+                else:
+                    precio_kg_exp = first_reporte.p_precio_kg_exp or 0
+                    
+                if total_kg_nal > 0:
+                    precio_kg_nal = sum(Decimal(str(r.p_kg_nacional or 0)) * Decimal(str(r.p_precio_kg_nal or 0)) for r in reportes_proveedor) / total_kg_nal
+                else:
+                    precio_kg_nal = first_reporte.p_precio_kg_nal or 0
+                
+                # Create mock object or update an unsaved instance
+                reporte_proveedor = ReporteCalidadProveedor()
+                reporte_proveedor.pk = first_reporte.pk
+                reporte_proveedor.p_kg_totales = total_kg
+                reporte_proveedor.p_kg_exportacion = total_kg_exp
+                reporte_proveedor.p_porcentaje_exportacion = porc_exp
+                reporte_proveedor.p_precio_kg_exp = precio_kg_exp
+                reporte_proveedor.p_kg_nacional = total_kg_nal
+                reporte_proveedor.p_porcentaje_nacional = porc_nal
+                reporte_proveedor.p_precio_kg_nal = precio_kg_nal
+                reporte_proveedor.p_kg_merma = total_kg_merma
+                reporte_proveedor.p_porcentaje_merma = porc_merma
+                reporte_proveedor.p_total_facturar = total_facturar
+                reporte_proveedor.asohofrucol = total_asohofrucol
+                reporte_proveedor.rte_fte = total_rte_fte
+                reporte_proveedor.rte_ica = total_rte_ica
+                reporte_proveedor.p_total_pagar = total_pagar
+                
+                reporte_exportador = ReporteCalidadExportador.objects.filter(venta_nacional=ventas.first()).first()
+                venta = ventas.first()
                 proveedor = compra.proveedor
         
-        except (CompraNacional.DoesNotExist, VentaNacional.DoesNotExist, 
-                ReporteCalidadExportador.DoesNotExist, ReporteCalidadProveedor.DoesNotExist):
-
+        except CompraNacional.DoesNotExist:
             pass
     
     context = {
