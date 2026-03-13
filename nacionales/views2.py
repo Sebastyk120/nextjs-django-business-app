@@ -279,29 +279,71 @@ def reporte_individual_proveedor(request):
             compra = CompraNacional.objects.get(numero_guia=numero_guia)
             ventas = VentaNacional.objects.filter(compra_nacional=compra)
             
-            reportes_proveedor = []
+            reportes_proveedor_list = []
             for v in ventas:
-                rep_exp = ReporteCalidadExportador.objects.filter(venta_nacional=v).first()
+                rep_exp = ReporteCalidadExportador.objects.select_related(
+                    'venta_nacional__compra_nacional'
+                ).filter(venta_nacional=v).first()
                 if rep_exp:
                     try:
-                        rep_prov = ReporteCalidadProveedor.objects.get(rep_cal_exp=rep_exp)
-                        reportes_proveedor.append(rep_prov)
+                        rep_prov = ReporteCalidadProveedor.objects.select_related(
+                            'rep_cal_exp__venta_nacional__compra_nacional'
+                        ).get(rep_cal_exp=rep_exp)
+                        reportes_proveedor_list.append(rep_prov)
                     except ReporteCalidadProveedor.DoesNotExist:
                         pass
             
-            if reportes_proveedor:
-                first_reporte = reportes_proveedor[0]
+            if reportes_proveedor_list:
+                first_reporte = reportes_proveedor_list[0]
                 
-                # Consolidate
-                total_kg = sum(Decimal(str(r.p_kg_totales or 0)) for r in reportes_proveedor)
-                total_kg_exp = sum(Decimal(str(r.p_kg_exportacion or 0)) for r in reportes_proveedor)
-                total_kg_nal = sum(Decimal(str(r.p_kg_nacional or 0)) for r in reportes_proveedor)
-                total_kg_merma = sum(Decimal(str(r.p_kg_merma or 0)) for r in reportes_proveedor)
-                total_facturar = sum(Decimal(str(r.p_total_facturar or 0)) for r in reportes_proveedor)
-                total_asohofrucol = sum(Decimal(str(r.asohofrucol or 0)) for r in reportes_proveedor)
-                total_rte_fte = sum(Decimal(str(r.rte_fte or 0)) for r in reportes_proveedor)
-                total_rte_ica = sum(Decimal(str(r.rte_ica or 0)) for r in reportes_proveedor)
-                total_pagar = sum(Decimal(str(r.p_total_pagar or 0)) for r in reportes_proveedor)
+                # Helper: get effective prices (fallback for stale p_precio_kg_nal)
+                def get_effective_precio_exp(r):
+                    if r.p_precio_kg_exp and r.p_precio_kg_exp > 0:
+                        return Decimal(str(r.p_precio_kg_exp))
+                    return Decimal(str(r.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_exp or 0))
+                
+                def get_effective_precio_nal(r):
+                    if r.p_precio_kg_nal and r.p_precio_kg_nal > 0:
+                        return Decimal(str(r.p_precio_kg_nal))
+                    return Decimal(str(r.rep_cal_exp.precio_venta_kg_nal or 0))
+                
+                # Consolidate kg
+                total_kg = sum(Decimal(str(r.p_kg_totales or 0)) for r in reportes_proveedor_list)
+                total_kg_exp = sum(Decimal(str(r.p_kg_exportacion or 0)) for r in reportes_proveedor_list)
+                total_kg_nal = sum(Decimal(str(r.p_kg_nacional or 0)) for r in reportes_proveedor_list)
+                total_kg_merma = sum(Decimal(str(r.p_kg_merma or 0)) for r in reportes_proveedor_list)
+                
+                # Compute total values using effective (corrected) prices
+                total_valor_exp = sum(
+                    Decimal(str(r.p_kg_exportacion or 0)) * get_effective_precio_exp(r)
+                    for r in reportes_proveedor_list
+                )
+                total_valor_nal = sum(
+                    Decimal(str(r.p_kg_nacional or 0)) * get_effective_precio_nal(r)
+                    for r in reportes_proveedor_list
+                )
+                
+                # Recalculate total_facturar from corrected values
+                total_facturar = total_valor_exp + total_valor_nal
+                
+                # Recalculate retenciones based on corrected total_facturar
+                prov = compra.proveedor
+                if prov.asohofrucol:
+                    total_asohofrucol = (total_facturar * Decimal('1.00') / Decimal('100.00')).quantize(Decimal('0.01'))
+                else:
+                    total_asohofrucol = Decimal('0')
+                
+                if prov.rte_fte:
+                    total_rte_fte = (total_facturar * Decimal('1.50') / Decimal('100.00')).quantize(Decimal('0.01'))
+                else:
+                    total_rte_fte = Decimal('0')
+                
+                if prov.rte_ica:
+                    total_rte_ica = (total_facturar * Decimal('4.14') / Decimal('1000.00')).quantize(Decimal('0.01'))
+                else:
+                    total_rte_ica = Decimal('0')
+                
+                total_pagar = total_facturar - total_asohofrucol - total_rte_fte - total_rte_ica
                 
                 if total_kg > 0:
                     porc_exp = (total_kg_exp / total_kg * 100).quantize(Decimal('0.01'))
@@ -311,16 +353,16 @@ def reporte_individual_proveedor(request):
                     porc_exp = porc_nal = porc_merma = Decimal('0')
 
                 if total_kg_exp > 0:
-                    precio_kg_exp = sum(Decimal(str(r.p_kg_exportacion or 0)) * Decimal(str(r.p_precio_kg_exp or 0)) for r in reportes_proveedor) / total_kg_exp
+                    precio_kg_exp = total_valor_exp / total_kg_exp
                 else:
-                    precio_kg_exp = first_reporte.p_precio_kg_exp or 0
+                    precio_kg_exp = get_effective_precio_exp(first_reporte)
                     
                 if total_kg_nal > 0:
-                    precio_kg_nal = sum(Decimal(str(r.p_kg_nacional or 0)) * Decimal(str(r.p_precio_kg_nal or 0)) for r in reportes_proveedor) / total_kg_nal
+                    precio_kg_nal = total_valor_nal / total_kg_nal
                 else:
-                    precio_kg_nal = first_reporte.p_precio_kg_nal or 0
+                    precio_kg_nal = get_effective_precio_nal(first_reporte)
                 
-                # Create mock object or update an unsaved instance
+                # Create mock object for the template
                 reporte_proveedor = ReporteCalidadProveedor()
                 reporte_proveedor.pk = first_reporte.pk
                 reporte_proveedor.p_kg_totales = total_kg
