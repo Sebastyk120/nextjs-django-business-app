@@ -27,6 +27,11 @@ class ReporteCalidadProveedorSerializer(serializers.ModelSerializer):
     rte_fte = serializers.SerializerMethodField()
     rte_ica = serializers.SerializerMethodField()
     p_total_pagar = serializers.SerializerMethodField()
+    # Utilidad fields also need recalculation as they were stored based on wrong p_total_facturar
+    p_utilidad = serializers.SerializerMethodField()
+    p_utilidad_sin_ajuste = serializers.SerializerMethodField()
+    diferencia_utilidad = serializers.SerializerMethodField()
+    p_porcentaje_utilidad = serializers.SerializerMethodField()
 
     class Meta:
         model = ReporteCalidadProveedor
@@ -78,6 +83,32 @@ class ReporteCalidadProveedorSerializer(serializers.ModelSerializer):
     def get_p_total_pagar(self, obj):
         total = self._get_corrected_total_facturar(obj)
         return round(total - self.get_asohofrucol(obj) - self.get_rte_fte(obj) - self.get_rte_ica(obj), 2)
+
+    def get_p_utilidad(self, obj):
+        # p_utilidad = lo que cobró el exportador al comprador - lo que le pagamos al proveedor
+        precio_total_exp = float(obj.rep_cal_exp.precio_total or 0)
+        total_facturar = self._get_corrected_total_facturar(obj)
+        return round(precio_total_exp - total_facturar, 2)
+
+    def get_p_utilidad_sin_ajuste(self, obj):
+        # Utilidad sin ajuste = precio_total_exp - costo de compra al proveedor con precios originales de compra
+        rep_exp = obj.rep_cal_exp
+        compra = rep_exp.venta_nacional.compra_nacional
+        precio_total_exp = float(rep_exp.precio_total or 0)
+        costo_compra = (
+            float(rep_exp.kg_exportacion or 0) * float(compra.precio_compra_exp or 0) +
+            float(rep_exp.kg_nacional or 0) * float(rep_exp.precio_venta_kg_nal or 0)
+        )
+        return round(precio_total_exp - costo_compra, 2)
+
+    def get_diferencia_utilidad(self, obj):
+        return round(self.get_p_utilidad(obj) - self.get_p_utilidad_sin_ajuste(obj), 2)
+
+    def get_p_porcentaje_utilidad(self, obj):
+        precio_total_exp = float(obj.rep_cal_exp.precio_total or 0)
+        if precio_total_exp == 0:
+            return 0.0
+        return round((self.get_p_utilidad(obj) / precio_total_exp) * 100.0, 2)
 
 class ResumenReporteProveedorSerializer(ReporteCalidadProveedorSerializer):
     compra_guia = serializers.ReadOnlyField(source='rep_cal_exp.venta_nacional.compra_nacional.numero_guia')
