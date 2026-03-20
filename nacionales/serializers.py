@@ -17,10 +17,7 @@ class EmpaqueSerializer(serializers.ModelSerializer):
         fields = ['id', 'nombre', 'peso']
 
 class ReporteCalidadProveedorSerializer(serializers.ModelSerializer):
-    # Overridden computed fields: p_precio_kg_nal may be stored as 0/None
-    # due to a signal timing issue (update() doesn't refresh in-memory objects).
-    # We fall back to rep_cal_exp.precio_venta_kg_nal as source of truth.
-    p_precio_kg_nal = serializers.SerializerMethodField()
+    # Overridden computed fields
     p_precio_kg_exp = serializers.SerializerMethodField()
     p_total_facturar = serializers.SerializerMethodField()
     asohofrucol = serializers.SerializerMethodField()

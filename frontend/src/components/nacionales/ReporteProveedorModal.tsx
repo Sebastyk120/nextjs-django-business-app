@@ -82,6 +82,8 @@ export function ReporteProveedorModal({ open, onOpenChange, reporteExpData, comp
             .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Peso inválido"),
         p_kg_nacional: z.string()
             .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Peso inválido"),
+        p_precio_kg_nal: z.string()
+            .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Precio inválido"),
         factura_prov: z.string().optional(),
         reporte_enviado: z.boolean(),
     }).refine((data) => {
@@ -115,6 +117,7 @@ export function ReporteProveedorModal({ open, onOpenChange, reporteExpData, comp
             p_kg_totales: "",
             p_kg_exportacion: "0",
             p_kg_nacional: "0",
+            p_precio_kg_nal: "0",
             factura_prov: "",
             reporte_enviado: false,
         }
@@ -124,6 +127,7 @@ export function ReporteProveedorModal({ open, onOpenChange, reporteExpData, comp
     const pKgTotales = form.watch("p_kg_totales");
     const pKgExp = form.watch("p_kg_exportacion");
     const pKgNal = form.watch("p_kg_nacional");
+    const pPrecioKgNal = form.watch("p_precio_kg_nal");
     const reporteEnviado = form.watch("reporte_enviado");
     const facturaProv = form.watch("factura_prov");
 
@@ -140,7 +144,7 @@ export function ReporteProveedorModal({ open, onOpenChange, reporteExpData, comp
         const porcNal = total > 0 ? (nal / total * 100) : 0;
         const porcMerma = total > 0 ? (merma / total * 100) : 0;
 
-        const totalFacturar = (exp * precioKgExp) + (nal * precioKgNal);
+        const totalFacturar = (exp * precioKgExp) + (nal * Number(pPrecioKgNal));
 
         // Calculate tax deductions based on provider settings
         const asohofrucol = proveedorAsohofrucol ? totalFacturar * 0.01 : 0;
@@ -169,7 +173,7 @@ export function ReporteProveedorModal({ open, onOpenChange, reporteExpData, comp
             utilidad,
             isNegativeMerma: rawMerma < 0,
         };
-    }, [pKgTotales, pKgExp, pKgNal, precioKgExp, precioKgNal, proveedorAsohofrucol, proveedorRteFte, proveedorRteIca, reporteExpData.precio_total]);
+    }, [pKgTotales, pKgExp, pKgNal, pPrecioKgNal, precioKgExp, proveedorAsohofrucol, proveedorRteFte, proveedorRteIca, reporteExpData.precio_total]);
 
     // Real-time validation errors
     const validationErrors = useMemo(() => {
@@ -212,6 +216,7 @@ export function ReporteProveedorModal({ open, onOpenChange, reporteExpData, comp
                     p_kg_totales: initialData.p_kg_totales?.toString() || defaultKgTotales.toString(),
                     p_kg_exportacion: initialData.p_kg_exportacion?.toString() || "0",
                     p_kg_nacional: initialData.p_kg_nacional?.toString() || "0",
+                    p_precio_kg_nal: initialData.p_precio_kg_nal?.toString() || (compraData.precio_compra_nal || compraData.precio_compra_exp)?.toString(),
                     factura_prov: initialData.factura_prov || "",
                     reporte_enviado: initialData.reporte_enviado || false,
                 });
@@ -220,6 +225,7 @@ export function ReporteProveedorModal({ open, onOpenChange, reporteExpData, comp
                     p_kg_totales: defaultKgTotales.toString(),
                     p_kg_exportacion: defaultKgExp.toString(),
                     p_kg_nacional: defaultKgNal.toString(),
+                    p_precio_kg_nal: (compraData.precio_compra_nal || compraData.precio_compra_exp).toString(),
                     factura_prov: "",
                     reporte_enviado: false,
                 });
@@ -234,6 +240,7 @@ export function ReporteProveedorModal({ open, onOpenChange, reporteExpData, comp
                 p_kg_totales: Number(values.p_kg_totales),
                 p_kg_exportacion: Number(values.p_kg_exportacion),
                 p_kg_nacional: Number(values.p_kg_nacional),
+                p_precio_kg_nal: Number(values.p_precio_kg_nal),
                 factura_prov: values.factura_prov || null,
                 reporte_enviado: values.reporte_enviado,
             };
@@ -543,7 +550,7 @@ export function ReporteProveedorModal({ open, onOpenChange, reporteExpData, comp
                                                         </FormControl>
 
                                                         <div className="text-xs text-blue-600 mt-1">
-                                                            {calculations.porcNal}% • {formatCurrency(precioKgNal)}/Kg
+                                                            {calculations.porcNal}% • {formatCurrency(Number(pPrecioKgNal))}/Kg
                                                         </div>
 
                                                         <FormMessage />
@@ -551,6 +558,44 @@ export function ReporteProveedorModal({ open, onOpenChange, reporteExpData, comp
                                                 )}
                                             />
                                         </div>
+
+                                        {/* Precio Nacional Editable */}
+                                        <Card className="bg-blue-50/50 border-blue-200">
+                                            <CardContent className="p-4 pt-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="p_precio_kg_nal"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <FormLabel className="flex items-center gap-2 text-blue-700">
+                                                                    <DollarSign className="h-4 w-4" />
+                                                                    Precio Nacional Definido
+                                                                </FormLabel>
+                                                                <Badge variant="outline" className="bg-white text-[10px] text-blue-600 border-blue-200">
+                                                                    Opcional
+                                                                </Badge>
+                                                            </div>
+                                                            <FormControl>
+                                                                <div className="relative">
+                                                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 font-bold">$</div>
+                                                                    <Input
+                                                                        type="number"
+                                                                        step="1"
+                                                                        className="h-10 pl-7 font-mono text-lg text-blue-800 bg-white border-blue-200 focus:ring-blue-500"
+                                                                        {...field}
+                                                                    />
+                                                                </div>
+                                                            </FormControl>
+                                                            <FormDescription className="text-[10px] text-blue-500">
+                                                                Por defecto carga: {formatCurrency(compraData.precio_compra_nal || compraData.precio_compra_exp)}
+                                                            </FormDescription>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </CardContent>
+                                        </Card>
 
                                         {/* Merma Display */}
 

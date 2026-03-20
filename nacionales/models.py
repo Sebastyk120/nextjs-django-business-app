@@ -257,7 +257,7 @@ class ReporteCalidadProveedor(models.Model):
     p_precio_kg_exp = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$ Kg Exp", validators=[MinValueValidator(0.0)], editable=False)
     p_kg_nacional = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Kg Nal", validators=[MinValueValidator(0.0)], blank=True, null=True)
     p_porcentaje_nacional = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="% Nal", validators=[MinValueValidator(0.0), MaxValueValidator(100.00)], editable=False)
-    p_precio_kg_nal = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$ Kg Nal", validators=[MinValueValidator(0.0)], editable=False)
+    p_precio_kg_nal = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="$ Kg Nal", validators=[MinValueValidator(0.0)], blank=True, null=True)
     p_kg_merma = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Kg Merma", validators=[MinValueValidator(0.0)], editable=False)
     p_porcentaje_merma = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="% Merma", validators=[MinValueValidator(0.0), MaxValueValidator(100.00)], editable=False)
     p_total_facturar = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Total Facturar", validators=[MinValueValidator(0.0)], editable=False)
@@ -360,7 +360,8 @@ class ReporteCalidadProveedor(models.Model):
         # refresh the in-memory object. Reading it here would get a stale None/0 value.
         # rep_cal_exp.precio_venta_kg_nal is always fresh (it was just saved).
         self.p_precio_kg_exp = self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_exp
-        self.p_precio_kg_nal = self.rep_cal_exp.precio_venta_kg_nal
+        if not self.p_precio_kg_nal:
+            self.p_precio_kg_nal = self.rep_cal_exp.precio_venta_kg_nal
         self.p_total_facturar = (self.p_kg_exportacion * self.p_precio_kg_exp) + (self.p_kg_nacional * self.p_precio_kg_nal)
         self.p_utilidad_sin_ajuste = self.rep_cal_exp.precio_total - ((self.rep_cal_exp.kg_exportacion * self.rep_cal_exp.venta_nacional.compra_nacional.precio_compra_exp) + (self.rep_cal_exp.kg_nacional * self.rep_cal_exp.precio_venta_kg_nal))
         # Cálculos de retenciones
