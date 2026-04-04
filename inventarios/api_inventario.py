@@ -75,7 +75,7 @@ class InventarioSerializer(serializers.ModelSerializer):
 
     def get_stock_actual(self, obj):
         ingresos = (obj.compras_efectivas or 0) + (obj.saldos_iniciales or 0)
-        salidas = (obj.salidas or 0) + (obj.traslado_propio or 0) + (obj.traslado_remisionado or 0) + (obj.ventas or 0)
+        salidas = (obj.salidas or 0) + (obj.traslado_propio or 0) + (obj.traslado_remisionado or 0) + (obj.ventas or 0) + (obj.venta_contenedor or 0)
         return ingresos - salidas
 
 class MovimientoSerializer(serializers.ModelSerializer):
@@ -154,7 +154,8 @@ class InventarioViewSet(viewsets.ReadOnlyModelViewSet):
             total_salidas=Sum('salidas'),
             total_traslado_propio=Sum('traslado_propio'),
             total_traslado_remisionado=Sum('traslado_remisionado'),
-            total_ventas=Sum('ventas')
+            total_ventas=Sum('ventas'),
+            total_venta_contenedor=Sum('venta_contenedor')
         )
         
         # We also need counts for the KPIs
@@ -162,7 +163,7 @@ class InventarioViewSet(viewsets.ReadOnlyModelViewSet):
         all_items = list(queryset)
         def get_stock(item):
             ingresos = (item.compras_efectivas or 0) + (item.saldos_iniciales or 0)
-            salidas = (item.salidas or 0) + (item.traslado_propio or 0) + (item.traslado_remisionado or 0) + (item.ventas or 0)
+            salidas = (item.salidas or 0) + (item.traslado_propio or 0) + (item.traslado_remisionado or 0) + (item.ventas or 0) + (item.venta_contenedor or 0)
             return ingresos - salidas
 
         low_stock_count = sum(1 for item in all_items if 0 < get_stock(item) < 50)
@@ -172,7 +173,7 @@ class InventarioViewSet(viewsets.ReadOnlyModelViewSet):
         # We need to sum them carefully handling None values
         ingresos = (totals['total_compras'] or 0) + (totals['total_saldos_iniciales'] or 0)
         egresos = (totals['total_salidas'] or 0) + (totals['total_traslado_propio'] or 0) + \
-                  (totals['total_traslado_remisionado'] or 0) + (totals['total_ventas'] or 0)
+                  (totals['total_traslado_remisionado'] or 0) + (totals['total_ventas'] or 0) + (totals['total_venta_contenedor'] or 0)
         stock_total = ingresos - egresos
 
         page = self.paginate_queryset(queryset)
@@ -185,7 +186,7 @@ class InventarioViewSet(viewsets.ReadOnlyModelViewSet):
                 'salidas': totals['total_salidas'] or 0,
                 'traslado_propio': totals['total_traslado_propio'] or 0,
                 'traslado_remisionado': totals['total_traslado_remisionado'] or 0,
-                'ventas': totals['total_ventas'] or 0,
+                'ventas': (totals['total_ventas'] or 0) + (totals['total_venta_contenedor'] or 0),
                 'stock_actual': stock_total,
                 'low_stock_count': low_stock_count,
                 'out_of_stock_count': out_of_stock_count
@@ -291,8 +292,7 @@ class InventarioViewSet(viewsets.ReadOnlyModelViewSet):
                 item.salidas,
                 item.traslado_propio,
                 item.traslado_remisionado,
-                item.ventas,
-                item.venta_contenedor,
+                (item.ventas or 0) + (item.venta_contenedor or 0),
                 stock_actual
             ]
             for col_num, cell_value in enumerate(row, start=1):

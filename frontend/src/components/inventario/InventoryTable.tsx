@@ -109,18 +109,22 @@ export function InventoryTable({
         return { variant: "ok", label: "OK", icon: ArrowUpRight };
     };
 
-    const formatValue = (value: any, type?: string, row?: Inventario) => {
+    const formatValue = (value: any, type?: string, key?: string) => {
         if (value === null || value === undefined) return <span className="text-slate-300">-</span>;
 
         if (type === 'number') {
             const num = Number(value);
             if (num === 0) return <span className="text-slate-300">-</span>;
+
+            // Define which columns are "outgoing"
+            const isOutgoing = ['salidas', 'traslado_propio', 'traslado_remisionado', 'ventas'].includes(key || '');
+            
             return (
                 <span className={cn(
-                    "font-medium",
-                    num > 0 ? "text-slate-700" : "text-slate-400"
+                    "font-bold",
+                    isOutgoing ? "text-rose-600" : "text-emerald-600"
                 )}>
-                    {num.toLocaleString('es-CO')}
+                    {isOutgoing ? "-" : ""}{num.toLocaleString('es-CO')}
                 </span>
             );
         }
@@ -130,11 +134,11 @@ export function InventoryTable({
             const status = getStockStatus(num);
             const Icon = status.icon;
 
-            let badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+            let badgeClass = "bg-emerald-500 text-white border-emerald-600";
             if (status.variant === "out") {
-                badgeClass = "bg-rose-50 text-rose-700 border-rose-200";
+                badgeClass = "bg-rose-500 text-white border-rose-600";
             } else if (status.variant === "low") {
-                badgeClass = "bg-amber-50 text-amber-700 border-amber-200";
+                badgeClass = "bg-amber-500 text-white border-amber-600 shadow-amber-100";
             }
 
             return (
@@ -142,7 +146,7 @@ export function InventoryTable({
                     <Badge
                         variant="outline"
                         className={cn(
-                            "font-bold px-2.5 py-1 text-xs border shadow-sm min-w-[60px] justify-center gap-1",
+                            "font-black px-2.5 py-1 text-xs border shadow-md min-w-[65px] justify-center gap-1",
                             badgeClass
                         )}
                     >
@@ -284,7 +288,7 @@ export function InventoryTable({
                                                     </span>
                                                 </div>
                                             ) : (
-                                                formatValue(row[col.key as keyof Inventario], col.format, row)
+                                                formatValue(row[col.key as keyof Inventario], col.format, col.key)
                                             )}
                                         </TableCell>
                                     ))}
@@ -332,23 +336,23 @@ export function InventoryTable({
                             <TableCell colSpan={2} className="px-3 py-4 text-[13px] text-slate-900 font-bold uppercase tracking-wider">
                                 TOTAL GENERAL
                             </TableCell>
-                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-emerald-700 font-black">
                                 {totals.compras_efectivas.toLocaleString('es-CO')}
                             </TableCell>
-                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-emerald-700 font-black">
                                 {totals.saldos_iniciales.toLocaleString('es-CO')}
                             </TableCell>
-                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
-                                {totals.salidas.toLocaleString('es-CO')}
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-rose-700 font-black">
+                                -{totals.salidas.toLocaleString('es-CO')}
                             </TableCell>
-                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
-                                {totals.traslado_propio.toLocaleString('es-CO')}
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-rose-700 font-black">
+                                -{totals.traslado_propio.toLocaleString('es-CO')}
                             </TableCell>
-                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
-                                {totals.traslado_remisionado.toLocaleString('es-CO')}
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-rose-700 font-black">
+                                -{totals.traslado_remisionado.toLocaleString('es-CO')}
                             </TableCell>
-                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
-                                {totals.ventas.toLocaleString('es-CO')}
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-rose-700 font-black">
+                                -{totals.ventas.toLocaleString('es-CO')}
                             </TableCell>
                             <TableCell className="px-3 py-4 text-[13px] text-right">
                                 <Badge 
