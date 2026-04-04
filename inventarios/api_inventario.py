@@ -140,8 +140,71 @@ class InventarioViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = InventarioSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination  # CRITICAL: Do not remove
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['numero_item__nombre', 'numero_item__exportador__nombre']
+    ordering_fields = '__all__'
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Calculate totals for the entire FILTERED queryset
+        totals = queryset.aggregate(
+            total_compras=Sum('compras_efectivas'),
+            total_saldos_iniciales=Sum('saldos_iniciales'),
+            total_salidas=Sum('salidas'),
+            total_traslado_propio=Sum('traslado_propio'),
+            total_traslado_remisionado=Sum('traslado_remisionado'),
+            total_ventas=Sum('ventas')
+        )
+        
+        # We also need counts for the KPIs
+        # This is more efficient to do on the whole queryset here
+        all_items = list(queryset)
+        def get_stock(item):
+            ingresos = (item.compras_efectivas or 0) + (item.saldos_iniciales or 0)
+            salidas = (item.salidas or 0) + (item.traslado_propio or 0) + (item.traslado_remisionado or 0) + (item.ventas or 0)
+            return ingresos - salidas
+
+        low_stock_count = sum(1 for item in all_items if 0 < get_stock(item) < 50)
+        out_of_stock_count = sum(1 for item in all_items if get_stock(item) <= 0)
+        
+        # Calculate stock total (Ingresos - Salidas)
+        # We need to sum them carefully handling None values
+        ingresos = (totals['total_compras'] or 0) + (totals['total_saldos_iniciales'] or 0)
+        egresos = (totals['total_salidas'] or 0) + (totals['total_traslado_propio'] or 0) + \
+                  (totals['total_traslado_remisionado'] or 0) + (totals['total_ventas'] or 0)
+        stock_total = ingresos - egresos
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            response = self.get_paginated_response(serializer.data)
+            response.data['totals'] = {
+                'compras_efectivas': totals['total_compras'] or 0,
+                'saldos_iniciales': totals['total_saldos_iniciales'] or 0,
+                'salidas': totals['total_salidas'] or 0,
+                'traslado_propio': totals['total_traslado_propio'] or 0,
+                'traslado_remisionado': totals['total_traslado_remisionado'] or 0,
+                'ventas': totals['total_ventas'] or 0,
+                'stock_actual': stock_total,
+                'low_stock_count': low_stock_count,
+                'out_of_stock_count': out_of_stock_count
+            }
+            return response
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'results': serializer.data,
+            'totals': {
+                'compras_efectivas': totals['total_compras'] or 0,
+                'saldos_iniciales': totals['total_saldos_iniciales'] or 0,
+                'salidas': totals['total_salidas'] or 0,
+                'traslado_propio': totals['total_traslado_propio'] or 0,
+                'traslado_remisionado': totals['total_traslado_remisionado'] or 0,
+                'ventas': totals['total_ventas'] or 0,
+                'stock_actual': stock_total
+            }
+        })
     
     def get_queryset(self):
         user = self.request.user

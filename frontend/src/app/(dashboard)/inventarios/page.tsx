@@ -31,12 +31,21 @@ function InventariosContent() {
     // Filters State
     const [filters, setFilters] = useState<InventarioFilters>({});
 
-    // KPI State
     const [kpis, setKpis] = useState({
         stockTotal: 0,
         referenciasCount: 0,
         lowStockCount: 0,
         outOfStockCount: 0
+    });
+
+    const [grandTotals, setGrandTotals] = useState({
+        compras_efectivas: 0,
+        saldos_iniciales: 0,
+        salidas: 0,
+        traslado_propio: 0,
+        traslado_remisionado: 0,
+        ventas: 0,
+        stock_actual: 0
     });
 
     // Modals State
@@ -63,24 +72,27 @@ function InventariosContent() {
             const results = response.data.results || [];
             setData(results);
             setTotalItems(response.data.count || 0);
+            
+            // Use totals from backend if available
+            if (response.data.totals) {
+                const { totals } = response.data;
+                setGrandTotals({
+                    compras_efectivas: totals.compras_efectivas,
+                    saldos_iniciales: totals.saldos_iniciales,
+                    salidas: totals.salidas,
+                    traslado_propio: totals.traslado_propio,
+                    traslado_remisionado: totals.traslado_remisionado,
+                    ventas: totals.ventas,
+                    stock_actual: totals.stock_actual
+                });
 
-            // Calculate metrics from CURRENT PAGE results
-            const lowStock = results.filter((item: Inventario) => {
-                const stock = (item.stock_actual !== undefined) ? item.stock_actual : 0;
-                return stock > 0 && stock < 50;
-            }).length;
-
-            const outOfStock = results.filter((item: Inventario) => {
-                const stock = (item.stock_actual !== undefined) ? item.stock_actual : 0;
-                return stock <= 0;
-            }).length;
-
-            setKpis({
-                stockTotal: 0,
-                referenciasCount: response.data.count || 0,
-                lowStockCount: lowStock,
-                outOfStockCount: outOfStock
-            });
+                setKpis({
+                    stockTotal: totals.stock_actual,
+                    referenciasCount: response.data.count || 0,
+                    lowStockCount: totals.low_stock_count,
+                    outOfStockCount: totals.out_of_stock_count
+                });
+            }
 
         } catch (error) {
             console.error("Error fetching inventory:", error);
@@ -205,6 +217,7 @@ function InventariosContent() {
                             loading={loading}
                             onEdit={handleEditHistory}
                             userGroups={user?.groups}
+                            totals={grandTotals}
                         />
                     </div>
 

@@ -18,20 +18,33 @@ const cardVariants = {
         opacity: 1,
         y: 0,
         transition: {
-            delay: i * 0.1,
-            duration: 0.4,
-            ease: [0.25, 0.46, 0.45, 0.94]
+            delay: i * 0.08,
+            duration: 0.4
         }
     })
 };
 
 export function InventoryStockCard({
+    stockTotal,
     referenciasCount,
     lowStockCount,
     outOfStockCount,
     loading
 }: InventoryStockCardProps) {
     const cards = [
+        {
+            id: "stock",
+            title: "Stock Total",
+            value: stockTotal,
+            subtitle: "Unidades en almacén",
+            icon: Package,
+            gradient: "from-indigo-500 to-violet-600",
+            bgGradient: "from-indigo-50/80 to-violet-50/50",
+            iconBg: "bg-indigo-100 text-indigo-600",
+            textColor: "text-indigo-900",
+            subtextColor: "text-indigo-600/70",
+            trend: "up"
+        },
         {
             id: "total",
             title: "Total Referencias",
@@ -76,7 +89,7 @@ export function InventoryStockCard({
     ];
 
     return (
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {cards.map((card, index) => {
                 const Icon = card.icon;
                 const TrendIcon = card.trend === "up" ? TrendingUp : TrendingDown;

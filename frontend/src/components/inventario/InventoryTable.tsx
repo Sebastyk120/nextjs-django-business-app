@@ -7,6 +7,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
+    TableFooter,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,13 +33,21 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 interface InventoryTableProps {
     data: Inventario[];
     loading: boolean;
     onEdit?: (item: Inventario) => void;
     onDelete?: (item: Inventario) => void;
     userGroups?: string[];
+    totals?: {
+        compras_efectivas: number;
+        saldos_iniciales: number;
+        salidas: number;
+        traslado_propio: number;
+        traslado_remisionado: number;
+        ventas: number;
+        stock_actual: number;
+    };
 }
 
 const exporterColors: Record<string, string> = {
@@ -52,7 +61,8 @@ export function InventoryTable({
     data,
     loading,
     onEdit,
-    userGroups = []
+    userGroups = [],
+    totals
 }: InventoryTableProps) {
     const [sortConfig, setSortConfig] = useState<{ key: keyof Inventario; direction: 'asc' | 'desc' } | null>(null);
     const [hoveredRow, setHoveredRow] = useState<number | null>(null);
@@ -61,8 +71,9 @@ export function InventoryTable({
     const columns = [
         { key: 'numero_item_nombre', label: 'Referencia', sortable: true, width: 'w-[200px]' },
         { key: 'exportador_nombre', label: 'Exportador', sortable: true, width: 'w-[120px]' },
-        { key: 'compras_efectivas', label: 'Compras', sortable: true, format: 'number', width: 'w-[100px]' },
-        { key: 'salidas', label: 'Salidas', sortable: true, format: 'number', width: 'w-[100px]' },
+        { key: 'compras_efectivas', label: 'Compras', sortable: true, format: 'number', width: 'w-[90px]' },
+        { key: 'saldos_iniciales', label: 'Saldos Ini.', sortable: true, format: 'number', width: 'w-[90px]' },
+        { key: 'salidas', label: 'Salidas', sortable: true, format: 'number', width: 'w-[90px]' },
         { key: 'traslado_propio', label: 'Trasl. Propio', sortable: true, format: 'number', width: 'w-[100px]' },
         { key: 'traslado_remisionado', label: 'Trasl. Remis.', sortable: true, format: 'number', width: 'w-[100px]' },
         { key: 'ventas', label: 'Ventas', sortable: true, format: 'number', width: 'w-[100px]' },
@@ -315,6 +326,47 @@ export function InventoryTable({
                         })}
                     </AnimatePresence>
                 </TableBody>
+                {totals && (
+                    <TableFooter className="bg-slate-50/80 font-bold border-t-2 border-slate-200">
+                        <TableRow>
+                            <TableCell colSpan={2} className="px-3 py-4 text-[13px] text-slate-900 font-bold uppercase tracking-wider">
+                                TOTAL GENERAL
+                            </TableCell>
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
+                                {totals.compras_efectivas.toLocaleString('es-CO')}
+                            </TableCell>
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
+                                {totals.saldos_iniciales.toLocaleString('es-CO')}
+                            </TableCell>
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
+                                {totals.salidas.toLocaleString('es-CO')}
+                            </TableCell>
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
+                                {totals.traslado_propio.toLocaleString('es-CO')}
+                            </TableCell>
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
+                                {totals.traslado_remisionado.toLocaleString('es-CO')}
+                            </TableCell>
+                            <TableCell className="px-3 py-4 text-[13px] text-right text-indigo-700 font-black">
+                                {totals.ventas.toLocaleString('es-CO')}
+                            </TableCell>
+                            <TableCell className="px-3 py-4 text-[13px] text-right">
+                                <Badge 
+                                    variant="outline" 
+                                    className={cn(
+                                        "font-black px-2.5 py-1 text-sm border-2 shadow-sm min-w-[70px] justify-center gap-1",
+                                        totals.stock_actual > 0 
+                                            ? "bg-indigo-600 text-white border-indigo-700 shadow-indigo-100" 
+                                            : "bg-rose-600 text-white border-rose-700 shadow-rose-100"
+                                    )}
+                                >
+                                    {totals.stock_actual.toLocaleString('es-CO')}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="px-2 py-4" />
+                        </TableRow>
+                    </TableFooter>
+                )}
             </Table>
         </div>
     );
