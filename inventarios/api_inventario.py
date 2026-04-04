@@ -358,6 +358,10 @@ class ItemViewSet(viewsets.ModelViewSet):
         if exportador:
             queryset = queryset.filter(bodega__exportador__nombre=exportador)
             
+        numero_item = self.request.query_params.get('numero_item', None)
+        if numero_item:
+            queryset = queryset.filter(numero_item_id=numero_item)
+            
         return queryset
 
     @action(detail=False, methods=['get'], url_path='export-excel')

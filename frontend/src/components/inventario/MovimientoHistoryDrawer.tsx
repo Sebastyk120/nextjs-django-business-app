@@ -48,7 +48,7 @@ export function MovimientoHistoryDrawer({
     const fetchHistory = async () => {
         setLoading(true);
         try {
-            const response = await axiosClient.get(`/inventarios/api/items/?search=${inventarioItem?.numero_item_nombre}`);
+            const response = await axiosClient.get(`/inventarios/api/items/?numero_item=${inventarioItem?.numero_item}&page_size=100`);
             setMovements(response.data.results || []);
         } catch (error) {
             console.error("Error loading history:", error);
