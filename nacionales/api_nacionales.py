@@ -1114,11 +1114,14 @@ def reportes_vencidos_api(request):
         
     today = datetime.date.today()
     
-    # Obtener ventas nacionales con reportes vencidos (fecha vencimiento < hoy)
+    # Obtener ventas nacionales vencidas y SIN reporte de exportador
+    # Se determina dinámicamente en vez de usar estado_venta, ya que ese campo
+    # no se actualiza cuando se crea un ReporteCalidadExportador (queda stale).
     reportes = VentaNacional.objects.filter(
-        fecha_vencimiento__lt=today, # Estrictamente menor a hoy
+        fecha_vencimiento__lt=today,
         exportador=exportador,
-        estado_venta="Vencido"
+    ).exclude(
+        reportecalidadexportador__isnull=False
     ).select_related(
         'compra_nacional',
         'compra_nacional__fruta',

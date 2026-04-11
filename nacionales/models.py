@@ -575,6 +575,19 @@ def actualizar_balance_tras_eliminar_reporte(sender, instance, **kwargs):
     reevaluar_pagos_proveedor(proveedor)
 
 
+@receiver(post_save, sender=ReporteCalidadExportador)
+def actualizar_estado_venta_tras_reporte_exp(sender, instance, **kwargs):
+    """Re-guarda la VentaNacional para que recalcule estado_venta al crear/editar un ReporteCalidadExportador"""
+    venta = instance.venta_nacional
+    venta.save()
+
+
+@receiver(post_delete, sender=ReporteCalidadExportador)
+def actualizar_estado_venta_tras_eliminar_reporte_exp(sender, instance, **kwargs):
+    """Re-guarda la VentaNacional para que recalcule estado_venta al eliminar un ReporteCalidadExportador"""
+    venta = instance.venta_nacional
+    venta.save()
+
 
 
 
