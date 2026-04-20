@@ -577,16 +577,23 @@ def actualizar_balance_tras_eliminar_reporte(sender, instance, **kwargs):
 
 @receiver(post_save, sender=ReporteCalidadExportador)
 def actualizar_estado_venta_tras_reporte_exp(sender, instance, **kwargs):
-    """Re-guarda la VentaNacional para que recalcule estado_venta al crear/editar un ReporteCalidadExportador"""
+    """Actualiza el estado_venta de la VentaNacional usando update() para evitar recursión con signals"""
+    from django.utils.timezone import now
     venta = instance.venta_nacional
-    venta.save()
+    estado = "Completado"
+    VentaNacional.objects.filter(pk=venta.pk).update(estado_venta=estado)
 
 
 @receiver(post_delete, sender=ReporteCalidadExportador)
 def actualizar_estado_venta_tras_eliminar_reporte_exp(sender, instance, **kwargs):
-    """Re-guarda la VentaNacional para que recalcule estado_venta al eliminar un ReporteCalidadExportador"""
+    """Actualiza el estado_venta de la VentaNacional usando update() para evitar recursión con signals"""
+    from datetime import date
     venta = instance.venta_nacional
-    venta.save()
+    if date.today() > venta.fecha_vencimiento:
+        estado = "Vencido"
+    else:
+        estado = "Pendiente"
+    VentaNacional.objects.filter(pk=venta.pk).update(estado_venta=estado)
 
 
 
