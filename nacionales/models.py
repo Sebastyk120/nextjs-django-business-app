@@ -242,7 +242,7 @@ class ReporteCalidadExportador(models.Model):
         self.porcentaje_nacional = (self.kg_nacional / self.kg_totales * Decimal("100.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         self.kg_merma = self.venta_nacional.peso_neto_recibido - self.kg_exportacion - self.kg_nacional
         self.porcentaje_merma = (self.kg_merma / self.kg_totales * Decimal("100.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        self.precio_total = (self.kg_exportacion * self.precio_venta_kg_exp) + (self.kg_nacional * self.precio_venta_kg_nal)
+        self.precio_total = ((self.kg_exportacion * self.precio_venta_kg_exp) + (self.kg_nacional * self.precio_venta_kg_nal)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         if self.factura:
             self.estado_reporte_exp = "Facturado"
         
