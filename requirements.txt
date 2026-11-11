@@ -23,7 +23,7 @@ et-xmlfile==2.0.0
 filelock==3.20.0
 uvicorn[standard]
 MarkupPy==1.14
-numpy==2.3.1
+numpy==2.3.5
 num2words==0.5.14
 odfpy==1.4.1
 openpyxl==3.1.5
@@ -40,7 +40,7 @@ xlwt==1.3.0
 dj-config-url~=0.1.1
 python-dotenv~=1.0.1
 requests~=2.32.3
-pandas~=2.2.3
+pandas==2.3.3
 xlsxwriter==3.2.9
 mailjet-rest==1.5.1
 reportlab==4.4.6
